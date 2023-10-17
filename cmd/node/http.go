@@ -1,4 +1,4 @@
-package receiver
+package main
 
 type errResp struct {
 	Error string `json:"error,omitempty"`
@@ -6,4 +6,8 @@ type errResp struct {
 
 func newErrResp(err error) *errResp {
 	return &errResp{Error: err.Error()}
+}
+
+type receiveMsgReq struct {
+	Data string `json:"data"        binding:"required"`
 }
