@@ -17,7 +17,7 @@ func main() {
 
 	router := gin.Default()
 	router.POST("/message", func(c *gin.Context) {
-		var req receiveMsgReq
+		var req msgReq
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, newErrResp(err))
 			return

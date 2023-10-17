@@ -8,6 +8,6 @@ func newErrResp(err error) *errResp {
 	return &errResp{Error: err.Error()}
 }
 
-type receiveMsgReq struct {
+type msgReq struct {
 	Data string `json:"data"        binding:"required"`
 }
