@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
 	"github.com/machinefi/w3bstream-mainnet/pkg/msghandler"
 )
 
@@ -22,7 +23,7 @@ func main() {
 			c.JSON(http.StatusBadRequest, newErrResp(err))
 			return
 		}
-		msg := &msghandler.Msg{
+		msg := &msg.Msg{
 			Data: []byte(req.Data),
 		}
 		if err := msgHandler.Handle(msg); err != nil {
