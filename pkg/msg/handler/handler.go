@@ -1,4 +1,4 @@
-package msghandler
+package handler
 
 import (
 	"github.com/machinefi/w3bstream-mainnet/pkg/msg"

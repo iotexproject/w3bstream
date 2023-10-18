@@ -10,11 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
-	"github.com/machinefi/w3bstream-mainnet/pkg/msghandler"
+	"github.com/machinefi/w3bstream-mainnet/pkg/msg/handler"
 )
 
 func main() {
-	msgHandler := msghandler.New()
+	msgHandler := handler.New()
 
 	router := gin.Default()
 	router.POST("/message", func(c *gin.Context) {
