@@ -1,10 +1,12 @@
 package manager
 
 import (
+	"context"
 	"sync"
 
 	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
 	"github.com/machinefi/w3bstream-mainnet/pkg/vm/instance"
+	"github.com/machinefi/w3bstream-mainnet/pkg/vm/risc0"
 )
 
 type Config struct {
@@ -25,8 +27,9 @@ func (m *Mgr) Acquire(msg *msg.Msg) (instance.Instance, error) {
 		return i, nil
 	}
 
-	return nil, nil
-
+	// TODO get project bin data by real project info
+	testdata := getTestData()
+	return risc0.NewInstance(context.Background(), m.conf.Risc0ServerAddr, msg.Key(), testdata.Content, testdata.ExpParam)
 }
 
 func (m *Mgr) Release(key msg.MsgKey, i instance.Instance) {
