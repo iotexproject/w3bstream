@@ -11,10 +11,13 @@ import (
 
 	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
 	"github.com/machinefi/w3bstream-mainnet/pkg/msg/handler"
+	"github.com/machinefi/w3bstream-mainnet/pkg/vm"
 )
 
 func main() {
-	msgHandler := handler.New()
+	// TODO read from config file
+	vmHandler := vm.NewHandler("localhost:9001")
+	msgHandler := handler.New(vmHandler)
 
 	router := gin.Default()
 	router.POST("/message", func(c *gin.Context) {
