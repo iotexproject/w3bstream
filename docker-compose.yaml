@@ -4,15 +4,36 @@ services:
   w3bnode:
     image: iotexdev/w3bstream-mainnet-node:v0.0.1
     depends_on:
-      - "risc0-service"
+      - "risc0"
     container_name: w3bstream-node
     restart: always
     ports:
       - "9000:9000"
 
-  risc0-service:
+  risc0:
     image: iotexdev/risc0server:v0.8rc1
+    depends_on:
+      - "postgres"
     container_name: risc0-service
     restart: always
+    environment:
+      DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+  
+  postgres:
+    image: postgres:14
+    container_name: w3bstream-node-postgres
+    restart: always
+    command:
+      [
+        "postgres",
+        "-cshared_preload_libraries=pg_stat_statements"
+      ]
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_passwd
+      POSTGRES_DB: test
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
     ports:
-      - "9001:9001"
+    # for manual create db table, will become auto in feature
+      - "9001:5432"

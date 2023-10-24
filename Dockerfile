@@ -12,6 +12,7 @@ RUN cd ./cmd/node && go build -o node
 FROM golang:1.21 AS runtime
 
 COPY --from=builder /go/src/cmd/node/node /go/bin/node
+COPY --from=builder /go/src/test/data/create.json /go/bin/test/data/create.json
 EXPOSE 9000
 
 WORKDIR /go/bin
