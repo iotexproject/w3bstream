@@ -1,0 +1,18 @@
+version: "3.6"
+
+services:
+  w3bnode:
+    image: iotexdev/w3bstream-mainnet-node:v0.0.1
+    depends_on:
+      - "risc0-service"
+    container_name: w3bstream-node
+    restart: always
+    ports:
+      - "9000:9000"
+
+  risc0-service:
+    image: iotexdev/risc0server:v0.8rc1
+    container_name: risc0-service
+    restart: always
+    ports:
+      - "9001:9001"
