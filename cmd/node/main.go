@@ -16,7 +16,7 @@ import (
 
 func main() {
 	// TODO read from config file
-	vmHandler := vm.NewHandler("risc0:4001")
+	vmHandler := vm.NewHandler("localhost:9001")
 	msgHandler := handler.New(vmHandler)
 
 	router := gin.Default()
