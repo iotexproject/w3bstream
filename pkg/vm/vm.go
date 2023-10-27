@@ -3,9 +3,10 @@ package vm
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
 	"github.com/machinefi/w3bstream-mainnet/pkg/vm/instance/manager"
-	"github.com/pkg/errors"
 )
 
 type Handler struct {
