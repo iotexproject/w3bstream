@@ -2,12 +2,14 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 
 	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
 	"github.com/machinefi/w3bstream-mainnet/pkg/msg/handler"
@@ -15,9 +17,19 @@ import (
 )
 
 func main() {
-	// TODO read from config file
-	vmHandler := vm.NewHandler("risc0:4001")
-	msgHandler := handler.New(vmHandler)
+	var programLevel = slog.LevelDebug
+	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: programLevel})
+	slog.SetDefault(slog.New(h))
+
+	dbMigrate()
+	viper.MustBindEnv("ENDPOINT")
+	viper.MustBindEnv("RISC0_SERVER_ENDPOINT")
+	viper.MustBindEnv("PROJECT_CONFIG_FILE")
+	viper.MustBindEnv("CHAIN_ENDPOINT")
+	viper.MustBindEnv("OPERATOR_PRIVATE_KEY")
+
+	vmHandler := vm.NewHandler(viper.Get("RISC0_SERVER_ENDPOINT").(string), viper.Get("PROJECT_CONFIG_FILE").(string))
+	msgHandler := handler.New(vmHandler, viper.Get("CHAIN_ENDPOINT").(string), viper.Get("OPERATOR_PRIVATE_KEY").(string))
 
 	router := gin.Default()
 	router.POST("/message", func(c *gin.Context) {
@@ -29,6 +41,7 @@ func main() {
 		msg := &msg.Msg{
 			Data: []byte(req.Data),
 		}
+		slog.Debug("received your message, handling")
 		if err := msgHandler.Handle(msg); err != nil {
 			c.JSON(http.StatusInternalServerError, newErrResp(err))
 			return
@@ -38,8 +51,7 @@ func main() {
 	})
 
 	go func() {
-		// TODO move ":9000" to config
-		if err := router.Run(":9000"); err != nil {
+		if err := router.Run(viper.Get("ENDPOINT").(string)); err != nil {
 			log.Fatal(err)
 		}
 	}()

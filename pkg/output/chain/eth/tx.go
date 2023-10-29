@@ -13,7 +13,7 @@ import (
 func SendTX(ctx context.Context, endpoint, privateKey, toStr string, data []byte) (string, error) {
 	cli, err := ethclient.Dial(endpoint)
 	if err != nil {
-		return "", errors.Wrap(err, "dial eth endpoint failed")
+		return "", errors.Wrapf(err, "dial eth endpoint %s failed", endpoint)
 	}
 
 	pk := crypto.ToECDSAUnsafe(common.FromHex(privateKey))

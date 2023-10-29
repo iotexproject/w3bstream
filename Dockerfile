@@ -13,6 +13,7 @@ FROM golang:1.21 AS runtime
 
 COPY --from=builder /go/src/cmd/node/node /go/bin/node
 COPY --from=builder /go/src/test/data/create.json /go/bin/test/data/create.json
+COPY --from=builder /go/src/test/contract/Store.abi /go/bin/test/contract/Store.abi
 EXPOSE 9000
 
 WORKDIR /go/bin
