@@ -15,7 +15,7 @@ services:
       RISC0_SERVER_ENDPOINT: "risc0:4001"
       PROJECT_CONFIG_FILE: "test/data/create.json"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
-      OPERATOR_PRIVATE_KEY: "1dd02a766b13a3dd1d7bcaf928449ce0d1b56815caf96800f8e772326eb03012"
+      OPERATOR_PRIVATE_KEY: "your private key"
 
   risc0:
     image: iotexdev/risc0server:v0.8rc1
