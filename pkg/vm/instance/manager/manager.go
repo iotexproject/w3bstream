@@ -10,7 +10,8 @@ import (
 )
 
 type Config struct {
-	Risc0ServerAddr string
+	Risc0ServerAddr       string
+	ProjectConfigFilePath string
 }
 
 type Mgr struct {
@@ -28,7 +29,7 @@ func (m *Mgr) Acquire(msg *msg.Msg) (instance.Instance, error) {
 	}
 
 	// TODO get project bin data by real project info
-	testdata := getTestData()
+	testdata := getTestData(m.conf.ProjectConfigFilePath)
 	return risc0.NewInstance(context.Background(), m.conf.Risc0ServerAddr, msg.Key(), testdata.Content, testdata.ExpParam)
 }
 

@@ -14,8 +14,8 @@ type testData struct {
 	ExpParam string `json:"expParam"`
 }
 
-func getTestData() *testData {
-	content, err := os.ReadFile("test/data/create.json")
+func getTestData(file string) *testData {
+	content, err := os.ReadFile(file)
 	if err != nil {
 		panic(err)
 	}
