@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
-	"github.com/machinefi/w3bstream-mainnet/pkg/vm/instance"
-	"github.com/machinefi/w3bstream-mainnet/pkg/vm/risc0"
+	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/w3bstream-mainnet/vm/instance"
+	"github.com/machinefi/w3bstream-mainnet/vm/risc0"
 )
 
 type Config struct {

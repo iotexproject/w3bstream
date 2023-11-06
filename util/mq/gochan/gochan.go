@@ -1,8 +1,8 @@
 package gochan
 
 import (
-	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
-	"github.com/machinefi/w3bstream-mainnet/pkg/util/mq"
+	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/w3bstream-mainnet/util/mq"
 )
 
 const defaultQueueSize = 4096

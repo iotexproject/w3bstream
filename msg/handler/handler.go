@@ -4,12 +4,12 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
-	"github.com/machinefi/w3bstream-mainnet/pkg/output/chain/eth"
-	"github.com/machinefi/w3bstream-mainnet/pkg/util/mq"
-	"github.com/machinefi/w3bstream-mainnet/pkg/util/mq/gochan"
-	"github.com/machinefi/w3bstream-mainnet/pkg/vm"
+	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/w3bstream-mainnet/output/chain/eth"
 	"github.com/machinefi/w3bstream-mainnet/test/contract"
+	"github.com/machinefi/w3bstream-mainnet/util/mq"
+	"github.com/machinefi/w3bstream-mainnet/util/mq/gochan"
+	"github.com/machinefi/w3bstream-mainnet/vm"
 )
 
 type Handler struct {

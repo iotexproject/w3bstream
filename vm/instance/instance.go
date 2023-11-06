@@ -3,7 +3,7 @@ package instance
 import (
 	"context"
 
-	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
+	"github.com/machinefi/w3bstream-mainnet/msg"
 )
 
 type Instance interface {
