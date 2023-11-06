@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
-	"github.com/machinefi/w3bstream-mainnet/pkg/vm/instance/manager"
+	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/w3bstream-mainnet/vm/instance/manager"
 	"github.com/pkg/errors"
 )
 

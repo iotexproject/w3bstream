@@ -11,9 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/w3bstream-mainnet/pkg/msg"
-	"github.com/machinefi/w3bstream-mainnet/pkg/msg/handler"
-	"github.com/machinefi/w3bstream-mainnet/pkg/vm"
+	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/w3bstream-mainnet/msg/handler"
+	"github.com/machinefi/w3bstream-mainnet/vm"
 )
 
 func main() {
