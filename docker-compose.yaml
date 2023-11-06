@@ -9,13 +9,13 @@ services:
     container_name: w3bstream-node
     restart: always
     ports:
-      - "9000:9000"
+      - "${PORT}:${PORT}"
     environment:
-      ENDPOINT: ":9000"
+      ENDPOINT: ":${PORT}"
       RISC0_SERVER_ENDPOINT: "risc0:4001"
-      PROJECT_CONFIG_FILE: "test/data/create.json"
+      PROJECT_CONFIG_FILE: "${PROJECT_CONFIG_FILE}"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
-      OPERATOR_PRIVATE_KEY: "your private key"
+      OPERATOR_PRIVATE_KEY: "${OPERATOR_PRIVATE_KEY}"
 
   risc0:
     image: iotexdev/risc0server:v0.8rc1

@@ -33,16 +33,13 @@ func main() {
 
 	router := gin.Default()
 	router.POST("/message", func(c *gin.Context) {
-		var req msgReq
+		var req msg.Msg
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, newErrResp(err))
 			return
 		}
-		msg := &msg.Msg{
-			Data: []byte(req.Data),
-		}
 		slog.Debug("received your message, handling")
-		if err := msgHandler.Handle(msg); err != nil {
+		if err := msgHandler.Handle(&req); err != nil {
 			c.JSON(http.StatusInternalServerError, newErrResp(err))
 			return
 		}
