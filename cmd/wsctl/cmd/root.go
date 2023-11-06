@@ -35,7 +35,6 @@ func initConfig() {
 	viper.SetConfigFile(path.Join(confDir, "config.yaml"))
 	viper.SetDefault(NodeHost, "localhost")
 	viper.SetDefault(NodePort, "9000")
-	viper.SetDefault(NodeAdminPort, "9001")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
