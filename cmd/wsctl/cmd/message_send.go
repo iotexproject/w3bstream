@@ -10,8 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/machinefi/w3bstream-mainnet/msg"
 )
 
 var sendCmd = &cobra.Command{
@@ -26,12 +24,16 @@ var sendCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "failed to get flag project-version")
 		}
-		data, err := cmd.Flags().GetBytesBase64("data")
+		data, err := cmd.Flags().GetString("data")
 		if err != nil {
 			return errors.Wrap(err, "failed to get flag data")
 		}
 
-		body := &msg.Msg{
+		body := struct {
+			ProjectID      string `json:"projectID"`
+			ProjectVersion string `json:"projectVersion"`
+			Data           string `json:"data"`
+		}{
 			ProjectID:      projectID,
 			ProjectVersion: projectVersion,
 			Data:           data,
@@ -62,7 +64,7 @@ func init() {
 
 	sendCmd.Flags().StringP("project-id", "p", "", "the projectID which the message will send to")
 	sendCmd.Flags().StringP("project-version", "v", "", "the projectVersion")
-	sendCmd.Flags().BytesBase64P("data", "d", nil, "the data which will send to project")
+	sendCmd.Flags().StringP("data", "d", "", "the data which will send to project")
 
 	sendCmd.MarkFlagRequired("project-id")
 	sendCmd.MarkFlagRequired("project-version")

@@ -9,5 +9,7 @@ func newErrResp(err error) *errResp {
 }
 
 type msgReq struct {
-	Data string `json:"data"        binding:"required"`
+	ProjectID      string `json:"projectID"        binding:"required"`
+	ProjectVersion string `json:"projectVersion"   binding:"required"`
+	Data           string `json:"data"             binding:"required"`
 }
