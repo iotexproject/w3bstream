@@ -38,7 +38,7 @@ func NewInstance(ctx context.Context, grpcAddr string, msgKey msg.MsgKey, execut
 func (i *instance) Execute(ctx context.Context, msg *msg.Msg) ([]byte, error) {
 	req := &ExecuteRequest{
 		Project: string(msg.Key()),
-		Param:   string(msg.Data),
+		Param:   msg.Data,
 	}
 	cli := NewVmRuntimeClient(i.conn)
 	resp, err := cli.ExecuteOperator(ctx, req)

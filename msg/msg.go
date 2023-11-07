@@ -5,7 +5,7 @@ import "fmt"
 type Msg struct {
 	ProjectID      string `json:"projectID"`
 	ProjectVersion string `json:"projectVersion"`
-	Data           []byte `json:"data"`
+	Data           string `json:"data"`
 }
 
 type MsgKey string
