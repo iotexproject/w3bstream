@@ -16,6 +16,8 @@ services:
       PROJECT_CONFIG_FILE: "${PROJECT_CONFIG_FILE}"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
       OPERATOR_PRIVATE_KEY: "${OPERATOR_PRIVATE_KEY}"
+    volumes:
+      - .:/data
 
   risc0:
     image: iotexdev/risc0server:v0.8rc1

@@ -3,6 +3,8 @@ package manager
 import (
 	"encoding/json"
 	"os"
+	"path"
+	"strings"
 )
 
 // TODO delete this file
@@ -15,6 +17,9 @@ type testData struct {
 }
 
 func getTestData(file string) *testData {
+	if !strings.HasPrefix(file, "test/data/create.json") {
+		file = path.Join("/data", file)
+	}
 	content, err := os.ReadFile(file)
 	if err != nil {
 		panic(err)

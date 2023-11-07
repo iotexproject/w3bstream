@@ -36,11 +36,15 @@ var upCmd = &cobra.Command{
 			// TODO auto download docker-compose.yaml when not exist
 			return errors.Wrap(err, "docker-compose.yaml file not exist")
 		}
-		if err := createEnvFile(viper.Get(NodePort).(string), projectFile, privateKey); err != nil {
+		if err := createEnvFile(viper.Get(NodePort).(string)); err != nil {
 			return err
 		}
 
 		upCmd := exec.Command("docker-compose", "up", "-d")
+		upCmd.Env = os.Environ()
+		upCmd.Env = append(upCmd.Env, fmt.Sprintf("%s=%s", "PROJECT_CONFIG_FILE", projectFile))
+		upCmd.Env = append(upCmd.Env, fmt.Sprintf("%s=%s", "OPERATOR_PRIVATE_KEY", privateKey))
+
 		out, err := upCmd.StdoutPipe()
 		if err != nil {
 			return errors.Wrap(err, "failed to start docker-compose")
@@ -68,7 +72,7 @@ var upCmd = &cobra.Command{
 	},
 }
 
-func createEnvFile(port, projectFile, privateKey string) error {
+func createEnvFile(port string) error {
 	out, err := os.Create("./.env")
 	if err != nil {
 		return errors.Wrap(err, "failed to create env file")
@@ -76,8 +80,6 @@ func createEnvFile(port, projectFile, privateKey string) error {
 	defer out.Close()
 
 	fmt.Fprintf(out, "%s=%s\n", "PORT", port)
-	fmt.Fprintf(out, "%s=%s\n", "PROJECT_CONFIG_FILE", projectFile)
-	fmt.Fprintf(out, "%s=%s\n", "OPERATOR_PRIVATE_KEY", privateKey)
 	return nil
 }
 
