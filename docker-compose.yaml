@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   w3bnode:
-    image: iotexdev/w3bstream-mainnet-node:v0.1.0
+    image: iotexdev/w3bstream-mainnet-node:v0.2.0
     depends_on:
       - "risc0"
       - "postgres"
