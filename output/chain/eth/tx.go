@@ -39,7 +39,7 @@ func SendTX(ctx context.Context, endpoint, privateKey, toStr string, data []byte
 		&types.LegacyTx{
 			Nonce:    nonce,
 			GasPrice: gasPrice,
-			Gas:      uint64(3000000), // TODO get gas limit by cli.EstimateGas
+			Gas:      uint64(3000000000), // TODO get gas limit by cli.EstimateGas
 			To:       &to,
 			Data:     data,
 		})
