@@ -1,5 +1,5 @@
 # w3bstream-mainnet
-w3bstream mainnet
+w3bstream Mainnet Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as zkVMs like zkWASM and RISC0.
 
 ### step 1
 install wsctl https://github.com/machinefi/w3bstream-mainnet/releases
