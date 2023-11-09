@@ -2,7 +2,6 @@ name: build_image
 
 on:
   push:
-    branches: ["main"]
     tags: ["v*.*.*"]
 
 env:
