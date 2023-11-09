@@ -1,41 +1,43 @@
 # w3bstream-mainnet
-w3bstream Mainnet Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as zkVMs like zkWASM and RISC0.
+W3bstream Mainnet Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as zkVMs like zkWASM (WIP) and RISC0.
 
-### step 1
+wsctl is the command line tool that interact with W3bstream protocol which can be used by node operators as well as project developers.
+
+### Step 1
 install wsctl https://github.com/machinefi/w3bstream-mainnet/releases
 
-### step 2
+### Step 2
 install docker & docker-compose
 
-### step 3
+### Step 3
 ```bash
 git clone https://github.com/machinefi/w3bstream-mainnet.git
 cd w3bstream-mainnet
 ```
 
-### step 4
+### Step 4
 ```bash
 wsctl node up --private-key "your private key"
 ```
 
-### step 5
+### Step 5
 ```bash
 wsctl node log
 ```
 
-### step 6 
+### Step 6 
 open a new terminal and execute
 ```bash
 wsctl message send -p "test01" -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Stark\"}"
 ```
 will see log on `wsctl node log` terminal
 
-### step 7
+### Step 7
 ```bash
 wsctl node down
 ```
 
-### step 8
+### Step 8
 can watch config by 
 ```bash
 wsctl config get
