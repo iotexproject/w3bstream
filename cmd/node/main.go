@@ -24,11 +24,12 @@ func main() {
 	dbMigrate()
 	viper.MustBindEnv("ENDPOINT")
 	viper.MustBindEnv("RISC0_SERVER_ENDPOINT")
+	viper.MustBindEnv("HALO2_SERVER_ENDPOINT")
 	viper.MustBindEnv("PROJECT_CONFIG_FILE")
 	viper.MustBindEnv("CHAIN_ENDPOINT")
 	viper.MustBindEnv("OPERATOR_PRIVATE_KEY")
 
-	vmHandler := vm.NewHandler(viper.Get("RISC0_SERVER_ENDPOINT").(string), viper.Get("PROJECT_CONFIG_FILE").(string))
+	vmHandler := vm.NewHandler(viper.Get("RISC0_SERVER_ENDPOINT").(string), viper.Get("HALO2_SERVER_ENDPOINT").(string), viper.Get("PROJECT_CONFIG_FILE").(string))
 	msgHandler := handler.New(vmHandler, viper.Get("CHAIN_ENDPOINT").(string), viper.Get("OPERATOR_PRIVATE_KEY").(string))
 
 	router := gin.Default()

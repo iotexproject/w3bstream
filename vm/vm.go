@@ -30,10 +30,11 @@ func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
 	return res, nil
 }
 
-func NewHandler(risc0ServerAddr, projectConfigFilePath string) *Handler {
+func NewHandler(risc0ServerAddr, halo2ServerAddr, projectConfigFilePath string) *Handler {
 	return &Handler{
 		manager.NewMgr(&manager.Config{
 			Risc0ServerAddr:       risc0ServerAddr,
+			Halo2ServerAddr:       halo2ServerAddr,
 			ProjectConfigFilePath: projectConfigFilePath,
 		}),
 	}

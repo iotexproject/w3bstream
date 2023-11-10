@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	Risc0ServerAddr       string
+	Halo2ServerAddr       string
 	ProjectConfigFilePath string
 }
 
@@ -30,7 +31,7 @@ func (m *Mgr) Acquire(msg *msg.Msg) (instance.Instance, error) {
 
 	// TODO get project bin data by real project info
 	testdata := getTestData(m.conf.ProjectConfigFilePath)
-	return risc0.NewInstance(context.Background(), m.conf.Risc0ServerAddr, msg.Key(), testdata.Content, testdata.ExpParam)
+	return risc0.NewInstance(context.Background(), m.conf.Halo2ServerAddr, msg.Key(), testdata.Content, testdata.ExpParam)
 }
 
 func (m *Mgr) Release(key msg.MsgKey, i instance.Instance) {
