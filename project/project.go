@@ -13,10 +13,9 @@ type Project struct {
 }
 
 type Config struct {
-	CodeURI               string            `json:"codeURI"`
-	CodeChecksum          string            `json:"codeChecksum"`
-	MsgFetchStrategy      msg.FetchStrategy `json:"messageFetchStrategy"`
-	VMType                vm.Type           `json:"vmType"`
-	OutputType            output.Type       `json:"outputType"`
-	OutputContractAddress string            `json:"outputContractAddress,omitempty"`
+	Code             []byte            `json:"code"`
+	MsgFetchStrategy msg.FetchStrategy `json:"messageFetchStrategy"`
+	VMType           vm.Type           `json:"vmType"`
+	OutputType       output.Type       `json:"outputType"`
+	OutputAddress    string            `json:"outputAddress,omitempty"`
 }
