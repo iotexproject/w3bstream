@@ -5,16 +5,28 @@ import (
 	"log/slog"
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
-	"github.com/machinefi/w3bstream-mainnet/vm/instance/manager"
+	"github.com/machinefi/w3bstream-mainnet/vm/server"
+	"github.com/machinefi/w3bstream-mainnet/vm/types"
 	"github.com/pkg/errors"
 )
 
 type Handler struct {
-	instanceMgr *manager.Mgr
+	risc0ServerAddr       string
+	halo2ServerAddr       string
+	projectConfigFilePath string
+
+	instanceMgr *server.Mgr
 }
 
 func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
-	ins, err := r.instanceMgr.Acquire(msg)
+	// TODO get project bin data by real project info
+	testdata := getTestData(r.projectConfigFilePath)
+	serverAddr := r.halo2ServerAddr
+	if testdata.VMType == types.Risc0 {
+		serverAddr = r.risc0ServerAddr
+	}
+
+	ins, err := r.instanceMgr.Acquire(msg, serverAddr, testdata.Code, testdata.CodeExpParam)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
@@ -32,10 +44,9 @@ func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
 
 func NewHandler(risc0ServerAddr, halo2ServerAddr, projectConfigFilePath string) *Handler {
 	return &Handler{
-		manager.NewMgr(&manager.Config{
-			Risc0ServerAddr:       risc0ServerAddr,
-			Halo2ServerAddr:       halo2ServerAddr,
-			ProjectConfigFilePath: projectConfigFilePath,
-		}),
+		risc0ServerAddr:       risc0ServerAddr,
+		halo2ServerAddr:       halo2ServerAddr,
+		projectConfigFilePath: projectConfigFilePath,
+		instanceMgr:           server.NewMgr(),
 	}
 }
