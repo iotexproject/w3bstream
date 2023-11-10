@@ -1,5 +1,5 @@
-# w3bstream-mainnet
-W3bstream Mainnet Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as zkVMs like zkWASM (WIP) and RISC0.
+# W3bstream Sprout
+W3bstream Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as zkVMs like zkWASM (WIP) and RISC0.
 
 wsctl is the command line tool that interact with W3bstream protocol which can be used by node operators as well as project developers.
 
@@ -12,8 +12,8 @@ install docker & docker-compose
 
 ### Step 3
 ```bash
-git clone https://github.com/machinefi/w3bstream-mainnet.git
-cd w3bstream-mainnet
+git clone https://github.com/machinefi/sprout.git
+cd sprout
 ```
 
 ### Step 4
