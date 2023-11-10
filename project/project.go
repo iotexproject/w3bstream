@@ -14,7 +14,7 @@ type Project struct {
 
 type Config struct {
 	CodeURI               string            `json:"codeURI"`
-	CodeSHA1Hash          string            `json:"codeSHA1Hash"`
+	CodeChecksum          string            `json:"codeChecksum"`
 	MsgFetchStrategy      msg.FetchStrategy `json:"messageFetchStrategy"`
 	VMType                vm.Type           `json:"vmType"`
 	OutputType            output.Type       `json:"outputType"`
