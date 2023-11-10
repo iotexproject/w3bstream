@@ -3,6 +3,13 @@ W3bstream Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as z
 
 wsctl is the command line tool that interact with W3bstream protocol which can be used by node operators as well as project developers.
 
+
+### Minimum requirements
+
+| Components | Version | Description |
+|----------|-------------|-------------|
+| [Golang](https://golang.org) | &ge; 1.21 | Go programming language |
+
 ### Step 1
 install wsctl
 `curl https://raw.githubusercontent.com/machinefi/sprout/main/scripts/install_wsctl.sh | bash`
