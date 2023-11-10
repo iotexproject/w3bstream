@@ -4,7 +4,8 @@ W3bstream Mainnet Sprout (Alpha) which supports native Halo2 circuits (WIP) as w
 wsctl is the command line tool that interact with W3bstream protocol which can be used by node operators as well as project developers.
 
 ### Step 1
-install wsctl https://github.com/machinefi/w3bstream-mainnet/releases
+install wsctl
+`curl https://raw.githubusercontent.com/machinefi/sprout/main/scripts/install_wsctl.sh | bash`
 
 ### Step 2
 install docker & docker-compose
