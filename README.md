@@ -19,8 +19,8 @@ install docker & docker-compose
 
 ### Step 3
 ```bash
-git clone https://github.com/machinefi/sprout.git
-cd sprout
+mkdir sprout && cd sprout
+curl https://raw.githubusercontent.com/machinefi/sprout/main/docker-compose.yaml -o docker-compose.yaml
 ```
 
 ### Step 4
