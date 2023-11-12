@@ -12,7 +12,7 @@ type Mgr struct {
 	idle map[msg.MsgKey]*Instance
 }
 
-func (m *Mgr) Acquire(msg *msg.Msg, serverAddr string, code []byte, expParam string) (*Instance, error) {
+func (m *Mgr) Acquire(msg *msg.Msg, endpoint string, code []byte, expParam string) (*Instance, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -20,7 +20,7 @@ func (m *Mgr) Acquire(msg *msg.Msg, serverAddr string, code []byte, expParam str
 		return i, nil
 	}
 
-	return NewInstance(context.Background(), serverAddr, msg.Key(), code, expParam)
+	return NewInstance(context.Background(), endpoint, msg.Key(), code, expParam)
 }
 
 func (m *Mgr) Release(key msg.MsgKey, i *Instance) {

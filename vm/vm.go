@@ -11,8 +11,7 @@ import (
 )
 
 type Handler struct {
-	risc0ServerAddr       string
-	halo2ServerAddr       string
+	endpoints             map[types.Type]string
 	projectConfigFilePath string
 
 	instanceMgr *server.Mgr
@@ -21,12 +20,13 @@ type Handler struct {
 func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
 	// TODO get project bin data by real project info
 	testdata := getTestData(r.projectConfigFilePath)
-	serverAddr := r.halo2ServerAddr
-	if testdata.VMType == types.Risc0 {
-		serverAddr = r.risc0ServerAddr
+
+	endpoint, ok := r.endpoints[testdata.VMType]
+	if !ok {
+		return nil, errors.New("unsupported vm type")
 	}
 
-	ins, err := r.instanceMgr.Acquire(msg, serverAddr, testdata.Code, testdata.CodeExpParam)
+	ins, err := r.instanceMgr.Acquire(msg, endpoint, testdata.Code, testdata.CodeExpParam)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
@@ -42,10 +42,12 @@ func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
 	return res, nil
 }
 
-func NewHandler(risc0ServerAddr, halo2ServerAddr, projectConfigFilePath string) *Handler {
+func NewHandler(risc0Endpoint, halo2Endpoint, projectConfigFilePath string) *Handler {
 	return &Handler{
-		risc0ServerAddr:       risc0ServerAddr,
-		halo2ServerAddr:       halo2ServerAddr,
+		endpoints: map[types.Type]string{
+			types.Risc0: risc0Endpoint,
+			types.Halo2: halo2Endpoint,
+		},
 		projectConfigFilePath: projectConfigFilePath,
 		instanceMgr:           server.NewMgr(),
 	}

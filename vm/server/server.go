@@ -15,8 +15,8 @@ type Instance struct {
 	resp *CreateResponse
 }
 
-func NewInstance(ctx context.Context, grpcAddr string, msgKey msg.MsgKey, executeBinary []byte, expParam string) (*Instance, error) {
-	conn, err := grpc.Dial(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewInstance(ctx context.Context, endpoint string, msgKey msg.MsgKey, executeBinary []byte, expParam string) (*Instance, error) {
+	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial risc0 server")
 	}
