@@ -1,4 +1,4 @@
-package vm
+package data
 
 import (
 	"encoding/json"
@@ -11,14 +11,7 @@ import (
 
 // TODO delete this file
 
-type testData struct {
-	Project  string `json:"project"`
-	MD5      string `json:"md5"`
-	Content  []byte `json:"content"`
-	ExpParam string `json:"expParam"`
-}
-
-func getTestData(file string) *project.Config {
+func GetTestData(file string) *project.Config {
 	if !strings.HasPrefix(file, "test/data/create.json") {
 		file = path.Join("/data", file)
 	}

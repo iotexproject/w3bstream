@@ -29,8 +29,8 @@ func main() {
 	viper.MustBindEnv("CHAIN_ENDPOINT")
 	viper.MustBindEnv("OPERATOR_PRIVATE_KEY")
 
-	vmHandler := vm.NewHandler(viper.Get("RISC0_SERVER_ENDPOINT").(string), viper.Get("HALO2_SERVER_ENDPOINT").(string), viper.Get("PROJECT_CONFIG_FILE").(string))
-	msgHandler := handler.New(vmHandler, viper.Get("CHAIN_ENDPOINT").(string), viper.Get("OPERATOR_PRIVATE_KEY").(string))
+	vmHandler := vm.NewHandler(viper.Get("RISC0_SERVER_ENDPOINT").(string), viper.Get("HALO2_SERVER_ENDPOINT").(string))
+	msgHandler := handler.New(vmHandler, viper.Get("CHAIN_ENDPOINT").(string), viper.Get("OPERATOR_PRIVATE_KEY").(string), viper.Get("PROJECT_CONFIG_FILE").(string))
 
 	router := gin.Default()
 	router.POST("/message", func(c *gin.Context) {

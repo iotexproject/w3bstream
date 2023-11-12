@@ -6,27 +6,24 @@ import (
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
 	"github.com/machinefi/w3bstream-mainnet/vm/server"
-	"github.com/machinefi/w3bstream-mainnet/vm/types"
 	"github.com/pkg/errors"
 )
 
 type Handler struct {
-	endpoints             map[types.Type]string
-	projectConfigFilePath string
-
+	endpoints   map[Type]string
 	instanceMgr *server.Mgr
 }
 
-func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
+func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string) ([]byte, error) {
 	// TODO get project bin data by real project info
-	testdata := getTestData(r.projectConfigFilePath)
+	// code, expParam := data.GetTestData(r.projectConfigFilePath)
 
-	endpoint, ok := r.endpoints[testdata.VMType]
+	endpoint, ok := r.endpoints[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
 	}
 
-	ins, err := r.instanceMgr.Acquire(msg, endpoint, testdata.Code, testdata.CodeExpParam)
+	ins, err := r.instanceMgr.Acquire(msg, endpoint, code, expParam)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
@@ -42,13 +39,12 @@ func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
 	return res, nil
 }
 
-func NewHandler(risc0Endpoint, halo2Endpoint, projectConfigFilePath string) *Handler {
+func NewHandler(risc0Endpoint, halo2Endpoint string) *Handler {
 	return &Handler{
-		endpoints: map[types.Type]string{
-			types.Risc0: risc0Endpoint,
-			types.Halo2: halo2Endpoint,
+		endpoints: map[Type]string{
+			Risc0: risc0Endpoint,
+			Halo2: halo2Endpoint,
 		},
-		projectConfigFilePath: projectConfigFilePath,
-		instanceMgr:           server.NewMgr(),
+		instanceMgr: server.NewMgr(),
 	}
 }

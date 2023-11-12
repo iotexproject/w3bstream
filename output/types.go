@@ -1,4 +1,4 @@
-package types
+package output
 
 type Type string
 

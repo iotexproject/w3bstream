@@ -2,9 +2,9 @@ package project
 
 import (
 	"github.com/holiman/uint256"
-	msgtype "github.com/machinefi/w3bstream-mainnet/msg/types"
-	outtype "github.com/machinefi/w3bstream-mainnet/output/types"
-	vmtype "github.com/machinefi/w3bstream-mainnet/vm/types"
+	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/w3bstream-mainnet/output"
+	"github.com/machinefi/w3bstream-mainnet/vm"
 )
 
 type Project struct {
@@ -13,10 +13,10 @@ type Project struct {
 }
 
 type Config struct {
-	Code             []byte                `json:"code"`
-	CodeExpParam     string                `json:"codeExpParam,omitempty"`
-	MsgFetchStrategy msgtype.FetchStrategy `json:"messageFetchStrategy"`
-	VMType           vmtype.Type           `json:"vmType"`
-	OutputType       outtype.Type          `json:"outputType"`
-	OutputAddress    string                `json:"outputAddress,omitempty"`
+	Code             []byte            `json:"code"`
+	CodeExpParam     string            `json:"codeExpParam,omitempty"`
+	MsgFetchStrategy msg.FetchStrategy `json:"messageFetchStrategy"`
+	VMType           vm.Type           `json:"vmType"`
+	OutputType       output.Type       `json:"outputType"`
+	OutputAddress    string            `json:"outputAddress,omitempty"`
 }
