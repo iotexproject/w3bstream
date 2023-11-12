@@ -15,9 +15,6 @@ type Handler struct {
 }
 
 func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string) ([]byte, error) {
-	// TODO get project bin data by real project info
-	// code, expParam := data.GetTestData(r.projectConfigFilePath)
-
 	endpoint, ok := r.endpoints[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
