@@ -36,12 +36,9 @@ func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string
 	return res, nil
 }
 
-func NewHandler(risc0Endpoint, halo2Endpoint string) *Handler {
+func NewHandler(endpoints map[Type]string) *Handler {
 	return &Handler{
-		endpoints: map[Type]string{
-			Risc0: risc0Endpoint,
-			Halo2: halo2Endpoint,
-		},
+		endpoints:   endpoints,
 		instanceMgr: server.NewMgr(),
 	}
 }
