@@ -27,7 +27,7 @@ services:
     restart: always
 
   risc0:
-    image: iotexdev/risc0server:v0.8.stark
+    image: iotexdev/risc0server:v0.8rc1
     depends_on:
       - "postgres"
     container_name: risc0-service
