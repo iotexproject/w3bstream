@@ -14,6 +14,7 @@ type Project struct {
 
 type Config struct {
 	Code             []byte            `json:"code"`
+	CodeExpParam     string            `json:"codeExpParam,omitempty"`
 	MsgFetchStrategy msg.FetchStrategy `json:"messageFetchStrategy"`
 	VMType           vm.Type           `json:"vmType"`
 	OutputType       output.Type       `json:"outputType"`

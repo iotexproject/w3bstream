@@ -5,16 +5,22 @@ import (
 	"log/slog"
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
-	"github.com/machinefi/w3bstream-mainnet/vm/instance/manager"
+	"github.com/machinefi/w3bstream-mainnet/vm/server"
 	"github.com/pkg/errors"
 )
 
 type Handler struct {
-	instanceMgr *manager.Mgr
+	endpoints   map[Type]string
+	instanceMgr *server.Mgr
 }
 
-func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
-	ins, err := r.instanceMgr.Acquire(msg)
+func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string) ([]byte, error) {
+	endpoint, ok := r.endpoints[vmtype]
+	if !ok {
+		return nil, errors.New("unsupported vm type")
+	}
+
+	ins, err := r.instanceMgr.Acquire(msg, endpoint, code, expParam)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
@@ -30,11 +36,9 @@ func (r *Handler) Handle(msg *msg.Msg) ([]byte, error) {
 	return res, nil
 }
 
-func NewHandler(risc0ServerAddr, projectConfigFilePath string) *Handler {
+func NewHandler(endpoints map[Type]string) *Handler {
 	return &Handler{
-		manager.NewMgr(&manager.Config{
-			Risc0ServerAddr:       risc0ServerAddr,
-			ProjectConfigFilePath: projectConfigFilePath,
-		}),
+		endpoints:   endpoints,
+		instanceMgr: server.NewMgr(),
 	}
 }

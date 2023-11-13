@@ -14,11 +14,17 @@ services:
     environment:
       ENDPOINT: ":${PORT}"
       RISC0_SERVER_ENDPOINT: "risc0:4001"
+      HALO2_SERVER_ENDPOINT: "halo2:4001"
       PROJECT_CONFIG_FILE: "${PROJECT_CONFIG_FILE}"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
       OPERATOR_PRIVATE_KEY: "${OPERATOR_PRIVATE_KEY}"
     volumes:
       - .:/data
+
+  halo2:
+    image: iotexdev/halo2-server:0.0.1
+    container_name: halo2-service
+    restart: always
 
   risc0:
     image: iotexdev/risc0server:v0.8.stark
