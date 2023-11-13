@@ -51,7 +51,6 @@ services:
       POSTGRES_DB: test
     volumes:
       - ./postgres:/var/lib/postgresql/data
-      - ./scripts/init_risc0server.sql:/docker-entrypoint-initdb.d/init_risc0server.sql
     ports:
     # for manual create db table, will become auto in feature
-      - "9001:5432"
+      - "5432:5432"
