@@ -7,6 +7,7 @@ services:
       - "risc0"
       - "postgres"
     container_name: w3bstream-node
+    platform: linux/x86_64    
     restart: always
     ports:
       - "${PORT}:${PORT}"
@@ -24,6 +25,7 @@ services:
     depends_on:
       - "postgres"
     container_name: risc0-service
+    platform: linux/x86_64    
     restart: always
     environment:
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
