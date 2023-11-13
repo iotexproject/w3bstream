@@ -1,4 +1,4 @@
-# W3bstream Sprout
+# W3bstream Sprout :four_leaf_clover:
 W3bstream Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as zkVMs like zkWASM (WIP) and RISC0.
 
 `wsctl`` is the command line tool that interact with W3bstream protocol which can be used by node operators as well as project developers.
