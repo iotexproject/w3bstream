@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/machinefi/w3bstream-mainnet/enums"
 	"log"
 	"log/slog"
 	"net/http"
@@ -17,27 +18,18 @@ import (
 )
 
 func main() {
-	var programLevel = slog.LevelDebug
-	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: programLevel})
-	slog.SetDefault(slog.New(h))
-
-	viper.MustBindEnv("ENDPOINT")
-	viper.MustBindEnv("RISC0_SERVER_ENDPOINT")
-	viper.MustBindEnv("HALO2_SERVER_ENDPOINT")
-	viper.MustBindEnv("PROJECT_CONFIG_FILE")
-	viper.MustBindEnv("CHAIN_ENDPOINT")
-	viper.MustBindEnv("OPERATOR_PRIVATE_KEY")
-	viper.MustBindEnv("DATABASE_URL")
-
-	dbMigrate()
-
 	vmHandler := vm.NewHandler(
 		map[vm.Type]string{
-			vm.Risc0: viper.Get("RISC0_SERVER_ENDPOINT").(string),
-			vm.Halo2: viper.Get("HALO2_SERVER_ENDPOINT").(string),
+			vm.Risc0: viper.GetString(enums.EnvKeyRisc0ServerEndpoint),
+			vm.Halo2: viper.GetString(enums.EnvKeyHalo2ServerEndpoint),
 		},
 	)
-	msgHandler := handler.New(vmHandler, viper.Get("CHAIN_ENDPOINT").(string), viper.Get("OPERATOR_PRIVATE_KEY").(string), viper.Get("PROJECT_CONFIG_FILE").(string))
+	msgHandler := handler.New(
+		vmHandler,
+		viper.GetString(enums.EnvKeyChainEndpoint),
+		viper.GetString(enums.EnvKeyOperatorPrivateKey),
+		viper.GetString(enums.EnvKeyProjectConfigPath),
+	)
 
 	router := gin.Default()
 	router.POST("/message", func(c *gin.Context) {
