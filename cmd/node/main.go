@@ -21,7 +21,6 @@ func main() {
 	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: programLevel})
 	slog.SetDefault(slog.New(h))
 
-	dbMigrate()
 	viper.MustBindEnv("ENDPOINT")
 	viper.MustBindEnv("RISC0_SERVER_ENDPOINT")
 	viper.MustBindEnv("HALO2_SERVER_ENDPOINT")
@@ -29,6 +28,8 @@ func main() {
 	viper.MustBindEnv("CHAIN_ENDPOINT")
 	viper.MustBindEnv("OPERATOR_PRIVATE_KEY")
 	viper.MustBindEnv("DATABASE_URL")
+
+	dbMigrate()
 
 	vmHandler := vm.NewHandler(
 		map[vm.Type]string{
