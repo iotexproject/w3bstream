@@ -25,6 +25,7 @@ services:
   halo2:
     image: iotexdev/halo2-server:0.0.1
     container_name: halo2-service
+    platform: linux/x86_64
     restart: always
 
   risc0:

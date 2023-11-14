@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract ProjectRegistrar is ERC721, ReentrancyGuard {
     struct Project {
@@ -12,18 +12,22 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
         mapping(address => bool) operators;
     }
 
+    uint256 private _nextProjectId;
+
     mapping(uint256 => Project) public projects;
 
-    constructor() ERC721("ProjectToken", "PTK") {}
+    constructor() ERC721("ProjectToken", "PTK") {
+        _nextProjectId = 1;
+    }
 
     event OperatorAdded(uint256 indexed projectId, address indexed operator);
     event OperatorRemoved(uint256 indexed projectId, address indexed operator);
     event ProjectPaused(uint256 indexed projectId);
     event ProjectUnpaused(uint256 indexed projectId);
-    event ProjectUpdated(uint256 indexed projectId, string uri, bytes32 hash);
+    event ProjectUpserted(uint256 indexed projectId, string uri, bytes32 hash);
 
     modifier onlyProjectOperator(uint256 _projectId) {
-        require(ownerOf(_projectId) == msg.sender || projects[_projectId].operators[msg.sender], "Only the owner or operators can perform this action");
+        require(canOperateProject(msg.sender, _projectId), "Not authorized to operate this project");
         _;
     }
 
@@ -32,14 +36,18 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
         _;
     }
 
+    function canOperateProject(address _operator, uint256 _projectId) public view returns (bool) {
+        return ownerOf(_projectId) == _operator || projects[_projectId].operators[_operator];
+    }
+
     function createProject(string memory _uri, bytes32 _hash) public nonReentrant {
-        uint256 projectId = totalSupply();
+        uint256 projectId = _nextProjectId++;
         Project storage newProject = projects[projectId];
         newProject.uri = _uri;
         newProject.hash = _hash;
 
         _mint(msg.sender, projectId);
-        newProject.operators[msg.sender] = true;
+        emit ProjectUpserted(projectId, _uri, _hash);
     }
 
     function addOperator(uint256 _projectId, address _operator) public onlyProjectOwner(_projectId) {
@@ -69,6 +77,6 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
     function updateProject(uint256 _projectId, string memory _uri, bytes32 _hash) public onlyProjectOperator(_projectId) {
         projects[_projectId].uri = _uri;
         projects[_projectId].hash = _hash;
-        emit ProjectUpdated(_projectId, _uri, _hash);
+        emit ProjectUpserted(_projectId, _uri, _hash);
     }
 }
