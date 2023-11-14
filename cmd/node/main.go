@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/machinefi/w3bstream-mainnet/enums"
+	"github.com/machinefi/w3bstream-mainnet/vm"
 	"log"
 	"log/slog"
 	"net/http"
@@ -14,18 +15,11 @@ import (
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
 	"github.com/machinefi/w3bstream-mainnet/msg/handler"
-	"github.com/machinefi/w3bstream-mainnet/vm"
 )
 
 func main() {
-	vmHandler := vm.NewHandler(
-		map[vm.Type]string{
-			vm.Risc0: viper.GetString(enums.EnvKeyRisc0ServerEndpoint),
-			vm.Halo2: viper.GetString(enums.EnvKeyHalo2ServerEndpoint),
-		},
-	)
 	msgHandler := handler.New(
-		vmHandler,
+		vm.DefaultHandler,
 		viper.GetString(enums.EnvKeyChainEndpoint),
 		viper.GetString(enums.EnvKeyOperatorPrivateKey),
 		viper.GetString(enums.EnvKeyProjectConfigPath),
