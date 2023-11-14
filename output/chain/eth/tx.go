@@ -3,6 +3,7 @@ package eth
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -35,11 +36,22 @@ func SendTX(ctx context.Context, endpoint, privateKey, toStr string, data []byte
 		return "", errors.Wrap(err, "get pending nonce failed")
 	}
 
+	msg := ethereum.CallMsg{
+		From:     sender,
+		To:       &to,
+		GasPrice: gasPrice,
+		Data:     data,
+	}
+	gasLimit, err := cli.EstimateGas(ctx, msg)
+	if err != nil {
+		return "", errors.Wrap(err, "estimate gas failed")
+	}
+
 	tx := types.NewTx(
 		&types.LegacyTx{
 			Nonce:    nonce,
 			GasPrice: gasPrice,
-			Gas:      uint64(3000000000), // TODO get gas limit by cli.EstimateGas
+			Gas:      gasLimit,
 			To:       &to,
 			Data:     data,
 		})

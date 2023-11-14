@@ -47,6 +47,9 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 		slog.Error(err.Error())
 		return
 	}
+	slog.Debug("vm generate proof success, the proof is")
+	slog.Debug(string(res))
+
 	data, err := contract.BuildData(res)
 	if err != nil {
 		slog.Error(err.Error())
