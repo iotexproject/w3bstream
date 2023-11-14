@@ -35,7 +35,7 @@ func handleRequest(c *gin.Context) {
 func queryByMessageID(c *gin.Context) {
 	messageID := c.Param("messageID")
 
-	slog.Debug("received message querying: ", messageID)
+	slog.Debug("received message querying", "message_id", messageID)
 	m, ok := messages.Query(messageID)
 	if !ok {
 		c.JSON(http.StatusNotFound, HandleErrRsp{

@@ -54,7 +54,7 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 		messages.OnFailed(m.ID, err)
 		return
 	}
-	slog.Debug("proof result: ", string(res))
+	slog.Debug("proof result", "proof_result", string(res))
 	messages.OnProved(m.ID, string(res))
 
 	data, err := contract.BuildData(res)
@@ -72,7 +72,7 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 		return
 	}
 	messages.OnSucceeded(m.ID, txHash)
-	slog.Debug("transaction hash: ", txHash)
+	slog.Debug("transaction hash", "tx_hash", txHash)
 }
 
 var DefaultHandler *Handler
