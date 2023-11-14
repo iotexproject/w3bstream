@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"github.com/machinefi/w3bstream-mainnet/enums"
+	"github.com/spf13/viper"
 	"log/slog"
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
@@ -63,4 +65,15 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 	}
 	slog.Debug("writing proof to chain success, the transaction hash is")
 	slog.Debug(txHash)
+}
+
+var DefaultHandler *Handler
+
+func init() {
+	DefaultHandler = New(
+		vm.DefaultHandler,
+		viper.GetString(enums.EnvKeyChainEndpoint),
+		viper.GetString(enums.EnvKeyOperatorPrivateKey),
+		viper.GetString(enums.EnvKeyProjectConfigPath),
+	)
 }

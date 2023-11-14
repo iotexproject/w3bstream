@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/machinefi/w3bstream-mainnet/enums"
-	"github.com/machinefi/w3bstream-mainnet/vm"
+	msghandler "github.com/machinefi/w3bstream-mainnet/msg/handler"
 	"log"
 	"log/slog"
 	"net/http"
@@ -14,17 +13,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
-	"github.com/machinefi/w3bstream-mainnet/msg/handler"
 )
 
 func main() {
-	msgHandler := handler.New(
-		vm.DefaultHandler,
-		viper.GetString(enums.EnvKeyChainEndpoint),
-		viper.GetString(enums.EnvKeyOperatorPrivateKey),
-		viper.GetString(enums.EnvKeyProjectConfigPath),
-	)
-
 	router := gin.Default()
 	router.POST("/message", func(c *gin.Context) {
 		var req msgReq
@@ -38,7 +29,7 @@ func main() {
 			Data:           req.Data,
 		}
 		slog.Debug("received your message, handling")
-		if err := msgHandler.Handle(msg); err != nil {
+		if err := msghandler.DefaultHandler.Handle(msg); err != nil {
 			c.JSON(http.StatusInternalServerError, newErrResp(err))
 			return
 		}
