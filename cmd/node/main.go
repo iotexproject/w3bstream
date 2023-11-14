@@ -28,6 +28,7 @@ func main() {
 	viper.MustBindEnv("PROJECT_CONFIG_FILE")
 	viper.MustBindEnv("CHAIN_ENDPOINT")
 	viper.MustBindEnv("OPERATOR_PRIVATE_KEY")
+	viper.MustBindEnv("DATABASE_URL")
 
 	vmHandler := vm.NewHandler(
 		map[vm.Type]string{

@@ -5,6 +5,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 )
 
 // TODO use https://github.com/golang-migrate/migrate
@@ -30,7 +31,7 @@ func dbMigrate() {
 		create_at TIMESTAMP NOT NULL DEFAULT now()
 	  );`
 
-	db, err := sqlx.Connect("postgres", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable")
+	db, err := sqlx.Connect("postgres", viper.Get("DATABASE_URL").(string))
 	if err != nil {
 		log.Fatalln(err)
 	}
