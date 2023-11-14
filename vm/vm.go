@@ -2,6 +2,7 @@ package vm
 
 import (
 	"context"
+	"github.com/spf13/viper"
 	"log/slog"
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
@@ -39,4 +40,17 @@ func NewHandler(endpoints map[Type]string) *Handler {
 		endpoints:   endpoints,
 		instanceMgr: server.NewMgr(),
 	}
+}
+
+var DefaultHandler *Handler
+
+func init() {
+	var endpoints = make(map[Type]string)
+	for key, typ := range vmEndpointConfigEnvKeyMap {
+		if ep := viper.GetString(key); ep != "" {
+			endpoints[typ] = ep
+		}
+	}
+
+	DefaultHandler = NewHandler(endpoints)
 }
