@@ -31,8 +31,6 @@ func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute instance")
 	}
-	slog.Debug("ask risc0 generate proof success, the proof is")
-	slog.Debug(string(res))
 	return res, nil
 }
 
