@@ -35,6 +35,8 @@ func initConfig() {
 	viper.SetConfigFile(path.Join(confDir, "config.yaml"))
 	viper.SetDefault(NodeHost, "localhost")
 	viper.SetDefault(NodePort, "9000")
+	viper.SetDefault(ChainEndpoint, "https://babel-api.testnet.iotex.io")
+	viper.SetDefault(ContractAddress, "0x190Cc9af23504ac5Dc461376C1e2319bc3B9cD29")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
