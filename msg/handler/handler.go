@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"github.com/machinefi/w3bstream-mainnet/enums"
+	"github.com/machinefi/w3bstream-mainnet/msg/messages"
 	"github.com/spf13/viper"
 	"log/slog"
 
@@ -38,33 +39,40 @@ func New(vmHandler *vm.Handler, chainEndpoint, operatorPrivateKey, projectConfig
 
 func (r *Handler) Handle(msg *msg.Msg) error {
 	slog.Debug("push message into sequencer")
+	messages.New(msg)
 	return r.mq.Enqueue(msg)
 }
 
 func (r *Handler) asyncHandle(m *msg.Msg) {
-	slog.Debug("message popped by proofer")
+	slog.Debug("message popped")
 	project := data.GetTestData(r.projectConfigFilePath)
+
+	messages.OnSubmitProving(m.ID)
 	res, err := r.vmHandler.Handle(m, project.VMType, project.Code, project.CodeExpParam)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error("proof failed: ", err)
+		messages.OnFailed(m.ID, err)
 		return
 	}
-	slog.Debug("vm generate proof success, the proof is")
-	slog.Debug(string(res))
+	slog.Debug("proof result: ", string(res))
+	messages.OnProved(m.ID, string(res))
 
 	data, err := contract.BuildData(res)
 	if err != nil {
 		slog.Error(err.Error())
+		messages.OnFailed(m.ID, err)
 		return
 	}
 	slog.Debug("writing proof to chain")
+	messages.OnSubmitToBlockchain(m.ID)
 	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0x190Cc9af23504ac5Dc461376C1e2319bc3B9cD29", data)
 	if err != nil {
 		slog.Error(err.Error())
+		messages.OnFailed(m.ID, err)
 		return
 	}
-	slog.Debug("writing proof to chain success, the transaction hash is")
-	slog.Debug(txHash)
+	messages.OnSucceeded(m.ID, txHash)
+	slog.Debug("transaction hash: ", txHash)
 }
 
 var DefaultHandler *Handler

@@ -9,3 +9,7 @@ type HandleReq struct {
 	ProjectVersion string `json:"projectVersion"   binding:"required"`
 	Data           string `json:"data"             binding:"required"`
 }
+
+type HandleRsp struct {
+	MessageID string `json:"messageID"`
+}
