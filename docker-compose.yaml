@@ -18,6 +18,7 @@ services:
       PROJECT_CONFIG_FILE: "${PROJECT_CONFIG_FILE}"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
       OPERATOR_PRIVATE_KEY: "${OPERATOR_PRIVATE_KEY}"
+      DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
     volumes:
       - .:/data
 
@@ -51,6 +52,4 @@ services:
       POSTGRES_DB: test
     volumes:
       - ./postgres:/var/lib/postgresql/data
-    ports:
-    # for manual create db table, will become auto in feature
-      - "5432:5432"
+
