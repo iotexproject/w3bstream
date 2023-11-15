@@ -1,13 +1,13 @@
 pragma solidity ^0.5.0;
 
 contract Store {
-    string private proof;
+    bytes private proof;
 
-    function setProof(string memory _proof) public {
+    function setProof(bytes memory _proof) public {
         proof = _proof;
     }
 
-    function getProof() public view returns (string memory){
+    function getProof() public view returns (bytes memory){
         return proof;
     }
 }

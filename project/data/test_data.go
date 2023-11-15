@@ -12,7 +12,7 @@ import (
 // TODO delete this file
 
 func GetTestData(file string) *project.Config {
-	if !strings.HasPrefix(file, "test/data/create.json") {
+	if !strings.HasPrefix(file, "test/data/risc0-project-config.json") {
 		file = path.Join("/data", file)
 	}
 	content, err := os.ReadFile(file)
