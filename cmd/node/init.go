@@ -34,14 +34,14 @@ func initEnvConfigBind() {
 func initDatabaseMigrating() {
 	// TODO use https://github.com/golang-migrate/migrate
 	var schema = `
-	CREATE TABLE vms (
+	CREATE TABLE IF NOT EXISTS vms (
 		id SERIAL PRIMARY KEY,
 		project_name VARCHAR NOT NULL,
 		elf TEXT NOT NULL,
 		image_id VARCHAR NOT NULL
 	  );
 	  
-	  CREATE TABLE proofs (
+	  CREATE TABLE IF NOT EXISTS proofs (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR NOT NULL,
 		template_name VARCHAR NOT NULL,
@@ -54,7 +54,9 @@ func initDatabaseMigrating() {
 		create_at TIMESTAMP NOT NULL DEFAULT now()
 	  );`
 
-	db, err := sqlx.Connect("postgres", viper.Get("DATABASE_URL").(string))
+	dsn := viper.GetString(enums.EnvKeyDatabaseDSN)
+	slog.Debug("connecting database", "dsn", dsn)
+	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		slog.Error("connecting database: ", err)
 		panic(err)
