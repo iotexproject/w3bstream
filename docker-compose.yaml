@@ -10,14 +10,14 @@ services:
     platform: linux/x86_64    
     restart: always
     ports:
-      - "${PORT}:${PORT}"
+      - "9000:9000"
     environment:
-      ENDPOINT: ":${PORT}"
+      ENDPOINT: ":9000"
       RISC0_SERVER_ENDPOINT: "risc0:4001"
       HALO2_SERVER_ENDPOINT: "halo2:4001"
-      PROJECT_CONFIG_FILE: "${PROJECT_CONFIG_FILE}"
+      PROJECT_CONFIG_FILE: "test/data/risc0-project-config.json"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
-      OPERATOR_PRIVATE_KEY: "${OPERATOR_PRIVATE_KEY}"
+      OPERATOR_PRIVATE_KEY: "${your private key}"
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
     volumes:
       - .:/data
@@ -37,6 +37,7 @@ services:
     restart: always
     environment:
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+      BONSAI_KEY: "${your bonsai key}"
   
   postgres:
     image: postgres:14

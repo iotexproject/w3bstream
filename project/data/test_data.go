@@ -3,8 +3,6 @@ package data
 import (
 	"encoding/json"
 	"os"
-	"path"
-	"strings"
 
 	"github.com/machinefi/w3bstream-mainnet/project"
 )
@@ -12,9 +10,6 @@ import (
 // TODO delete this file
 
 func GetTestData(file string) *project.Config {
-	if !strings.HasPrefix(file, "test/data/create.json") {
-		file = path.Join("/data", file)
-	}
 	content, err := os.ReadFile(file)
 	if err != nil {
 		panic(err)
