@@ -19,8 +19,8 @@ func NewOutputter(cfg Config) (out Outputter, err error) {
 	switch cfg.Type {
 	case Stdout:
 		// TODO: implement
-	case EvmContract:
-		out = adapter.NewEvmContract(cfg.ChainEndpoint, cfg.Sk, cfg.ContractAddress)
+	case EthereumContract:
+		out = adapter.NewEthereumContract(cfg.ChainEndpoint, cfg.SecretKey, cfg.ContractAddress)
 	default:
 		return nil, errors.New("invalid output type")
 	}
