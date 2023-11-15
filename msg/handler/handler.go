@@ -56,7 +56,7 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 		return
 	}
 	slog.Debug("writing proof to chain")
-	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0x190Cc9af23504ac5Dc461376C1e2319bc3B9cD29", data)
+	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0xbc3c770272a8d274ba75ce2a104df397f7ca793e", data)
 	if err != nil {
 		slog.Error(err.Error())
 		return

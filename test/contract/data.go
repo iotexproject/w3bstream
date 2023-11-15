@@ -16,5 +16,5 @@ func BuildData(param []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return storeABI.Pack("setProof", string(param))
+	return storeABI.Pack("setProof", param)
 }
