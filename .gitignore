@@ -23,3 +23,5 @@ go.work
 postgres
 
 .env
+docker-compose.local.yaml
+docker-compose.local.yml
