@@ -12,7 +12,7 @@ import (
 )
 
 func handleRequest(c *gin.Context) {
-	req := HandleReq{}
+	req := &HandleReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, &HandleErrRsp{err.Error()})
 		return
@@ -29,7 +29,8 @@ func handleRequest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, &HandleRsp{MessageID: messageID})
+	slog.Debug("message handled", "message_id", messageID)
+	c.JSON(http.StatusOK, &HandleRsp{MessageID: messageID})
 }
 
 func queryByMessageID(c *gin.Context) {

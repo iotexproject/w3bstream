@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/machinefi/w3bstream-mainnet/msg/messages"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,12 +31,26 @@ var messageQueryCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "call w3bstream node failed")
 		}
-		defer rsp.Body.Close()
 
+		switch sc := rsp.StatusCode; sc {
+		case http.StatusNotFound:
+			return errors.Errorf("the message [%s] is not found or expired", messageID)
+		case http.StatusOK:
+		default:
+			return errors.Errorf("responded status code: %d", sc)
+		}
+
+		defer rsp.Body.Close()
 		content, err := io.ReadAll(rsp.Body)
 		if err != nil {
 			return errors.Wrap(err, "read responded body failed")
 		}
+
+		rspVal := &messages.MessageContext{}
+		if err := json.Unmarshal(content, rspVal); err != nil {
+			return errors.Wrap(err, "parse responded body failed")
+		}
+		content, _ = json.MarshalIndent(rspVal, "", "  ")
 
 		cmd.Print(string(content))
 		return nil

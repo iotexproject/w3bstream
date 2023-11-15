@@ -3,17 +3,16 @@ package handler
 import (
 	"context"
 	"github.com/machinefi/w3bstream-mainnet/enums"
-	"github.com/machinefi/w3bstream-mainnet/msg/messages"
-	"github.com/spf13/viper"
-	"log/slog"
-
 	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/w3bstream-mainnet/msg/messages"
 	"github.com/machinefi/w3bstream-mainnet/output/chain/eth"
 	"github.com/machinefi/w3bstream-mainnet/project/data"
 	"github.com/machinefi/w3bstream-mainnet/test/contract"
 	"github.com/machinefi/w3bstream-mainnet/util/mq"
 	"github.com/machinefi/w3bstream-mainnet/util/mq/gochan"
 	"github.com/machinefi/w3bstream-mainnet/vm"
+	"github.com/spf13/viper"
+	"log/slog"
 )
 
 type Handler struct {
@@ -44,7 +43,7 @@ func (r *Handler) Handle(msg *msg.Msg) error {
 }
 
 func (r *Handler) asyncHandle(m *msg.Msg) {
-	slog.Debug("message popped")
+	slog.Debug("message popped", "message_id", m.ID)
 	project := data.GetTestData(r.projectConfigFilePath)
 
 	messages.OnSubmitProving(m.ID)
@@ -80,6 +79,9 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 var DefaultHandler *Handler
 
 func init() {
+	viper.MustBindEnv(enums.EnvKeyChainEndpoint)
+	viper.MustBindEnv(enums.EnvKeyOperatorPrivateKey)
+	viper.MustBindEnv(enums.EnvKeyProjectConfigPath)
 	DefaultHandler = New(
 		vm.DefaultHandler,
 		viper.GetString(enums.EnvKeyChainEndpoint),

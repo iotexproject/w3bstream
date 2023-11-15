@@ -2,7 +2,7 @@
 FROM golang:1.21 AS builder
 
 ENV GO111MODULE=on
-ENV GOPROXY=https://goproxy.cn,direct
+#ENV GOPROXY=https://goproxy.cn,direct
 
 WORKDIR /go/src
 COPY ./ ./

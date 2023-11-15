@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/machinefi/w3bstream-mainnet/cmd/node/apis/message"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -54,6 +56,17 @@ var sendCmd = &cobra.Command{
 			return errors.Wrap(err, "call w3bstream node failed")
 		}
 		defer resp.Body.Close()
+
+		content, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return errors.Wrap(err, "failed to read responded content")
+		}
+		rspVal := &message.HandleRsp{}
+		if err := json.Unmarshal(content, rspVal); err != nil {
+			return errors.Wrap(err, "failed to parse responded content")
+		}
+		content, _ = json.MarshalIndent(rspVal, "", "  ")
+		cmd.Println(string(content))
 
 		return nil
 	},

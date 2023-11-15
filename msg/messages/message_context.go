@@ -7,21 +7,21 @@ import (
 )
 
 func newMessageContext(m *msg.Msg) *MessageContext {
-
+	now := time.Now()
 	return &MessageContext{
 		Msg:        m,
 		Status:     enums.MessageStatusReceived,
-		ReceivedAt: time.Now(),
+		ReceivedAt: &now,
 	}
 }
 
 type MessageContext struct {
 	*msg.Msg
 	Status               enums.MessageStatus `json:"status"`
-	ReceivedAt           time.Time           `json:"receivedAt"`
-	SubmitProvingAt      time.Time           `json:"submitProvingAt,omitempty"`
+	ReceivedAt           *time.Time          `json:"receivedAt"`
+	SubmitProvingAt      *time.Time          `json:"submitProvingAt,omitempty"`
 	ProofResult          string              `json:"proofResult,omitempty"`
-	SubmitToBlockchainAt time.Time           `json:"SubmitToBlockchainAt,omitempty"`
+	SubmitToBlockchainAt *time.Time          `json:"SubmitToBlockchainAt,omitempty"`
 	TxHash               string              `json:"txHash,omitempty"`
 	Succeed              bool                `json:"succeed"`
 	ErrorMessage         string              `json:"errorMessage,omitempty"`
@@ -29,7 +29,8 @@ type MessageContext struct {
 
 func (mc *MessageContext) OnSubmitProving() {
 	mc.Status = enums.MessageStatusSubmitProving
-	mc.SubmitProvingAt = time.Now()
+	mc.SubmitProvingAt = new(time.Time)
+	*mc.SubmitProvingAt = time.Now()
 }
 
 func (mc *MessageContext) OnProved(res string) {
@@ -39,7 +40,8 @@ func (mc *MessageContext) OnProved(res string) {
 
 func (mc *MessageContext) OnSubmitToBlockchain() {
 	mc.Status = enums.MessageStatusSubmitToBlockchain
-	mc.SubmitToBlockchainAt = time.Now()
+	mc.SubmitToBlockchainAt = new(time.Time)
+	*mc.SubmitToBlockchainAt = time.Now()
 }
 
 func (mc *MessageContext) OnSucceeded(txHash string) {

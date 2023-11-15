@@ -47,6 +47,7 @@ var DefaultHandler *Handler
 func init() {
 	var endpoints = make(map[Type]string)
 	for key, typ := range vmEndpointConfigEnvKeyMap {
+		viper.MustBindEnv(key)
 		if ep := viper.GetString(key); ep != "" {
 			endpoints[typ] = ep
 		}
