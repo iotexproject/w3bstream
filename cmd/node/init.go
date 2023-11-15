@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log/slog"
+	"os"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/machinefi/w3bstream-mainnet/enums"
 	"github.com/spf13/viper"
-	"log/slog"
-	"os"
 )
 
 func init() {
@@ -27,6 +28,7 @@ func initEnvConfigBind() {
 	viper.MustBindEnv(enums.EnvKeyHalo2ServerEndpoint)
 	viper.MustBindEnv(enums.EnvKeyProjectConfigPath)
 	viper.MustBindEnv(enums.EnvKeyChainEndpoint)
+	viper.MustBindEnv(enums.EnvKeyProjectContractAddress)
 	viper.MustBindEnv(enums.EnvKeyOperatorPrivateKey)
 	viper.MustBindEnv(enums.EnvKeyDatabaseDSN)
 }
