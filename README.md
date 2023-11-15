@@ -23,25 +23,34 @@ curl https://raw.githubusercontent.com/machinefi/sprout/main/scripts/install_wsc
 ```
 
 ## Run server
-### Download source code
+### Download docker-compose.yaml
 ```bash
 mkdir sprout && cd sprout
 curl https://raw.githubusercontent.com/machinefi/sprout/main/docker-compose.yaml -o docker-compose.yaml
 ```
 
+### Populate docker-compose.yaml fields
+W3bstream-node need write proof to chain and need a private key for chain write. Set your private key at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L20  
+If you need risc0 snark proof, a bonsai key is needed at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L40
+
+### Use customized project code
+Docker-compose will mount current work directory to containers /data https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L23  
+So you can appoint the project file at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L18
+
+
 ### Start w3bstream node
 ```bash
-wsctl node up --private-key "your private key"
+docker-compose up -d
 ```
 
 ### Monitor w3bstream node status
 ```bash
-wsctl node log
+docker-compose logs -f w3bnode
 ```
 
 ### Shut down w3bstream node
 ```bash
-wsctl node down
+docker-compose down
 ```
 
 ### Compile your own w3bstream code
@@ -67,4 +76,4 @@ open a new terminal and execute
 ```bash
 wsctl message send -p "test01" -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
-It will send a message to project test01 running on the remote server. The processing status could be checked via `wsctl node log` on the server.
+It will send a message to project test01 running on the remote server. The processing status could be checked via `docker-compose logs -f w3bnode` on the server.
