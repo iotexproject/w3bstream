@@ -72,8 +72,13 @@ wsctl config get endpoint
 ```
 
 ### Send message to remote server
-open a new terminal and execute
+open a new terminal and execute  
+risc0 snark test
 ```bash
-wsctl message send -p "test01" -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+wsctl message send -p 10000 -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+```
+halo2 test 
+```bash
+./wsctl message send -p 10001 -v "0.1" -d "{\"private_input\":\"4\"}"
 ```
 It will send a message to project test01 running on the remote server. The processing status could be checked via `docker-compose logs -f w3bnode` on the server.
