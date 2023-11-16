@@ -37,33 +37,27 @@ type EthereumContract struct {
 	chainEndpoint   string
 	contractAddress string
 	secretKey       string
-}
-
-var (
-	contractABI abi.ABI
-)
-
-func init() {
-	var err error
-	contractABI, err = abi.JSON(strings.NewReader(contractAbiJSON))
-	if err != nil {
-		panic(err)
-	}
+	contractABI     abi.ABI
 }
 
 // NewEthereumContract returns a new ethereum contract adapter
-func NewEthereumContract(chainEndpoint, secretKey, contractAddress string) *EthereumContract {
+func NewEthereumContract(chainEndpoint, secretKey, contractAddress string) (*EthereumContract, error) {
+	contractABI, err := abi.JSON(strings.NewReader(contractAbiJSON))
+	if err != nil {
+		return nil, err
+	}
 	return &EthereumContract{
 		chainEndpoint:   chainEndpoint,
 		secretKey:       secretKey,
 		contractAddress: contractAddress,
-	}
+		contractABI:     contractABI,
+	}, nil
 }
 
 // Output outputs the proof to the ethereum contract
 func (e *EthereumContract) Output(proof []byte) error {
 	// pack contract data
-	data, err := contractABI.Pack(contractMethod, proof)
+	data, err := e.contractABI.Pack(contractMethod, proof)
 	if err != nil {
 		return err
 	}
