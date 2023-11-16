@@ -6,6 +6,7 @@ import (
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
 	"github.com/machinefi/w3bstream-mainnet/output/chain/eth"
+	"github.com/machinefi/w3bstream-mainnet/project"
 	"github.com/machinefi/w3bstream-mainnet/project/data"
 	"github.com/machinefi/w3bstream-mainnet/test/contract"
 	"github.com/machinefi/w3bstream-mainnet/util/mq"
@@ -21,7 +22,7 @@ type Handler struct {
 	projectConfigFilePath string
 }
 
-func New(vmHandler *vm.Handler, chainEndpoint, operatorPrivateKey, projectConfigFilePath string) *Handler {
+func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey, projectConfigFilePath string) *Handler {
 	q := gochan.New()
 	h := &Handler{
 		mq:                    q,
@@ -41,6 +42,7 @@ func (r *Handler) Handle(msg *msg.Msg) error {
 
 func (r *Handler) asyncHandle(m *msg.Msg) {
 	slog.Debug("message popped by proofer")
+	// TODO get project data from project manager
 	project := data.GetTestData(r.projectConfigFilePath)
 	res, err := r.vmHandler.Handle(m, project.VMType, project.Code, project.CodeExpParam)
 	if err != nil {

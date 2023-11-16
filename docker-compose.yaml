@@ -17,6 +17,7 @@ services:
       HALO2_SERVER_ENDPOINT: "halo2:4001"
       PROJECT_CONFIG_FILE: "test/data/risc0-project-config.json"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
+      PROJECT_CONTRACT_ADDRESS: "0xdbbe0cd9c56f7d9b0e08935c5a912f11a37c3a34"
       OPERATOR_PRIVATE_KEY: "${your private key}"
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
     volumes:
