@@ -31,6 +31,7 @@ var messageQueryCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "call w3bstream node failed")
 		}
+		defer rsp.Body.Close()
 
 		switch sc := rsp.StatusCode; sc {
 		case http.StatusNotFound:
@@ -40,7 +41,6 @@ var messageQueryCmd = &cobra.Command{
 			return errors.Errorf("responded status code: %d", sc)
 		}
 
-		defer rsp.Body.Close()
 		content, err := io.ReadAll(rsp.Body)
 		if err != nil {
 			return errors.Wrap(err, "read responded body failed")
