@@ -2,8 +2,7 @@
 
 W3bstream Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as zkVMs like zkWASM (WIP) and RISC0.
 
-`wsctl`` is the command line tool that interact with W3bstream protocol which can be used by node operators as well as
-project developers.
+`wsctl` is the command line tool that interact with W3bstream protocol which can be used by node operators as well as project developers.
 
 ## Minimum requirements
 
@@ -45,7 +44,7 @@ If you need risc0 snark proof, a bonsai key is needed at https://github.com/mach
 
 ### Use customized project code
 
-Docker-compose will mount current work directory to containers /data https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L23  
+Docker-compose will mount current work directory to containers `/data` https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L23  
 So you can appoint the project file at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L18
 
 ### Start w3bstream node
@@ -107,8 +106,7 @@ halo2 test
 wsctl message send -p 10001 -v "0.1" -d "{\"private_input\":\"4\"}"
 ```
 
-It will send a message to project test01 running on the remote server. The processing status could be checked
-via `docker-compose logs -f w3bnode` on the server.
+It will send a message to project test01 running on the remote server. The processing status could be checked via `docker-compose logs -f w3bnode` on the server.
 And you would receive the message id. the output like below:
 
 ```json
