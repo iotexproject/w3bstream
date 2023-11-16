@@ -8,11 +8,13 @@ import (
 )
 
 func NewServer(ep string, mh *msghandler.Handler) *Server {
-	return &Server{
+	s := &Server{
 		endpoint:   ep,
 		engine:     gin.Default(),
 		msgHandler: mh,
 	}
+	s.engine.POST("/message", s.handleRequest)
+	return s
 }
 
 type Server struct {
@@ -24,8 +26,6 @@ type Server struct {
 
 // this func will block caller
 func (s *Server) Run() error {
-	s.engine.POST("/message", s.handleRequest)
-
 	if err := s.engine.Run(s.endpoint); err != nil {
 		return errors.Wrap(err, "start http server failed")
 	}
