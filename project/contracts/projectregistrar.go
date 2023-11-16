@@ -31,7 +31,7 @@ var (
 
 // ContractsMetaData contains all meta data concerning the Contracts contract.
 var ContractsMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"ERC721IncorrectOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ERC721InsufficientApproval\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"approver\",\"type\":\"address\"}],\"name\":\"ERC721InvalidApprover\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"ERC721InvalidOperator\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"ERC721InvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"}],\"name\":\"ERC721InvalidReceiver\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"ERC721InvalidSender\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ERC721NonexistentToken\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ReentrancyGuardReentrantCall\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"approved\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"}],\"name\":\"ProjectPaused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"}],\"name\":\"ProjectUnpaused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"uri\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"}],\"name\":\"ProjectUpserted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"}],\"name\":\"canOperateProject\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_uri\",\"type\":\"string\"},{\"internalType\":\"bytes32\",\"name\":\"_hash\",\"type\":\"bytes32\"}],\"name\":\"createProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"}],\"name\":\"pauseProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"projects\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"uri\",\"type\":\"string\"},{\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"paused\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"tokenURI\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"}],\"name\":\"unpauseProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_uri\",\"type\":\"string\"},{\"internalType\":\"bytes32\",\"name\":\"_hash\",\"type\":\"bytes32\"}],\"name\":\"updateProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"ERC721IncorrectOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ERC721InsufficientApproval\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"approver\",\"type\":\"address\"}],\"name\":\"ERC721InvalidApprover\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"ERC721InvalidOperator\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"ERC721InvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"}],\"name\":\"ERC721InvalidReceiver\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"ERC721InvalidSender\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ERC721NonexistentToken\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ReentrancyGuardReentrantCall\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"approved\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"projectId\",\"type\":\"uint64\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"projectId\",\"type\":\"uint64\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"projectId\",\"type\":\"uint64\"}],\"name\":\"ProjectPaused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"projectId\",\"type\":\"uint64\"}],\"name\":\"ProjectUnpaused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"projectId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"uri\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"}],\"name\":\"ProjectUpserted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_projectId\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"_projectId\",\"type\":\"uint64\"}],\"name\":\"canOperateProject\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_uri\",\"type\":\"string\"},{\"internalType\":\"bytes32\",\"name\":\"_hash\",\"type\":\"bytes32\"}],\"name\":\"createProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_projectId\",\"type\":\"uint64\"}],\"name\":\"pauseProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"name\":\"projects\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"uri\",\"type\":\"string\"},{\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"paused\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_projectId\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"tokenURI\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_projectId\",\"type\":\"uint64\"}],\"name\":\"unpauseProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_projectId\",\"type\":\"uint64\"},{\"internalType\":\"string\",\"name\":\"_uri\",\"type\":\"string\"},{\"internalType\":\"bytes32\",\"name\":\"_hash\",\"type\":\"bytes32\"}],\"name\":\"updateProject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // ContractsABI is the input ABI used to generate the binding from.
@@ -211,10 +211,10 @@ func (_Contracts *ContractsCallerSession) BalanceOf(owner common.Address) (*big.
 	return _Contracts.Contract.BalanceOf(&_Contracts.CallOpts, owner)
 }
 
-// CanOperateProject is a free data retrieval call binding the contract method 0x01e42ab0.
+// CanOperateProject is a free data retrieval call binding the contract method 0xf2af9b5e.
 //
-// Solidity: function canOperateProject(address _operator, uint256 _projectId) view returns(bool)
-func (_Contracts *ContractsCaller) CanOperateProject(opts *bind.CallOpts, _operator common.Address, _projectId *big.Int) (bool, error) {
+// Solidity: function canOperateProject(address _operator, uint64 _projectId) view returns(bool)
+func (_Contracts *ContractsCaller) CanOperateProject(opts *bind.CallOpts, _operator common.Address, _projectId uint64) (bool, error) {
 	var out []interface{}
 	err := _Contracts.contract.Call(opts, &out, "canOperateProject", _operator, _projectId)
 
@@ -228,17 +228,17 @@ func (_Contracts *ContractsCaller) CanOperateProject(opts *bind.CallOpts, _opera
 
 }
 
-// CanOperateProject is a free data retrieval call binding the contract method 0x01e42ab0.
+// CanOperateProject is a free data retrieval call binding the contract method 0xf2af9b5e.
 //
-// Solidity: function canOperateProject(address _operator, uint256 _projectId) view returns(bool)
-func (_Contracts *ContractsSession) CanOperateProject(_operator common.Address, _projectId *big.Int) (bool, error) {
+// Solidity: function canOperateProject(address _operator, uint64 _projectId) view returns(bool)
+func (_Contracts *ContractsSession) CanOperateProject(_operator common.Address, _projectId uint64) (bool, error) {
 	return _Contracts.Contract.CanOperateProject(&_Contracts.CallOpts, _operator, _projectId)
 }
 
-// CanOperateProject is a free data retrieval call binding the contract method 0x01e42ab0.
+// CanOperateProject is a free data retrieval call binding the contract method 0xf2af9b5e.
 //
-// Solidity: function canOperateProject(address _operator, uint256 _projectId) view returns(bool)
-func (_Contracts *ContractsCallerSession) CanOperateProject(_operator common.Address, _projectId *big.Int) (bool, error) {
+// Solidity: function canOperateProject(address _operator, uint64 _projectId) view returns(bool)
+func (_Contracts *ContractsCallerSession) CanOperateProject(_operator common.Address, _projectId uint64) (bool, error) {
 	return _Contracts.Contract.CanOperateProject(&_Contracts.CallOpts, _operator, _projectId)
 }
 
@@ -366,10 +366,10 @@ func (_Contracts *ContractsCallerSession) OwnerOf(tokenId *big.Int) (common.Addr
 	return _Contracts.Contract.OwnerOf(&_Contracts.CallOpts, tokenId)
 }
 
-// Projects is a free data retrieval call binding the contract method 0x107046bd.
+// Projects is a free data retrieval call binding the contract method 0x4aa3a56d.
 //
-// Solidity: function projects(uint256 ) view returns(string uri, bytes32 hash, bool paused)
-func (_Contracts *ContractsCaller) Projects(opts *bind.CallOpts, arg0 *big.Int) (struct {
+// Solidity: function projects(uint64 ) view returns(string uri, bytes32 hash, bool paused)
+func (_Contracts *ContractsCaller) Projects(opts *bind.CallOpts, arg0 uint64) (struct {
 	Uri    string
 	Hash   [32]byte
 	Paused bool
@@ -394,10 +394,10 @@ func (_Contracts *ContractsCaller) Projects(opts *bind.CallOpts, arg0 *big.Int) 
 
 }
 
-// Projects is a free data retrieval call binding the contract method 0x107046bd.
+// Projects is a free data retrieval call binding the contract method 0x4aa3a56d.
 //
-// Solidity: function projects(uint256 ) view returns(string uri, bytes32 hash, bool paused)
-func (_Contracts *ContractsSession) Projects(arg0 *big.Int) (struct {
+// Solidity: function projects(uint64 ) view returns(string uri, bytes32 hash, bool paused)
+func (_Contracts *ContractsSession) Projects(arg0 uint64) (struct {
 	Uri    string
 	Hash   [32]byte
 	Paused bool
@@ -405,10 +405,10 @@ func (_Contracts *ContractsSession) Projects(arg0 *big.Int) (struct {
 	return _Contracts.Contract.Projects(&_Contracts.CallOpts, arg0)
 }
 
-// Projects is a free data retrieval call binding the contract method 0x107046bd.
+// Projects is a free data retrieval call binding the contract method 0x4aa3a56d.
 //
-// Solidity: function projects(uint256 ) view returns(string uri, bytes32 hash, bool paused)
-func (_Contracts *ContractsCallerSession) Projects(arg0 *big.Int) (struct {
+// Solidity: function projects(uint64 ) view returns(string uri, bytes32 hash, bool paused)
+func (_Contracts *ContractsCallerSession) Projects(arg0 uint64) (struct {
 	Uri    string
 	Hash   [32]byte
 	Paused bool
@@ -509,24 +509,24 @@ func (_Contracts *ContractsCallerSession) TokenURI(tokenId *big.Int) (string, er
 	return _Contracts.Contract.TokenURI(&_Contracts.CallOpts, tokenId)
 }
 
-// AddOperator is a paid mutator transaction binding the contract method 0x7d46a713.
+// AddOperator is a paid mutator transaction binding the contract method 0x76b0f503.
 //
-// Solidity: function addOperator(uint256 _projectId, address _operator) returns()
-func (_Contracts *ContractsTransactor) AddOperator(opts *bind.TransactOpts, _projectId *big.Int, _operator common.Address) (*types.Transaction, error) {
+// Solidity: function addOperator(uint64 _projectId, address _operator) returns()
+func (_Contracts *ContractsTransactor) AddOperator(opts *bind.TransactOpts, _projectId uint64, _operator common.Address) (*types.Transaction, error) {
 	return _Contracts.contract.Transact(opts, "addOperator", _projectId, _operator)
 }
 
-// AddOperator is a paid mutator transaction binding the contract method 0x7d46a713.
+// AddOperator is a paid mutator transaction binding the contract method 0x76b0f503.
 //
-// Solidity: function addOperator(uint256 _projectId, address _operator) returns()
-func (_Contracts *ContractsSession) AddOperator(_projectId *big.Int, _operator common.Address) (*types.Transaction, error) {
+// Solidity: function addOperator(uint64 _projectId, address _operator) returns()
+func (_Contracts *ContractsSession) AddOperator(_projectId uint64, _operator common.Address) (*types.Transaction, error) {
 	return _Contracts.Contract.AddOperator(&_Contracts.TransactOpts, _projectId, _operator)
 }
 
-// AddOperator is a paid mutator transaction binding the contract method 0x7d46a713.
+// AddOperator is a paid mutator transaction binding the contract method 0x76b0f503.
 //
-// Solidity: function addOperator(uint256 _projectId, address _operator) returns()
-func (_Contracts *ContractsTransactorSession) AddOperator(_projectId *big.Int, _operator common.Address) (*types.Transaction, error) {
+// Solidity: function addOperator(uint64 _projectId, address _operator) returns()
+func (_Contracts *ContractsTransactorSession) AddOperator(_projectId uint64, _operator common.Address) (*types.Transaction, error) {
 	return _Contracts.Contract.AddOperator(&_Contracts.TransactOpts, _projectId, _operator)
 }
 
@@ -572,45 +572,45 @@ func (_Contracts *ContractsTransactorSession) CreateProject(_uri string, _hash [
 	return _Contracts.Contract.CreateProject(&_Contracts.TransactOpts, _uri, _hash)
 }
 
-// PauseProject is a paid mutator transaction binding the contract method 0x0f717a63.
+// PauseProject is a paid mutator transaction binding the contract method 0xa054b8c4.
 //
-// Solidity: function pauseProject(uint256 _projectId) returns()
-func (_Contracts *ContractsTransactor) PauseProject(opts *bind.TransactOpts, _projectId *big.Int) (*types.Transaction, error) {
+// Solidity: function pauseProject(uint64 _projectId) returns()
+func (_Contracts *ContractsTransactor) PauseProject(opts *bind.TransactOpts, _projectId uint64) (*types.Transaction, error) {
 	return _Contracts.contract.Transact(opts, "pauseProject", _projectId)
 }
 
-// PauseProject is a paid mutator transaction binding the contract method 0x0f717a63.
+// PauseProject is a paid mutator transaction binding the contract method 0xa054b8c4.
 //
-// Solidity: function pauseProject(uint256 _projectId) returns()
-func (_Contracts *ContractsSession) PauseProject(_projectId *big.Int) (*types.Transaction, error) {
+// Solidity: function pauseProject(uint64 _projectId) returns()
+func (_Contracts *ContractsSession) PauseProject(_projectId uint64) (*types.Transaction, error) {
 	return _Contracts.Contract.PauseProject(&_Contracts.TransactOpts, _projectId)
 }
 
-// PauseProject is a paid mutator transaction binding the contract method 0x0f717a63.
+// PauseProject is a paid mutator transaction binding the contract method 0xa054b8c4.
 //
-// Solidity: function pauseProject(uint256 _projectId) returns()
-func (_Contracts *ContractsTransactorSession) PauseProject(_projectId *big.Int) (*types.Transaction, error) {
+// Solidity: function pauseProject(uint64 _projectId) returns()
+func (_Contracts *ContractsTransactorSession) PauseProject(_projectId uint64) (*types.Transaction, error) {
 	return _Contracts.Contract.PauseProject(&_Contracts.TransactOpts, _projectId)
 }
 
-// RemoveOperator is a paid mutator transaction binding the contract method 0x0d18d07a.
+// RemoveOperator is a paid mutator transaction binding the contract method 0xb6cda4f0.
 //
-// Solidity: function removeOperator(uint256 _projectId, address _operator) returns()
-func (_Contracts *ContractsTransactor) RemoveOperator(opts *bind.TransactOpts, _projectId *big.Int, _operator common.Address) (*types.Transaction, error) {
+// Solidity: function removeOperator(uint64 _projectId, address _operator) returns()
+func (_Contracts *ContractsTransactor) RemoveOperator(opts *bind.TransactOpts, _projectId uint64, _operator common.Address) (*types.Transaction, error) {
 	return _Contracts.contract.Transact(opts, "removeOperator", _projectId, _operator)
 }
 
-// RemoveOperator is a paid mutator transaction binding the contract method 0x0d18d07a.
+// RemoveOperator is a paid mutator transaction binding the contract method 0xb6cda4f0.
 //
-// Solidity: function removeOperator(uint256 _projectId, address _operator) returns()
-func (_Contracts *ContractsSession) RemoveOperator(_projectId *big.Int, _operator common.Address) (*types.Transaction, error) {
+// Solidity: function removeOperator(uint64 _projectId, address _operator) returns()
+func (_Contracts *ContractsSession) RemoveOperator(_projectId uint64, _operator common.Address) (*types.Transaction, error) {
 	return _Contracts.Contract.RemoveOperator(&_Contracts.TransactOpts, _projectId, _operator)
 }
 
-// RemoveOperator is a paid mutator transaction binding the contract method 0x0d18d07a.
+// RemoveOperator is a paid mutator transaction binding the contract method 0xb6cda4f0.
 //
-// Solidity: function removeOperator(uint256 _projectId, address _operator) returns()
-func (_Contracts *ContractsTransactorSession) RemoveOperator(_projectId *big.Int, _operator common.Address) (*types.Transaction, error) {
+// Solidity: function removeOperator(uint64 _projectId, address _operator) returns()
+func (_Contracts *ContractsTransactorSession) RemoveOperator(_projectId uint64, _operator common.Address) (*types.Transaction, error) {
 	return _Contracts.Contract.RemoveOperator(&_Contracts.TransactOpts, _projectId, _operator)
 }
 
@@ -698,45 +698,45 @@ func (_Contracts *ContractsTransactorSession) TransferFrom(from common.Address, 
 	return _Contracts.Contract.TransferFrom(&_Contracts.TransactOpts, from, to, tokenId)
 }
 
-// UnpauseProject is a paid mutator transaction binding the contract method 0xd9394d83.
+// UnpauseProject is a paid mutator transaction binding the contract method 0x1ab76761.
 //
-// Solidity: function unpauseProject(uint256 _projectId) returns()
-func (_Contracts *ContractsTransactor) UnpauseProject(opts *bind.TransactOpts, _projectId *big.Int) (*types.Transaction, error) {
+// Solidity: function unpauseProject(uint64 _projectId) returns()
+func (_Contracts *ContractsTransactor) UnpauseProject(opts *bind.TransactOpts, _projectId uint64) (*types.Transaction, error) {
 	return _Contracts.contract.Transact(opts, "unpauseProject", _projectId)
 }
 
-// UnpauseProject is a paid mutator transaction binding the contract method 0xd9394d83.
+// UnpauseProject is a paid mutator transaction binding the contract method 0x1ab76761.
 //
-// Solidity: function unpauseProject(uint256 _projectId) returns()
-func (_Contracts *ContractsSession) UnpauseProject(_projectId *big.Int) (*types.Transaction, error) {
+// Solidity: function unpauseProject(uint64 _projectId) returns()
+func (_Contracts *ContractsSession) UnpauseProject(_projectId uint64) (*types.Transaction, error) {
 	return _Contracts.Contract.UnpauseProject(&_Contracts.TransactOpts, _projectId)
 }
 
-// UnpauseProject is a paid mutator transaction binding the contract method 0xd9394d83.
+// UnpauseProject is a paid mutator transaction binding the contract method 0x1ab76761.
 //
-// Solidity: function unpauseProject(uint256 _projectId) returns()
-func (_Contracts *ContractsTransactorSession) UnpauseProject(_projectId *big.Int) (*types.Transaction, error) {
+// Solidity: function unpauseProject(uint64 _projectId) returns()
+func (_Contracts *ContractsTransactorSession) UnpauseProject(_projectId uint64) (*types.Transaction, error) {
 	return _Contracts.Contract.UnpauseProject(&_Contracts.TransactOpts, _projectId)
 }
 
-// UpdateProject is a paid mutator transaction binding the contract method 0x4e0230f6.
+// UpdateProject is a paid mutator transaction binding the contract method 0xdf65fe1e.
 //
-// Solidity: function updateProject(uint256 _projectId, string _uri, bytes32 _hash) returns()
-func (_Contracts *ContractsTransactor) UpdateProject(opts *bind.TransactOpts, _projectId *big.Int, _uri string, _hash [32]byte) (*types.Transaction, error) {
+// Solidity: function updateProject(uint64 _projectId, string _uri, bytes32 _hash) returns()
+func (_Contracts *ContractsTransactor) UpdateProject(opts *bind.TransactOpts, _projectId uint64, _uri string, _hash [32]byte) (*types.Transaction, error) {
 	return _Contracts.contract.Transact(opts, "updateProject", _projectId, _uri, _hash)
 }
 
-// UpdateProject is a paid mutator transaction binding the contract method 0x4e0230f6.
+// UpdateProject is a paid mutator transaction binding the contract method 0xdf65fe1e.
 //
-// Solidity: function updateProject(uint256 _projectId, string _uri, bytes32 _hash) returns()
-func (_Contracts *ContractsSession) UpdateProject(_projectId *big.Int, _uri string, _hash [32]byte) (*types.Transaction, error) {
+// Solidity: function updateProject(uint64 _projectId, string _uri, bytes32 _hash) returns()
+func (_Contracts *ContractsSession) UpdateProject(_projectId uint64, _uri string, _hash [32]byte) (*types.Transaction, error) {
 	return _Contracts.Contract.UpdateProject(&_Contracts.TransactOpts, _projectId, _uri, _hash)
 }
 
-// UpdateProject is a paid mutator transaction binding the contract method 0x4e0230f6.
+// UpdateProject is a paid mutator transaction binding the contract method 0xdf65fe1e.
 //
-// Solidity: function updateProject(uint256 _projectId, string _uri, bytes32 _hash) returns()
-func (_Contracts *ContractsTransactorSession) UpdateProject(_projectId *big.Int, _uri string, _hash [32]byte) (*types.Transaction, error) {
+// Solidity: function updateProject(uint64 _projectId, string _uri, bytes32 _hash) returns()
+func (_Contracts *ContractsTransactorSession) UpdateProject(_projectId uint64, _uri string, _hash [32]byte) (*types.Transaction, error) {
 	return _Contracts.Contract.UpdateProject(&_Contracts.TransactOpts, _projectId, _uri, _hash)
 }
 
@@ -1125,15 +1125,15 @@ func (it *ContractsOperatorAddedIterator) Close() error {
 
 // ContractsOperatorAdded represents a OperatorAdded event raised by the Contracts contract.
 type ContractsOperatorAdded struct {
-	ProjectId *big.Int
+	ProjectId uint64
 	Operator  common.Address
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterOperatorAdded is a free log retrieval operation binding the contract event 0x2f4755543338efb68c5e596ffe21ca190ab52b296eb3b02eb5d7fd73527091d4.
+// FilterOperatorAdded is a free log retrieval operation binding the contract event 0x0a0df300ccf76478395c461777737ac6ccf35863e5962635752f7d415491012b.
 //
-// Solidity: event OperatorAdded(uint256 indexed projectId, address indexed operator)
-func (_Contracts *ContractsFilterer) FilterOperatorAdded(opts *bind.FilterOpts, projectId []*big.Int, operator []common.Address) (*ContractsOperatorAddedIterator, error) {
+// Solidity: event OperatorAdded(uint64 indexed projectId, address indexed operator)
+func (_Contracts *ContractsFilterer) FilterOperatorAdded(opts *bind.FilterOpts, projectId []uint64, operator []common.Address) (*ContractsOperatorAddedIterator, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1151,10 +1151,10 @@ func (_Contracts *ContractsFilterer) FilterOperatorAdded(opts *bind.FilterOpts, 
 	return &ContractsOperatorAddedIterator{contract: _Contracts.contract, event: "OperatorAdded", logs: logs, sub: sub}, nil
 }
 
-// WatchOperatorAdded is a free log subscription operation binding the contract event 0x2f4755543338efb68c5e596ffe21ca190ab52b296eb3b02eb5d7fd73527091d4.
+// WatchOperatorAdded is a free log subscription operation binding the contract event 0x0a0df300ccf76478395c461777737ac6ccf35863e5962635752f7d415491012b.
 //
-// Solidity: event OperatorAdded(uint256 indexed projectId, address indexed operator)
-func (_Contracts *ContractsFilterer) WatchOperatorAdded(opts *bind.WatchOpts, sink chan<- *ContractsOperatorAdded, projectId []*big.Int, operator []common.Address) (event.Subscription, error) {
+// Solidity: event OperatorAdded(uint64 indexed projectId, address indexed operator)
+func (_Contracts *ContractsFilterer) WatchOperatorAdded(opts *bind.WatchOpts, sink chan<- *ContractsOperatorAdded, projectId []uint64, operator []common.Address) (event.Subscription, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1197,9 +1197,9 @@ func (_Contracts *ContractsFilterer) WatchOperatorAdded(opts *bind.WatchOpts, si
 	}), nil
 }
 
-// ParseOperatorAdded is a log parse operation binding the contract event 0x2f4755543338efb68c5e596ffe21ca190ab52b296eb3b02eb5d7fd73527091d4.
+// ParseOperatorAdded is a log parse operation binding the contract event 0x0a0df300ccf76478395c461777737ac6ccf35863e5962635752f7d415491012b.
 //
-// Solidity: event OperatorAdded(uint256 indexed projectId, address indexed operator)
+// Solidity: event OperatorAdded(uint64 indexed projectId, address indexed operator)
 func (_Contracts *ContractsFilterer) ParseOperatorAdded(log types.Log) (*ContractsOperatorAdded, error) {
 	event := new(ContractsOperatorAdded)
 	if err := _Contracts.contract.UnpackLog(event, "OperatorAdded", log); err != nil {
@@ -1278,15 +1278,15 @@ func (it *ContractsOperatorRemovedIterator) Close() error {
 
 // ContractsOperatorRemoved represents a OperatorRemoved event raised by the Contracts contract.
 type ContractsOperatorRemoved struct {
-	ProjectId *big.Int
+	ProjectId uint64
 	Operator  common.Address
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterOperatorRemoved is a free log retrieval operation binding the contract event 0x52d3687b8125cef8627d9a4976cbb4de4fb13a1eec014884f69cb22f0f9bacb1.
+// FilterOperatorRemoved is a free log retrieval operation binding the contract event 0x65b332ebfdc6c104b92b72200da87c0f5584dfea0956e013b4dafb4fae9d3513.
 //
-// Solidity: event OperatorRemoved(uint256 indexed projectId, address indexed operator)
-func (_Contracts *ContractsFilterer) FilterOperatorRemoved(opts *bind.FilterOpts, projectId []*big.Int, operator []common.Address) (*ContractsOperatorRemovedIterator, error) {
+// Solidity: event OperatorRemoved(uint64 indexed projectId, address indexed operator)
+func (_Contracts *ContractsFilterer) FilterOperatorRemoved(opts *bind.FilterOpts, projectId []uint64, operator []common.Address) (*ContractsOperatorRemovedIterator, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1304,10 +1304,10 @@ func (_Contracts *ContractsFilterer) FilterOperatorRemoved(opts *bind.FilterOpts
 	return &ContractsOperatorRemovedIterator{contract: _Contracts.contract, event: "OperatorRemoved", logs: logs, sub: sub}, nil
 }
 
-// WatchOperatorRemoved is a free log subscription operation binding the contract event 0x52d3687b8125cef8627d9a4976cbb4de4fb13a1eec014884f69cb22f0f9bacb1.
+// WatchOperatorRemoved is a free log subscription operation binding the contract event 0x65b332ebfdc6c104b92b72200da87c0f5584dfea0956e013b4dafb4fae9d3513.
 //
-// Solidity: event OperatorRemoved(uint256 indexed projectId, address indexed operator)
-func (_Contracts *ContractsFilterer) WatchOperatorRemoved(opts *bind.WatchOpts, sink chan<- *ContractsOperatorRemoved, projectId []*big.Int, operator []common.Address) (event.Subscription, error) {
+// Solidity: event OperatorRemoved(uint64 indexed projectId, address indexed operator)
+func (_Contracts *ContractsFilterer) WatchOperatorRemoved(opts *bind.WatchOpts, sink chan<- *ContractsOperatorRemoved, projectId []uint64, operator []common.Address) (event.Subscription, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1350,9 +1350,9 @@ func (_Contracts *ContractsFilterer) WatchOperatorRemoved(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParseOperatorRemoved is a log parse operation binding the contract event 0x52d3687b8125cef8627d9a4976cbb4de4fb13a1eec014884f69cb22f0f9bacb1.
+// ParseOperatorRemoved is a log parse operation binding the contract event 0x65b332ebfdc6c104b92b72200da87c0f5584dfea0956e013b4dafb4fae9d3513.
 //
-// Solidity: event OperatorRemoved(uint256 indexed projectId, address indexed operator)
+// Solidity: event OperatorRemoved(uint64 indexed projectId, address indexed operator)
 func (_Contracts *ContractsFilterer) ParseOperatorRemoved(log types.Log) (*ContractsOperatorRemoved, error) {
 	event := new(ContractsOperatorRemoved)
 	if err := _Contracts.contract.UnpackLog(event, "OperatorRemoved", log); err != nil {
@@ -1431,14 +1431,14 @@ func (it *ContractsProjectPausedIterator) Close() error {
 
 // ContractsProjectPaused represents a ProjectPaused event raised by the Contracts contract.
 type ContractsProjectPaused struct {
-	ProjectId *big.Int
+	ProjectId uint64
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterProjectPaused is a free log retrieval operation binding the contract event 0x9f505f325627bdd7f5a6dd8bcceecdc48a989f647561427d61d35b7a50703f79.
+// FilterProjectPaused is a free log retrieval operation binding the contract event 0xf8848fbf85a1255fc1ce9fdf530b19192c9be37003bafe656e23c7fd73b05262.
 //
-// Solidity: event ProjectPaused(uint256 indexed projectId)
-func (_Contracts *ContractsFilterer) FilterProjectPaused(opts *bind.FilterOpts, projectId []*big.Int) (*ContractsProjectPausedIterator, error) {
+// Solidity: event ProjectPaused(uint64 indexed projectId)
+func (_Contracts *ContractsFilterer) FilterProjectPaused(opts *bind.FilterOpts, projectId []uint64) (*ContractsProjectPausedIterator, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1452,10 +1452,10 @@ func (_Contracts *ContractsFilterer) FilterProjectPaused(opts *bind.FilterOpts, 
 	return &ContractsProjectPausedIterator{contract: _Contracts.contract, event: "ProjectPaused", logs: logs, sub: sub}, nil
 }
 
-// WatchProjectPaused is a free log subscription operation binding the contract event 0x9f505f325627bdd7f5a6dd8bcceecdc48a989f647561427d61d35b7a50703f79.
+// WatchProjectPaused is a free log subscription operation binding the contract event 0xf8848fbf85a1255fc1ce9fdf530b19192c9be37003bafe656e23c7fd73b05262.
 //
-// Solidity: event ProjectPaused(uint256 indexed projectId)
-func (_Contracts *ContractsFilterer) WatchProjectPaused(opts *bind.WatchOpts, sink chan<- *ContractsProjectPaused, projectId []*big.Int) (event.Subscription, error) {
+// Solidity: event ProjectPaused(uint64 indexed projectId)
+func (_Contracts *ContractsFilterer) WatchProjectPaused(opts *bind.WatchOpts, sink chan<- *ContractsProjectPaused, projectId []uint64) (event.Subscription, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1494,9 +1494,9 @@ func (_Contracts *ContractsFilterer) WatchProjectPaused(opts *bind.WatchOpts, si
 	}), nil
 }
 
-// ParseProjectPaused is a log parse operation binding the contract event 0x9f505f325627bdd7f5a6dd8bcceecdc48a989f647561427d61d35b7a50703f79.
+// ParseProjectPaused is a log parse operation binding the contract event 0xf8848fbf85a1255fc1ce9fdf530b19192c9be37003bafe656e23c7fd73b05262.
 //
-// Solidity: event ProjectPaused(uint256 indexed projectId)
+// Solidity: event ProjectPaused(uint64 indexed projectId)
 func (_Contracts *ContractsFilterer) ParseProjectPaused(log types.Log) (*ContractsProjectPaused, error) {
 	event := new(ContractsProjectPaused)
 	if err := _Contracts.contract.UnpackLog(event, "ProjectPaused", log); err != nil {
@@ -1575,14 +1575,14 @@ func (it *ContractsProjectUnpausedIterator) Close() error {
 
 // ContractsProjectUnpaused represents a ProjectUnpaused event raised by the Contracts contract.
 type ContractsProjectUnpaused struct {
-	ProjectId *big.Int
+	ProjectId uint64
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterProjectUnpaused is a free log retrieval operation binding the contract event 0xf87e623aca5b8bef3f4a5f8a900ecd4c0367b153c2d476a78b65a68661ba7a25.
+// FilterProjectUnpaused is a free log retrieval operation binding the contract event 0x446bd3e2dc8ee8806eae263bc8add80885bed6e576864809bced88a93110df35.
 //
-// Solidity: event ProjectUnpaused(uint256 indexed projectId)
-func (_Contracts *ContractsFilterer) FilterProjectUnpaused(opts *bind.FilterOpts, projectId []*big.Int) (*ContractsProjectUnpausedIterator, error) {
+// Solidity: event ProjectUnpaused(uint64 indexed projectId)
+func (_Contracts *ContractsFilterer) FilterProjectUnpaused(opts *bind.FilterOpts, projectId []uint64) (*ContractsProjectUnpausedIterator, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1596,10 +1596,10 @@ func (_Contracts *ContractsFilterer) FilterProjectUnpaused(opts *bind.FilterOpts
 	return &ContractsProjectUnpausedIterator{contract: _Contracts.contract, event: "ProjectUnpaused", logs: logs, sub: sub}, nil
 }
 
-// WatchProjectUnpaused is a free log subscription operation binding the contract event 0xf87e623aca5b8bef3f4a5f8a900ecd4c0367b153c2d476a78b65a68661ba7a25.
+// WatchProjectUnpaused is a free log subscription operation binding the contract event 0x446bd3e2dc8ee8806eae263bc8add80885bed6e576864809bced88a93110df35.
 //
-// Solidity: event ProjectUnpaused(uint256 indexed projectId)
-func (_Contracts *ContractsFilterer) WatchProjectUnpaused(opts *bind.WatchOpts, sink chan<- *ContractsProjectUnpaused, projectId []*big.Int) (event.Subscription, error) {
+// Solidity: event ProjectUnpaused(uint64 indexed projectId)
+func (_Contracts *ContractsFilterer) WatchProjectUnpaused(opts *bind.WatchOpts, sink chan<- *ContractsProjectUnpaused, projectId []uint64) (event.Subscription, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1638,9 +1638,9 @@ func (_Contracts *ContractsFilterer) WatchProjectUnpaused(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParseProjectUnpaused is a log parse operation binding the contract event 0xf87e623aca5b8bef3f4a5f8a900ecd4c0367b153c2d476a78b65a68661ba7a25.
+// ParseProjectUnpaused is a log parse operation binding the contract event 0x446bd3e2dc8ee8806eae263bc8add80885bed6e576864809bced88a93110df35.
 //
-// Solidity: event ProjectUnpaused(uint256 indexed projectId)
+// Solidity: event ProjectUnpaused(uint64 indexed projectId)
 func (_Contracts *ContractsFilterer) ParseProjectUnpaused(log types.Log) (*ContractsProjectUnpaused, error) {
 	event := new(ContractsProjectUnpaused)
 	if err := _Contracts.contract.UnpackLog(event, "ProjectUnpaused", log); err != nil {
@@ -1719,16 +1719,16 @@ func (it *ContractsProjectUpsertedIterator) Close() error {
 
 // ContractsProjectUpserted represents a ProjectUpserted event raised by the Contracts contract.
 type ContractsProjectUpserted struct {
-	ProjectId *big.Int
+	ProjectId uint64
 	Uri       string
 	Hash      [32]byte
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterProjectUpserted is a free log retrieval operation binding the contract event 0x7d70e5e6237865f1bf3f01321f4e49b2e9f3bba211d6fffbe6eda8fbd9735427.
+// FilterProjectUpserted is a free log retrieval operation binding the contract event 0x889d61147bfd16f8996ff259e22ac44288a7d6fa0957844db988f071b7883c23.
 //
-// Solidity: event ProjectUpserted(uint256 indexed projectId, string uri, bytes32 hash)
-func (_Contracts *ContractsFilterer) FilterProjectUpserted(opts *bind.FilterOpts, projectId []*big.Int) (*ContractsProjectUpsertedIterator, error) {
+// Solidity: event ProjectUpserted(uint64 indexed projectId, string uri, bytes32 hash)
+func (_Contracts *ContractsFilterer) FilterProjectUpserted(opts *bind.FilterOpts, projectId []uint64) (*ContractsProjectUpsertedIterator, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1742,10 +1742,10 @@ func (_Contracts *ContractsFilterer) FilterProjectUpserted(opts *bind.FilterOpts
 	return &ContractsProjectUpsertedIterator{contract: _Contracts.contract, event: "ProjectUpserted", logs: logs, sub: sub}, nil
 }
 
-// WatchProjectUpserted is a free log subscription operation binding the contract event 0x7d70e5e6237865f1bf3f01321f4e49b2e9f3bba211d6fffbe6eda8fbd9735427.
+// WatchProjectUpserted is a free log subscription operation binding the contract event 0x889d61147bfd16f8996ff259e22ac44288a7d6fa0957844db988f071b7883c23.
 //
-// Solidity: event ProjectUpserted(uint256 indexed projectId, string uri, bytes32 hash)
-func (_Contracts *ContractsFilterer) WatchProjectUpserted(opts *bind.WatchOpts, sink chan<- *ContractsProjectUpserted, projectId []*big.Int) (event.Subscription, error) {
+// Solidity: event ProjectUpserted(uint64 indexed projectId, string uri, bytes32 hash)
+func (_Contracts *ContractsFilterer) WatchProjectUpserted(opts *bind.WatchOpts, sink chan<- *ContractsProjectUpserted, projectId []uint64) (event.Subscription, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1784,9 +1784,9 @@ func (_Contracts *ContractsFilterer) WatchProjectUpserted(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParseProjectUpserted is a log parse operation binding the contract event 0x7d70e5e6237865f1bf3f01321f4e49b2e9f3bba211d6fffbe6eda8fbd9735427.
+// ParseProjectUpserted is a log parse operation binding the contract event 0x889d61147bfd16f8996ff259e22ac44288a7d6fa0957844db988f071b7883c23.
 //
-// Solidity: event ProjectUpserted(uint256 indexed projectId, string uri, bytes32 hash)
+// Solidity: event ProjectUpserted(uint64 indexed projectId, string uri, bytes32 hash)
 func (_Contracts *ContractsFilterer) ParseProjectUpserted(log types.Log) (*ContractsProjectUpserted, error) {
 	event := new(ContractsProjectUpserted)
 	if err := _Contracts.contract.UnpackLog(event, "ProjectUpserted", log); err != nil {
