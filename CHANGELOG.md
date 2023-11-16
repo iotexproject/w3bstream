@@ -11,7 +11,7 @@
 ### Added
 - Create wsctl
 - Draft project registratar contract
-- Support RISC0 API KEY -- `100%` by @hunshenshi
+- Support RISC0 API KEY
 
 ### Changed
 
