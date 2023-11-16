@@ -22,7 +22,7 @@ type Server struct {
 	vmHandler  *vm.Handler
 }
 
-// this
+// this func will block caller
 func (s *Server) Run() error {
 	s.engine.POST("/message", s.handleRequest)
 
