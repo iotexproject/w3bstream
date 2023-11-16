@@ -3,7 +3,6 @@ package project
 import (
 	"encoding/json"
 	"io"
-	"math/big"
 	"net/http"
 	"sync"
 
@@ -45,7 +44,7 @@ func (m *Manager) Get(projectID uint64) (*Project, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "new contracts instance failed")
 	}
-	p, err := instance.Projects(nil, new(big.Int).SetUint64(projectID))
+	p, err := instance.Projects(nil, projectID)
 	if err != nil {
 		return nil, errors.Wrap(err, "get project from contracts failed")
 	}
