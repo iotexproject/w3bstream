@@ -65,5 +65,5 @@ func SendTX(ctx context.Context, endpoint, privateKey, toStr string, data []byte
 		return "", errors.Wrap(err, "send transaction failed")
 	}
 
-	return tx.Hash().Hex(), nil
+	return signedTx.Hash().Hex(), nil
 }
