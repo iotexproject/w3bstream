@@ -14,7 +14,7 @@ type Handler struct {
 	instanceMgr *server.Mgr
 }
 
-func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string) ([]byte, error) {
+func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code string, expParam string) ([]byte, error) {
 	endpoint, ok := r.endpoints[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
@@ -25,7 +25,7 @@ func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
 	slog.Debug("acquire risc0 instance success")
-	defer r.instanceMgr.Release(msg.Key(), ins)
+	defer r.instanceMgr.Release(msg.ProjectID, ins)
 
 	res, err := ins.Execute(context.Background(), msg)
 	if err != nil {
