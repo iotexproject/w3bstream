@@ -8,17 +8,16 @@ service VmRuntime {
 }
 
 message CreateRequest {
-    string project = 1;
+    uint64 projectID = 1;
     string content = 2;
     string expParam = 3;
 }
 
 message CreateResponse {
-    string instanceId = 1;
 }
 
 message ExecuteRequest {
-    string project = 1;
+    uint64 projectID = 1;
     string param = 2;
 }
 
