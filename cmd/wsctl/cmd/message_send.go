@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/machinefi/w3bstream-mainnet/cmd/node/apis/message"
+	"github.com/machinefi/w3bstream-mainnet/cmd/node/apis"
 	"io"
 	"net/http"
 	"net/url"
@@ -61,7 +61,7 @@ var sendCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "failed to read responded content")
 		}
-		rspVal := &message.HandleRsp{}
+		rspVal := &apis.HandleRsp{}
 		if err := json.Unmarshal(content, rspVal); err != nil {
 			return errors.Wrap(err, "failed to parse responded content")
 		}
