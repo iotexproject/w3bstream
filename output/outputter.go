@@ -2,6 +2,8 @@ package output
 
 import (
 	"errors"
+
+	"github.com/machinefi/w3bstream-mainnet/output/adapter"
 )
 
 type (
@@ -17,8 +19,8 @@ func NewOutputter(cfg Config) (out Outputter, err error) {
 	switch cfg.Type {
 	case Stdout:
 		// TODO: implement
-	case EvmContract:
-		// TODO: implement
+	case EthereumContract:
+		out, err = adapter.NewEthereumContract(cfg.ChainEndpoint, cfg.SecretKey, cfg.ContractAddress)
 	default:
 		return nil, errors.New("invalid output type")
 	}

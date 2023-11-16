@@ -2,16 +2,15 @@ package handler
 
 import (
 	"context"
-	"github.com/machinefi/w3bstream-mainnet/enums"
 	"github.com/machinefi/w3bstream-mainnet/msg"
 	"github.com/machinefi/w3bstream-mainnet/msg/messages"
 	"github.com/machinefi/w3bstream-mainnet/output/chain/eth"
+	"github.com/machinefi/w3bstream-mainnet/project"
 	"github.com/machinefi/w3bstream-mainnet/project/data"
 	"github.com/machinefi/w3bstream-mainnet/test/contract"
 	"github.com/machinefi/w3bstream-mainnet/util/mq"
 	"github.com/machinefi/w3bstream-mainnet/util/mq/gochan"
 	"github.com/machinefi/w3bstream-mainnet/vm"
-	"github.com/spf13/viper"
 	"log/slog"
 )
 
@@ -23,7 +22,7 @@ type Handler struct {
 	projectConfigFilePath string
 }
 
-func New(vmHandler *vm.Handler, chainEndpoint, operatorPrivateKey, projectConfigFilePath string) *Handler {
+func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey, projectConfigFilePath string) *Handler {
 	q := gochan.New()
 	h := &Handler{
 		mq:                    q,
@@ -44,6 +43,8 @@ func (r *Handler) Handle(msg *msg.Msg) error {
 
 func (r *Handler) asyncHandle(m *msg.Msg) {
 	slog.Debug("message popped", "message_id", m.ID)
+
+	// TODO get project data from project manager
 	project := data.GetTestData(r.projectConfigFilePath)
 
 	messages.OnSubmitProving(m.ID)
@@ -74,18 +75,4 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 	}
 	messages.OnSucceeded(m.ID, txHash)
 	slog.Debug("transaction hash", "tx_hash", txHash)
-}
-
-var DefaultHandler *Handler
-
-func init() {
-	viper.MustBindEnv(enums.EnvKeyChainEndpoint)
-	viper.MustBindEnv(enums.EnvKeyOperatorPrivateKey)
-	viper.MustBindEnv(enums.EnvKeyProjectConfigPath)
-	DefaultHandler = New(
-		vm.DefaultHandler,
-		viper.GetString(enums.EnvKeyChainEndpoint),
-		viper.GetString(enums.EnvKeyOperatorPrivateKey),
-		viper.GetString(enums.EnvKeyProjectConfigPath),
-	)
 }

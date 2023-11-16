@@ -167,9 +167,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "projectId",
-				"type": "uint256"
+				"type": "uint64"
 			},
 			{
 				"indexed": true,
@@ -186,9 +186,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "projectId",
-				"type": "uint256"
+				"type": "uint64"
 			},
 			{
 				"indexed": true,
@@ -205,9 +205,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "projectId",
-				"type": "uint256"
+				"type": "uint64"
 			}
 		],
 		"name": "ProjectPaused",
@@ -218,9 +218,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "projectId",
-				"type": "uint256"
+				"type": "uint64"
 			}
 		],
 		"name": "ProjectUnpaused",
@@ -231,9 +231,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "projectId",
-				"type": "uint256"
+				"type": "uint64"
 			},
 			{
 				"indexed": false,
@@ -279,9 +279,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "_projectId",
-				"type": "uint256"
+				"type": "uint64"
 			},
 			{
 				"internalType": "address",
@@ -339,9 +339,9 @@
 				"type": "address"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "_projectId",
-				"type": "uint256"
+				"type": "uint64"
 			}
 		],
 		"name": "canOperateProject",
@@ -451,9 +451,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "_projectId",
-				"type": "uint256"
+				"type": "uint64"
 			}
 		],
 		"name": "pauseProject",
@@ -464,9 +464,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "",
-				"type": "uint256"
+				"type": "uint64"
 			}
 		],
 		"name": "projects",
@@ -493,9 +493,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "_projectId",
-				"type": "uint256"
+				"type": "uint64"
 			},
 			{
 				"internalType": "address",
@@ -654,9 +654,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "_projectId",
-				"type": "uint256"
+				"type": "uint64"
 			}
 		],
 		"name": "unpauseProject",
@@ -667,9 +667,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint64",
 				"name": "_projectId",
-				"type": "uint256"
+				"type": "uint64"
 			},
 			{
 				"internalType": "string",

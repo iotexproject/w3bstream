@@ -2,7 +2,7 @@ package vm
 
 import (
 	"context"
-	"github.com/spf13/viper"
+	"fmt"
 	"log/slog"
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
@@ -15,7 +15,7 @@ type Handler struct {
 	instanceMgr *server.Mgr
 }
 
-func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string) ([]byte, error) {
+func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code string, expParam string) ([]byte, error) {
 	endpoint, ok := r.endpoints[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
@@ -25,8 +25,8 @@ func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code []byte, expParam string
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
-	slog.Debug("acquire risc0 instance success")
-	defer r.instanceMgr.Release(msg.Key(), ins)
+	slog.Debug(fmt.Sprintf("acquire %s instance success", vmtype))
+	defer r.instanceMgr.Release(msg.ProjectID, ins)
 
 	res, err := ins.Execute(context.Background(), msg)
 	if err != nil {
@@ -40,18 +40,4 @@ func NewHandler(endpoints map[Type]string) *Handler {
 		endpoints:   endpoints,
 		instanceMgr: server.NewMgr(),
 	}
-}
-
-var DefaultHandler *Handler
-
-func init() {
-	var endpoints = make(map[Type]string)
-	for key, typ := range vmEndpointConfigEnvKeyMap {
-		viper.MustBindEnv(key)
-		if ep := viper.GetString(key); ep != "" {
-			endpoints[typ] = ep
-		}
-	}
-
-	DefaultHandler = NewHandler(endpoints)
 }
