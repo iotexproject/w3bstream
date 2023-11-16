@@ -2,6 +2,7 @@ package vm
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/machinefi/w3bstream-mainnet/msg"
@@ -24,7 +25,7 @@ func (r *Handler) Handle(msg *msg.Msg, vmtype Type, code string, expParam string
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
-	slog.Debug("acquire risc0 instance success")
+	slog.Debug(fmt.Sprintf("acquire %s instance success", vmtype))
 	defer r.instanceMgr.Release(msg.ProjectID, ins)
 
 	res, err := ins.Execute(context.Background(), msg)
