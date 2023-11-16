@@ -25,3 +25,5 @@ postgres
 .env
 docker-compose.local.yaml
 docker-compose.local.yml
+docker-compose.debug.yaml
+docker-compose.debug.yml

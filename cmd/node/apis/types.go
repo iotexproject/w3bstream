@@ -1,4 +1,4 @@
-package main
+package apis
 
 type errResp struct {
 	Error string `json:"error,omitempty"`
