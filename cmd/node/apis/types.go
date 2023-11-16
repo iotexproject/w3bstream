@@ -1,11 +1,15 @@
 package apis
 
-type HandleErrRsp struct {
+type errResp struct {
 	Error string `json:"error,omitempty"`
 }
 
-type HandleReq struct {
-	ProjectID      string `json:"projectID"        binding:"required"`
+func newErrResp(err error) *errResp {
+	return &errResp{Error: err.Error()}
+}
+
+type msgReq struct {
+	ProjectID      uint64 `json:"projectID"        binding:"required"`
 	ProjectVersion string `json:"projectVersion"   binding:"required"`
 	Data           string `json:"data"             binding:"required"`
 }

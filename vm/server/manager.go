@@ -9,29 +9,29 @@ import (
 
 type Mgr struct {
 	mux  sync.Mutex
-	idle map[msg.MsgKey]*Instance
+	idle map[uint64]*Instance
 }
 
-func (m *Mgr) Acquire(msg *msg.Msg, endpoint string, code []byte, expParam string) (*Instance, error) {
+func (m *Mgr) Acquire(msg *msg.Msg, endpoint string, code string, expParam string) (*Instance, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	if i, ok := m.idle[msg.Key()]; ok {
+	if i, ok := m.idle[msg.ProjectID]; ok {
 		return i, nil
 	}
 
-	return NewInstance(context.Background(), endpoint, msg.Key(), code, expParam)
+	return NewInstance(context.Background(), endpoint, msg.ProjectID, code, expParam)
 }
 
-func (m *Mgr) Release(key msg.MsgKey, i *Instance) {
+func (m *Mgr) Release(projectID uint64, i *Instance) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	m.idle[key] = i
+	m.idle[projectID] = i
 }
 
 func NewMgr() *Mgr {
 	return &Mgr{
-		idle: make(map[msg.MsgKey]*Instance),
+		idle: make(map[uint64]*Instance),
 	}
 }

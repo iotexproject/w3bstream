@@ -8,9 +8,9 @@ import (
 )
 
 func (s *Server) handleRequest(c *gin.Context) {
-	req := HandleReq{}
+	req := &msgReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
-		c.JSON(http.StatusBadRequest, &HandleErrRsp{err.Error()})
+		c.JSON(http.StatusBadRequest, newErrResp(err))
 		return
 	}
 	slog.Debug("received your message, handling")
@@ -19,7 +19,7 @@ func (s *Server) handleRequest(c *gin.Context) {
 		ProjectVersion: req.ProjectVersion,
 		Data:           req.Data,
 	}); err != nil {
-		c.JSON(http.StatusInternalServerError, &HandleErrRsp{err.Error()})
+		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return
 	}
 

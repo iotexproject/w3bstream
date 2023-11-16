@@ -22,6 +22,7 @@ type Server struct {
 	vmHandler  *vm.Handler
 }
 
+// this
 func (s *Server) Run() error {
 	s.engine.POST("/message", s.handleRequest)
 
