@@ -16,7 +16,7 @@ var sendCmd = &cobra.Command{
 	Use:   "send",
 	Short: "send message to w3bstream node",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		projectID, err := cmd.Flags().GetString("project-id")
+		projectID, err := cmd.Flags().GetUint64("project-id")
 		if err != nil {
 			return errors.Wrap(err, "failed to get flag project-id")
 		}
@@ -30,7 +30,7 @@ var sendCmd = &cobra.Command{
 		}
 
 		body := struct {
-			ProjectID      string `json:"projectID"`
+			ProjectID      uint64 `json:"projectID"`
 			ProjectVersion string `json:"projectVersion"`
 			Data           string `json:"data"`
 		}{
@@ -62,7 +62,7 @@ var sendCmd = &cobra.Command{
 func init() {
 	messageCmd.AddCommand(sendCmd)
 
-	sendCmd.Flags().StringP("project-id", "p", "", "the projectID which the message will send to")
+	sendCmd.Flags().Uint64P("project-id", "p", 0, "the projectID which the message will send to")
 	sendCmd.Flags().StringP("project-version", "v", "", "the projectVersion")
 	sendCmd.Flags().StringP("data", "d", "", "the data which will send to project")
 
