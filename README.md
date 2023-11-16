@@ -40,15 +40,12 @@ curl https://raw.githubusercontent.com/machinefi/sprout/main/docker-compose.yaml
 
 ### Populate docker-compose.yaml fields
 
-W3bstream-node need write proof to chain and need a private key for chain write. Set your private key
-at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L20  
-If you need risc0 snark proof, a bonsai key is needed
-at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L40
+W3bstream-node need write proof to chain and need a private key for chain write. Set your private key at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L20  
+If you need risc0 snark proof, a bonsai key is needed at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L40
 
 ### Use customized project code
 
-Docker-compose will mount current work directory to containers
-/data https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L23  
+Docker-compose will mount current work directory to containers /data https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L23  
 So you can appoint the project file at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L18
 
 ### Start w3bstream node
@@ -99,12 +96,15 @@ wsctl config get endpoint
 
 open a new terminal and execute  
 risc0 snark test
+
 ```bash
 wsctl message send -p 10000 -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
-halo2 test 
+
+halo2 test
+
 ```bash
-./wsctl message send -p 10001 -v "0.1" -d "{\"private_input\":\"4\"}"
+wsctl message send -p 10001 -v "0.1" -d "{\"private_input\":\"4\"}"
 ```
 
 It will send a message to project test01 running on the remote server. The processing status could be checked
