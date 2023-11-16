@@ -3,14 +3,19 @@
 ## [Unreleased]
 
 ### In Process
-- Support Halo2 VM -- `90%` by @hunshenshi 
+- Support Halo2 VM -- `95%` by @hunshenshi 
 - Support project config loading -- `80%` by @huangzhiran
 - Add query API -- `95%` by @saitofun
-- Support RISC0 API KEY -- `0%` by @hunshenshi
+- Change the code file of halo2 vm and risc0 vm to hex string -- `95%` by @hunshenshi
 
-### Changed
+### Added
 - Create wsctl
 - Draft project registratar contract
+- Support RISC0 API KEY
+
+### Changed
+
+### Fixed
 
 ---
 ---
