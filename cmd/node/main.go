@@ -1,15 +1,16 @@
 package main
 
 import (
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/machinefi/w3bstream-mainnet/cmd/node/apis"
 	"github.com/machinefi/w3bstream-mainnet/enums"
 	"github.com/machinefi/w3bstream-mainnet/msg/handler"
 	"github.com/machinefi/w3bstream-mainnet/vm"
 	"github.com/spf13/viper"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/machinefi/w3bstream-mainnet/project"
 )
@@ -21,14 +22,16 @@ func main() {
 			vm.Halo2: viper.GetString(enums.EnvKeyHalo2ServerEndpoint),
 		},
 	)
-	projectManager := project.NewManager(viper.GetString(enums.EnvKeyChainEndpoint), viper.GetString(enums.EnvKeyProjectContractAddress))
+	projectManager, err := project.NewManager(viper.GetString(enums.EnvKeyChainEndpoint), viper.GetString(enums.EnvKeyProjectContractAddress), viper.GetString(enums.EnvKeyProjectFileDirectory))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	msgHandler := handler.New(
 		vmHandler,
 		projectManager,
 		viper.GetString(enums.EnvKeyChainEndpoint),
 		viper.GetString(enums.EnvKeyOperatorPrivateKey),
-		viper.GetString(enums.EnvKeyProjectConfigPath),
 	)
 
 	go func() {

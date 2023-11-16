@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -19,12 +20,34 @@ type Manager struct {
 	contractAddress string
 }
 
-func NewManager(chainEndpoint, contractAddress string) *Manager {
+func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*Manager, error) {
+	pool := make(map[uint64]*Project)
+	files, err := os.ReadDir(projectFileDirectory)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return nil, errors.Wrap(err, "read project file directory failed")
+		}
+	}
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(f.Name())
+		if err != nil {
+			return nil, errors.Wrapf(err, "read project file %s failed", f.Name())
+		}
+		p := Project{}
+		if err := json.Unmarshal(data, &p); err != nil {
+			return nil, errors.Wrapf(err, "unmarshal project file %s failed", f.Name())
+		}
+		pool[p.ID] = &p
+	}
+
 	return &Manager{
-		pool:            make(map[uint64]*Project),
+		pool:            pool,
 		chainEndpoint:   chainEndpoint,
 		contractAddress: contractAddress,
-	}
+	}, nil
 }
 
 func (m *Manager) Get(projectID uint64) (*Project, error) {

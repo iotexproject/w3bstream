@@ -7,7 +7,6 @@ import (
 	"github.com/machinefi/w3bstream-mainnet/msg"
 	"github.com/machinefi/w3bstream-mainnet/output/chain/eth"
 	"github.com/machinefi/w3bstream-mainnet/project"
-	"github.com/machinefi/w3bstream-mainnet/project/data"
 	"github.com/machinefi/w3bstream-mainnet/test/contract"
 	"github.com/machinefi/w3bstream-mainnet/util/mq"
 	"github.com/machinefi/w3bstream-mainnet/util/mq/gochan"
@@ -15,21 +14,21 @@ import (
 )
 
 type Handler struct {
-	mq                    mq.MQ
-	vmHandler             *vm.Handler
-	chainEndpoint         string
-	operatorPrivateKey    string
-	projectConfigFilePath string
+	mq                 mq.MQ
+	vmHandler          *vm.Handler
+	projectManager     *project.Manager
+	chainEndpoint      string
+	operatorPrivateKey string
 }
 
-func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey, projectConfigFilePath string) *Handler {
+func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey string) *Handler {
 	q := gochan.New()
 	h := &Handler{
-		mq:                    q,
-		vmHandler:             vmHandler,
-		chainEndpoint:         chainEndpoint,
-		operatorPrivateKey:    operatorPrivateKey,
-		projectConfigFilePath: projectConfigFilePath,
+		mq:                 q,
+		vmHandler:          vmHandler,
+		chainEndpoint:      chainEndpoint,
+		operatorPrivateKey: operatorPrivateKey,
+		projectManager:     projectManager,
 	}
 	go q.Watch(h.asyncHandle)
 	return h
@@ -42,9 +41,12 @@ func (r *Handler) Handle(msg *msg.Msg) error {
 
 func (r *Handler) asyncHandle(m *msg.Msg) {
 	slog.Debug("message popped by proofer")
-	// TODO get project data from project manager
-	project := data.GetTestData(r.projectConfigFilePath)
-	res, err := r.vmHandler.Handle(m, project.VMType, project.Code, project.CodeExpParam)
+	project, err := r.projectManager.Get(m.ProjectID)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	res, err := r.vmHandler.Handle(m, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
 		slog.Error(err.Error())
 		return
