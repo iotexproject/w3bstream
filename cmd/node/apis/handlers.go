@@ -2,6 +2,7 @@ package apis
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/machinefi/w3bstream-mainnet/msg"
 	"github.com/machinefi/w3bstream-mainnet/msg/messages"
 	"github.com/pkg/errors"
@@ -15,8 +16,10 @@ func (s *Server) handleRequest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(err))
 		return
 	}
+	messageID := uuid.NewString()
 	slog.Debug("received your message, handling")
 	if err := s.msgHandler.Handle(&msg.Msg{
+		ID:             messageID,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           req.Data,
@@ -24,8 +27,8 @@ func (s *Server) handleRequest(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return
 	}
-
-	c.Status(http.StatusOK)
+	slog.Debug("message was handled", "messageID", messageID)
+	c.JSON(http.StatusOK, &HandleRsp{MessageID: messageID})
 }
 
 func (s *Server) queryByMessageID(c *gin.Context) {
