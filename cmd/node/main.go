@@ -22,14 +22,16 @@ func main() {
 			vm.Halo2: viper.GetString(enums.EnvKeyHalo2ServerEndpoint),
 		},
 	)
-	projectManager := project.NewManager(viper.GetString(enums.EnvKeyChainEndpoint), viper.GetString(enums.EnvKeyProjectContractAddress))
+	projectManager, err := project.NewManager(viper.GetString(enums.EnvKeyChainEndpoint), viper.GetString(enums.EnvKeyProjectContractAddress), viper.GetString(enums.EnvKeyProjectFileDirectory))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	msgHandler := handler.New(
 		vmHandler,
 		projectManager,
 		viper.GetString(enums.EnvKeyChainEndpoint),
 		viper.GetString(enums.EnvKeyOperatorPrivateKey),
-		viper.GetString(enums.EnvKeyProjectConfigPath),
 	)
 
 	go func() {
