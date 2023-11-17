@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -32,7 +33,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 		if f.IsDir() {
 			continue
 		}
-		data, err := os.ReadFile(f.Name())
+		data, err := os.ReadFile(path.Join(projectFileDirectory, f.Name()))
 		if err != nil {
 			return nil, errors.Wrapf(err, "read project file %s failed", f.Name())
 		}
