@@ -2,9 +2,17 @@
 
 ## Welcome to the Zero-Node Protocol Repository
 
+- [Introduction](#-about-zero-node-protocol)
+- [Getting Started](#getting-started)
+- [Running the Node](#running-the-node)
+- [Sending data](#sending-data)
+- [Contributing](#contributing)
+- [Community & Support](#community-and-support)
+
+
 #### 🌍 About Zero-Node Protocol
 
-Zero-Node Protocol, is an integral part of the [IoTeX network](https://iotex.io). It's a new protocol, dedicated to generating custom Zero-Knowledge (ZK) Proofs on top of machine data, forming a robust backbone for Decentralized Physical Infrastructures (**DePIN**) applications. These proofs are crucial in scaling DePIN data computation and storage, and are key in triggering token economies **based on verifiable proofs of real-world work**.
+Zero-Node Protocol is an integral part of the [IoTeX network](https://iotex.io). It's a new protocol, dedicated to generating custom Zero-Knowledge (ZK) Proofs on top of machine data, forming a robust backbone for Decentralized Physical Infrastructures (**DePIN**) applications. These proofs are crucial in scaling DePIN data computation and storage, and are key in triggering token economies **based on verifiable proofs of real-world work**.
 
 #### 🔗 Integrating with Blockchains
 
@@ -73,7 +81,7 @@ Ensure you have the following installed:
 
 3. Docker Compose will mount the current work directory under the `/data` volume. You can edit the file `docker-compose.yaml` to set `PROJECT_FILE_DIRECTORY` tp the appropriate path where the project configuration file (which includes the prover code) is stored.
 
-### Run the node
+## Running the node
 
 Start the ZNode with the following command:
 
@@ -95,7 +103,7 @@ Shut down the node with:
 docker-compose logs -f w3bnode
 ```
 
-## Usage
+## Sending data
 
 ### Configure wsctl
 
