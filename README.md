@@ -112,7 +112,7 @@ The following example sends a message to a project running on the Zero-Node. The
 For RISC0 Snark Provers:
 
 ```bash
-wsctl message send -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+wsctl message send -p 10000 -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
 For halo2 Provers [WIP]
