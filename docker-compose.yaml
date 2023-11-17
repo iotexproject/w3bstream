@@ -18,7 +18,7 @@ services:
       PROJECT_CONFIG_FILE: "test/data/risc0-project-config.json"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
       PROJECT_CONTRACT_ADDRESS: "0x4F7e678B0203e0444E17512108dba4B08B39512e"
-      OPERATOR_PRIVATE_KEY: ${YOUR_PRIVATE_KEY:-}
+      OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
     volumes:
       - .:/data
@@ -38,7 +38,7 @@ services:
     restart: always
     environment:
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
-      BONSAI_KEY: "${YOUR_BONSAI_KEY:-}"
+      BONSAI_KEY: "${BONSAI_KEY:-}"
   
   postgres:
     image: postgres:14

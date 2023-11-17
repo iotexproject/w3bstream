@@ -39,8 +39,15 @@ curl https://raw.githubusercontent.com/machinefi/sprout/main/docker-compose.yaml
 
 ### Populate docker-compose.yaml fields
 
-W3bstream-node need write proof to chain and need a private key for chain write. Set your private key at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L20  
-If you need risc0 snark proof, a bonsai key is needed at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L40
+W3bstream-node need write proof to chain and a private key is needed. If PRIVATE_KEY is empty, write chain will skip   
+```bash
+export PRIVATE_KEY=${your private key}
+```
+
+If you need risc0 snark proof, a bonsai key is needed. Or will failed to generate risc0 snark proof
+```bash
+export BONSAI_KEY=${your bonsai key}
+```
 
 ### Use customized project code
 
