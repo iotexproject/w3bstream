@@ -1,15 +1,16 @@
 package main
 
 import (
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/machinefi/w3bstream-mainnet/cmd/node/apis"
 	"github.com/machinefi/w3bstream-mainnet/enums"
 	"github.com/machinefi/w3bstream-mainnet/msg/handler"
 	"github.com/machinefi/w3bstream-mainnet/vm"
 	"github.com/spf13/viper"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/machinefi/w3bstream-mainnet/project"
 )

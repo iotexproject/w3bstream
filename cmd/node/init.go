@@ -29,8 +29,9 @@ func initEnvConfigBind() {
 	viper.MustBindEnv(enums.EnvKeyProjectConfigPath)
 	viper.MustBindEnv(enums.EnvKeyChainEndpoint)
 	viper.MustBindEnv(enums.EnvKeyProjectContractAddress)
-	viper.MustBindEnv(enums.EnvKeyOperatorPrivateKey)
 	viper.MustBindEnv(enums.EnvKeyDatabaseDSN)
+
+	viper.BindEnv(enums.EnvKeyOperatorPrivateKey)
 }
 
 func initDatabaseMigrating() {
