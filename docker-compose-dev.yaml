@@ -1,0 +1,64 @@
+version: "3.6"
+
+services:
+  # w3bnode:
+  #   image: ghcr.io/machinefi/sprout:latest
+  #   depends_on:
+  #     - "risc0"
+  #     - "postgres"
+  #   container_name: w3bstream-node
+  #   platform: linux/x86_64
+  #   restart: always
+  #   ports:
+  #     - "9000:9000"
+  #   environment:
+  #     ENDPOINT: ":9000"
+  #     RISC0_SERVER_ENDPOINT: "risc0:4001"
+  #     HALO2_SERVER_ENDPOINT: "halo2:4001"
+  #     PROJECT_FILE_DIRECTORY: "/data/test/data"
+  #     CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
+  #     PROJECT_CONTRACT_ADDRESS: "0x4F7e678B0203e0444E17512108dba4B08B39512e"
+  #     OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
+  #     DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+  #   volumes:
+  #     - .:/data
+
+  halo2:
+    image: iotexdev/halo2-server:0.0.4
+    container_name: halo2-service
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - 4002:4001
+
+  risc0:
+    image: iotexdev/risc0server:v0.8.1.rc3
+    depends_on:
+      - "postgres"
+    container_name: risc0-service
+    platform: linux/x86_64
+    restart: always
+    environment:
+      DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+      BONSAI_KEY: "${BONSAI_KEY:-}"
+    ports:
+     - "4001:4001"
+
+  postgres:
+    image: postgres:14
+    container_name: w3bstream-node-postgres
+    restart: always
+    command:
+      [
+        "postgres",
+        "-cshared_preload_libraries=pg_stat_statements"
+      ]
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_passwd
+      POSTGRES_DB: test
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    ports:
+     - "5432:5432"
+

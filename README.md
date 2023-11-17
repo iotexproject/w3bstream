@@ -147,12 +147,6 @@ make docker
 
 Shut down the node and ensure you replace the `w3bnode` image name inside `docker-compose.yaml`` with the name:tag of your local image before running the node again.
 
-The node can also be rebuild outside of Docker with:
-
-```bash
-cd cmd/node
-go build -o node 
-```
 
 ## Community and support
 
