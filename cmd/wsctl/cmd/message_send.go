@@ -31,11 +31,7 @@ var sendCmd = &cobra.Command{
 			return errors.Wrap(err, "failed to get flag data")
 		}
 
-		body := struct {
-			ProjectID      uint64 `json:"projectID"`
-			ProjectVersion string `json:"projectVersion"`
-			Data           string `json:"data"`
-		}{
+		body := &apis.HandleReq{
 			ProjectID:      projectID,
 			ProjectVersion: projectVersion,
 			Data:           data,

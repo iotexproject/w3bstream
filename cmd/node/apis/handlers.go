@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Server) handleRequest(c *gin.Context) {
-	req := &msgReq{}
+	req := &HandleReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, newErrResp(err))
 		return
