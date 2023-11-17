@@ -42,13 +42,14 @@ func (r *Handler) Handle(msg *msg.Msg) error {
 }
 
 func (r *Handler) asyncHandle(m *msg.Msg) {
-	slog.Debug("message popped by proofer")
+	slog.Debug("message popped", "message_id", m.ID)
+
 	project, err := r.projectManager.Get(m.ProjectID)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error("get project failed: ", err)
+		messages.OnFailed(m.ID, err)
 		return
 	}
-	slog.Debug("message popped", "message_id", m.ID)
 
 	messages.OnSubmitProving(m.ID)
 	res, err := r.vmHandler.Handle(m, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
