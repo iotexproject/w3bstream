@@ -7,7 +7,7 @@ services:
       - "risc0"
       - "postgres"
     container_name: w3bstream-node
-    platform: linux/x86_64    
+    platform: linux/x86_64
     restart: always
     ports:
       - "9000:9000"
@@ -24,7 +24,7 @@ services:
       - .:/data
 
   halo2:
-    image: iotexdev/halo2-server:0.0.3
+    image: iotexdev/halo2-server:0.0.4
     container_name: halo2-service
     platform: linux/x86_64
     restart: always
@@ -34,12 +34,12 @@ services:
     depends_on:
       - "postgres"
     container_name: risc0-service
-    platform: linux/x86_64    
+    platform: linux/x86_64
     restart: always
     environment:
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
       BONSAI_KEY: "${BONSAI_KEY:-}"
-  
+
   postgres:
     image: postgres:14
     container_name: w3bstream-node-postgres
