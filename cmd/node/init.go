@@ -13,6 +13,7 @@ import (
 func init() {
 	initStdLogger()
 	initEnvConfigBind()
+	LogAllSettings()
 	initDatabaseMigrating()
 }
 
@@ -32,6 +33,15 @@ func initEnvConfigBind() {
 	viper.MustBindEnv(enums.EnvKeyDatabaseDSN)
 
 	viper.BindEnv(enums.EnvKeyOperatorPrivateKey)
+}
+
+func LogAllSettings() {
+	settings := viper.AllSettings()
+	slog.Debug("--------------")
+	for key, value := range settings {
+		slog.Debug("SETTING:", key, value)
+	}
+	slog.Debug("--------------")
 }
 
 func initDatabaseMigrating() {
