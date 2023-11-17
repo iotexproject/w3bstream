@@ -103,7 +103,7 @@ wsctl message send -p 10000 -v "0.1" -d "{\"private_input\":\"14\", \"public_inp
 halo2 test
 
 ```bash
-wsctl message send -p 10001 -v "0.1" -d "{\"private_input\":\"4\"}"
+wsctl message send -p 10001 -v "0.1" -d "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
 It will send a message to project test01 running on the remote server. The processing status could be checked via `docker-compose logs -f w3bnode` on the server.
