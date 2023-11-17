@@ -31,6 +31,55 @@ There are many ways to contribute to this project:
 
 ### Making changes
 
+1. Ensure all required env variables are exported:
+    ```bash
+    # --- Edit the following
+
+    # The RPC of the destination chain where proofs must be sent
+    export CHAIN_ENDPOINT=https://babel-api.testnet.iotex.io
+    # The contract address to which the proof will be sent
+    export PROJECT_CONTRACT_ADDRESS=0x4F7e678B0203e0444E17512108dba4B08B39512e
+    # A funded account on the destination chain 
+    export OPERATOR_PRIVATE_KEY=<your_blockchain_key>
+    # Optional: Required for working with RISC0 provers
+    export BONSAI_KEY=<your_bonsai_api_key>
+    # ---
+    
+    export ENDPOINT=:9000
+    export PROJECT_FILE_DIRECTORY=./test/data
+    export DATABASE_URL=postgres://test_user:test_passwd@0.0.0.0:5432/test?sslmode=disable
+    export HALO2_SERVER_ENDPOINT=:4002
+    export RISC0_SERVER_ENDPOINT=:4001
+    ```
+
+3. Start required services:
+    
+    ```bash
+    docker compose -f docker-compose-dev.yaml up -d
+    ```
+
+4. Open the repository in VS Code and create a launch.json file with the following content:
+
+    ```json
+    {
+      "version": "0.2.0",
+      "configurations": [
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/cmd/node"
+        }
+      ]
+    }
+    ```
+
+5. Set your breakpoints in the code and start debugging by pressing F5! FInd the node log in the Debug Console of VS Code. 
+
+### Guidelines
+
 1. **Code Guidelines**: Write clean, maintainable code. Refer to the [go coding styleguide](https://google.github.io/styleguide/go/) and follow coding standards already in place.
 
 2. **Testing**: Add tests for new features or fix existing test cases as necessary.
