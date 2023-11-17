@@ -14,6 +14,7 @@ func NewServer(ep string, mh *msghandler.Handler) *Server {
 		msgHandler: mh,
 	}
 	s.engine.POST("/message", s.handleRequest)
+	s.engine.GET("/message/:messageID", s.queryByMessageID)
 	return s
 }
 

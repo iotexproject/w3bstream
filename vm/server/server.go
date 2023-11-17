@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -42,6 +43,7 @@ func (i *Instance) Execute(ctx context.Context, msg *msg.Msg) ([]byte, error) {
 	cli := NewVmRuntimeClient(i.conn)
 	resp, err := cli.ExecuteOperator(ctx, req)
 	if err != nil {
+		slog.Debug("request", "body", req)
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
 	return resp.Result, nil
