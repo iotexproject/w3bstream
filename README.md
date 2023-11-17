@@ -1,149 +1,160 @@
-# W3bstream Sprout :four_leaf_clover:
+# IoTeX Zero-Node (Sprout Release 🍀)
 
-W3bstream Sprout (Alpha) which supports native Halo2 circuits (WIP) as well as zkVMs like zkWASM (WIP) and RISC0.
+## Welcome to the Zero-Node Protocol Repository
 
-`wsctl` is the command line tool that interact with W3bstream protocol which can be used by node operators as well as project developers.
+#### 🌍 About Zero-Node Protocol
 
-## Minimum requirements
+Zero-Node Protocol, is an integral part of the [IoTeX network](https://iotex.io). It's a new protocol, dedicated to generating custom Zero-Knowledge (ZK) Proofs on top of machine data, forming a robust backbone for Decentralized Physical Infrastructures (**DePIN**) applications. These proofs are crucial in scaling DePIN data computation and storage, and are key in triggering token economies **based on verifiable proofs of real-world work**.
 
-| Components                   | Version   | Description             |
-|------------------------------|-----------|-------------------------|
-| [Golang](https://golang.org) | &ge; 1.21 | Go programming language |
+#### 🔗 Integrating with Blockchains
 
-## Preparation
+The Zero-Node Protocol sends these compact, verifiable proofs to various blockchains, activating DePIN token economies upon their verification. [Supported Blockchains →](#supported_blockchains) 
 
-### Install docker
+#### 🛠 Custom Provers and VM Support
 
-Docker is needed to run the node service. Please make sure your docker is up to date.
+DePIN project owners can utilize native Halo2 circuits to create custom provers. The protocol currently supports RISC0 and zkWASM Virtual Machines for proof generation.
+
+#### Supported Blockchains
+
+Currently, all EVM blockchains are supported as the target for ZNode Proofs.
+
+## Getting Started
+
+### Prerequisites
+
+Ensure you have the following installed:
+
+- **Golang**: Version 1.21 or higher. Download and Install instructions can be found at https://go.dev/doc/install.
+
+- **Docker Engine**: Version 18.02 or higher. Installation instructions can be found at https://docs.docker.com/engine/install/
+
+- **Docker Compose Plugin**: Ensure you have the Compose plugin installed:
+
+  ```bash
+  docker compose version
+  # Install with: sudo apt install docker-compose-plugin
+  ```
+
+- **Blockchain Wallet**: The ZNode will dispatch proofs to a blockchain contract, which requires a funded wallet account on the target blockchain (for IoTeX Testnet, see how to [create a wallet](https://docs.iotex.io/the-iotex-stack/wallets/metamask), and [claim test IOTX](https://docs.iotex.io/the-iotex-stack/iotx-faucets/testnet-tokens#the-iotex-developer-portal))
+
+- **Bonsai API Key**: If you plan to generate RISC0 snark proofs, as the ZNode protocol currently relies on the [Bonsai API](https://dev.risczero.com/api/bonsai/) you'll need to get [their API key](https://docs.google.com/forms/d/e/1FAIpQLSf9mu18V65862GS4PLYd7tFTEKrl90J5GTyzw_d14ASxrruFQ/viewform).
+
+### Installation
+
+1. Download the latest release from [releases page](https://github.com/machinefi/sprout/releases).
+
+2. Unpack the release code (replace with your specific file name):
+
+    ```bash
+    tar xzf sprout-x.y.z.tar.gz
+    cd sprout-x.y.z.tar.gz
+    ```
+
+### Configure the node
+
+> **_NOTE:_**
+>
+> - RISC Zero is currently the only supported zkVM.
+> - EVM chains are currently the only supported target for proofs.
+
+#### Set your blockchain account
+
+1. To enable the node to send proofs to the destination blockchain, configure a funded account on the target chain:
+
+    ```bash
+    export PRIVATE_KEY=${your private key}
+    ```
+
+2. To use RISC0 Provers for proof generation, provide your Bonsai API Key (see prerequisites above):
+
+    ```bash
+    export BONSAI_KEY=${your bonsai key}
+    ```
+
+3. Docker Compose will mount the current work directory under the `/data` volume. You can edit the file `docker-compose.yaml` to set `PROJECT_FILE_DIRECTORY` tp the appropriate path where the project configuration file (which includes the prover code) is stored.
+
+### Run the node
+
+Start the ZNode with the following command:
 
 ```bash
-install docker & docker-compose
+docker compose up -d
 ```
 
-### Install wsctl
+#### Monitoring and management
 
-`wsctl` is the W3bstream command line.
-
-```bash
-curl https://raw.githubusercontent.com/machinefi/sprout/main/scripts/install_wsctl.sh | bash
-```
-
-## Run server
-
-### Download docker-compose.yaml
-
-```bash
-mkdir sprout && cd sprout
-curl https://raw.githubusercontent.com/machinefi/sprout/main/docker-compose.yaml -o docker-compose.yaml
-```
-
-### Populate docker-compose.yaml fields
-
-W3bstream-node need write proof to chain and a private key is needed. If PRIVATE_KEY is empty, write chain will skip   
-```bash
-export PRIVATE_KEY=${your private key}
-```
-
-If you need risc0 snark proof, a bonsai key is needed. Or will failed to generate risc0 snark proof
-```bash
-export BONSAI_KEY=${your bonsai key}
-```
-
-### Use customized project code
-
-Docker-compose will mount current work directory to containers `/data` https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L23  
-So you can appoint the project file at https://github.com/machinefi/sprout/blob/main/docker-compose.yaml#L18
-
-### Start w3bstream node
-
-```bash
-docker-compose up -d
-```
-
-### Monitor w3bstream node status
+Monitor the node status with:
 
 ```bash
 docker-compose logs -f w3bnode
 ```
 
-### Shut down w3bstream node
+Shut down the node with:
 
 ```bash
-docker-compose down
+docker-compose logs -f w3bnode
 ```
 
-### Compile your own w3bstream code
+## Usage
 
-After modifying w3bstream source code, the image could be rebuild by running
+### Configure wsctl
+
+Set up the `wsctl` endpoint to your running node (`wsctl`settings are located in `~/.w3bstream/config.yaml``)
 
 ```bash
-make docker
+wsctl config set endpoint localhost:9000
 ```
 
-Replace the image name in the docker-compose.yaml to the new image built above.
+### Send a test message to the server
 
-## Send message from client
+The following example sends a message to a project running on the Zero-Node. The message will become the input for the project's prover:
 
-### Set remote w3bstream server
-
-Set server endpoint and language via subcommand `config`:
+For RISC0 Snark Provers:
 
 ```bash
-wsctl config set endpoint localhost:8888
+wsctl message send -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
-The value of the variables in config could be fetched via
-
-```bash
-wsctl config get endpoint
-```
-
-### Send message to remote server
-
-open a new terminal and execute  
-risc0 snark test
-
-```bash
-wsctl message send -p 10000 -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
-```
-
-halo2 test
+For halo2 Provers [WIP]
 
 ```bash
 wsctl message send -p 10001 -v "0.1" -d "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
-It will send a message to project test01 running on the remote server. The processing status could be checked via `docker-compose logs -f w3bnode` on the server.
-And you would receive the message id. the output like below:
+## Contributing
 
-```json
-{
-  "messageID": "6ae1bedd-264f-4339-a0b4-d5613d7d0ecc"
-}
+We welcome contributions! Please read our [contributing guidelines](CONTRIBUTING.md) and submit pull requests to our GitHub repository.
+
+After making changes to the code, you can rebuild the Docker image with:
+
+```bash
+make docker
 ```
 
-### Query your message status
+Shut down the node and ensure you replace the `w3bnode` image name inside `docker-compose.yaml`` with the name:tag of your local image before running the node again.
 
-Query message handling status by the `message id`
+The node can also be rebuild outside of Docker with:
 
-```sh
-wsctl message query -m "6ae1bedd-264f-4339-a0b4-d5613d7d0ecc"
+```bash
+cd cmd/node
+go build -o node 
 ```
 
-You will receive a response like below:
+## Community and support
 
-```json
-{
-  "id": "6ae1bedd-264f-4339-a0b4-d5613d7d0ecc",
-  "projectID": "test01",
-  "projectVersion": "0.1",
-  "data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}",
-  "status": 3,
-  "receivedAt": "2023-11-15T14:37:13.052271046Z",
-  "submitProvingAt": "2023-11-15T14:37:13.842647504Z",
-  "proofResult": "get proof error",
-  "SubmitToBlockchainAt": "2023-11-15T14:37:15.911203172Z",
-  "succeed": false,
-  "errorMessage": "estimate gas failed: execution simulation failed: status = 106"
-}
-```
+We encourage you to seek support and ask questions in one of the following platforms:
+
+#### Join Our Discord Community
+
+For real-time discussions and community support, join our Discord server where we have a dedicated
+Developers Lounge category. This is a great place to get quick help, discuss features, and connect with other community members:
+
+[Join the IoTeX Discord →](https://iotex.io/devdiscord)
+
+### Ask on Stack Overflow
+
+For more structured and detailed questions, consider using **Stack Overflow**. Many of IoTeX's core and expert developers prefer this platform for its non-realtime format, which encourages well-structured and comprehensive questions. Ask your question here: 
+
+[Stack Overflow - IoTeX Tag →](https://stackoverflow.com/questions/tagged/iotex) 
+
+and make sure it's tagged [`IOTEX`].
