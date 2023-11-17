@@ -57,6 +57,12 @@ Ensure you have the following installed:
     tar xzf sprout-x.y.z.tar.gz
     cd sprout-x.y.z.tar.gz
     ```
+    
+3. Install the node command line client `wsctl`:
+    ```bash
+    curl https://raw.githubusercontent.com/machinefi/sprout/main/scripts/install_wsctl.sh | bash
+    ```
+
 
 ### Configure the node
 
