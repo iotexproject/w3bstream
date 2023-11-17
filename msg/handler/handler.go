@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/machinefi/w3bstream-mainnet/msg"
 	"github.com/machinefi/w3bstream-mainnet/msg/messages"
 	"github.com/machinefi/w3bstream-mainnet/output/chain/eth"
@@ -11,7 +13,6 @@ import (
 	"github.com/machinefi/w3bstream-mainnet/util/mq"
 	"github.com/machinefi/w3bstream-mainnet/util/mq/gochan"
 	"github.com/machinefi/w3bstream-mainnet/vm"
-	"log/slog"
 )
 
 type Handler struct {
@@ -56,6 +57,13 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 	}
 	slog.Debug("proof result", "proof_result", string(res))
 	messages.OnProved(m.ID, string(res))
+
+	if r.operatorPrivateKey == "" {
+		info := "missing operator private key, will not write to chain"
+		slog.Debug(info)
+		messages.OnSucceeded(m.ID, info)
+		return
+	}
 
 	data, err := contract.BuildData(res)
 	if err != nil {
