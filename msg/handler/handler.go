@@ -78,7 +78,7 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 	slog.Debug("writing proof to chain")
 
 	messages.OnSubmitToBlockchain(m.ID)
-	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0x190Cc9af23504ac5Dc461376C1e2319bc3B9cD29", data)
+	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0x6e30b42554DDA34bAFca9cB00Ec4B464f452a671", data)
 	if err != nil {
 		slog.Error(err.Error())
 		messages.OnFailed(m.ID, err)
