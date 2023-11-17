@@ -30,7 +30,7 @@ services:
     restart: always
 
   risc0:
-    image: iotexdev/risc0server:v0.8.1.rc2
+    image: iotexdev/risc0server:v0.8.1.rc3
     depends_on:
       - "postgres"
     container_name: risc0-service
