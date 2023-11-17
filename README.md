@@ -121,15 +121,15 @@ wsctl config set endpoint localhost:9000
 
 ### Send a test message to the server
 
-The following example sends a message to a project running on the Zero-Node. The message will become the input for the project's prover:
+znode projects are currently placed inside the folder `test/data`. Each project file is composed of a JSON object definition that includes a unique ID for the project, the binary code of the proover, and other parameters.
 
-For RISC0 Snark Provers:
+The following example sends a message to an example project deployed on the node that makes use of a RISC0 prover, which has project ID 10000:
 
 ```bash
 wsctl message send -p 10000 -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
-For halo2 Provers [WIP]
+The following example sends a message to an example project deployed on the node that makes use of a Halo2 prover, which has project ID 10001:
 
 ```bash
 wsctl message send -p 10001 -v "0.1" -d "{\"private_a\": 3, \"private_b\": 4}"
