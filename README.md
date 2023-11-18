@@ -126,13 +126,13 @@ znode projects are currently placed inside the folder `test/data`. Each project 
 The following example sends a message to an example project deployed on the node that makes use of a RISC0 prover, which has project ID 10000:
 
 ```bash
-wsctl message send -p 10000 -v "0.1" -d "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+wsctl message send --project-id 10000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
 The following example sends a message to an example project deployed on the node that makes use of a Halo2 prover, which has project ID 10001:
 
 ```bash
-wsctl message send -p 10001 -v "0.1" -d "{\"private_a\": 3, \"private_b\": 4}"
+wsctl message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
 ## Contributing
