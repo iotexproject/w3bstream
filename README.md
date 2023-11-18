@@ -92,7 +92,7 @@ Ensure you have the following installed:
 Start the ZNode with the following command:
 
 ```bash
-docker compose up -d
+docker-compose up -d
 ```
 
 #### Monitoring and management
@@ -106,7 +106,7 @@ docker-compose logs -f w3bnode
 Shut down the node with:
 
 ```bash
-docker-compose logs -f w3bnode
+docker-compose down
 ```
 
 ## Sending data
