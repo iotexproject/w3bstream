@@ -95,8 +95,17 @@ Start the ZNode with the following command:
 cd sprout
 docker compose up -d
 ```
+### Configure wsctl
 
-#### Monitoring and management
+Set up the `wsctl` endpoint to your running node (`wsctl`settings are located in `~/.w3bstream/config.yaml``)
+
+```bash
+wsctl config set endpoint localhost:9000
+```
+
+After that, you can use ```wsctl config get endpoint``` to make sure the config is effective.
+
+### Monitoring and management
 
 Monitor the node status with:
 
@@ -110,19 +119,9 @@ Shut down the node with:
 docker-compose logs -f w3bnode
 ```
 
-## Sending data for generating ZKP
+## Generate ZKP
 
-### Configure wsctl
-
-Set up the `wsctl` endpoint to your running node (`wsctl`settings are located in `~/.w3bstream/config.yaml``)
-
-```bash
-wsctl config set endpoint localhost:9000
-```
-
-After that, you can use ```wsctl config get endpoint``` to make sure the config is effective.
-
-### Compile and deploy the ZK circuit
+### Compile and deploy the customized ZK circuit
 
 TBD
 
