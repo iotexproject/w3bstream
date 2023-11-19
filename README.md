@@ -49,14 +49,14 @@ Ensure you have the following installed:
 
 ### Installation
 
-1. Download the latest release from [releases page](https://github.com/machinefi/sprout/releases).
-
-2. Unpack the release code (replace with your specific file name):
+1. Download the latest release from [releases page](https://github.com/machinefi/sprout/releases) and unpack the release code (replace with your specific file name):
 
     ```bash
     tar xzf sprout-x.y.z.tar.gz
     cd sprout-x.y.z.tar.gz
     ```
+
+2. Alternatively, ```git clone https://github.com/machinefi/sprout.git```
     
 3. Install the node command line client `wsctl`:
     ```bash
