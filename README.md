@@ -110,7 +110,7 @@ Shut down the node with:
 docker-compose logs -f w3bnode
 ```
 
-## Sending data
+## Sending data for generating ZKP
 
 ### Configure wsctl
 
@@ -120,7 +120,13 @@ Set up the `wsctl` endpoint to your running node (`wsctl`settings are located in
 wsctl config set endpoint localhost:9000
 ```
 
-### Send a test message to the server
+After that, you can use ```wsctl config get endpoint``` to make sure the config is effective.
+
+### Compile and deploy the ZK circuit
+
+TBD
+
+### Send testing date to the server
 
 znode projects are currently placed inside the folder `test/data`. Each project file is composed of a JSON object definition that includes a unique ID for the project, the binary code of the proover, and other parameters.
 
@@ -135,6 +141,10 @@ The following example sends a message to an example project deployed on the node
 ```bash
 wsctl message send -p 10001 -v "0.1" -d "{\"private_a\": 3, \"private_b\": 4}"
 ```
+
+### Retrieve ZKP
+
+TBD
 
 ## Contributing
 
