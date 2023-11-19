@@ -121,7 +121,25 @@ docker-compose logs -f w3bnode
 
 ## Generate ZKP
 
-### Compile and deploy the customized ZK circuit
+### Compile the customized Halo2 circuit
+
+1. Install `wasm-pack`
+``` shell
+curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+```
+
+2. Build wasm
+
+``` shell
+cd examples/halo2-circuits/
+wasm-pack build --target nodejs --out-dir pkg
+```
+
+you will find `halo2_wasm_bg.wasm` under the `pkg` folder. 
+
+3. (Optional) You can also write your circuit according to the [halo2 development documentation](https://zcash.github.io/halo2/user/simple-example.html), and put the circuit file in `src/circuits`; replace the `TODO` in `src/lib.rs` and build wasm with `wasm-pack build --target nodejs --out-dir pkg`.
+
+### Deploy Compiled circuit to W3bstream
 
 TBD
 
