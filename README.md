@@ -92,6 +92,7 @@ Ensure you have the following installed:
 Start the ZNode with the following command:
 
 ```bash
+cd sprout
 docker compose up -d
 ```
 
