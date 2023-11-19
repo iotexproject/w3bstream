@@ -125,7 +125,7 @@ docker-compose logs -f w3bnode
 
 TBD
 
-### Send testing date to the server
+### Send testing data to the server
 
 znode projects are currently placed inside the folder `test/data`. Each project file is composed of a JSON object definition that includes a unique ID for the project, the binary code of the proover, and other parameters.
 
