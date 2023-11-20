@@ -16,7 +16,7 @@ Zero-Node Protocol is an integral part of the [IoTeX network](https://iotex.io).
 
 #### 🔗 Integrating with Blockchains
 
-The Zero-Node Protocol sends these compact, verifiable proofs to various blockchains, activating DePIN token economies upon their verification. [Supported Blockchains →](#supported_blockchains) 
+The Zero-Node Protocol sends these compact, verifiable proofs to various blockchains, activating DePIN token economies upon their verification. [Supported Blockchains →](#supported_blockchains)
 
 #### 🛠 Custom Provers and VM Support
 
@@ -57,7 +57,7 @@ Ensure you have the following installed:
     ```
 
 2. Alternatively, ```git clone https://github.com/machinefi/sprout.git```
-    
+
 3. Install the node command line client `wsctl`:
     ```bash
     curl https://raw.githubusercontent.com/machinefi/sprout/main/scripts/install_wsctl.sh | bash
@@ -135,7 +135,7 @@ cd examples/halo2-circuits/
 wasm-pack build --target nodejs --out-dir pkg
 ```
 
-you will find `halo2_wasm_bg.wasm` under the `pkg` folder. 
+you will find `halo2_wasm_bg.wasm` under the `pkg` folder.
 
 3. (Optional) You can also write your circuit according to the [halo2 development documentation](https://zcash.github.io/halo2/user/simple-example.html), and put the circuit file in `src/circuits`; replace the `TODO` in `src/lib.rs` and build wasm with `wasm-pack build --target nodejs --out-dir pkg`.
 
@@ -161,7 +161,37 @@ wsctl message send --project-id 10001 --project-version "0.1" --data "{\"private
 
 ### Retrieve ZKP
 
-TBD
+After znode received the message, the id of the zk proof task will return, like below:
+
+```json
+{
+  "taskID": "4abbc43a-798f-49e8-bc05-b6baeafec630"
+}
+```
+
+The following example queries the task status:
+
+```shell
+wsctl message query --message-id "4abbc43a-798f-49e8-bc05-b6baeafec630"
+```
+
+the query result like below:
+
+```json
+{
+  "id": "4abbc43a-798f-49e8-bc05-b6baeafec630",
+  "projectID": 10001,
+  "projectVersion": "0.1",
+  "data": "{\"private_a\": 3, \"private_b\": 4}",
+  "status": 3,
+  "receivedAt": "2023-11-20T15:55:44.985587+08:00",
+  "submitProvingAt": "2023-11-20T15:55:44.985695+08:00",
+  "proofResult": "{\n\"proof\": \"...\",\n\"calldata\": \"...\"\n}",
+  "SubmitToBlockchainAt": "2023-11-20T15:55:47.010452+08:00",
+  "succeed": true,
+  "errorMessage": ""
+}
+```
 
 ## Contributing
 
@@ -189,8 +219,8 @@ Developers Lounge category. This is a great place to get quick help, discuss fea
 
 ### Ask on Stack Overflow
 
-For more structured and detailed questions, consider using **Stack Overflow**. Many of IoTeX's core and expert developers prefer this platform for its non-realtime format, which encourages well-structured and comprehensive questions. Ask your question here: 
+For more structured and detailed questions, consider using **Stack Overflow**. Many of IoTeX's core and expert developers prefer this platform for its non-realtime format, which encourages well-structured and comprehensive questions. Ask your question here:
 
-[Stack Overflow - IoTeX Tag →](https://stackoverflow.com/questions/tagged/iotex) 
+[Stack Overflow - IoTeX Tag →](https://stackoverflow.com/questions/tagged/iotex)
 
 and make sure it's tagged [`IOTEX`].
