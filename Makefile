@@ -8,4 +8,4 @@ down:
 
 .PHONY: docker
 docker:
-	DOCKER_BUILDKIT=1 docker build -t $(USER)/w3bstream-mainnet-node:local .
+	DOCKER_BUILDKIT=1 docker build -t $(USER)/w3bstream-sprout-node:local .

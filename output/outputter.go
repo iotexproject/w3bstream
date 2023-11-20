@@ -3,7 +3,7 @@ package output
 import (
 	"errors"
 
-	"github.com/machinefi/w3bstream-mainnet/output/adapter"
+	"github.com/machinefi/sprout/output/adapter"
 )
 
 type (

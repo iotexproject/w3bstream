@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/sprout/msg"
 )
 
 type Mgr struct {

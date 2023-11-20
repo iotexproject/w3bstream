@@ -1,9 +1,10 @@
 package messages
 
 import (
-	"github.com/machinefi/w3bstream-mainnet/enums"
-	"github.com/machinefi/w3bstream-mainnet/msg"
 	"time"
+
+	"github.com/machinefi/sprout/enums"
+	"github.com/machinefi/sprout/msg"
 )
 
 func newMessageContext(m *msg.Msg) *MessageContext {

@@ -3,13 +3,15 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/machinefi/w3bstream-mainnet/msg/messages"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"github.com/machinefi/sprout/msg/messages"
 )
 
 var messageQueryCmd = &cobra.Command{

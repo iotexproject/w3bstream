@@ -1,8 +1,8 @@
 package gochan
 
 import (
-	"github.com/machinefi/w3bstream-mainnet/msg"
-	"github.com/machinefi/w3bstream-mainnet/util/mq"
+	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/util/mq"
 )
 
 const defaultQueueSize = 4096

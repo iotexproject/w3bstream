@@ -2,8 +2,9 @@ package messages
 
 import (
 	"container/list"
-	"github.com/machinefi/w3bstream-mainnet/msg"
 	"sync"
+
+	"github.com/machinefi/sprout/msg"
 )
 
 type MessageCache struct {

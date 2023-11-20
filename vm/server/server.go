@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/machinefi/w3bstream-mainnet/msg"
+	"github.com/machinefi/sprout/msg"
 )
 
 type Instance struct {

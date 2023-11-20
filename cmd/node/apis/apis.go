@@ -2,8 +2,8 @@ package apis
 
 import (
 	"github.com/gin-gonic/gin"
-	msghandler "github.com/machinefi/w3bstream-mainnet/msg/handler"
-	"github.com/machinefi/w3bstream-mainnet/vm"
+	msghandler "github.com/machinefi/sprout/msg/handler"
+	"github.com/machinefi/sprout/vm"
 	"github.com/pkg/errors"
 )
 

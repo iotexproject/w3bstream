@@ -6,8 +6,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/machinefi/w3bstream-mainnet/enums"
 	"github.com/spf13/viper"
+
+	"github.com/machinefi/sprout/enums"
 )
 
 func init() {

@@ -1,9 +1,9 @@
 package project
 
 import (
-	"github.com/machinefi/w3bstream-mainnet/msg"
-	"github.com/machinefi/w3bstream-mainnet/output"
-	"github.com/machinefi/w3bstream-mainnet/vm"
+	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/output"
+	"github.com/machinefi/sprout/vm"
 )
 
 type Project struct {

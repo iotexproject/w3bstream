@@ -11,8 +11,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/machinefi/w3bstream-mainnet/project/contracts"
 	"github.com/pkg/errors"
+
+	"github.com/machinefi/sprout/project/contracts"
 )
 
 type Manager struct {

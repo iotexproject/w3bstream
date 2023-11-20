@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/machinefi/w3bstream-mainnet/output/chain/eth"
+
+	"github.com/machinefi/sprout/output/chain/eth"
 )
 
 // contractAbiJSON is the ABI of the contract

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/machinefi/w3bstream-mainnet/cmd/node/apis"
 	"io"
 	"net/http"
 	"net/url"
@@ -12,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/machinefi/sprout/cmd/node/apis"
 )
 
 var sendCmd = &cobra.Command{

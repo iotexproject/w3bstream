@@ -1,13 +1,15 @@
 package apis
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/machinefi/w3bstream-mainnet/msg"
-	"github.com/machinefi/w3bstream-mainnet/msg/messages"
-	"github.com/pkg/errors"
 	"log/slog"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+
+	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/msg/messages"
 )
 
 func (s *Server) handleRequest(c *gin.Context) {
