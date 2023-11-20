@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/msg"
-	"github.com/machinefi/sprout/msg/messages"
+	"github.com/machinefi/sprout/tasks"
 )
 
 func (s *Server) handleRequest(c *gin.Context) {
@@ -18,10 +18,10 @@ func (s *Server) handleRequest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(err))
 		return
 	}
-	messageID := uuid.NewString()
+	taskID := uuid.NewString()
 	slog.Debug("received your message, handling")
 	if err := s.msgHandler.Handle(&msg.Msg{
-		ID:             messageID,
+		ID:             taskID,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           req.Data,
@@ -29,17 +29,17 @@ func (s *Server) handleRequest(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return
 	}
-	slog.Debug("message was handled", "messageID", messageID)
-	c.JSON(http.StatusOK, &HandleRsp{MessageID: messageID})
+	slog.Debug("message was handled", "taskID", taskID)
+	c.JSON(http.StatusOK, &HandleRsp{TaskID: taskID})
 }
 
-func (s *Server) queryByMessageID(c *gin.Context) {
-	messageID := c.Param("messageID")
+func (s *Server) queryByTaskID(c *gin.Context) {
+	taskID := c.Param("taskID")
 
-	slog.Debug("received message querying", "message_id", messageID)
-	m, ok := messages.Query(messageID)
+	slog.Debug("received task querying", "task_id", taskID)
+	m, ok := tasks.Query(taskID)
 	if !ok {
-		c.JSON(http.StatusNotFound, newErrResp(errors.Errorf("message id %s expired or not exists", messageID)))
+		c.JSON(http.StatusNotFound, newErrResp(errors.Errorf("task [%s] was expired or not exists", taskID)))
 		return
 	}
 

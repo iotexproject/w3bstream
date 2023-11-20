@@ -5,9 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/machinefi/sprout/msg"
-	"github.com/machinefi/sprout/msg/messages"
 	"github.com/machinefi/sprout/output/chain/eth"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/tasks"
 	"github.com/machinefi/sprout/test/contract"
 	"github.com/machinefi/sprout/util/mq"
 	"github.com/machinefi/sprout/util/mq/gochan"
@@ -37,7 +37,7 @@ func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, 
 
 func (r *Handler) Handle(msg *msg.Msg) error {
 	slog.Debug("push message into sequencer")
-	messages.New(msg)
+	tasks.New(msg)
 	return r.mq.Enqueue(msg)
 }
 
@@ -47,43 +47,43 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 	project, err := r.projectManager.Get(m.ProjectID)
 	if err != nil {
 		slog.Error("get project failed:", "error", err)
-		messages.OnFailed(m.ID, err)
+		tasks.OnFailed(m.ID, err)
 		return
 	}
 
-	messages.OnSubmitProving(m.ID)
+	tasks.OnSubmitProving(m.ID)
 	res, err := r.vmHandler.Handle(m, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed:", "error", err)
-		messages.OnFailed(m.ID, err)
+		tasks.OnFailed(m.ID, err)
 		return
 	}
 	slog.Debug("proof result", "proof_result", string(res))
-	messages.OnProved(m.ID, string(res))
+	tasks.OnProved(m.ID, string(res))
 
 	if r.operatorPrivateKey == "" {
 		info := "missing operator private key, will not write to chain"
 		slog.Debug(info)
-		messages.OnSucceeded(m.ID, info)
+		tasks.OnSucceeded(m.ID, info)
 		return
 	}
 
 	data, err := contract.BuildData(res)
 	if err != nil {
 		slog.Error(err.Error())
-		messages.OnFailed(m.ID, err)
+		tasks.OnFailed(m.ID, err)
 		return
 	}
 
 	slog.Debug("writing proof to chain")
 
-	messages.OnSubmitToBlockchain(m.ID)
+	tasks.OnSubmitToBlockchain(m.ID)
 	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0x6e30b42554DDA34bAFca9cB00Ec4B464f452a671", data)
 	if err != nil {
 		slog.Error(err.Error())
-		messages.OnFailed(m.ID, err)
+		tasks.OnFailed(m.ID, err)
 		return
 	}
-	messages.OnSucceeded(m.ID, txHash)
+	tasks.OnSucceeded(m.ID, txHash)
 	slog.Debug("transaction hash", "tx_hash", txHash)
 }
