@@ -46,7 +46,7 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 
 	project, err := r.projectManager.Get(m.ProjectID)
 	if err != nil {
-		slog.Error("get project failed: ", err)
+		slog.Error("get project failed:", "error", err)
 		messages.OnFailed(m.ID, err)
 		return
 	}
@@ -54,7 +54,7 @@ func (r *Handler) asyncHandle(m *msg.Msg) {
 	messages.OnSubmitProving(m.ID)
 	res, err := r.vmHandler.Handle(m, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
-		slog.Error("proof failed: ", err)
+		slog.Error("proof failed:", "error", err)
 		messages.OnFailed(m.ID, err)
 		return
 	}
