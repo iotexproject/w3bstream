@@ -20,7 +20,7 @@
 # Go workspace file
 go.work
 
-postgres
+/postgres
 
 .env
 docker-compose.local.yaml
