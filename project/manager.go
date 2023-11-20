@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -39,10 +40,22 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 		if err != nil {
 			return nil, errors.Wrapf(err, "read project file %s failed", f.Name())
 		}
-		p := Project{}
-		if err := json.Unmarshal(data, &p); err != nil {
-			return nil, errors.Wrapf(err, "unmarshal project file %s failed", f.Name())
+
+		projectID, err := strconv.ParseUint(f.Name(), 10, 64)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unmarshal config file %s failed", f.Name())
 		}
+
+		c := Config{}
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, errors.Wrapf(err, "unmarshal config file %s failed", f.Name())
+		}
+
+		p := Project{
+			ID:     projectID,
+			Config: c,
+		}
+
 		pool[p.ID] = &p
 	}
 
