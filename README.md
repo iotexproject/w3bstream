@@ -49,14 +49,14 @@ Ensure you have the following installed:
 
 ### Installation
 
-1. Download the latest release from [releases page](https://github.com/machinefi/sprout/releases).
-
-2. Unpack the release code (replace with your specific file name):
+1. Download the latest release from [releases page](https://github.com/machinefi/sprout/releases) and unpack the release code (replace with your specific file name):
 
     ```bash
     tar xzf sprout-x.y.z.tar.gz
     cd sprout-x.y.z.tar.gz
     ```
+
+2. Alternatively, ```git clone https://github.com/machinefi/sprout.git```
     
 3. Install the node command line client `wsctl`:
     ```bash
@@ -92,10 +92,20 @@ Ensure you have the following installed:
 Start the ZNode with the following command:
 
 ```bash
-docker-compose up -d
+cd sprout
+docker compose up -d
+```
+### Configure wsctl
+
+Set up the `wsctl` endpoint to your running node (`wsctl`settings are located in `~/.w3bstream/config.yaml``)
+
+```bash
+wsctl config set endpoint localhost:9000
 ```
 
-#### Monitoring and management
+After that, you can use ```wsctl config get endpoint``` to make sure the config is effective.
+
+### Monitoring and management
 
 Monitor the node status with:
 
@@ -109,17 +119,31 @@ Shut down the node with:
 docker-compose down
 ```
 
-## Sending data
+## Generate ZKP
 
-### Configure wsctl
+### Compile the customized Halo2 circuit
 
-Set up the `wsctl` endpoint to your running node (`wsctl`settings are located in `~/.w3bstream/config.yaml``)
-
-```bash
-wsctl config set endpoint localhost:9000
+1. Install `wasm-pack`
+``` shell
+curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 ```
 
-### Send a test message to the server
+2. Build wasm
+
+``` shell
+cd examples/halo2-circuits/
+wasm-pack build --target nodejs --out-dir pkg
+```
+
+you will find `halo2_wasm_bg.wasm` under the `pkg` folder. 
+
+3. (Optional) You can also write your circuit according to the [halo2 development documentation](https://zcash.github.io/halo2/user/simple-example.html), and put the circuit file in `src/circuits`; replace the `TODO` in `src/lib.rs` and build wasm with `wasm-pack build --target nodejs --out-dir pkg`.
+
+### Deploy Compiled circuit to W3bstream
+
+TBD
+
+### Send testing data to the server
 
 znode projects are currently placed inside the folder `test/data`. Each project file is composed of a JSON object definition that includes a unique ID for the project, the binary code of the proover, and other parameters.
 
@@ -134,6 +158,10 @@ The following example sends a message to an example project deployed on the node
 ```bash
 wsctl message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
+
+### Retrieve ZKP
+
+TBD
 
 ## Contributing
 
