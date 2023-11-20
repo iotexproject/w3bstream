@@ -1,6 +1,6 @@
 package mq
 
-import "github.com/machinefi/w3bstream-mainnet/msg"
+import "github.com/machinefi/sprout/msg"
 
 type MQ interface {
 	Enqueue(*msg.Msg) error

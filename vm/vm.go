@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/machinefi/w3bstream-mainnet/msg"
-	"github.com/machinefi/w3bstream-mainnet/vm/server"
 	"github.com/pkg/errors"
+
+	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/vm/server"
 )
 
 type Handler struct {

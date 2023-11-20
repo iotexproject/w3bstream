@@ -1,4 +1,4 @@
-# iotexdev/w3bstream-mainnet-node:version
+# iotexdev/w3bstream-sprout-node:version
 FROM golang:1.21 AS builder
 
 ENV GO111MODULE=on

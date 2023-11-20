@@ -1,4 +1,4 @@
-module github.com/machinefi/w3bstream-mainnet
+module github.com/machinefi/sprout
 
 go 1.21
 

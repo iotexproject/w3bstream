@@ -6,13 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/machinefi/w3bstream-mainnet/cmd/node/apis"
-	"github.com/machinefi/w3bstream-mainnet/enums"
-	"github.com/machinefi/w3bstream-mainnet/msg/handler"
-	"github.com/machinefi/w3bstream-mainnet/vm"
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/w3bstream-mainnet/project"
+	"github.com/machinefi/sprout/cmd/node/apis"
+	"github.com/machinefi/sprout/enums"
+	"github.com/machinefi/sprout/msg/handler"
+	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/vm"
 )
 
 func main() {
