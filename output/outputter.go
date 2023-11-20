@@ -18,7 +18,7 @@ type (
 func NewOutputter(cfg Config) (out Outputter, err error) {
 	switch cfg.Type {
 	case Stdout:
-		// TODO: implement
+		out = adapter.NewStdout()
 	case EthereumContract:
 		out, err = adapter.NewEthereumContract(cfg.ChainEndpoint, cfg.SecretKey, cfg.ContractAddress)
 	default:
