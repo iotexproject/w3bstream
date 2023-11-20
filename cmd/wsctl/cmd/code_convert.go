@@ -37,14 +37,13 @@ var convertCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to read code-file %s", codeFile))
 		}
-
 		var b bytes.Buffer
 		w := zlib.NewWriter(&b)
-		defer w.Close()
 		_, err = w.Write(content)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to zlib code-file %s", codeFile))
 		}
+		w.Close()
 
 		hexString := hex.EncodeToString(b.Bytes())
 
