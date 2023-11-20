@@ -49,6 +49,10 @@ func NewSequencer(pgEndpoint string) (sequencer.Sequencer, error) {
 		return nil, errors.Wrap(err, "connect postgres failed")
 	}
 
+	if err := db.AutoMigrate(&Message{}); err != nil {
+		return nil, errors.Wrap(err, "migrate message model failed")
+	}
+
 	return &pgSequencer{
 		db: db,
 	}, nil
