@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/sprout/msg/messages"
+	"github.com/machinefi/sprout/tasks"
 )
 
 var messageQueryCmd = &cobra.Command{
@@ -48,7 +48,7 @@ var messageQueryCmd = &cobra.Command{
 			return errors.Wrap(err, "read responded body failed")
 		}
 
-		rspVal := &messages.MessageContext{}
+		rspVal := &tasks.TaskContext{}
 		if err := json.Unmarshal(content, rspVal); err != nil {
 			return errors.Wrap(err, "parse responded body failed")
 		}

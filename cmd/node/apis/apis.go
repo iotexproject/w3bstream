@@ -2,9 +2,10 @@ package apis
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
+
 	msghandler "github.com/machinefi/sprout/msg/handler"
 	"github.com/machinefi/sprout/vm"
-	"github.com/pkg/errors"
 )
 
 func NewServer(ep string, mh *msghandler.Handler) *Server {
@@ -14,7 +15,7 @@ func NewServer(ep string, mh *msghandler.Handler) *Server {
 		msgHandler: mh,
 	}
 	s.engine.POST("/message", s.handleRequest)
-	s.engine.GET("/message/:messageID", s.queryByMessageID)
+	s.engine.GET("/message/:taskID", s.queryByTaskID)
 	return s
 }
 
