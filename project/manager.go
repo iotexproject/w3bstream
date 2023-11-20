@@ -3,6 +3,7 @@ package project
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path"
@@ -72,6 +73,12 @@ func (m *Manager) Get(projectID uint64) (*Project, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "get project from contracts failed")
 	}
+
+	if p.Uri == "" {
+		return nil, errors.New("project not exist")
+	}
+
+	slog.Debug("get project file uri", "projectID", projectID, "uri", p.Uri)
 
 	resp, err := http.Get(p.Uri)
 	if err != nil {
