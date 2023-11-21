@@ -1,0 +1,24 @@
+syntax = "proto3";
+package proto;
+option go_package = "proto";
+
+service SequencerService {
+    rpc Fetch(CreateRequest) returns (CreateResponse);
+    rpc Report(ReportRequest) returns (ReportResponse);
+}
+
+message FetchRequest {
+    uint64 projectID = 1;
+}
+
+message FetchResponse {
+    repeated Message messages = 1;
+}
+
+message ReportRequest {
+    repeated string messageIDs = 1;
+    MessageState state = 2;
+    string description = 3;
+}
+
+message ReportResponse {}
