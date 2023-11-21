@@ -1,8 +1,8 @@
 package sequencer
 
-import "github.com/machinefi/sprout/msg"
+import "github.com/machinefi/sprout/message"
 
 type Sequencer interface {
-	Save(msg *msg.Msg) (msgID uint64, err error)
-	Fetch(projectID, afterMsgID uint64, strategy msg.FetchStrategy) ([]*msg.Msg, error)
+	Save(msg *message.Message) (msgID uint64, err error)
+	Fetch(projectID, afterMsgID uint64, strategy message.FetchStrategy) ([]*message.Message, error)
 }

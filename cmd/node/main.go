@@ -10,7 +10,7 @@ import (
 
 	"github.com/machinefi/sprout/cmd/node/apis"
 	"github.com/machinefi/sprout/enums"
-	"github.com/machinefi/sprout/msg/handler"
+	"github.com/machinefi/sprout/message/handler"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/vm"
 )

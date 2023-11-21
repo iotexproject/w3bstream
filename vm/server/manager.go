@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/message"
 )
 
 type Mgr struct {
@@ -12,7 +12,7 @@ type Mgr struct {
 	idle map[uint64]*Instance
 }
 
-func (m *Mgr) Acquire(msg *msg.Msg, endpoint string, code string, expParam string) (*Instance, error) {
+func (m *Mgr) Acquire(msg *message.Message, endpoint string, code string, expParam string) (*Instance, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 

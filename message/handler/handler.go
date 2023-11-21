@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/output/chain/eth"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/tasks"
@@ -35,13 +35,13 @@ func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, 
 	return h
 }
 
-func (r *Handler) Handle(msg *msg.Msg) error {
+func (r *Handler) Handle(msg *message.Message) error {
 	slog.Debug("push message into sequencer")
 	tasks.New(msg)
 	return r.mq.Enqueue(msg)
 }
 
-func (r *Handler) asyncHandle(m *msg.Msg) {
+func (r *Handler) asyncHandle(m *message.Message) {
 	slog.Debug("message popped", "message_id", m.ID)
 
 	project, err := r.projectManager.Get(m.ProjectID)

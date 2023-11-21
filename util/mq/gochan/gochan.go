@@ -1,17 +1,17 @@
 package gochan
 
 import (
-	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/util/mq"
 )
 
 const defaultQueueSize = 4096
 
 type queue struct {
-	q chan *msg.Msg
+	q chan *message.Message
 }
 
-func (q *queue) Enqueue(msg *msg.Msg) error {
+func (q *queue) Enqueue(msg *message.Message) error {
 	select {
 	case q.q <- msg:
 		return nil
@@ -20,7 +20,7 @@ func (q *queue) Enqueue(msg *msg.Msg) error {
 	}
 }
 
-func (q *queue) Dequeue() (*msg.Msg, error) {
+func (q *queue) Dequeue() (*message.Message, error) {
 	select {
 	case m := <-q.q:
 		return m, nil
@@ -29,7 +29,7 @@ func (q *queue) Dequeue() (*msg.Msg, error) {
 	}
 }
 
-func (q *queue) Watch(h func(*msg.Msg)) {
+func (q *queue) Watch(h func(*message.Message)) {
 	for m := range q.q {
 		h(m)
 	}
@@ -37,6 +37,6 @@ func (q *queue) Watch(h func(*msg.Msg)) {
 
 func New() mq.MQ {
 	return &queue{
-		q: make(chan *msg.Msg, defaultQueueSize),
+		q: make(chan *message.Message, defaultQueueSize),
 	}
 }
