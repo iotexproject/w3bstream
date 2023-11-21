@@ -43,7 +43,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 
 		projectID, err := strconv.ParseUint(f.Name(), 10, 64)
 		if err != nil {
-			return nil, errors.Wrapf(err, "parse file name %s to uint64 failed", f.Name())
+			return nil, errors.Wrapf(err, "parse file name %s to projectID failed", f.Name())
 		}
 
 		c := Config{}
