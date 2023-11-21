@@ -139,9 +139,21 @@ you will find `halo2_wasm_bg.wasm` under the `pkg` folder.
 
 3. (Optional) You can also write your circuit according to the [halo2 development documentation](https://zcash.github.io/halo2/user/simple-example.html), and put the circuit file in `src/circuits`; replace the `TODO` in `src/lib.rs` and build wasm with `wasm-pack build --target nodejs --out-dir pkg`.
 
+[read more](./examples/halo2-circuits/README.md)
+
 ### Deploy Compiled circuit to W3bstream
 
-TBD
+#### Deploy halo2 circuit to W3bstream
+
+```shell
+wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm"
+```
+
+This command will generate a file named `halo2-config.json` in the current folder. 
+Or you can run `wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/filename.wasm"`
+
+> **_NOTE:_**
+> in test model, move `halo2-config.json` to `test/data, and then rename `halo2-config.json` to `10001`(`10001` is project id).
 
 ### Send testing data to the server
 
