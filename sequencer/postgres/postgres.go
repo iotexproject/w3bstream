@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/sequencer"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
@@ -12,7 +12,7 @@ type pgSequencer struct {
 	db *gorm.DB
 }
 
-func (s *pgSequencer) Save(msg *msg.Msg) (msgID uint64, err error) {
+func (s *pgSequencer) Save(msg *message.Message) (msgID uint64, err error) {
 	m := Message{
 		ProjectID: msg.ProjectID,
 		Data:      msg.Data,
@@ -24,7 +24,7 @@ func (s *pgSequencer) Save(msg *msg.Msg) (msgID uint64, err error) {
 	return uint64(m.ID), nil
 }
 
-func (s *pgSequencer) Fetch(projectID, afterMsgID uint64, strategy msg.FetchStrategy) ([]*msg.Msg, error) {
+func (s *pgSequencer) Fetch(projectID, afterMsgID uint64, strategy message.FetchStrategy) ([]*message.Message, error) {
 	// TODO FetchStrategy support
 
 	ms := []*Message{}
@@ -33,9 +33,9 @@ func (s *pgSequencer) Fetch(projectID, afterMsgID uint64, strategy msg.FetchStra
 		return nil, result.Error
 	}
 
-	mms := []*msg.Msg{}
+	mms := []*message.Message{}
 	for _, m := range ms {
-		mms = append(mms, &msg.Msg{
+		mms = append(mms, &message.Message{
 			ProjectID: m.ProjectID,
 			Data:      m.Data,
 		})

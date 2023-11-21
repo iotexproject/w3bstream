@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/tasks"
 )
 
@@ -20,7 +20,7 @@ func (s *Server) handleRequest(c *gin.Context) {
 	}
 	taskID := uuid.NewString()
 	slog.Debug("received your message, handling")
-	if err := s.msgHandler.Handle(&msg.Msg{
+	if err := s.msgHandler.Handle(&message.Message{
 		ID:             taskID,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,

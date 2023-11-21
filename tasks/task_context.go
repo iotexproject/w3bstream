@@ -4,20 +4,20 @@ import (
 	"time"
 
 	"github.com/machinefi/sprout/enums"
-	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/message"
 )
 
-func newTaskContext(m *msg.Msg) *TaskContext {
+func newTaskContext(m *message.Message) *TaskContext {
 	now := time.Now()
 	return &TaskContext{
-		Msg:        m,
+		Message:    m,
 		Status:     enums.ZKProofTaskStatusReceived,
 		ReceivedAt: &now,
 	}
 }
 
 type TaskContext struct {
-	*msg.Msg
+	*message.Message
 	Status               enums.ZKProofTaskStatus `json:"status"`
 	ReceivedAt           *time.Time              `json:"receivedAt"`
 	SubmitProvingAt      *time.Time              `json:"submitProvingAt,omitempty"`

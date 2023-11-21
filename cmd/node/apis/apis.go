@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
-	msghandler "github.com/machinefi/sprout/msg/handler"
+	msghandler "github.com/machinefi/sprout/message/handler"
 	"github.com/machinefi/sprout/vm"
 )
 

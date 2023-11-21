@@ -1,6 +1,6 @@
-package msg
+package message
 
-type Msg struct {
+type Message struct {
 	ID             string `json:"id"`
 	ProjectID      uint64 `json:"projectID"`
 	ProjectVersion string `json:"projectVersion"`

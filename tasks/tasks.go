@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"sync"
 
-	"github.com/machinefi/sprout/msg"
+	"github.com/machinefi/sprout/message"
 )
 
 type Cache struct {
@@ -14,7 +14,7 @@ type Cache struct {
 	limit   int
 }
 
-func (c *Cache) Add(m *msg.Msg) {
+func (c *Cache) Add(m *message.Message) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -89,7 +89,7 @@ func init() {
 	}
 }
 
-func New(m *msg.Msg) {
+func New(m *message.Message) {
 	defaultTasksCache.Add(m)
 }
 
