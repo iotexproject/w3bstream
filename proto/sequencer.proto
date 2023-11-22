@@ -1,9 +1,10 @@
 syntax = "proto3";
 package proto;
-option go_package = "proto";
+option go_package = "./proto";
+import "message.proto";
 
 service SequencerService {
-    rpc Fetch(CreateRequest) returns (CreateResponse);
+    rpc Fetch(FetchRequest) returns (FetchResponse);
     rpc Report(ReportRequest) returns (ReportResponse);
 }
 
