@@ -3,15 +3,20 @@ package handler
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/output/chain/eth"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/proto"
 	"github.com/machinefi/sprout/tasks"
 	"github.com/machinefi/sprout/test/contract"
 	"github.com/machinefi/sprout/util/mq"
 	"github.com/machinefi/sprout/util/mq/gochan"
 	"github.com/machinefi/sprout/vm"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Handler struct {
@@ -20,9 +25,16 @@ type Handler struct {
 	projectManager     *project.Manager
 	chainEndpoint      string
 	operatorPrivateKey string
+	sequencerClient    proto.SequencerClient
+	projectID          uint64
 }
 
-func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey string) *Handler {
+func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, sequencerEndpoint, operatorPrivateKey string, projectID uint64) (*Handler, error) {
+	conn, err := grpc.Dial(sequencerEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to dial sequencer server")
+	}
+
 	q := gochan.New()
 	h := &Handler{
 		mq:                 q,
@@ -30,9 +42,33 @@ func New(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, 
 		chainEndpoint:      chainEndpoint,
 		operatorPrivateKey: operatorPrivateKey,
 		projectManager:     projectManager,
+		sequencerClient:    proto.NewSequencerClient(conn),
+		projectID:          projectID,
 	}
 	go q.Watch(h.asyncHandle)
-	return h
+	go h.fetchMessage()
+	return h, nil
+}
+
+// TODO support batch message fetch & fetch frequency define
+func (r *Handler) fetchMessage() {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		m, err := r.sequencerClient.Fetch(context.Background(), &proto.FetchRequest{ProjectID: r.projectID})
+		if err != nil {
+			slog.Error("fetch message from sequencer failed", "error", err)
+		}
+		if len(m.Messages) != 0 {
+			m := m.Messages[0]
+			r.mq.Enqueue(&message.Message{
+				ID:        m.MessageID,
+				ProjectID: m.ProjectID,
+				Data:      m.Data,
+			})
+		}
+	}
 }
 
 func (r *Handler) Handle(msg *message.Message) error {

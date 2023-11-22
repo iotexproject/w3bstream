@@ -26,12 +26,14 @@ func initStdLogger() {
 
 func initEnvConfigBind() {
 	viper.MustBindEnv(enums.EnvKeyServiceEndpoint)
+	viper.MustBindEnv(enums.EnvKeySequencerServerEndpoint)
 	viper.MustBindEnv(enums.EnvKeyRisc0ServerEndpoint)
 	viper.MustBindEnv(enums.EnvKeyHalo2ServerEndpoint)
 	viper.MustBindEnv(enums.EnvKeyProjectFileDirectory)
 	viper.MustBindEnv(enums.EnvKeyChainEndpoint)
 	viper.MustBindEnv(enums.EnvKeyProjectContractAddress)
 	viper.MustBindEnv(enums.EnvKeyDatabaseDSN)
+	viper.MustBindEnv(enums.EnvKeyProjectID)
 
 	viper.BindEnv(enums.EnvKeyOperatorPrivateKey)
 }
