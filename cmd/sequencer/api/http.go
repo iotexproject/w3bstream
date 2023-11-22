@@ -104,7 +104,7 @@ func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 		ss = append(ss, &stateLog{
 			State:       l.State.String(),
 			Time:        l.CreatedAt,
-			Description: l.Description,
+			Description: l.Comment,
 		})
 	}
 

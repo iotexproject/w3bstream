@@ -59,13 +59,13 @@ func (s *Sequencer) FetchStateLog(messageID string) ([]*MessageStateLog, error) 
 	return ls, nil
 }
 
-func (s *Sequencer) UpdateMessageState(msgIDs []string, state proto.MessageState, desc string) error {
+func (s *Sequencer) UpdateMessageState(msgIDs []string, state proto.MessageState, comment string) error {
 	ls := []*MessageStateLog{}
 	for _, id := range msgIDs {
 		ls = append(ls, &MessageStateLog{
-			MessageID:   id,
-			State:       state,
-			Description: desc,
+			MessageID: id,
+			State:     state,
+			Comment:   comment,
 		})
 	}
 

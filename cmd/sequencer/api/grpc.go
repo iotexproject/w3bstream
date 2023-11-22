@@ -59,7 +59,7 @@ func (s *GrpcServer) Report(ctx context.Context, req *proto.ReportRequest) (*pro
 	if len(req.MessageIDs) == 0 {
 		return nil, nil
 	}
-	if err := s.seq.UpdateMessageState(req.MessageIDs, req.State, req.Description); err != nil {
+	if err := s.seq.UpdateMessageState(req.MessageIDs, req.State, req.Comment); err != nil {
 		slog.Error("sequencer update message state failed", "error", err)
 		return nil, err
 	}

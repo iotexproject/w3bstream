@@ -15,7 +15,7 @@ type Message struct {
 
 type MessageStateLog struct {
 	gorm.Model
-	MessageID   string             `gorm:"index:message_id,not null"`
-	State       proto.MessageState `gorm:"not null"`
-	Description string
+	MessageID string             `gorm:"index:message_id,not null"`
+	State     proto.MessageState `gorm:"not null"`
+	Comment   string
 }
