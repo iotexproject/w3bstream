@@ -19,126 +19,126 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	SequencerService_Fetch_FullMethodName  = "/proto.SequencerService/Fetch"
-	SequencerService_Report_FullMethodName = "/proto.SequencerService/Report"
+	Sequencer_Fetch_FullMethodName  = "/proto.Sequencer/Fetch"
+	Sequencer_Report_FullMethodName = "/proto.Sequencer/Report"
 )
 
-// SequencerServiceClient is the client API for SequencerService service.
+// SequencerClient is the client API for Sequencer service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type SequencerServiceClient interface {
+type SequencerClient interface {
 	Fetch(ctx context.Context, in *FetchRequest, opts ...grpc.CallOption) (*FetchResponse, error)
 	Report(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ReportResponse, error)
 }
 
-type sequencerServiceClient struct {
+type sequencerClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewSequencerServiceClient(cc grpc.ClientConnInterface) SequencerServiceClient {
-	return &sequencerServiceClient{cc}
+func NewSequencerClient(cc grpc.ClientConnInterface) SequencerClient {
+	return &sequencerClient{cc}
 }
 
-func (c *sequencerServiceClient) Fetch(ctx context.Context, in *FetchRequest, opts ...grpc.CallOption) (*FetchResponse, error) {
+func (c *sequencerClient) Fetch(ctx context.Context, in *FetchRequest, opts ...grpc.CallOption) (*FetchResponse, error) {
 	out := new(FetchResponse)
-	err := c.cc.Invoke(ctx, SequencerService_Fetch_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Sequencer_Fetch_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *sequencerServiceClient) Report(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ReportResponse, error) {
+func (c *sequencerClient) Report(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ReportResponse, error) {
 	out := new(ReportResponse)
-	err := c.cc.Invoke(ctx, SequencerService_Report_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Sequencer_Report_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// SequencerServiceServer is the server API for SequencerService service.
-// All implementations must embed UnimplementedSequencerServiceServer
+// SequencerServer is the server API for Sequencer service.
+// All implementations must embed UnimplementedSequencerServer
 // for forward compatibility
-type SequencerServiceServer interface {
+type SequencerServer interface {
 	Fetch(context.Context, *FetchRequest) (*FetchResponse, error)
 	Report(context.Context, *ReportRequest) (*ReportResponse, error)
-	mustEmbedUnimplementedSequencerServiceServer()
+	mustEmbedUnimplementedSequencerServer()
 }
 
-// UnimplementedSequencerServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedSequencerServiceServer struct {
+// UnimplementedSequencerServer must be embedded to have forward compatible implementations.
+type UnimplementedSequencerServer struct {
 }
 
-func (UnimplementedSequencerServiceServer) Fetch(context.Context, *FetchRequest) (*FetchResponse, error) {
+func (UnimplementedSequencerServer) Fetch(context.Context, *FetchRequest) (*FetchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Fetch not implemented")
 }
-func (UnimplementedSequencerServiceServer) Report(context.Context, *ReportRequest) (*ReportResponse, error) {
+func (UnimplementedSequencerServer) Report(context.Context, *ReportRequest) (*ReportResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Report not implemented")
 }
-func (UnimplementedSequencerServiceServer) mustEmbedUnimplementedSequencerServiceServer() {}
+func (UnimplementedSequencerServer) mustEmbedUnimplementedSequencerServer() {}
 
-// UnsafeSequencerServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to SequencerServiceServer will
+// UnsafeSequencerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SequencerServer will
 // result in compilation errors.
-type UnsafeSequencerServiceServer interface {
-	mustEmbedUnimplementedSequencerServiceServer()
+type UnsafeSequencerServer interface {
+	mustEmbedUnimplementedSequencerServer()
 }
 
-func RegisterSequencerServiceServer(s grpc.ServiceRegistrar, srv SequencerServiceServer) {
-	s.RegisterService(&SequencerService_ServiceDesc, srv)
+func RegisterSequencerServer(s grpc.ServiceRegistrar, srv SequencerServer) {
+	s.RegisterService(&Sequencer_ServiceDesc, srv)
 }
 
-func _SequencerService_Fetch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Sequencer_Fetch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FetchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SequencerServiceServer).Fetch(ctx, in)
+		return srv.(SequencerServer).Fetch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SequencerService_Fetch_FullMethodName,
+		FullMethod: Sequencer_Fetch_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SequencerServiceServer).Fetch(ctx, req.(*FetchRequest))
+		return srv.(SequencerServer).Fetch(ctx, req.(*FetchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SequencerService_Report_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Sequencer_Report_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReportRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SequencerServiceServer).Report(ctx, in)
+		return srv.(SequencerServer).Report(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SequencerService_Report_FullMethodName,
+		FullMethod: Sequencer_Report_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SequencerServiceServer).Report(ctx, req.(*ReportRequest))
+		return srv.(SequencerServer).Report(ctx, req.(*ReportRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// SequencerService_ServiceDesc is the grpc.ServiceDesc for SequencerService service.
+// Sequencer_ServiceDesc is the grpc.ServiceDesc for Sequencer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var SequencerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.SequencerService",
-	HandlerType: (*SequencerServiceServer)(nil),
+var Sequencer_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.Sequencer",
+	HandlerType: (*SequencerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Fetch",
-			Handler:    _SequencerService_Fetch_Handler,
+			Handler:    _Sequencer_Fetch_Handler,
 		},
 		{
 			MethodName: "Report",
-			Handler:    _SequencerService_Report_Handler,
+			Handler:    _Sequencer_Report_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
