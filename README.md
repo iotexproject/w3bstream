@@ -141,6 +141,19 @@ you will find `halo2_wasm_bg.wasm` under the `pkg` folder.
 
 More details and options for `Halo2 circuit` are given in [its README](./examples/halo2-circuits/README.md).
 
+### Compile the customized Risc0 circuits
+
+1. Build
+
+``` shell
+cd examples/risc0-circuits/
+cargo build --release
+```
+
+you will find `methods.rs` in the `target/release/build/risc0-circuits-xxx/out/methods.rs`
+
+More details and options for `Risc0 circuit` are given in [its README](./examples/risc0-circuits/README.md).
+
 ### Deploy Compiled circuit to W3bstream
 
 #### Deploy halo2 circuit to W3bstream
@@ -150,10 +163,21 @@ wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm"
 ```
 
 This command will generate a file named `halo2-config.json` in the current folder. 
-Or you can run `wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/filename.wasm"`
+Or you can run `wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/filename.json"`
+
+#### Deploy risc0 circuit to W3bstream
+
+```shell
+wsctl code convert -t "risc0" -i "methods.rs"  -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
+```
+The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs`.
+
+This command will generate a file named `risc0-config.json` in the current folder.
+Or you can run `wsctl code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}`
 
 > **_NOTE:_**
 > in test model, move `halo2-config.json` to `test/data, and then rename `halo2-config.json` to `10001`(`10001` is project id).
+> in test model, move `risc0-config.json` to `test/data, and then rename `risc0-config.json` to `10000`(`10000` is project id).
 
 ### Send testing data to the server
 
