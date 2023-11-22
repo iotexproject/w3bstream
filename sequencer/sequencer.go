@@ -3,6 +3,7 @@ package sequencer
 import (
 	"github.com/machinefi/sprout/enums"
 	"github.com/machinefi/sprout/message"
+	"github.com/machinefi/sprout/proto"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -18,11 +19,21 @@ func (s *Sequencer) Save(msg *message.Message) error {
 		ProjectID: msg.ProjectID,
 		Data:      msg.Data,
 	}
-	result := s.db.Create(&m)
-	if result.Error != nil {
-		return errors.Wrap(result.Error, "save message failed")
+	l := MessageStateLog{
+		MessageID: msg.ID,
+		State:     proto.MessageState_MESSAGE_STATE_RECEIVED,
 	}
-	return nil
+
+	return s.db.Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Create(&m).Error; err != nil {
+			return errors.Wrap(err, "create message failed")
+		}
+		if err := tx.Create(&l).Error; err != nil {
+			return errors.Wrap(err, "create message state log failed")
+		}
+		return nil
+	})
 }
 
 func (s *Sequencer) Fetch(projectID uint64) (*message.Message, error) {
@@ -39,13 +50,35 @@ func (s *Sequencer) Fetch(projectID uint64) (*message.Message, error) {
 	}, nil
 }
 
-func (s *Sequencer) UpdateMessageState(msgID string, state enums.MessageState) error {
-	result := s.db.Model(&Message{}).Where("message_id = ?", msgID).Update("state", state)
-	if result.Error != nil {
-		return errors.Wrapf(result.Error, "update message failed, message_id %s, target_state %v", msgID, state)
+func (s *Sequencer) FetchStateLog(messageID string) ([]*MessageStateLog, error) {
+	ls := []*MessageStateLog{}
+
+	if err := s.db.Where("message_id = ?", messageID).Find(&ls).Error; err != nil {
+		return nil, errors.Wrapf(err, "query message state log failed, messageID %s", messageID)
+	}
+	return ls, nil
+}
+
+func (s *Sequencer) UpdateMessageState(msgIDs []string, state proto.MessageState, comment string) error {
+	ls := []*MessageStateLog{}
+	for _, id := range msgIDs {
+		ls = append(ls, &MessageStateLog{
+			MessageID: id,
+			State:     state,
+			Comment:   comment,
+		})
 	}
 
-	return nil
+	return s.db.Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Model(&Message{}).Where("message_id IN ?", msgIDs).Update("state", state).Error; err != nil {
+			return errors.Wrapf(err, "update message failed, message_ids %v, target_state %v", msgIDs, state)
+		}
+		if err := tx.Create(ls).Error; err != nil {
+			return errors.Wrap(err, "create message state log failed")
+		}
+		return nil
+	})
 }
 
 func NewSequencer(pgEndpoint string) (*Sequencer, error) {
@@ -54,7 +87,7 @@ func NewSequencer(pgEndpoint string) (*Sequencer, error) {
 		return nil, errors.Wrap(err, "connect postgres failed")
 	}
 
-	if err := db.AutoMigrate(&Message{}); err != nil {
+	if err := db.AutoMigrate(&Message{}, &MessageStateLog{}); err != nil {
 		return nil, errors.Wrap(err, "migrate message model failed")
 	}
 
