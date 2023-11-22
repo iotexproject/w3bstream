@@ -22,7 +22,13 @@ func main() {
 	}
 
 	go func() {
-		if err := api.NewServer(viper.GetString(ServiceEndpoint), seq).Run(); err != nil {
+		if err := api.NewHttpServer(seq).Run(viper.GetString(HttpServiceEndpoint)); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	go func() {
+		if err := api.NewGrpcServer(seq).Run(viper.GetString(GrpcServiceEndpoint)); err != nil {
 			log.Fatal(err)
 		}
 	}()

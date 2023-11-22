@@ -12,7 +12,7 @@ import (
 	"github.com/machinefi/sprout/tasks"
 )
 
-func (s *Server) handleMessage(c *gin.Context) {
+func (s *HttpServer) handleMessage(c *gin.Context) {
 	req := &handleMessageReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, newErrResp(err))
@@ -35,7 +35,7 @@ func (s *Server) handleMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, &handleMessageResp{MessageID: id})
 }
 
-func (s *Server) queryByID(c *gin.Context) {
+func (s *HttpServer) queryByID(c *gin.Context) {
 	messageID := c.Param("id")
 
 	slog.Debug("received message querying", "message_id", messageID)

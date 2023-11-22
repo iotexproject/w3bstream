@@ -15,6 +15,7 @@ func initStdLogger() {
 }
 
 func initEnvConfigBind() {
-	viper.MustBindEnv(ServiceEndpoint)
+	viper.MustBindEnv(HttpServiceEndpoint)
+	viper.MustBindEnv(GrpcServiceEndpoint)
 	viper.MustBindEnv(DatabaseDSN)
 }
