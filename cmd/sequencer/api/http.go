@@ -7,11 +7,10 @@ import (
 	"github.com/machinefi/sprout/sequencer"
 )
 
-func NewServer(endpoint string, seq *sequencer.Sequencer) *Server {
-	s := &Server{
-		endpoint: endpoint,
-		engine:   gin.Default(),
-		seq:      seq,
+func NewHttpServer(seq *sequencer.Sequencer) *HttpServer {
+	s := &HttpServer{
+		engine: gin.Default(),
+		seq:    seq,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
@@ -20,15 +19,14 @@ func NewServer(endpoint string, seq *sequencer.Sequencer) *Server {
 	return s
 }
 
-type Server struct {
-	engine   *gin.Engine
-	endpoint string
-	seq      *sequencer.Sequencer
+type HttpServer struct {
+	engine *gin.Engine
+	seq    *sequencer.Sequencer
 }
 
 // this func will block caller
-func (s *Server) Run() error {
-	if err := s.engine.Run(s.endpoint); err != nil {
+func (s *HttpServer) Run(endpoint string) error {
+	if err := s.engine.Run(endpoint); err != nil {
 		return errors.Wrap(err, "start http server failed")
 	}
 	return nil
