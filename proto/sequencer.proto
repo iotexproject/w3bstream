@@ -3,7 +3,7 @@ package proto;
 option go_package = "./proto";
 import "message.proto";
 
-service SequencerService {
+service Sequencer {
     rpc Fetch(FetchRequest) returns (FetchResponse);
     rpc Report(ReportRequest) returns (ReportResponse);
 }
