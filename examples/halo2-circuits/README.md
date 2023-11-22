@@ -14,7 +14,7 @@ Reference [install guid](https://docs.soliditylang.org/en/v0.8.9/installing-soli
 1. get template 
 
 ``` shell
-git clone git@github.com:machinefi/vm-template.git && cd halo2-wasm
+git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuits
 ```
 
 2. build wasm
