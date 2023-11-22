@@ -3,6 +3,7 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/sequencer"
-	"github.com/machinefi/sprout/tasks"
 )
 
 type errResp struct {
@@ -31,6 +31,17 @@ type handleMessageResp struct {
 	MessageID string `json:"messageID"`
 }
 
+type stateLog struct {
+	State       string    `json:"state"`
+	Time        time.Time `json:"time"`
+	Description string    `json:"description"`
+}
+
+type queryMessageStateLogResp struct {
+	MessageID string      `json:"messageID"`
+	States    []*stateLog `json:"states"`
+}
+
 type HttpServer struct {
 	engine *gin.Engine
 	seq    *sequencer.Sequencer
@@ -43,7 +54,7 @@ func NewHttpServer(seq *sequencer.Sequencer) *HttpServer {
 	}
 
 	s.engine.POST("/message", s.handleMessage)
-	s.engine.GET("/message/:id", s.queryByID)
+	s.engine.GET("/message/:id", s.queryStateLogByID)
 
 	return s
 }
@@ -79,15 +90,24 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, &handleMessageResp{MessageID: id})
 }
 
-func (s *HttpServer) queryByID(c *gin.Context) {
+func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 	messageID := c.Param("id")
 
-	slog.Debug("received message querying", "message_id", messageID)
-	m, ok := tasks.Query(messageID)
-	if !ok {
-		c.JSON(http.StatusNotFound, newErrResp(errors.Errorf("message [%s] was expired or not exists", messageID)))
+	ls, err := s.seq.FetchStateLog(messageID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, m)
+	ss := []*stateLog{}
+	for _, l := range ls {
+		ss = append(ss, &stateLog{
+			State:       l.State.String(),
+			Time:        l.CreatedAt,
+			Description: l.Description,
+		})
+	}
+
+	slog.Debug("received message querying", "message_id", messageID)
+	c.JSON(http.StatusOK, &queryMessageStateLogResp{MessageID: messageID, States: ss})
 }

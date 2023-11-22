@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"log/slog"
 	"net"
 
 	"github.com/pkg/errors"
@@ -39,10 +40,28 @@ func (s *GrpcServer) Run(endpoint string) error {
 	return nil
 }
 
-func (s *GrpcServer) Fetch(context.Context, *proto.FetchRequest) (*proto.FetchResponse, error) {
-	return nil, nil
+func (s *GrpcServer) Fetch(ctx context.Context, req *proto.FetchRequest) (*proto.FetchResponse, error) {
+	m, err := s.seq.Fetch(req.ProjectID)
+	if err != nil {
+		slog.Error("sequencer fetch failed", "error", err)
+		return nil, err
+	}
+	return &proto.FetchResponse{
+		Messages: []*proto.Message{{
+			MessageID: m.ID,
+			ProjectID: m.ProjectID,
+			Data:      m.Data,
+		}},
+	}, nil
 }
 
-func (s *GrpcServer) Report(context.Context, *proto.ReportRequest) (*proto.ReportResponse, error) {
-	return nil, nil
+func (s *GrpcServer) Report(ctx context.Context, req *proto.ReportRequest) (*proto.ReportResponse, error) {
+	if len(req.MessageIDs) == 0 {
+		return nil, nil
+	}
+	if err := s.seq.UpdateMessageState(req.MessageIDs, req.State, req.Description); err != nil {
+		slog.Error("sequencer update message state failed", "error", err)
+		return nil, err
+	}
+	return &proto.ReportResponse{}, nil
 }
