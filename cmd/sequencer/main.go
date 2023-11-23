@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	initStdLogger()
-	initEnvConfigBind()
+	initLogger()
+	bindEnvConfig()
 
 	seq, err := sequencer.NewSequencer(viper.GetString(DatabaseDSN))
 	if err != nil {
