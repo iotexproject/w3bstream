@@ -32,7 +32,7 @@ func main() {
 	}
 
 	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(SequencerServerEndpoint),
-		viper.GetString(OperatorPrivateKey), viper.GetUint64(ProjectID))
+		viper.GetString(OperatorPrivateKey))
 	if err != nil {
 		log.Fatal(err)
 	}
