@@ -19,7 +19,7 @@ func (s *Sequencer) Save(msg *proto.Message) error {
 	}
 	l := MessageStateLog{
 		MessageID: msg.MessageID,
-		State:     proto.MessageState_MESSAGE_STATE_RECEIVED,
+		State:     proto.MessageState_RECEIVED,
 	}
 
 	return s.db.Transaction(func(tx *gorm.DB) error {
