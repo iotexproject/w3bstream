@@ -5,10 +5,12 @@ type (
 	Config struct {
 		Type Type
 
-		// configuration for the ethereum contract outputter
+		// for the ethereum & solana contract outputter
 		ChainEndpoint   string
 		ContractAddress string
 		SecretKey       string
+		// for the solana program outputter
+		StateAccountPK string
 	}
 
 	// Type is the type of outputter
@@ -19,4 +21,5 @@ type (
 const (
 	Stdout           Type = "stdout"
 	EthereumContract Type = "ethereumContract"
+	SolanaProgram    Type = "solanaProgram"
 )

@@ -21,6 +21,8 @@ func NewOutputter(cfg Config) (out Outputter, err error) {
 		out = adapter.NewStdout()
 	case EthereumContract:
 		out, err = adapter.NewEthereumContract(cfg.ChainEndpoint, cfg.SecretKey, cfg.ContractAddress)
+	case SolanaProgram:
+		out = adapter.NewSolanaProgram(cfg.ChainEndpoint, cfg.ContractAddress, cfg.SecretKey, cfg.StateAccountPK)
 	default:
 		return nil, errors.New("invalid output type")
 	}

@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::env;
+use std::path::Path;
+
 fn main() {
     risc0_build::embed_methods();
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let methods_path = Path::new(&out_dir).join("methods.rs");
+    println!("cargo:warning=methods_path is: {:?}", methods_path);
 }

@@ -28,6 +28,7 @@ services:
     environment:
       RISC0_SERVER_ENDPOINT: "risc0:4001"
       HALO2_SERVER_ENDPOINT: "halo2:4001"
+      ZKWASM_SERVER_ENDPOINT: "zkwasm:4001"
       SEQUENCER_SERVER_ENDPOINT: "w3bsequencer:9001"
       PROJECT_FILE_DIRECTORY: "/data/test/project"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
@@ -40,6 +41,12 @@ services:
   halo2:
     image: iotexdev/halo2-server:0.0.5
     container_name: halo2-service
+    platform: linux/x86_64
+    restart: always
+
+  zkwasm:
+    image: iotexdev/zkwasmserver:v0.0.1
+    container_name: zkwasm-service
     platform: linux/x86_64
     restart: always
 

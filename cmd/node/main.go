@@ -22,8 +22,9 @@ func main() {
 
 	vmHandler := vm.NewHandler(
 		map[vm.Type]string{
-			vm.Risc0: viper.GetString(Risc0ServerEndpoint),
-			vm.Halo2: viper.GetString(Halo2ServerEndpoint),
+			vm.Risc0:  viper.GetString(Risc0ServerEndpoint),
+			vm.Halo2:  viper.GetString(Halo2ServerEndpoint),
+			vm.Zkwasm: viper.GetString(ZkwasmServerEndpoint),
 		},
 	)
 	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(ProjectFileDirectory))

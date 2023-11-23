@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type Sequencer struct {
@@ -16,6 +17,7 @@ func (s *Sequencer) Save(msg *proto.Message) error {
 		MessageID: msg.MessageID,
 		ProjectID: msg.ProjectID,
 		Data:      msg.Data,
+		State:     proto.MessageState_RECEIVED,
 	}
 	l := MessageStateLog{
 		MessageID: msg.MessageID,
@@ -36,9 +38,11 @@ func (s *Sequencer) Save(msg *proto.Message) error {
 
 func (s *Sequencer) Fetch(projectID uint64) (*proto.Message, error) {
 	m := Message{}
-	result := s.db.Where("project_id = ? AND state = ?", projectID, proto.MessageState_RECEIVED).First(&m)
-	if result.Error != nil {
-		return nil, errors.Wrapf(result.Error, "query message failed, projectID %d", projectID)
+	if err := s.db.Where("project_id = ? AND state = ?", projectID, proto.MessageState_RECEIVED).First(&m).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "query message failed, projectID %d", projectID)
 	}
 
 	return &proto.Message{
@@ -80,7 +84,9 @@ func (s *Sequencer) UpdateMessageState(msgIDs []string, state proto.MessageState
 }
 
 func NewSequencer(pgEndpoint string) (*Sequencer, error) {
-	db, err := gorm.Open(postgres.Open(pgEndpoint), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(pgEndpoint), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		return nil, errors.Wrap(err, "connect postgres failed")
 	}
