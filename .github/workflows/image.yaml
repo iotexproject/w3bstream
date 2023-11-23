@@ -7,7 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
   SEQUENCER_IMAGE_NAME: machinefi/sequencer
   NODE_IMAGE_NAME: machinefi/node
 
@@ -54,11 +53,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.REGISTRY }}/${{ env.SEQUENCER_IMAGE_NAME }}
+            ${{ env.REGISTRY }}/${{ env.NODE_IMAGE_NAME }}
 
 
       - name: Build and push Docker image sequencer
-        id: build-and-push-sequencer
+        id: build-and-push
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -69,7 +70,7 @@ jobs:
           
 
       - name: Build and push Docker image node
-        id: build-and-push-node
+        id: build-and-push
         uses: docker/build-push-action@v4
         with:
           context: .
