@@ -3,14 +3,14 @@ package proto;
 option go_package = "./proto";
 
 enum MessageState {
-    MESSAGE_STATE_INVALID = 0;
-    MESSAGE_STATE_RECEIVED = 1;
-    MESSAGE_STATE_FETCHED = 2;
-    MESSAGE_STATE_PROVING = 3;
-    MESSAGE_STATE_PROVED = 4;
-    MESSAGE_STATE_OUTPUTTING = 5;
-    MESSAGE_STATE_OUTPUTTED = 6;
-    MESSAGE_STATE_FAILED = 7;
+    INVALID = 0;
+    RECEIVED = 1;
+    FETCHED = 2;
+    PROVING = 3;
+    PROVED = 4;
+    OUTPUTTING = 5;
+    OUTPUTTED = 6;
+    FAILED = 7;
 }
 
 message Message {

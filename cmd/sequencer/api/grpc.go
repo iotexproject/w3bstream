@@ -47,11 +47,7 @@ func (s *GrpcServer) Fetch(ctx context.Context, req *proto.FetchRequest) (*proto
 		return nil, err
 	}
 	return &proto.FetchResponse{
-		Messages: []*proto.Message{{
-			MessageID: m.ID,
-			ProjectID: m.ProjectID,
-			Data:      m.Data,
-		}},
+		Messages: []*proto.Message{m},
 	}, nil
 }
 

@@ -4,11 +4,10 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/machinefi/sprout/proto"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/machinefi/sprout/message"
 )
 
 type Instance struct {
@@ -35,7 +34,7 @@ func NewInstance(ctx context.Context, endpoint string, projectID uint64, execute
 	return &Instance{conn: conn, resp: resp}, nil
 }
 
-func (i *Instance) Execute(ctx context.Context, msg *message.Message) ([]byte, error) {
+func (i *Instance) Execute(ctx context.Context, msg *proto.Message) ([]byte, error) {
 	req := &ExecuteRequest{
 		ProjectID: msg.ProjectID,
 		Param:     msg.Data,

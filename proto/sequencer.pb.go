@@ -167,7 +167,7 @@ func (x *ReportRequest) GetState() MessageState {
 	if x != nil {
 		return x.State
 	}
-	return MessageState_MESSAGE_STATE_INVALID
+	return MessageState_INVALID
 }
 
 func (x *ReportRequest) GetComment() string {

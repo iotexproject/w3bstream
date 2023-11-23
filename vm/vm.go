@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/message"
+	"github.com/machinefi/sprout/proto"
 	"github.com/machinefi/sprout/vm/server"
 )
 
@@ -16,7 +16,7 @@ type Handler struct {
 	instanceMgr *server.Mgr
 }
 
-func (r *Handler) Handle(msg *message.Message, vmtype Type, code string, expParam string) ([]byte, error) {
+func (r *Handler) Handle(msg *proto.Message, vmtype Type, code string, expParam string) ([]byte, error) {
 	endpoint, ok := r.endpoints[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")

@@ -8,37 +8,36 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/sprout/cmd/node/apis"
-	"github.com/machinefi/sprout/enums"
-	"github.com/machinefi/sprout/message/handler"
+	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/vm"
 )
 
 func main() {
+	initLogger()
+	bindEnvConfig()
+	if err := migrateDatabase(); err != nil {
+		log.Fatal(err)
+	}
+
 	vmHandler := vm.NewHandler(
 		map[vm.Type]string{
-			vm.Risc0: viper.GetString(enums.EnvKeyRisc0ServerEndpoint),
-			vm.Halo2: viper.GetString(enums.EnvKeyHalo2ServerEndpoint),
+			vm.Risc0: viper.GetString(Risc0ServerEndpoint),
+			vm.Halo2: viper.GetString(Halo2ServerEndpoint),
 		},
 	)
-	projectManager, err := project.NewManager(viper.GetString(enums.EnvKeyChainEndpoint), viper.GetString(enums.EnvKeyProjectContractAddress), viper.GetString(enums.EnvKeyProjectFileDirectory))
+	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(ProjectFileDirectory))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	msgHandler := handler.New(
-		vmHandler,
-		projectManager,
-		viper.GetString(enums.EnvKeyChainEndpoint),
-		viper.GetString(enums.EnvKeyOperatorPrivateKey),
-	)
+	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(SequencerServerEndpoint),
+		viper.GetString(OperatorPrivateKey), viper.GetUint64(ProjectID))
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	go func() {
-		if err := apis.NewServer(viper.GetString(enums.EnvKeyServiceEndpoint), msgHandler).Run(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	go msgProcessor.Run()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)

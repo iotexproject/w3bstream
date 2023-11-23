@@ -11,8 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/machinefi/sprout/cmd/node/apis"
 )
 
 var sendCmd = &cobra.Command{
@@ -32,7 +30,11 @@ var sendCmd = &cobra.Command{
 			return errors.Wrap(err, "failed to get flag data")
 		}
 
-		body := &apis.HandleReq{
+		body := &struct {
+			ProjectID      uint64 `json:"projectID"        binding:"required"`
+			ProjectVersion string `json:"projectVersion"   binding:"required"`
+			Data           string `json:"data"             binding:"required"`
+		}{
 			ProjectID:      projectID,
 			ProjectVersion: projectVersion,
 			Data:           data,
@@ -58,7 +60,9 @@ var sendCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "failed to read responded content")
 		}
-		rspVal := &apis.HandleRsp{}
+		rspVal := &struct {
+			MessageID string `json:"messageID"`
+		}{}
 		if err := json.Unmarshal(content, rspVal); err != nil {
 			return errors.Wrap(err, "failed to parse responded content")
 		}

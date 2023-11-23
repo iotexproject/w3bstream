@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,8 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/machinefi/sprout/tasks"
 )
 
 var messageQueryCmd = &cobra.Command{
@@ -47,12 +44,6 @@ var messageQueryCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "read responded body failed")
 		}
-
-		rspVal := &tasks.TaskContext{}
-		if err := json.Unmarshal(content, rspVal); err != nil {
-			return errors.Wrap(err, "parse responded body failed")
-		}
-		content, _ = json.MarshalIndent(rspVal, "", "  ")
 
 		cmd.Print(string(content))
 		return nil
