@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest,macos-latest]
+        os: [ubuntu-latest]
     permissions:
       contents: read
       packages: write
@@ -28,9 +28,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Set up QEMU
-        if: startsWith(matrix.os, 'macos-latest') != true
-        uses: docker/setup-qemu-action@v2
+      # - name: Set up QEMU
+      #   if: startsWith(matrix.os, 'macos-latest') != true
+      #   uses: docker/setup-qemu-action@v2
         
       - name: Setup Docker and Colima
         if: startsWith(matrix.os, 'macos-latest') == true
@@ -62,6 +62,7 @@ jobs:
         id: build-and-push-sequencer
         uses: docker/build-push-action@v4
         with:
+          platforms: linux/amd64,linux/arm64
           context: .
           file: ./sequencer.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
@@ -74,6 +75,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           file: ./node.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.NODE_IMAGE_NAME }}
