@@ -7,8 +7,6 @@ const (
 	OperatorPrivateKey      = "OPERATOR_PRIVATE_KEY"
 	ProjectContractAddress  = "PROJECT_CONTRACT_ADDRESS"
 	ProjectFileDirectory    = "PROJECT_FILE_DIRECTORY"
-	ProjectID               = "PROJECT_ID"
 	Risc0ServerEndpoint     = "RISC0_SERVER_ENDPOINT"
 	SequencerServerEndpoint = "SEQUENCER_SERVER_ENDPOINT"
-	ServiceEndpoint         = "ENDPOINT"
 )
