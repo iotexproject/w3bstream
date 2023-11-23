@@ -30,7 +30,7 @@ services:
       RISC0_SERVER_ENDPOINT: "risc0:4001"
       HALO2_SERVER_ENDPOINT: "halo2:4001"
       SEQUENCER_SERVER_ENDPOINT: "w3bsequencer:9001"
-      PROJECT_FILE_DIRECTORY: "/data/test/data"
+      PROJECT_FILE_DIRECTORY: "/data/test/project"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
       PROJECT_CONTRACT_ADDRESS: "0x4F7e678B0203e0444E17512108dba4B08B39512e"
       OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
