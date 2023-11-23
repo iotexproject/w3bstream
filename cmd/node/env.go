@@ -2,7 +2,7 @@ package main
 
 const (
 	ChainEndpoint           = "CHAIN_ENDPOINT"
-	DatabaseDSN             = "DATABASE_URL"
+	DatabaseDSN             = "DATABASE_DSN"
 	Halo2ServerEndpoint     = "HALO2_SERVER_ENDPOINT"
 	OperatorPrivateKey      = "OPERATOR_PRIVATE_KEY"
 	ProjectContractAddress  = "PROJECT_CONTRACT_ADDRESS"
