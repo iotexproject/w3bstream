@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/message"
+	"github.com/machinefi/sprout/proto"
 	"github.com/machinefi/sprout/sequencer"
 )
 
@@ -22,7 +22,8 @@ func newErrResp(err error) *errResp {
 }
 
 type handleMessageReq struct {
-	ProjectID      uint64 `json:"projectID"        binding:"required"`
+	ProjectID uint64 `json:"projectID"        binding:"required"`
+	// TODO support project version
 	ProjectVersion string `json:"projectVersion"   binding:"required"`
 	Data           string `json:"data"             binding:"required"`
 }
@@ -76,11 +77,10 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 
 	id := uuid.NewString()
 	slog.Debug("received your message, handling")
-	if err := s.seq.Save(&message.Message{
-		ID:             id,
-		ProjectID:      req.ProjectID,
-		ProjectVersion: req.ProjectVersion,
-		Data:           req.Data,
+	if err := s.seq.Save(&proto.Message{
+		MessageID: id,
+		ProjectID: req.ProjectID,
+		Data:      req.Data,
 	}); err != nil {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return

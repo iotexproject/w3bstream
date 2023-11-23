@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"sync"
 
-	"github.com/machinefi/sprout/message"
+	"github.com/machinefi/sprout/proto"
 )
 
 type Cache struct {
@@ -14,12 +14,12 @@ type Cache struct {
 	limit   int
 }
 
-func (c *Cache) Add(m *message.Message) {
+func (c *Cache) Add(m *proto.Message) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	ctx := newTaskContext(m)
-	c.records[m.ID] = ctx
+	c.records[m.MessageID] = ctx
 	c.list.PushBack(ctx)
 	if c.list.Len() > c.limit {
 		c.cleanup()
@@ -31,7 +31,7 @@ func (c *Cache) cleanup() {
 		elem := c.list.Front()
 		c.list.Remove(elem)
 		m := elem.Value.(*TaskContext)
-		delete(c.records, m.ID)
+		delete(c.records, m.MessageID)
 	}
 }
 
@@ -89,7 +89,7 @@ func init() {
 	}
 }
 
-func New(m *message.Message) {
+func New(m *proto.Message) {
 	defaultTasksCache.Add(m)
 }
 
