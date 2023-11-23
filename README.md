@@ -60,7 +60,7 @@ Ensure you have the following installed:
 
 3. Install the node command line client `wsctl`:
     ```bash
-    curl https://raw.githubusercontent.com/machinefi/sprout/main/scripts/install_wsctl.sh | bash
+    curl https://raw.githubusercontent.com/machinefi/sprout/release/scripts/install_wsctl.sh | bash
     ```
 
 
