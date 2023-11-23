@@ -6,49 +6,32 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-
-	"github.com/machinefi/sprout/enums"
 )
 
-func init() {
-	initStdLogger()
-	initEnvConfigBind()
-	LogAllSettings()
-	initDatabaseMigrating()
-}
-
-func initStdLogger() {
+func initLogger() {
 	var programLevel = slog.LevelDebug
 	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: programLevel})
 	slog.SetDefault(slog.New(h))
 }
 
-func initEnvConfigBind() {
-	viper.MustBindEnv(enums.EnvKeyServiceEndpoint)
-	viper.MustBindEnv(enums.EnvKeySequencerServerEndpoint)
-	viper.MustBindEnv(enums.EnvKeyRisc0ServerEndpoint)
-	viper.MustBindEnv(enums.EnvKeyHalo2ServerEndpoint)
-	viper.MustBindEnv(enums.EnvKeyProjectFileDirectory)
-	viper.MustBindEnv(enums.EnvKeyChainEndpoint)
-	viper.MustBindEnv(enums.EnvKeyProjectContractAddress)
-	viper.MustBindEnv(enums.EnvKeyDatabaseDSN)
-	viper.MustBindEnv(enums.EnvKeyProjectID)
+func bindEnvConfig() {
+	viper.MustBindEnv(ServiceEndpoint)
+	viper.MustBindEnv(SequencerServerEndpoint)
+	viper.MustBindEnv(Risc0ServerEndpoint)
+	viper.MustBindEnv(Halo2ServerEndpoint)
+	viper.MustBindEnv(ProjectFileDirectory)
+	viper.MustBindEnv(ChainEndpoint)
+	viper.MustBindEnv(ProjectContractAddress)
+	viper.MustBindEnv(DatabaseDSN)
+	viper.MustBindEnv(ProjectID)
 
-	viper.BindEnv(enums.EnvKeyOperatorPrivateKey)
+	viper.BindEnv(OperatorPrivateKey)
 }
 
-func LogAllSettings() {
-	settings := viper.AllSettings()
-	slog.Debug("--------------")
-	for key, value := range settings {
-		slog.Debug("SETTING:", key, value)
-	}
-	slog.Debug("--------------")
-}
-
-func initDatabaseMigrating() {
-	// TODO use https://github.com/golang-migrate/migrate
+// TODO it's risc0 depend tables, will move to risc0
+func migrateDatabase() error {
 	var schema = `
 	CREATE TABLE IF NOT EXISTS vms (
 		id SERIAL PRIMARY KEY,
@@ -70,15 +53,14 @@ func initDatabaseMigrating() {
 		create_at TIMESTAMP NOT NULL DEFAULT now()
 	  );`
 
-	dsn := viper.GetString(enums.EnvKeyDatabaseDSN)
+	dsn := viper.GetString(DatabaseDSN)
 	slog.Debug("connecting database", "dsn", dsn)
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
-		slog.Error("connecting database: ", err)
-		panic(err)
+		return errors.Wrap(err, "connect db failed")
 	}
 	if _, err = db.Exec(schema); err != nil {
-		slog.Error("migrating database: ", err)
-		panic(err)
+		return errors.Wrap(err, "migrate db failed")
 	}
+	return nil
 }
