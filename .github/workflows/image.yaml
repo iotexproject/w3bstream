@@ -58,7 +58,7 @@ jobs:
 
 
       - name: Build and push Docker image sequencer
-        id: build-and-push
+        id: build-and-push-sequencer
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -69,7 +69,7 @@ jobs:
           
 
       - name: Build and push Docker image node
-        id: build-and-push
+        id: build-and-push-node
         uses: docker/build-push-action@v4
         with:
           context: .
