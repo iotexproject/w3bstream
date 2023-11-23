@@ -4,11 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
-	msghandler "github.com/machinefi/sprout/message/handler"
+	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/vm"
 )
 
-func NewServer(ep string, mh *msghandler.Handler) *Server {
+func NewServer(ep string, mh *message.Handler) *Server {
 	s := &Server{
 		endpoint:   ep,
 		engine:     gin.Default(),
@@ -22,7 +22,7 @@ func NewServer(ep string, mh *msghandler.Handler) *Server {
 type Server struct {
 	engine     *gin.Engine
 	endpoint   string
-	msgHandler *msghandler.Handler
+	msgHandler *message.Handler
 	vmHandler  *vm.Handler
 }
 

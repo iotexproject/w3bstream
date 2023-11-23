@@ -1,10 +1,12 @@
 package mq
 
-import "github.com/machinefi/sprout/message"
+import (
+	"github.com/machinefi/sprout/proto"
+)
 
 type MQ interface {
-	Enqueue(*message.Message) error
-	Dequeue() (*message.Message, error)
+	Enqueue(*proto.Message) error
+	Dequeue() (*proto.Message, error)
 	// will block caller
-	Watch(func(*message.Message))
+	Watch(func(*proto.Message))
 }

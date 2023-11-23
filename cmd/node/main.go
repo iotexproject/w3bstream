@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/machinefi/sprout/cmd/node/apis"
-	"github.com/machinefi/sprout/message/handler"
+	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/vm"
 )
@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msgHandler, err := handler.New(
+	msgHandler, err := message.NewHandler(
 		vmHandler,
 		projectManager,
 		viper.GetString(ChainEndpoint),
