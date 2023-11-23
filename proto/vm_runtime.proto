@@ -1,0 +1,26 @@
+syntax = "proto3";
+package vm_runtime;
+option go_package = "./proto";
+
+service VmRuntime {
+    rpc Create(CreateRequest) returns (CreateResponse);
+    rpc ExecuteOperator(ExecuteRequest) returns (ExecuteResponse);
+}
+
+message CreateRequest {
+    uint64 projectID = 1;
+    string content = 2;
+    string expParam = 3;
+}
+
+message CreateResponse {
+}
+
+message ExecuteRequest {
+    uint64 projectID = 1;
+    repeated string datas = 2;
+}
+
+message ExecuteResponse {
+    bytes result = 1;
+}
