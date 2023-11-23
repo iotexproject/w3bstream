@@ -20,7 +20,7 @@ import (
 
 type Handler struct {
 	mq                 mq.MQ
-	vmHandler          *vm.Handler
+	vmProcessor        *vm.Processor
 	projectManager     *project.Manager
 	chainEndpoint      string
 	operatorPrivateKey string
@@ -28,7 +28,7 @@ type Handler struct {
 	projectID          uint64
 }
 
-func NewHandler(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, sequencerEndpoint, operatorPrivateKey string, projectID uint64) (*Handler, error) {
+func NewHandler(vmProcessor *vm.Processor, projectManager *project.Manager, chainEndpoint, sequencerEndpoint, operatorPrivateKey string, projectID uint64) (*Handler, error) {
 	conn, err := grpc.Dial(sequencerEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial sequencer server")
@@ -37,7 +37,7 @@ func NewHandler(vmHandler *vm.Handler, projectManager *project.Manager, chainEnd
 	q := gochan.New()
 	h := &Handler{
 		mq:                 q,
-		vmHandler:          vmHandler,
+		vmProcessor:        vmProcessor,
 		chainEndpoint:      chainEndpoint,
 		operatorPrivateKey: operatorPrivateKey,
 		projectManager:     projectManager,
@@ -82,7 +82,7 @@ func (r *Handler) asyncHandle(m *proto.Message) {
 	}
 
 	tasks.OnSubmitProving(m.MessageID)
-	res, err := r.vmHandler.Handle(m, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
+	res, err := r.vmProcessor.Process(m, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed:", "error", err)
 		tasks.OnFailed(m.MessageID, err)
