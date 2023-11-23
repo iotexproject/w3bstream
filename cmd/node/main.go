@@ -27,12 +27,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msgHandler := handler.New(
+	msgHandler, err := handler.New(
 		vmHandler,
 		projectManager,
 		viper.GetString(enums.EnvKeyChainEndpoint),
+		viper.GetString(enums.EnvKeySequencerServerEndpoint),
 		viper.GetString(enums.EnvKeyOperatorPrivateKey),
+		viper.GetUint64(enums.EnvKeyProjectID),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	go func() {
 		if err := apis.NewServer(viper.GetString(enums.EnvKeyServiceEndpoint), msgHandler).Run(); err != nil {
