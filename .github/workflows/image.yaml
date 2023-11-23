@@ -2,11 +2,14 @@ name: build_image
 
 on:
   push:
+    branches: ["release"]
     tags: ["v*.*.*"]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  SEQUENCER_IMAGE_NAME: machinefi/sequencer
+  NODE_IMAGE_NAME: machinefi/node
 
 jobs:
   build_docker_image:
@@ -53,14 +56,24 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build and push Docker image
+
+      - name: Build and push Docker image sequencer
         id: build-and-push
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile
+          file: ./sequencer.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY }}/${{ env.SEQUENCER_IMAGE_NAME }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          
+
+      - name: Build and push Docker image node
+        id: build-and-push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./node.Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ env.NODE_IMAGE_NAME }}
+          labels: ${{ steps.meta.outputs.labels }}
