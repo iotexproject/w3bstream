@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	vmProcessor := vm.NewProcessor(
+	vmHandler := vm.NewHandler(
 		map[vm.Type]string{
 			vm.Risc0: viper.GetString(Risc0ServerEndpoint),
 			vm.Halo2: viper.GetString(Halo2ServerEndpoint),
@@ -31,13 +31,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msgHandler, err := message.NewHandler(vmProcessor, projectManager, viper.GetString(ChainEndpoint), viper.GetString(SequencerServerEndpoint),
+	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(SequencerServerEndpoint),
 		viper.GetString(OperatorPrivateKey), viper.GetUint64(ProjectID))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	go msgHandler.Run()
+	go msgProcessor.Run()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)

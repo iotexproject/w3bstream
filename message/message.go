@@ -16,8 +16,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type Handler struct {
-	vmProcessor        *vm.Processor
+type Processor struct {
+	vmHandler          *vm.Handler
 	projectManager     *project.Manager
 	chainEndpoint      string
 	operatorPrivateKey string
@@ -25,14 +25,14 @@ type Handler struct {
 	projectID          uint64
 }
 
-func NewHandler(vmProcessor *vm.Processor, projectManager *project.Manager, chainEndpoint, sequencerEndpoint, operatorPrivateKey string, projectID uint64) (*Handler, error) {
+func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, sequencerEndpoint, operatorPrivateKey string, projectID uint64) (*Processor, error) {
 	conn, err := grpc.Dial(sequencerEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial sequencer server")
 	}
 
-	h := &Handler{
-		vmProcessor:        vmProcessor,
+	h := &Processor{
+		vmHandler:          vmHandler,
 		chainEndpoint:      chainEndpoint,
 		operatorPrivateKey: operatorPrivateKey,
 		projectManager:     projectManager,
@@ -43,7 +43,7 @@ func NewHandler(vmProcessor *vm.Processor, projectManager *project.Manager, chai
 }
 
 // TODO support batch message fetch & fetch frequency define
-func (r *Handler) Run() {
+func (r *Processor) Run() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
@@ -53,12 +53,12 @@ func (r *Handler) Run() {
 			slog.Error("fetch message from sequencer failed", "error", err)
 		}
 		if len(m.Messages) != 0 {
-			r.handle(m.Messages[0])
+			r.process(m.Messages[0])
 		}
 	}
 }
 
-func (r *Handler) handle(m *proto.Message) {
+func (r *Processor) process(m *proto.Message) {
 	slog.Debug("message popped", "message_id", m.MessageID)
 
 	project, err := r.projectManager.Get(m.ProjectID)
@@ -69,7 +69,7 @@ func (r *Handler) handle(m *proto.Message) {
 	}
 
 	r.reportSuccess([]string{m.MessageID}, proto.MessageState_PROVING, "")
-	res, err := r.vmProcessor.Process(m, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
+	res, err := r.vmHandler.Handle(m, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed", "error", err)
 		r.reportFail([]string{m.MessageID}, err)
@@ -105,7 +105,7 @@ func (r *Handler) handle(m *proto.Message) {
 	slog.Debug("transaction hash", "tx_hash", txHash)
 }
 
-func (r *Handler) reportFail(messageIDs []string, err error) {
+func (r *Processor) reportFail(messageIDs []string, err error) {
 	if _, err := r.sequencerClient.Report(context.Background(), &proto.ReportRequest{
 		MessageIDs: messageIDs,
 		State:      proto.MessageState_FAILED,
@@ -115,7 +115,7 @@ func (r *Handler) reportFail(messageIDs []string, err error) {
 	}
 }
 
-func (r *Handler) reportSuccess(messageIDs []string, state proto.MessageState, comment string) {
+func (r *Processor) reportSuccess(messageIDs []string, state proto.MessageState, comment string) {
 	if _, err := r.sequencerClient.Report(context.Background(), &proto.ReportRequest{
 		MessageIDs: messageIDs,
 		State:      state,

@@ -11,12 +11,12 @@ import (
 	"github.com/machinefi/sprout/vm/server"
 )
 
-type Processor struct {
+type Handler struct {
 	endpoints   map[Type]string
 	instanceMgr *server.Mgr
 }
 
-func (r *Processor) Process(msg *proto.Message, vmtype Type, code string, expParam string) ([]byte, error) {
+func (r *Handler) Handle(msg *proto.Message, vmtype Type, code string, expParam string) ([]byte, error) {
 	endpoint, ok := r.endpoints[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
@@ -36,8 +36,8 @@ func (r *Processor) Process(msg *proto.Message, vmtype Type, code string, expPar
 	return res, nil
 }
 
-func NewProcessor(endpoints map[Type]string) *Processor {
-	return &Processor{
+func NewHandler(endpoints map[Type]string) *Handler {
+	return &Handler{
 		endpoints:   endpoints,
 		instanceMgr: server.NewMgr(),
 	}
