@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/machinefi/sprout/proto"
 	"github.com/machinefi/sprout/sequencer"
@@ -31,7 +32,7 @@ func (s *GrpcServer) Run(endpoint string) error {
 		return errors.Wrapf(err, "listen %s failed", endpoint)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 	proto.RegisterSequencerServer(grpcServer, s)
 
 	if err := grpcServer.Serve(listen); err != nil {
@@ -46,8 +47,12 @@ func (s *GrpcServer) Fetch(ctx context.Context, req *proto.FetchRequest) (*proto
 		slog.Error("sequencer fetch failed", "error", err)
 		return nil, err
 	}
+	ms := []*proto.Message{}
+	if m != nil {
+		ms = append(ms, m)
+	}
 	return &proto.FetchResponse{
-		Messages: []*proto.Message{m},
+		Messages: ms,
 	}, nil
 }
 

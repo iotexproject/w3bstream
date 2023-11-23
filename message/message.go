@@ -63,6 +63,7 @@ func (r *Processor) Run() {
 func (r *Processor) process(ms []*proto.Message) {
 	mids := r.getMessageIDs(ms)
 	slog.Debug("message popped", "message_ids", mids)
+	r.reportSuccess(mids, proto.MessageState_FETCHED, "")
 
 	project, err := r.projectManager.Get(ms[0].ProjectID)
 	if err != nil {
