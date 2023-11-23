@@ -1,7 +1,6 @@
 package sequencer
 
 import (
-	"github.com/machinefi/sprout/enums"
 	"github.com/machinefi/sprout/proto"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
@@ -20,7 +19,7 @@ func (s *Sequencer) Save(msg *proto.Message) error {
 	}
 	l := MessageStateLog{
 		MessageID: msg.MessageID,
-		State:     proto.MessageState_MESSAGE_STATE_RECEIVED,
+		State:     proto.MessageState_RECEIVED,
 	}
 
 	return s.db.Transaction(func(tx *gorm.DB) error {
@@ -37,7 +36,7 @@ func (s *Sequencer) Save(msg *proto.Message) error {
 
 func (s *Sequencer) Fetch(projectID uint64) (*proto.Message, error) {
 	m := Message{}
-	result := s.db.Where("project_id = ? AND state = ?", projectID, enums.MessageReceived).First(&m)
+	result := s.db.Where("project_id = ? AND state = ?", projectID, proto.MessageState_RECEIVED).First(&m)
 	if result.Error != nil {
 		return nil, errors.Wrapf(result.Error, "query message failed, projectID %d", projectID)
 	}
