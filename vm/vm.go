@@ -12,33 +12,36 @@ import (
 )
 
 type Handler struct {
-	endpoints   map[Type]string
-	instanceMgr *server.Mgr
+	vmServerEndpoints map[Type]string
+	instanceMgr       *server.Mgr
 }
 
-func (r *Handler) Handle(msg *proto.Message, vmtype Type, code string, expParam string) ([]byte, error) {
-	endpoint, ok := r.endpoints[vmtype]
+func (r *Handler) Handle(msgs []*proto.Message, vmtype Type, code string, expParam string) ([]byte, error) {
+	if len(msgs) == 0 {
+		return nil, errors.New("missing messages")
+	}
+	endpoint, ok := r.vmServerEndpoints[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
 	}
 
-	ins, err := r.instanceMgr.Acquire(msg, endpoint, code, expParam)
+	ins, err := r.instanceMgr.Acquire(msgs[0].ProjectID, endpoint, code, expParam)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
 	slog.Debug(fmt.Sprintf("acquire %s instance success", vmtype))
-	defer r.instanceMgr.Release(msg.ProjectID, ins)
+	defer r.instanceMgr.Release(msgs[0].ProjectID, ins)
 
-	res, err := ins.Execute(context.Background(), msg)
+	res, err := ins.Execute(context.Background(), msgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute instance")
 	}
 	return res, nil
 }
 
-func NewHandler(endpoints map[Type]string) *Handler {
+func NewHandler(vmServerEndpoints map[Type]string) *Handler {
 	return &Handler{
-		endpoints:   endpoints,
-		instanceMgr: server.NewMgr(),
+		vmServerEndpoints: vmServerEndpoints,
+		instanceMgr:       server.NewMgr(),
 	}
 }

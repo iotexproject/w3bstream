@@ -12,7 +12,7 @@ import (
 
 type Instance struct {
 	conn *grpc.ClientConn
-	resp *CreateResponse
+	resp *proto.CreateResponse
 }
 
 func NewInstance(ctx context.Context, endpoint string, projectID uint64, executeBinary string, expParam string) (*Instance, error) {
@@ -20,9 +20,9 @@ func NewInstance(ctx context.Context, endpoint string, projectID uint64, execute
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial vm server")
 	}
-	cli := NewVmRuntimeClient(conn)
+	cli := proto.NewVmRuntimeClient(conn)
 
-	req := &CreateRequest{
+	req := &proto.CreateRequest{
 		ProjectID: projectID,
 		Content:   executeBinary,
 		ExpParam:  expParam,
@@ -34,12 +34,16 @@ func NewInstance(ctx context.Context, endpoint string, projectID uint64, execute
 	return &Instance{conn: conn, resp: resp}, nil
 }
 
-func (i *Instance) Execute(ctx context.Context, msg *proto.Message) ([]byte, error) {
-	req := &ExecuteRequest{
-		ProjectID: msg.ProjectID,
-		Param:     msg.Data,
+func (i *Instance) Execute(ctx context.Context, msgs []*proto.Message) ([]byte, error) {
+	datas := []string{}
+	for _, m := range msgs {
+		datas = append(datas, m.Data)
 	}
-	cli := NewVmRuntimeClient(i.conn)
+	req := &proto.ExecuteRequest{
+		ProjectID: msgs[0].ProjectID,
+		Datas:     datas,
+	}
+	cli := proto.NewVmRuntimeClient(i.conn)
 	resp, err := cli.ExecuteOperator(ctx, req)
 	if err != nil {
 		slog.Debug("request", "body", req)
