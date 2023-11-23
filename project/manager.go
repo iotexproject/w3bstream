@@ -114,3 +114,15 @@ func (m *Manager) Get(projectID uint64) (*Project, error) {
 	m.pool[projectID] = &np
 	return &np, nil
 }
+
+// TODO will delete when node konw how to fetch message
+func (m *Manager) GetAllProjectID() []uint64 {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	ids := []uint64{}
+	for id := range m.pool {
+		ids = append(ids, id)
+	}
+	return ids
+}

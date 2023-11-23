@@ -17,7 +17,6 @@ func initLogger() {
 }
 
 func bindEnvConfig() {
-	viper.MustBindEnv(ServiceEndpoint)
 	viper.MustBindEnv(SequencerServerEndpoint)
 	viper.MustBindEnv(Risc0ServerEndpoint)
 	viper.MustBindEnv(Halo2ServerEndpoint)
@@ -25,7 +24,6 @@ func bindEnvConfig() {
 	viper.MustBindEnv(ChainEndpoint)
 	viper.MustBindEnv(ProjectContractAddress)
 	viper.MustBindEnv(DatabaseDSN)
-	viper.MustBindEnv(ProjectID)
 
 	viper.BindEnv(OperatorPrivateKey)
 }

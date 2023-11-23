@@ -26,7 +26,6 @@ services:
     platform: linux/x86_64
     restart: always
     environment:
-      ENDPOINT: ":9002"
       RISC0_SERVER_ENDPOINT: "risc0:4001"
       HALO2_SERVER_ENDPOINT: "halo2:4001"
       SEQUENCER_SERVER_ENDPOINT: "w3bsequencer:9001"

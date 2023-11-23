@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v4.25.0
-// source: server.proto
+// source: vm_runtime.proto
 
-package server
+package proto
 
 import (
 	context "context"
@@ -142,5 +142,5 @@ var VmRuntime_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "server.proto",
+	Metadata: "vm_runtime.proto",
 }
