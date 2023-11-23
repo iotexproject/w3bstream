@@ -23,7 +23,7 @@ type Server struct {
 	engine     *gin.Engine
 	endpoint   string
 	msgHandler *message.Handler
-	vmHandler  *vm.Handler
+	vmHandler  *vm.Processor
 }
 
 // this func will block caller

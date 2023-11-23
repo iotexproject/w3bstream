@@ -21,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	vmHandler := vm.NewHandler(
+	vmProcessor := vm.NewProcessor(
 		map[vm.Type]string{
 			vm.Risc0: viper.GetString(Risc0ServerEndpoint),
 			vm.Halo2: viper.GetString(Halo2ServerEndpoint),
@@ -33,7 +33,7 @@ func main() {
 	}
 
 	msgHandler, err := message.NewHandler(
-		vmHandler,
+		vmProcessor,
 		projectManager,
 		viper.GetString(ChainEndpoint),
 		viper.GetString(SequencerServerEndpoint),
