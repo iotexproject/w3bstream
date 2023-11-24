@@ -181,7 +181,7 @@ Or you can run `wsctl code convert -t "risc0" -i "methods.rs" -o "path/filename.
 
 ### Send testing data to the server
 
-znode projects are currently placed inside the folder `test/data`. Each project file is composed of a JSON object definition that includes a unique ID for the project, the binary code of the proover, and other parameters.
+znode projects are currently placed inside the folder `test/project`. Each project file name is a unique ID for the project. And each project file is composed of a JSON object definition that includes the binary code of the proover, vm type, and other parameters.
 
 The following example sends a message to an example project deployed on the node that makes use of a RISC0 prover, which has project ID 10000:
 
@@ -195,17 +195,23 @@ The following example sends a message to an example project deployed on the node
 wsctl message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
+The following example sends a message to an example project deployed on the node that makes use of a Zkwasm prover, which has project ID 10002:
+
+```bash
+wsctl message send --project-id 10002 --project-version "0.1" --data "{\"private_a\": 1, \"private_b\": 1}"
+```
+
 ### Retrieve ZKP
 
-After znode received the message, the id of the zk proof task will return, like below:
+After znode received the message, a message id will return, like below:
 
 ```json
 {
-  "taskID": "4abbc43a-798f-49e8-bc05-b6baeafec630"
+  "messageID": "4abbc43a-798f-49e8-bc05-b6baeafec630"
 }
 ```
 
-The following example queries the task status:
+The following example queries the message status:
 
 ```shell
 wsctl message query --message-id "4abbc43a-798f-49e8-bc05-b6baeafec630"
@@ -215,17 +221,32 @@ the query result like below:
 
 ```json
 {
-  "id": "4abbc43a-798f-49e8-bc05-b6baeafec630",
-  "projectID": 10001,
-  "projectVersion": "0.1",
-  "data": "{\"private_a\": 3, \"private_b\": 4}",
-  "status": 3,
-  "receivedAt": "2023-11-20T15:55:44.985587+08:00",
-  "submitProvingAt": "2023-11-20T15:55:44.985695+08:00",
-  "proofResult": "{\n\"proof\": \"...\",\n\"calldata\": \"...\"\n}",
-  "SubmitToBlockchainAt": "2023-11-20T15:55:47.010452+08:00",
-  "succeed": true,
-  "errorMessage": ""
+	"messageID": "4abbc43a-798f-49e8-bc05-b6baeafec630",
+	"states": [{
+		"state": "RECEIVED",
+		"time": "2023-11-24T03:41:16.946333Z",
+		"description": ""
+	}, {
+		"state": "FETCHED",
+		"time": "2023-11-24T03:41:19.579558Z",
+		"description": ""
+	}, {
+		"state": "PROVING",
+		"time": "2023-11-24T03:41:19.59012Z",
+		"description": ""
+	}, {
+		"state": "PROVED",
+		"time": "2023-11-24T03:42:23.346377Z",
+		"description": "your proof data"
+	}, {
+		"state": "OUTPUTTING",
+		"time": "2023-11-24T03:42:23.357991Z",
+		"description": "writing proof to chain"
+	}, {
+		"state": "OUTPUTTED",
+		"time": "2023-11-24T03:42:26.013841Z",
+		"description": "your transaction hash"
+	}]
 }
 ```
 
