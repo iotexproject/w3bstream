@@ -56,6 +56,7 @@ There are many ways to contribute to this project:
     
     export PROJECT_FILE_DIRECTORY=./test/data
     export DATABASE_URL=postgres://test_user:test_passwd@0.0.0.0:5432/test?sslmode=disable
+    export ZKWASM_SERVER_ENDPOINT=localhost:4003
     export HALO2_SERVER_ENDPOINT=localhost:4002
     export RISC0_SERVER_ENDPOINT=localhost:4001
     export SEQUENCER_SERVER_ENDPOINT=localhost:9001
