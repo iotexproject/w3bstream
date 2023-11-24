@@ -33,9 +33,9 @@ type handleMessageResp struct {
 }
 
 type stateLog struct {
-	State       string    `json:"state"`
-	Time        time.Time `json:"time"`
-	Description string    `json:"description"`
+	State   string    `json:"state"`
+	Time    time.Time `json:"time"`
+	Comment string    `json:"comment"`
 }
 
 type queryMessageStateLogResp struct {
@@ -102,9 +102,9 @@ func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 	ss := []*stateLog{}
 	for _, l := range ls {
 		ss = append(ss, &stateLog{
-			State:       l.State.String(),
-			Time:        l.CreatedAt,
-			Description: l.Comment,
+			State:   l.State.String(),
+			Time:    l.CreatedAt,
+			Comment: l.Comment,
 		})
 	}
 
