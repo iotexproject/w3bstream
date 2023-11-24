@@ -9,6 +9,14 @@ services:
     ports:
       - 4002:4001
 
+  zkwasm:
+    image: iotexdev/zkwasmserver:v0.0.1
+    container_name: zkwasm-service
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - 4003:4001
+
   risc0:
     image: iotexdev/risc0server:v0.8.1.rc4
     depends_on:

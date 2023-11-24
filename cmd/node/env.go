@@ -9,4 +9,5 @@ const (
 	ProjectFileDirectory    = "PROJECT_FILE_DIRECTORY"
 	Risc0ServerEndpoint     = "RISC0_SERVER_ENDPOINT"
 	SequencerServerEndpoint = "SEQUENCER_SERVER_ENDPOINT"
+	ZkwasmServerEndpoint    = "ZKWASM_SERVER_ENDPOINT"
 )
