@@ -17,7 +17,9 @@ use serde_json::Value as JsonValue;
 pub fn prove(input: &str) -> std::string::String {
 
     // TODO parse input json, like {"private_a": 3, "private_b": 4}
-    let v: JsonValue = serde_json::from_str(&input).unwrap();
+    let input_v: JsonValue = serde_json::from_str(&input).unwrap();
+    let item_str = &input_v.as_array().unwrap()[0].as_str().unwrap();
+    let v: JsonValue = serde_json::from_str(item_str).unwrap();
     let private_a = Fr::from(v["private_a"].as_u64().unwrap());
     let private_b = Fr::from(v["private_b"].as_u64().unwrap());
 
