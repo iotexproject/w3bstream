@@ -27,10 +27,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-
-      # - name: Set up QEMU
-      #   if: startsWith(matrix.os, 'macos-latest') != true
-      #   uses: docker/setup-qemu-action@v2
         
       - name: Setup Docker and Colima
         if: startsWith(matrix.os, 'macos-latest') == true
@@ -50,12 +46,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Docker metadata
-        id: meta
+        id: meta-sequencer
         uses: docker/metadata-action@v4
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.SEQUENCER_IMAGE_NAME }}
-            ${{ env.REGISTRY }}/${{ env.NODE_IMAGE_NAME }}
 
 
       - name: Build and push Docker image sequencer
@@ -66,9 +61,16 @@ jobs:
           context: .
           file: ./sequencer.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.SEQUENCER_IMAGE_NAME }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-sequencer.outputs.tags }}
+          labels: ${{ steps.meta-sequencer.outputs.labels }}
           
+
+      - name: Extract Docker metadata
+        id: meta-node
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.NODE_IMAGE_NAME }}
 
       - name: Build and push Docker image node
         id: build-and-push-node
@@ -78,5 +80,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: ./node.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.NODE_IMAGE_NAME }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-node.outputs.tags }}
+          labels: ${{ steps.meta-node.outputs.labels }}
