@@ -195,7 +195,7 @@ The following example sends a message to an example project deployed on the node
 wsctl message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
-The following example sends a message to an example project deployed on the node that makes use of a Zkwasm prover, which has project ID 10002:
+The following example sends a message to an example project deployed on the node that makes use of a Zkwasm prover, which has project ID 10002, this may be slow and may take some time:
 
 ```bash
 wsctl message send --project-id 10002 --project-version "0.1" --data "{\"private_a\": 1, \"private_b\": 1}"
