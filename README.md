@@ -63,6 +63,11 @@ Ensure you have the following installed:
     curl https://raw.githubusercontent.com/machinefi/sprout/release/scripts/install_wsctl.sh | bash
     ```
 
+4. Install the all-in-one command line client `ioctl`
+
+```sh
+go install github.com/iotexproject/iotex-core/tools/ioctl@master
+```
 
 ### Configure the node
 
@@ -104,6 +109,20 @@ wsctl config set endpoint localhost:9000
 ```
 
 After that, you can use ```wsctl config get endpoint``` to make sure the config is effective.
+
+Or set up w3bstream endpoint use ioctl. (`ioctl` settings are located in `$HOME/.config/ioctl/default/config.default`)
+
+```sh
+ioctl config set wsEndpoint $(your w3bstream endpoint)
+```
+
+Review your `ioctl` settings 
+
+```sh
+ioctl config get all
+```
+
+And more information about `ioctl`, refer to [ioctl document](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
 
 ### Monitoring and management
 
@@ -248,6 +267,43 @@ the query result like below:
 		"description": "your transaction hash"
 	}]
 }
+```
+
+### Pub message and retrieve ZKP by `ioctl`
+
+```sh
+ioctl ws message send --project-id ${project id} --project-version ${project version} --data ${message content}
+ioctl ws message query --message-id ${message id}
+```
+
+### w3bstream project management
+
+You need deploy project register contract to **IOTX** before operating w3bstream projects.
+
+#### Create project
+
+```sh
+export PROJECT_REGISTER_CONTRACT_ADDR=
+export PROJECT_URI=
+export PROJECT_HASH=
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR create --project-uri $PROJECT_URI --project-hash $PROJECT_HASH ## the project id will be retrieved. 
+```
+
+#### Update project
+
+```sh
+export PROJECT_REGISTER_CONTRACT_ADDR=
+export PROJECT_URI=
+export PROJECT_HASH=
+export PROJECT_ID=
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR update --project-id $PROJECT_ID --project-uri $PROJECT_URI --project-hash $PROJECT_HASH
+```
+
+#### Query project
+
+```sh
+export PROJECT_ID=
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR query --project-id $PROJECT_ID
 ```
 
 ## Contributing
