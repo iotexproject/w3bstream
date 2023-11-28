@@ -32,3 +32,5 @@ Template for previous version
 ### Fixed
 - Add bug fix here
 
+### Deprecated
+- Add deprecated or obselete features here
