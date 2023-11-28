@@ -2,7 +2,6 @@ package message
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -105,7 +104,7 @@ func (r *Processor) process(ms []*proto.Message) {
 		r.reportFail(mids, err)
 		return
 	}
-	r.reportSuccess(mids, proto.MessageState_OUTPUTTED, fmt.Sprintf("transaction hash is %s", txHash))
+	r.reportSuccess(mids, proto.MessageState_OUTPUTTED, txHash)
 	slog.Debug("transaction hash", "tx_hash", txHash)
 }
 
