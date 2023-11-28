@@ -44,7 +44,7 @@ wsctl message send --project-id 10000 --project-version "0.1" --data "{\"private
 ```
 
 The following example sends a message to an example project deployed on the node that makes use of a Halo2 prover, which has project ID 10001:
-Project `10001` is an example from Halo2 circuit, which can prove the product of two integers, `private_a` and `private_b`, multiplied by a constant of 4.
+Project `10001` is an example of Halo2 circuit, which can prove the product of two integers, `private_a` and `private_b`, multiplied by a constant of 4.
 
 ```bash
 wsctl message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
