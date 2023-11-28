@@ -73,7 +73,7 @@ go install github.com/iotexproject/iotex-core/tools/ioctl@master
 
 > **_NOTE:_**
 >
-> - RISC Zero is currently the only supported zkVM.
+> - The zkVM currently supports RISC Zero, Halo2 and zkWasm.
 > - EVM chains are currently the only supported target for proofs.
 
 #### Set your blockchain account
@@ -195,8 +195,8 @@ This command will generate a file named `risc0-config.json` in the current folde
 Or you can run `wsctl code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}`
 
 > **_NOTE:_**
-> in test model, move `halo2-config.json` to `test/data, and then rename `halo2-config.json` to `10001`(`10001` is project id).
-> in test model, move `risc0-config.json` to `test/data, and then rename `risc0-config.json` to `10000`(`10000` is project id).
+> in test model, move `halo2-config.json` to `test/project, and then rename `halo2-config.json` to `10001`(`10001` is project id) and restart images.
+> in test model, move `risc0-config.json` to `test/project, and then rename `risc0-config.json` to `10000`(`10000` is project id) and restart images.
 
 ### Send testing data to the server
 
