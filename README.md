@@ -37,21 +37,24 @@ curl https://raw.githubusercontent.com/machinefi/sprout/release/scripts/install_
 ### Send testing data to znode
 
 The following example sends a message to an example project deployed on the node that makes use of a RISC0 prover, which has project ID 10000:
+Project `10000` is an example of a Risc0 circuit, which can prove that an integer `private_input` is within an interval `public_input`.
 
 ```bash
 wsctl message send --project-id 10000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
 The following example sends a message to an example project deployed on the node that makes use of a Halo2 prover, which has project ID 10001:
+Project `10001` is an example of Halo2 circuit, which can prove the product of two integers, `private_a` and `private_b`, multiplied by a constant of 4.
 
 ```bash
 wsctl message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
 The following example sends a message to an example project deployed on the node that makes use of a Zkwasm prover, which has project ID 10002, this may be slow and may take some time:
+Project `10003` is an example of zkWasm circuit, which can prove that two integers 'private_input' are equal.
 
 ```bash
-wsctl message send --project-id 10002 --project-version "0.1" --data "{\"private_a\": 1, \"private_b\": 1}"
+wsctl message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
 ```
 
 ### Retrieve ZKP

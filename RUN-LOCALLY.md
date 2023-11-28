@@ -62,6 +62,18 @@ warning: methods_path is: "sprout/examples/risc0-circuits/target/release/build/r
 
 More details and options for `Risc0 circuit` are given in [its README](./examples/risc0-circuits/README.md).
 
+### Compile the customized zkWasm circuits
+
+1. Build
+
+```bash
+cd examples/zkwasm-circuits/
+asc src/add.ts -O --noAssert -o zkwasm_demo.wasm
+```
+
+More details and options for `zkWasm circuit` are given in [its README](./examples/zkwasm-circuits/README.md).
+
+
 ### Deploy Compiled circuit to W3bstream
 
 #### Deploy halo2 circuit to W3bstream
@@ -83,11 +95,24 @@ The values of `image_id` and `elf` are variable names, and will be found in the 
 This command will generate a file named `risc0-config.json` in the current folder.
 Or you can run `wsctl code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}`
 
+#### Deploy zkwasm circuit to W3bstream
+
+```bash
+wsctl code convert -t "zkwasm" -i "zkwasm_demo.wasm"
+```
+
+This command will generate a file named `zkwasm-config.json` in the current folder.
+Or you can run `wsctl code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/filename.json"`
+
+
 > **_NOTE:_**
 > move `risc0-config.json` to `test/project, and then rename `risc0-config.json` to `20000`(`20000` is project id).  
 
 > **_NOTE:_**
 > move `halo2-config.json` to `test/project, and then rename `halo2-config.json` to `20001`(`20001` is project id).
+
+> **_NOTE:_**
+> move `zkwasm-config.json` to `test/project, and then rename `zkwasm-config.json` to `20002`(`20002` is project id).
 
 ## Configure the node
 
