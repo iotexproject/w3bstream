@@ -30,9 +30,9 @@ Currently, all EVM blockchains are supported as the target for ZNode Proofs.
 ### Installation
 
 Install the node command line client `wsctl`:
-    ```bash
-    curl https://raw.githubusercontent.com/machinefi/sprout/release/scripts/install_wsctl.sh | bash
-    ```
+```bash
+curl https://raw.githubusercontent.com/machinefi/sprout/release/scripts/install_wsctl.sh | bash
+```
 
 ### Send testing data to znode
 
