@@ -3,9 +3,8 @@
 ## Welcome to the Zero-Node Protocol Repository
 
 - [Introduction](#-about-zero-node-protocol)
-- [Getting Started](#getting-started)
-- [Running the Node](#running-the-node)
-- [Sending data](#sending-data)
+- [Getting Started](#quickstart)
+- [Sending data](#send-testing-data-to-znode)
 - [Contributing](#contributing)
 - [Community & Support](#community-and-support)
 
@@ -27,7 +26,6 @@ DePIN project owners can utilize native Halo2 circuits to create custom provers.
 Currently, all EVM blockchains are supported as the target for ZNode Proofs.
 
 ## Quickstart
-
 
 ### Installation
 
