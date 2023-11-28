@@ -54,4 +54,4 @@ sudo mv wsctl /usr/local/bin/
 
 # Output the version of wsctl
 echo "wsctl installed successfully."
-/usr/local/bin/wsctl --version
+/usr/local/bin/wsctl version
