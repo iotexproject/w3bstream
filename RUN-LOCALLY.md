@@ -79,30 +79,30 @@ More details and options for `zkWasm circuit` are given in [its README](./exampl
 #### Deploy halo2 circuit to W3bstream
 
 ```bash
-wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm"
+ioctl ws code convert -t "halo2" -i "halo2_wasm_bg.wasm"
 ```
 
-This command will generate a file named `halo2-config.json` in the current folder. 
-Or you can run `wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/filename.json"`
+This command will generate a file named `halo2-config.json` in the current folder.
+Or you can run `ioctl ws code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/filename.json"`
 
 #### Deploy risc0 circuit to W3bstream
 
 ```bash
-wsctl code convert -t "risc0" -i "methods.rs"  -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
+ioctl ws code convert -t "risc0" -i "methods.rs"  -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
 ```
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs`.
 
 This command will generate a file named `risc0-config.json` in the current folder.
-Or you can run `wsctl code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}`
+Or you can run `ioctl ws code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}`
 
 #### Deploy zkwasm circuit to W3bstream
 
 ```bash
-wsctl code convert -t "zkwasm" -i "zkwasm_demo.wasm"
+ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm"
 ```
 
 This command will generate a file named `zkwasm-config.json` in the current folder.
-Or you can run `wsctl code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/filename.json"`
+Or you can run `ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/filename.json"`
 
 
 > **_NOTE:_**
@@ -140,15 +140,15 @@ Start the ZNode with the following command:
 cd sprout
 docker compose up -d
 ```
-### Configure wsctl
+### Configure ioctl
 
-Set up the `wsctl` endpoint to your running node (`wsctl`settings are located in `~/.w3bstream/config.yaml``)
+Set up the `ioctl` w3bstream endpoint to your running node (`ioctl` settings are located in `$HOME/.config/ioctl/default/config.default`)
 
 ```bash
-wsctl config set endpoint localhost:9000
+ioctl config set wsEndpoint 'localhost:9000'
 ```
 
-After that, you can use ```wsctl config get endpoint``` to make sure the config is effective.
+After that, you can use ```ioctl config get wsEndpoint``` to make sure the config is effective.
 
 ### Monitoring and management
 
@@ -171,5 +171,27 @@ znode projects are currently placed inside the folder `test/project`. Each proje
 The following example sends a message to an example project deployed on the node that makes use of a RISC0 prover, which has project ID 20000, please change the project ID to yours if necessary:
 
 ```bash
-wsctl message send --project-id 20000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+ioctl ws message send --project-id 20000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+```
+
+## w3bstream project management
+
+You need deploy project register contract to **IOTX** before operating w3bstream projects.
+
+### Create project
+
+```sh
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR create --project-uri $PROJECT_URI --project-hash $PROJECT_HASH ## the project id will be retrieved. 
+```
+
+### Update project
+
+```sh
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR update --project-id $PROJECT_ID --project-uri $PROJECT_URI --project-hash $PROJECT_HASH
+```
+
+### Query project
+
+```sh
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR query --project-id $PROJECT_ID
 ```
