@@ -29,10 +29,20 @@ Currently, all EVM blockchains are supported as the target for ZNode Proofs.
 
 ### Installation
 
-Install the node command line client `wsctl`:
+Install the node command line client `ioctl`:
+
 ```bash
-curl https://raw.githubusercontent.com/machinefi/sprout/release/scripts/install_wsctl.sh | bash
+brew tap iotexproject/ioctl-unstable
+brew install iotexproject/ioctl-unstable/ioctl-unstable
+alias ioctl=`which ioctl-unstable`
 ```
+
+> **_NOTE_**
+> `ioctl-unstable` is the latest command-line interface for interacting with IoTeX blockchain
+> 
+> We will soon release a stable version with full support for interacting with w3bstream node. (WIP)
+> 
+> For more, see [ioctl command line →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
 
 ### Send testing data to znode
 
@@ -40,21 +50,21 @@ The following example sends a message to an example project deployed on the node
 Project `10000` is an example of a Risc0 circuit, which can prove that an integer `private_input` is within an interval `public_input`.
 
 ```bash
-wsctl message send --project-id 10000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+ioctl ws message send --project-id 10000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
 The following example sends a message to an example project deployed on the node that makes use of a Halo2 prover, which has project ID 10001:
 Project `10001` is an example of Halo2 circuit, which can prove the product of two integers, `private_a` and `private_b`, multiplied by a constant of 4.
 
 ```bash
-wsctl message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
+ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
 The following example sends a message to an example project deployed on the node that makes use of a Zkwasm prover, which has project ID 10002, this may be slow and may take some time:
 Project `10003` is an example of zkWasm circuit, which can prove that two integers 'private_input' are equal.
 
 ```bash
-wsctl message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
+ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
 ```
 
 ### Retrieve ZKP
@@ -70,7 +80,7 @@ After znode received the message, a message id will return, like below:
 The following example queries the message status:
 
 ```shell
-wsctl message query --message-id "4abbc43a-798f-49e8-bc05-b6baeafec630"
+ioctl ws message query --message-id "4abbc43a-798f-49e8-bc05-b6baeafec630"
 ```
 
 the query result like below:
