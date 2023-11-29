@@ -9,13 +9,20 @@ import (
 	"github.com/machinefi/sprout/output/chain/solana"
 )
 
-// SolanaProgram is the solana program adapter
-type SolanaProgram struct {
-	endpoint       string
-	programID      string
-	secretKey      string
-	stateAccountPK string
-}
+type (
+	// SolanaProgram is the solana program adapter
+	SolanaProgram struct {
+		endpoint       string
+		programID      string
+		secretKey      string
+		stateAccountPK string
+	}
+
+	// SolanaProgramResult is the result of the solana program adapter
+	SolanaProgramResult struct {
+		TxHash string
+	}
+)
 
 // NewSolanaProgram returns a new solana program adapter
 func NewSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) *SolanaProgram {
@@ -28,18 +35,18 @@ func NewSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) *So
 }
 
 // Output outputs the proof to the ethereum contract
-func (e *SolanaProgram) Output(proof []byte) error {
+func (e *SolanaProgram) Output(proof []byte) (Result, error) {
 	// pack instructions
 	ins := e.packInstructions(proof)
 
 	// send tx
 	txHash, err := solana.SendTX(e.endpoint, e.secretKey, ins)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	slog.Debug("solana contract output", "txHash", txHash)
 
-	return nil
+	return &SolanaProgramResult{TxHash: txHash}, nil
 }
 
 // encodeData encodes the proof into the data field of the instruction

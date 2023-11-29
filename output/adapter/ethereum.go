@@ -33,13 +33,20 @@ const (
 ]`
 )
 
-// EthereumContract is the adapter for outputting proofs to an ethereum-compatible contract
-type EthereumContract struct {
-	chainEndpoint   string
-	contractAddress string
-	secretKey       string
-	contractABI     abi.ABI
-}
+type (
+	// EthereumContract is the adapter for outputting proofs to an ethereum-compatible contract
+	EthereumContract struct {
+		chainEndpoint   string
+		contractAddress string
+		secretKey       string
+		contractABI     abi.ABI
+	}
+
+	// EthereumContractResult is the result of the ethereum contract adapter
+	EthereumContractResult struct {
+		TxHash string
+	}
+)
 
 // NewEthereumContract returns a new ethereum contract adapter
 func NewEthereumContract(chainEndpoint, secretKey, contractAddress string) (*EthereumContract, error) {
@@ -56,19 +63,19 @@ func NewEthereumContract(chainEndpoint, secretKey, contractAddress string) (*Eth
 }
 
 // Output outputs the proof to the ethereum contract
-func (e *EthereumContract) Output(proof []byte) error {
+func (e *EthereumContract) Output(proof []byte) (Result, error) {
 	// pack contract data
 	data, err := e.contractABI.Pack(contractMethod, proof)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// send tx
 	txHash, err := eth.SendTX(context.Background(), e.chainEndpoint, e.secretKey, e.contractAddress, data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	slog.Debug("ethereum contract output", "txHash", txHash)
 
-	return nil
+	return &EthereumContractResult{TxHash: txHash}, nil
 }
