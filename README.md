@@ -117,7 +117,8 @@ the query result like below:
 ```
 
 ## Advancement
-- [build circuit and run znode locally](RUN-LOCALLY.md)
+- [build circuit](BUILD-CIRCUIT.md)
+- [run znode locally](RUN-LOCALLY.md)
 
 ## Contributing
 
