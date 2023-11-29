@@ -26,8 +26,10 @@ func bindEnvConfig() {
 	viper.MustBindEnv(DatabaseDSN)
 	viper.MustBindEnv(BootNodeMultiaddr)
 	viper.MustBindEnv(IotexChainID)
+	viper.MustBindEnv(ChainConfig)
 
 	viper.BindEnv(OperatorPrivateKey)
+	viper.BindEnv(OperatorPrivateKeyED25519)
 }
 
 // TODO it's risc0 depend tables, will move to risc0

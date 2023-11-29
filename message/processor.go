@@ -3,32 +3,35 @@ package message
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/machinefi/sprout/output/chain/eth"
+	"github.com/machinefi/sprout/output"
+	"github.com/machinefi/sprout/output/chain"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/test/contract"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
 
 type Processor struct {
-	vmHandler          *vm.Handler
-	projectManager     *project.Manager
-	chainEndpoint      string
-	operatorPrivateKey string
-	ps                 *p2p.PubSubs
+	vmHandler                 *vm.Handler
+	projectManager            *project.Manager
+	outputFactory             *output.Factory
+	operatorPrivateKeyECDSA   string
+	operatorPrivateKeyED25519 string
+	ps                        *p2p.PubSubs
 }
 
-func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey, bootNodeMultiaddr string, iotexChainID int) (*Processor, error) {
+func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, outputFactory *output.Factory, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr string, iotexChainID int) (*Processor, error) {
 	p := &Processor{
-		vmHandler:          vmHandler,
-		chainEndpoint:      chainEndpoint,
-		operatorPrivateKey: operatorPrivateKey,
-		projectManager:     projectManager,
+		vmHandler:                 vmHandler,
+		operatorPrivateKeyECDSA:   operatorPrivateKey,
+		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
+		projectManager:            projectManager,
+		outputFactory:             outputFactory,
 	}
 
 	ps, err := p2p.NewPubSubs(p.handleP2PData, bootNodeMultiaddr, iotexChainID)
@@ -95,31 +98,26 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	slog.Debug("proof result", "proof_result", string(res))
 	r.reportSuccess(mids, types.MessageStateProved, string(res), topic)
 
-	if r.operatorPrivateKey == "" {
-		info := "missing operator private key, will not write to chain"
-		slog.Debug(info)
-		r.reportSuccess(mids, types.MessageStateOutputted, info, topic)
-		return
-	}
-
-	data, err := contract.BuildData(res)
+	// output proof
+	outCfg := r.buildProjectOutputConfig(project.Config)
+	outputter, err := r.outputFactory.NewOutputter(outCfg)
 	if err != nil {
 		slog.Error(err.Error())
 		r.reportFail(mids, err, topic)
 		return
 	}
 
-	slog.Debug("writing proof to chain")
+	slog.Debug("output proof", "outputter", outputter)
 
-	r.reportSuccess(mids, types.MessageStateOutputting, "writing proof to chain", topic)
-	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0x6e30b42554DDA34bAFca9cB00Ec4B464f452a671", data)
+	r.reportSuccess(mids, types.MessageStateOutputting, "output proof", topic)
+	outRes, err := outputter.Output(res)
 	if err != nil {
 		slog.Error(err.Error())
 		r.reportFail(mids, err, topic)
 		return
 	}
-	r.reportSuccess(mids, types.MessageStateOutputted, txHash, topic)
-	slog.Debug("transaction hash", "tx_hash", txHash)
+	r.reportSuccess(mids, types.MessageStateOutputted, fmt.Sprintf("output result: %+v", outRes), topic)
+	slog.Debug("output success", "result", outRes)
 }
 
 func (r *Processor) reportFail(messageIDs []string, err error, topic *pubsub.Topic) {
@@ -166,4 +164,20 @@ func (r *Processor) getMessageIDs(ms []*types.Message) []string {
 		ids = append(ids, m.MessageID)
 	}
 	return ids
+}
+
+func (r *Processor) buildProjectOutputConfig(cfg project.Config) (outCfg output.Config) {
+	var projOutCfg = cfg.Output
+
+	switch projOutCfg.Type {
+	case types.OutputEthereumContract:
+		ethCfg := projOutCfg.Ethereum
+		outCfg = output.NewEthereumContractConfig(chain.Name(ethCfg.ChainName), ethCfg.ContractAddress, r.operatorPrivateKeyECDSA)
+	case types.OutputSolanaProgram:
+		solCfg := projOutCfg.Solana
+		outCfg = output.NewSolanaProgramConfig(chain.Name(solCfg.ChainName), solCfg.ProgramID, r.operatorPrivateKeyED25519, solCfg.StateAccountPK)
+	default:
+		outCfg = output.NewStdoutConfig()
+	}
+	return outCfg
 }

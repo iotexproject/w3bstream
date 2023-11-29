@@ -15,6 +15,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.10.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-multiaddr v0.12.0
+	github.com/near/borsh-go v0.3.2-0.20220516180422-1ff87d108454
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
