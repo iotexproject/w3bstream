@@ -1,25 +1,42 @@
 package output
 
+import "github.com/machinefi/sprout/output/chain"
+
 type (
 	// Config is the configuration for the outputter
 	Config struct {
-		Type Type
-
-		// for the ethereum & solana contract outputter
-		ChainEndpoint   string
+		Type            Type
+		ChainName       chain.Name
 		ContractAddress string
 		SecretKey       string
-		// for the solana program outputter
-		StateAccountPK string
+		StateAccountPK  string
 	}
-
-	// Type is the type of outputter
-	Type string
 )
 
-// Types of outputters
-const (
-	Stdout           Type = "stdout"
-	EthereumContract Type = "ethereumContract"
-	SolanaProgram    Type = "solanaProgram"
-)
+// NewStdoutConfig creates a stdout config
+func NewStdoutConfig() Config {
+	return Config{
+		Type: Stdout,
+	}
+}
+
+// NewEthereumContractConfig creates an ethereum contract config
+func NewEthereumContractConfig(chainName chain.Name, contractAddress, secretKey string) Config {
+	return Config{
+		Type:            EthereumContract,
+		ChainName:       chainName,
+		ContractAddress: contractAddress,
+		SecretKey:       secretKey,
+	}
+}
+
+// NewSolanaProgramConfig creates a solana program config
+func NewSolanaProgramConfig(chainName chain.Name, programID, secretKey, stateAccountPK string) Config {
+	return Config{
+		Type:            SolanaProgram,
+		ChainName:       chainName,
+		ContractAddress: programID,
+		SecretKey:       secretKey,
+		StateAccountPK:  stateAccountPK,
+	}
+}
