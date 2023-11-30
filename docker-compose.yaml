@@ -29,7 +29,7 @@ services:
       RISC0_SERVER_ENDPOINT: "risc0:4001"
       HALO2_SERVER_ENDPOINT: "halo2:4001"
       ZKWASM_SERVER_ENDPOINT: "zkwasm:4001"
-      SEQUENCER_SERVER_ENDPOINT: "w3bsequencer:9001"
+      P2P_MULTIADDR: "/ip4/0.0.0.0/tcp/10001"
       PROJECT_FILE_DIRECTORY: "/data/test/project"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
       PROJECT_CONTRACT_ADDRESS: "0x4F7e678B0203e0444E17512108dba4B08B39512e"
