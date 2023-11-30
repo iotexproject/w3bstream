@@ -10,7 +10,7 @@ type (
 	// Outputter is the interface for outputting proofs
 	Outputter interface {
 		// Output outputs the proof
-		Output(proof []byte) error
+		Output(proof []byte) (adapter.Result, error)
 	}
 )
 
