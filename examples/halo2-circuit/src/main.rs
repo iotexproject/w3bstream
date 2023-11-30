@@ -1,20 +1,36 @@
+pub mod opts;
+
 use std::{fs, io::BufReader};
 
-use halo2_curves::bn256::{Bn256, Fr};
+use clap::Parser;
+use halo2_circuit::{
+    circuits::simple::SimpleCircuit,
+    generator::{gen_pk, gen_sol_verifier},
+};
+use halo2_curves::bn256::{Bn256, Fr, G1Affine};
 use halo2_proofs::{
     circuit::Value,
-    poly::{commitment::Params, kzg::commitment::ParamsKZG},
+    plonk::verify_proof,
+    poly::{
+        commitment::{Params, ParamsProver},
+        kzg::{commitment::ParamsKZG, multiopen::VerifierGWC, strategy::AccumulatorStrategy},
+        VerificationStrategy,
+    },
+    transcript::TranscriptReadBuffer,
 };
-use halo2_wasm::{circuits::simple::SimpleCircuit, generator::gen_sol_verifier};
-use snark_verifier::loader::evm;
+use itertools::Itertools;
+use opts::{Opts, Subcommands};
+use serde_derive::{Deserialize, Serialize};
+use snark_verifier::{loader::evm, system::halo2::transcript::evm::EvmTranscript};
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Proof {
+    proof: String,
+    calldata: String,
+}
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let mut file = "Verifier.sol";
-
-    if args.len() >= 2 {
-        file = &args[1];
-    }
+    let opts = Opts::parse();
 
     // TODO replace your params
     // invoke gen_srs() to get your params
@@ -31,11 +47,46 @@ fn main() {
         b: Value::unknown(),
     };
 
-    let sol_code =
-        gen_sol_verifier(&params, empty_circuit, vec![1]).expect("generate solidity file error");
-    println!(
-        "Generated verifier contract size: {}",
-        evm::compile_solidity(sol_code.as_str()).len()
-    );
-    fs::write(file, sol_code).expect("write verifier solidity error");
+    match opts.sub {
+        Subcommands::Solidity { file } => {
+            let sol_code = gen_sol_verifier(&params, empty_circuit, vec![1])
+                .expect("generate solidity file error");
+            println!(
+                "Generated verifier contract size: {}",
+                evm::compile_solidity(sol_code.as_str()).len()
+            );
+            fs::write(file, sol_code).expect("write verifier solidity error");
+        }
+
+        Subcommands::Verfiy { proof, public } => {
+            let proof_raw = fs::read(proof).expect("read proof file error");
+            let proof_raw = String::from_utf8(proof_raw).unwrap();
+            let proof: Proof = serde_json::from_str(&proof_raw).unwrap();
+            let proof = proof.proof;
+            let proof = hex::decode(&proof[2..]).unwrap();
+
+            let pk = gen_pk(&params, &empty_circuit);
+
+            let instances = vec![vec![Fr::from(public)]];
+            let accept = {
+                let instances = instances
+                    .iter()
+                    .map(|instances| instances.as_slice())
+                    .collect_vec();
+                let mut transcript = TranscriptReadBuffer::<_, G1Affine, _>::init(proof.as_slice());
+                VerificationStrategy::<_, VerifierGWC<_>>::finalize(
+                    verify_proof::<_, VerifierGWC<_>, _, EvmTranscript<_, _, _, _>, _>(
+                        params.verifier_params(),
+                        pk.get_vk(),
+                        AccumulatorStrategy::new(params.verifier_params()),
+                        &[instances.as_slice()],
+                        &mut transcript,
+                    )
+                    .unwrap(),
+                )
+            };
+
+            println!("the proof is {:?}", accept);
+        }
+    }
 }

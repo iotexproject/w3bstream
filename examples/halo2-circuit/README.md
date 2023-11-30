@@ -32,17 +32,26 @@ You can also develop your own halo2 circuit program.
 2. Replace the `TODO` in `src/lib.rs`.
 3. Build wasm with `wasm-pack build --target nodejs --out-dir pkg`.
 
-## Generate verify smart contract
-
-### build 
+## Build executable file
 
 ``` shell
 cargo build --release
 ```
 
-### run 
+## Generate verify smart contract
 
 ``` shell
-target/release/halo2-wasm
+target/release/halo2-circuit solidity
 ```
-you will find `Verifier.sol` under the current folder. Or you can run `target/release/halo2-wasm path/filename.sol`.
+you will find `Verifier.sol` under the current folder. Or you can run `target/release/halo2-circuit solidity -f path/filename.sol`.
+
+## Local verify proof
+1. Get halo2 proof 
+if you can send messages to znode successfully, then you can execute `ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"` to obtain a halo2 proof, then put it in a file, like `halo2-proof.json`.
+
+2. verify
+`--proof` is proof file, and `--public` is the public input
+
+``` shell
+target/release/halo2-circuit verify --proof halo2-proof.json --public 900
+```
