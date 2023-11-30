@@ -16,19 +16,14 @@ func main() {
 	initLogger()
 	bindEnvConfig()
 
-	seq, err := sequencer.NewSequencer(viper.GetString(DatabaseDSN))
+	seq, err := sequencer.NewSequencer(viper.GetString(DatabaseDSN), viper.GetString(P2PMultiaddr))
 	if err != nil {
 		log.Fatal(err)
 	}
+	go seq.Run()
 
 	go func() {
 		if err := api.NewHttpServer(seq).Run(viper.GetString(HttpServiceEndpoint)); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	go func() {
-		if err := api.NewGrpcServer(seq).Run(viper.GetString(GrpcServiceEndpoint)); err != nil {
 			log.Fatal(err)
 		}
 	}()
