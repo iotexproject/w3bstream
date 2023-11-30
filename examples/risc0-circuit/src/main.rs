@@ -39,7 +39,6 @@ fn main() {
             let risc_receipt: RiscReceipt = serde_json::from_str(&proof_raw).unwrap();
             match risc_receipt {
                 RiscReceipt::Stark(receipt) => {
-                    // let verify_result = receipt.verify([520991199, 1491489009, 3725421922, 2701107036, 261900524, 710029518, 655219346, 3077599842]);
                     let verify_result = receipt.verify(id);
                     let result = match verify_result {
                 Ok(_) => from_slice(&receipt.journal.bytes).expect(
@@ -52,24 +51,4 @@ fn main() {
             }
         }
     }
-
-    // file image_id
-    // let proof_raw = fs::read("stark-proof.json").expect("read proof file error");
-    // let proof_raw = String::from_utf8(proof_raw).unwrap();
-    // let risc_receipt: RiscReceipt = serde_json::from_str(&proof_raw).unwrap();
-    // match risc_receipt {
-    //     RiscReceipt::Stark(receipt) => {
-    //         let verify_result = receipt.verify([
-    //             520991199, 1491489009, 3725421922, 2701107036, 261900524, 710029518, 655219346,
-    //             3077599842,
-    //         ]);
-    //         let result = match verify_result {
-    //             Ok(_) => from_slice(&receipt.journal.bytes).expect(
-    //                 "Journal output should deserialize into the same types (& order) that it was written",
-    //             ),
-    //             Err(e) => format!("{}", e),
-    //         };
-    //         println!("{:?}", result);
-    //     }
-    // }
 }
