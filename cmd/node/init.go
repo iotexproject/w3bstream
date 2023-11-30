@@ -17,7 +17,7 @@ func initLogger() {
 }
 
 func bindEnvConfig() {
-	viper.MustBindEnv(SequencerServerEndpoint)
+	viper.MustBindEnv(P2PMultiaddr)
 	viper.MustBindEnv(Risc0ServerEndpoint)
 	viper.MustBindEnv(Halo2ServerEndpoint)
 	viper.MustBindEnv(ZkwasmServerEndpoint)

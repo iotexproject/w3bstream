@@ -32,13 +32,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(SequencerServerEndpoint),
-		viper.GetString(OperatorPrivateKey))
+	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(P2PMultiaddr), viper.GetString(OperatorPrivateKey))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	go msgProcessor.Run()
+	msgProcessor.Run()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
