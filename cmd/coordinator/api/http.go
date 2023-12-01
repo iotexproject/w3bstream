@@ -48,10 +48,10 @@ type HttpServer struct {
 	coordinator *coordinator.Coordinator
 }
 
-func NewHttpServer(seq *coordinator.Coordinator) *HttpServer {
+func NewHttpServer(c *coordinator.Coordinator) *HttpServer {
 	s := &HttpServer{
 		engine:      gin.Default(),
-		coordinator: seq,
+		coordinator: c,
 	}
 
 	s.engine.POST("/message", s.handleMessage)

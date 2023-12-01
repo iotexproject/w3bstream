@@ -16,14 +16,14 @@ func main() {
 	initLogger()
 	bindEnvConfig()
 
-	seq, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN), viper.GetString(P2PMultiaddr))
+	coordinator, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN), viper.GetString(P2PMultiaddr))
 	if err != nil {
 		log.Fatal(err)
 	}
-	go seq.Run()
+	go coordinator.Run()
 
 	go func() {
-		if err := api.NewHttpServer(seq).Run(viper.GetString(HttpServiceEndpoint)); err != nil {
+		if err := api.NewHttpServer(coordinator).Run(viper.GetString(HttpServiceEndpoint)); err != nil {
 			log.Fatal(err)
 		}
 	}()
