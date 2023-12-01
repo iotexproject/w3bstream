@@ -8,15 +8,15 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/sprout/cmd/sequencer/api"
-	"github.com/machinefi/sprout/sequencer"
+	"github.com/machinefi/sprout/cmd/coordinator/api"
+	"github.com/machinefi/sprout/coordinator"
 )
 
 func main() {
 	initLogger()
 	bindEnvConfig()
 
-	seq, err := sequencer.NewSequencer(viper.GetString(DatabaseDSN), viper.GetString(P2PMultiaddr))
+	seq, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN), viper.GetString(P2PMultiaddr))
 	if err != nil {
 		log.Fatal(err)
 	}

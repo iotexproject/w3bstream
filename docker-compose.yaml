@@ -1,17 +1,16 @@
 version: "3.6"
 
 services:
-  w3bsequencer:
-    image: ghcr.io/machinefi/sequencer:latest
+  w3bcoordinator:
+    image: ghcr.io/machinefi/coordinator:latest
     depends_on:
       - "postgres"
-    container_name: w3bstream-sequencer
+    container_name: w3bstream-coordinator
     platform: linux/x86_64
     restart: always
     ports:
       - "9000:9000"
     environment:
-      GRPC_SERVICE_ENDPOINT: ":9001"
       HTTP_SERVICE_ENDPOINT: ":9000"
       P2P_MULTIADDR: "/ip4/0.0.0.0/tcp/10000"
       DATABASE_DSN: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable

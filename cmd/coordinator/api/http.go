@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/coordinator"
 	"github.com/machinefi/sprout/proto"
-	"github.com/machinefi/sprout/sequencer"
 )
 
 type errResp struct {
@@ -45,10 +45,10 @@ type queryMessageStateLogResp struct {
 
 type HttpServer struct {
 	engine *gin.Engine
-	seq    *sequencer.Sequencer
+	seq    *coordinator.Coordinator
 }
 
-func NewHttpServer(seq *sequencer.Sequencer) *HttpServer {
+func NewHttpServer(seq *coordinator.Coordinator) *HttpServer {
 	s := &HttpServer{
 		engine: gin.Default(),
 		seq:    seq,

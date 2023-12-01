@@ -15,7 +15,6 @@ func initLogger() {
 
 func bindEnvConfig() {
 	viper.MustBindEnv(HttpServiceEndpoint)
-	viper.MustBindEnv(GrpcServiceEndpoint)
 	viper.MustBindEnv(P2PMultiaddr)
 	viper.MustBindEnv(DatabaseDSN)
 }
