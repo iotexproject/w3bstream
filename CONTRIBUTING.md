@@ -33,9 +33,8 @@ There are many ways to contribute to this project:
 
 1. Ensure all required env variables are exported:
     ```bash
-    # sequencer env
+    # coordinator env
 
-    export GRPC_SERVICE_ENDPOINT=:9001
     export HTTP_SERVICE_ENDPOINT=:9000
     export DATABASE_DSN=postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable
     ```
@@ -59,7 +58,6 @@ There are many ways to contribute to this project:
     export ZKWASM_SERVER_ENDPOINT=localhost:4003
     export HALO2_SERVER_ENDPOINT=localhost:4002
     export RISC0_SERVER_ENDPOINT=localhost:4001
-    export SEQUENCER_SERVER_ENDPOINT=localhost:9001
     ```
 
 3. Start required services:
@@ -68,10 +66,10 @@ There are many ways to contribute to this project:
     docker compose -f docker-compose-dev.yaml up -d
     ```
 
-4. Start sequencer server:
+4. Start coordinator server:
     
     ```bash
-    go build -o sequencer && ./sequencer
+    go build -o coordinator && ./coordinator
     ```
 
 5. Open the repository in VS Code and create a launch.json file with the following content:
