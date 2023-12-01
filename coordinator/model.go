@@ -1,4 +1,4 @@
-package sequencer
+package coordinator
 
 import (
 	"github.com/machinefi/sprout/proto"

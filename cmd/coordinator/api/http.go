@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/coordinator"
 	"github.com/machinefi/sprout/proto"
-	"github.com/machinefi/sprout/sequencer"
 )
 
 type errResp struct {
@@ -44,14 +44,14 @@ type queryMessageStateLogResp struct {
 }
 
 type HttpServer struct {
-	engine *gin.Engine
-	seq    *sequencer.Sequencer
+	engine      *gin.Engine
+	coordinator *coordinator.Coordinator
 }
 
-func NewHttpServer(seq *sequencer.Sequencer) *HttpServer {
+func NewHttpServer(c *coordinator.Coordinator) *HttpServer {
 	s := &HttpServer{
-		engine: gin.Default(),
-		seq:    seq,
+		engine:      gin.Default(),
+		coordinator: c,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
@@ -77,7 +77,7 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 
 	id := uuid.NewString()
 	slog.Debug("received your message, handling")
-	if err := s.seq.Save(&proto.Message{
+	if err := s.coordinator.Save(&proto.Message{
 		MessageID: id,
 		ProjectID: req.ProjectID,
 		Data:      req.Data,
@@ -93,7 +93,7 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 	messageID := c.Param("id")
 
-	ls, err := s.seq.FetchStateLog(messageID)
+	ls, err := s.coordinator.FetchStateLog(messageID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return

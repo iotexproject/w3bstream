@@ -1,4 +1,4 @@
-package sequencer
+package coordinator
 
 import (
 	"context"
@@ -15,13 +15,13 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-type Sequencer struct {
+type Coordinator struct {
 	db    *gorm.DB
 	topic *pubsub.Topic
 	sub   *pubsub.Subscription
 }
 
-func (s *Sequencer) Save(msg *proto.Message) error {
+func (s *Coordinator) Save(msg *proto.Message) error {
 	m := Message{
 		MessageID: msg.MessageID,
 		ProjectID: msg.ProjectID,
@@ -45,7 +45,7 @@ func (s *Sequencer) Save(msg *proto.Message) error {
 	})
 }
 
-func (s *Sequencer) fetch(projectID uint64) (*proto.Message, error) {
+func (s *Coordinator) fetch(projectID uint64) (*proto.Message, error) {
 	m := Message{}
 	if err := s.db.Where("project_id = ? AND state = ?", projectID, proto.MessageState_RECEIVED).First(&m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -61,7 +61,7 @@ func (s *Sequencer) fetch(projectID uint64) (*proto.Message, error) {
 	}, nil
 }
 
-func (s *Sequencer) FetchStateLog(messageID string) ([]*MessageStateLog, error) {
+func (s *Coordinator) FetchStateLog(messageID string) ([]*MessageStateLog, error) {
 	ls := []*MessageStateLog{}
 
 	if err := s.db.Where("message_id = ?", messageID).Find(&ls).Error; err != nil {
@@ -70,7 +70,7 @@ func (s *Sequencer) FetchStateLog(messageID string) ([]*MessageStateLog, error) 
 	return ls, nil
 }
 
-func (s *Sequencer) updateMessageState(msgIDs []string, state proto.MessageState, comment string) error {
+func (s *Coordinator) updateMessageState(msgIDs []string, state proto.MessageState, comment string) error {
 	ls := []*MessageStateLog{}
 	for _, id := range msgIDs {
 		ls = append(ls, &MessageStateLog{
@@ -92,7 +92,7 @@ func (s *Sequencer) updateMessageState(msgIDs []string, state proto.MessageState
 	})
 }
 
-func (r *Sequencer) Run() {
+func (r *Coordinator) Run() {
 	for {
 		m, err := r.sub.Next(context.Background())
 		if err != nil {
@@ -113,7 +113,7 @@ func (r *Sequencer) Run() {
 	}
 }
 
-func (r *Sequencer) handleRequest(projectID uint64) {
+func (r *Coordinator) handleRequest(projectID uint64) {
 	m, err := r.fetch(projectID)
 	if err != nil {
 		slog.Error("fetch message failed", "error", err)
@@ -137,7 +137,7 @@ func (r *Sequencer) handleRequest(projectID uint64) {
 	}
 }
 
-func (r *Sequencer) handleResponse(messageIDs []string, state proto.MessageState, comment string) {
+func (r *Coordinator) handleResponse(messageIDs []string, state proto.MessageState, comment string) {
 	if len(messageIDs) == 0 {
 		return
 	}
@@ -147,7 +147,7 @@ func (r *Sequencer) handleResponse(messageIDs []string, state proto.MessageState
 	}
 }
 
-func NewSequencer(pgEndpoint, p2pMultiaddr string) (*Sequencer, error) {
+func NewCoordinator(pgEndpoint, p2pMultiaddr string) (*Coordinator, error) {
 	db, err := gorm.Open(postgres.Open(pgEndpoint), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -179,7 +179,7 @@ func NewSequencer(pgEndpoint, p2pMultiaddr string) (*Sequencer, error) {
 		return nil, errors.Wrap(err, "topic subscription failed")
 	}
 
-	return &Sequencer{
+	return &Coordinator{
 		db:    db,
 		topic: topic,
 		sub:   sub,
