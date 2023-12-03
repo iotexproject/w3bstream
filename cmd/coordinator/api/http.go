@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/coordinator"
-	"github.com/machinefi/sprout/proto"
+	"github.com/machinefi/sprout/types"
 )
 
 type errResp struct {
@@ -77,7 +77,7 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 
 	id := uuid.NewString()
 	slog.Debug("received your message, handling")
-	if err := s.coordinator.Save(&proto.Message{
+	if err := s.coordinator.Save(&types.Message{
 		MessageID: id,
 		ProjectID: req.ProjectID,
 		Data:      req.Data,
