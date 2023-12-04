@@ -11,8 +11,8 @@ import (
 	"github.com/machinefi/sprout/output/chain/eth"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/proto"
 	"github.com/machinefi/sprout/test/contract"
+	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 	"github.com/pkg/errors"
 )
@@ -76,8 +76,9 @@ func (r *Processor) runMessageRequest() {
 	for range ticker.C {
 		for _, projectID := range projectIDs {
 			d := p2p.Data{
-				Type:      p2p.Request,
-				ProjectID: projectID,
+				Request: &p2p.RequestData{
+					ProjectID: projectID,
+				},
 			}
 			j, err := json.Marshal(&d)
 			if err != nil {
@@ -104,19 +105,19 @@ func (r *Processor) runMessageProcess() {
 			slog.Error("json unmarshal p2p data failed", "error", err)
 			continue
 		}
-		if d.Type != p2p.Message {
+		if d.Message == nil {
 			continue
 		}
-		if len(d.Messages) != 0 {
-			r.process(d.Messages)
+		if len(d.Message.Messages) != 0 {
+			r.process(d.Message.Messages)
 		}
 	}
 }
 
-func (r *Processor) process(ms []*proto.Message) {
+func (r *Processor) process(ms []*types.Message) {
 	mids := r.getMessageIDs(ms)
 	slog.Debug("get new messages", "message_ids", mids)
-	r.reportSuccess(mids, proto.MessageState_FETCHED, "")
+	r.reportSuccess(mids, types.MessageStateFetched, "")
 
 	project, err := r.projectManager.Get(ms[0].ProjectID)
 	if err != nil {
@@ -125,7 +126,7 @@ func (r *Processor) process(ms []*proto.Message) {
 		return
 	}
 
-	r.reportSuccess(mids, proto.MessageState_PROVING, "")
+	r.reportSuccess(mids, types.MessageStateProving, "")
 	res, err := r.vmHandler.Handle(ms, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed", "error", err)
@@ -133,12 +134,12 @@ func (r *Processor) process(ms []*proto.Message) {
 		return
 	}
 	slog.Debug("proof result", "proof_result", string(res))
-	r.reportSuccess(mids, proto.MessageState_PROVED, string(res))
+	r.reportSuccess(mids, types.MessageStateProved, string(res))
 
 	if r.operatorPrivateKey == "" {
 		info := "missing operator private key, will not write to chain"
 		slog.Debug(info)
-		r.reportSuccess(mids, proto.MessageState_OUTPUTTED, info)
+		r.reportSuccess(mids, types.MessageStateOutputted, info)
 		return
 	}
 
@@ -151,23 +152,22 @@ func (r *Processor) process(ms []*proto.Message) {
 
 	slog.Debug("writing proof to chain")
 
-	r.reportSuccess(mids, proto.MessageState_OUTPUTTING, "writing proof to chain")
+	r.reportSuccess(mids, types.MessageStateOutputting, "writing proof to chain")
 	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0x6e30b42554DDA34bAFca9cB00Ec4B464f452a671", data)
 	if err != nil {
 		slog.Error(err.Error())
 		r.reportFail(mids, err)
 		return
 	}
-	r.reportSuccess(mids, proto.MessageState_OUTPUTTED, txHash)
+	r.reportSuccess(mids, types.MessageStateOutputted, txHash)
 	slog.Debug("transaction hash", "tx_hash", txHash)
 }
 
 func (r *Processor) reportFail(messageIDs []string, err error) {
 	d := p2p.Data{
-		Type: p2p.Response,
-		Report: &proto.ReportRequest{
+		Response: &p2p.ResponseData{
 			MessageIDs: messageIDs,
-			State:      proto.MessageState_FAILED,
+			State:      types.MessageStateFailed,
 			Comment:    err.Error(),
 		},
 	}
@@ -181,10 +181,9 @@ func (r *Processor) reportFail(messageIDs []string, err error) {
 	}
 }
 
-func (r *Processor) reportSuccess(messageIDs []string, state proto.MessageState, comment string) {
+func (r *Processor) reportSuccess(messageIDs []string, state types.MessageState, comment string) {
 	d := p2p.Data{
-		Type: p2p.Response,
-		Report: &proto.ReportRequest{
+		Response: &p2p.ResponseData{
 			MessageIDs: messageIDs,
 			State:      state,
 			Comment:    comment,
@@ -200,7 +199,7 @@ func (r *Processor) reportSuccess(messageIDs []string, state proto.MessageState,
 	}
 }
 
-func (r *Processor) getMessageIDs(ms []*proto.Message) []string {
+func (r *Processor) getMessageIDs(ms []*types.Message) []string {
 	ids := []string{}
 	for _, m := range ms {
 		ids = append(ids, m.MessageID)

@@ -8,7 +8,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/proto"
+	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,16 +21,16 @@ type Coordinator struct {
 	sub   *pubsub.Subscription
 }
 
-func (s *Coordinator) Save(msg *proto.Message) error {
+func (s *Coordinator) Save(msg *types.Message) error {
 	m := Message{
 		MessageID: msg.MessageID,
 		ProjectID: msg.ProjectID,
 		Data:      msg.Data,
-		State:     proto.MessageState_RECEIVED,
+		State:     types.MessageStateReceived,
 	}
 	l := MessageStateLog{
 		MessageID: msg.MessageID,
-		State:     proto.MessageState_RECEIVED,
+		State:     types.MessageStateReceived,
 	}
 
 	return s.db.Transaction(func(tx *gorm.DB) error {
@@ -45,16 +45,16 @@ func (s *Coordinator) Save(msg *proto.Message) error {
 	})
 }
 
-func (s *Coordinator) fetch(projectID uint64) (*proto.Message, error) {
+func (s *Coordinator) fetch(projectID uint64) (*types.Message, error) {
 	m := Message{}
-	if err := s.db.Where("project_id = ? AND state = ?", projectID, proto.MessageState_RECEIVED).First(&m).Error; err != nil {
+	if err := s.db.Where("project_id = ? AND state = ?", projectID, types.MessageStateReceived).First(&m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "query message failed, projectID %d", projectID)
 	}
 
-	return &proto.Message{
+	return &types.Message{
 		MessageID: m.MessageID,
 		ProjectID: m.ProjectID,
 		Data:      m.Data,
@@ -70,7 +70,7 @@ func (s *Coordinator) FetchStateLog(messageID string) ([]*MessageStateLog, error
 	return ls, nil
 }
 
-func (s *Coordinator) updateMessageState(msgIDs []string, state proto.MessageState, comment string) error {
+func (s *Coordinator) updateMessageState(msgIDs []string, state types.MessageState, comment string) error {
 	ls := []*MessageStateLog{}
 	for _, id := range msgIDs {
 		ls = append(ls, &MessageStateLog{
@@ -104,11 +104,11 @@ func (r *Coordinator) Run() {
 			slog.Error("json unmarshal p2p data failed", "error", err)
 			continue
 		}
-		switch d.Type {
-		case p2p.Request:
-			r.handleRequest(d.ProjectID)
-		case p2p.Response:
-			r.handleResponse(d.Report.MessageIDs, d.Report.State, d.Report.Comment)
+		switch {
+		case d.Request != nil:
+			r.handleRequest(d.Request.ProjectID)
+		case d.Response != nil:
+			r.handleResponse(d.Response.MessageIDs, d.Response.State, d.Response.Comment)
 		}
 	}
 }
@@ -123,8 +123,7 @@ func (r *Coordinator) handleRequest(projectID uint64) {
 		return
 	}
 	d := p2p.Data{
-		Type:     p2p.Message,
-		Messages: []*proto.Message{m},
+		Message: &p2p.MessageData{Messages: []*types.Message{m}},
 	}
 	j, err := json.Marshal(&d)
 	if err != nil {
@@ -137,7 +136,7 @@ func (r *Coordinator) handleRequest(projectID uint64) {
 	}
 }
 
-func (r *Coordinator) handleResponse(messageIDs []string, state proto.MessageState, comment string) {
+func (r *Coordinator) handleResponse(messageIDs []string, state types.MessageState, comment string) {
 	if len(messageIDs) == 0 {
 		return
 	}
