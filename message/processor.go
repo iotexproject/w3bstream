@@ -8,6 +8,7 @@ import (
 
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/machinefi/sprout/output/chain/eth"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
@@ -24,31 +25,30 @@ type Processor struct {
 	operatorPrivateKey string
 	topic              *pubsub.Topic
 	sub                *pubsub.Subscription
+	selfID             peer.ID
 }
 
-func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, p2pMultiaddr, operatorPrivateKey string) (*Processor, error) {
-	h, err := libp2p.New(libp2p.ListenAddrStrings(p2pMultiaddr))
+func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey string) (*Processor, error) {
+	ctx := context.Background()
+	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"), libp2p.NoSecurity)
 	if err != nil {
 		return nil, errors.Wrap(err, "new libp2p host failed")
 	}
-	ctx := context.Background()
-	go p2p.DiscoverPeers(ctx, h, p2p.Topic)
-
 	ps, err := pubsub.NewGossipSub(ctx, h)
 	if err != nil {
 		return nil, errors.Wrap(err, "new gossip subscription failed")
+	}
+	if err := p2p.SetupDiscovery(h); err != nil {
+		return nil, errors.Wrap(err, "setup mdns discovery failed")
 	}
 	topic, err := ps.Join(p2p.Topic)
 	if err != nil {
 		return nil, errors.Wrap(err, "join topic failed")
 	}
-	//go streamConsoleTo(ctx, topic)
-
 	sub, err := topic.Subscribe()
 	if err != nil {
 		return nil, errors.Wrap(err, "topic subscription failed")
 	}
-	//printMessagesFrom(ctx, sub)
 
 	p := &Processor{
 		vmHandler:          vmHandler,
@@ -57,6 +57,7 @@ func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainE
 		projectManager:     projectManager,
 		topic:              topic,
 		sub:                sub,
+		selfID:             h.ID(),
 	}
 	return p, nil
 }
@@ -85,6 +86,7 @@ func (r *Processor) runMessageRequest() {
 				slog.Error("json marshal p2p data failed", "error", err)
 				continue
 			}
+			slog.Info("send message request", "request", string(j))
 
 			if err := r.topic.Publish(context.Background(), j); err != nil {
 				slog.Error("publish data to p2p network failed", "error", err)
@@ -100,6 +102,10 @@ func (r *Processor) runMessageProcess() {
 			slog.Error("get p2p data failed", "error", err)
 			continue
 		}
+		if m.ReceivedFrom == r.selfID {
+			continue
+		}
+
 		d := p2p.Data{}
 		if err := json.Unmarshal(m.Message.Data, &d); err != nil {
 			slog.Error("json unmarshal p2p data failed", "error", err)

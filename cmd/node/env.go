@@ -8,6 +8,5 @@ const (
 	ProjectContractAddress = "PROJECT_CONTRACT_ADDRESS"
 	ProjectFileDirectory   = "PROJECT_FILE_DIRECTORY"
 	Risc0ServerEndpoint    = "RISC0_SERVER_ENDPOINT"
-	P2PMultiaddr           = "P2P_MULTIADDR"
 	ZkwasmServerEndpoint   = "ZKWASM_SERVER_ENDPOINT"
 )

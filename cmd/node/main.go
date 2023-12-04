@@ -33,7 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(P2PMultiaddr), viper.GetString(OperatorPrivateKey))
+	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(OperatorPrivateKey))
 	if err != nil {
 		log.Fatal(err)
 	}
