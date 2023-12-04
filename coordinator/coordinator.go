@@ -7,6 +7,7 @@ import (
 
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
@@ -16,9 +17,10 @@ import (
 )
 
 type Coordinator struct {
-	db    *gorm.DB
-	topic *pubsub.Topic
-	sub   *pubsub.Subscription
+	db     *gorm.DB
+	topic  *pubsub.Topic
+	sub    *pubsub.Subscription
+	selfID peer.ID
 }
 
 func (s *Coordinator) Save(msg *types.Message) error {
@@ -99,6 +101,10 @@ func (r *Coordinator) Run() {
 			slog.Error("get p2p data failed", "error", err)
 			continue
 		}
+		if m.ReceivedFrom == r.selfID {
+			continue
+		}
+
 		d := p2p.Data{}
 		if err := json.Unmarshal(m.Message.Data, &d); err != nil {
 			slog.Error("json unmarshal p2p data failed", "error", err)
@@ -146,7 +152,7 @@ func (r *Coordinator) handleResponse(messageIDs []string, state types.MessageSta
 	}
 }
 
-func NewCoordinator(pgEndpoint, p2pMultiaddr string) (*Coordinator, error) {
+func newDB(pgEndpoint string) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(pgEndpoint), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -156,31 +162,48 @@ func NewCoordinator(pgEndpoint, p2pMultiaddr string) (*Coordinator, error) {
 	if err := db.AutoMigrate(&Message{}, &MessageStateLog{}); err != nil {
 		return nil, errors.Wrap(err, "migrate message model failed")
 	}
+	return db, nil
+}
 
-	h, err := libp2p.New(libp2p.ListenAddrStrings(p2pMultiaddr))
-	if err != nil {
-		return nil, errors.Wrap(err, "new libp2p host failed")
-	}
+func newP2P() (*pubsub.Topic, *pubsub.Subscription, peer.ID, error) {
 	ctx := context.Background()
-	go p2p.DiscoverPeers(ctx, h, p2p.Topic)
+	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"), libp2p.NoSecurity)
+	if err != nil {
+		return nil, nil, "", errors.Wrap(err, "new libp2p host failed")
+	}
 
 	ps, err := pubsub.NewGossipSub(ctx, h)
 	if err != nil {
-		return nil, errors.Wrap(err, "new gossip subscription failed")
+		return nil, nil, "", errors.Wrap(err, "new gossip subscription failed")
+	}
+	if err := p2p.SetupDiscovery(h); err != nil {
+		return nil, nil, "", errors.Wrap(err, "setup mdns discovery failed")
 	}
 	topic, err := ps.Join(p2p.Topic)
 	if err != nil {
-		return nil, errors.Wrap(err, "join topic failed")
+		return nil, nil, "", errors.Wrap(err, "join topic failed")
 	}
-
 	sub, err := topic.Subscribe()
 	if err != nil {
-		return nil, errors.Wrap(err, "topic subscription failed")
+		return nil, nil, "", errors.Wrap(err, "topic subscription failed")
+	}
+	return topic, sub, h.ID(), nil
+}
+
+func NewCoordinator(pgEndpoint string) (*Coordinator, error) {
+	db, err := newDB(pgEndpoint)
+	if err != nil {
+		return nil, err
+	}
+	topic, sub, selfID, err := newP2P()
+	if err != nil {
+		return nil, err
 	}
 
 	return &Coordinator{
-		db:    db,
-		topic: topic,
-		sub:   sub,
+		db:     db,
+		topic:  topic,
+		sub:    sub,
+		selfID: selfID,
 	}, nil
 }

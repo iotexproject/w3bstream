@@ -17,7 +17,6 @@ func initLogger() {
 }
 
 func bindEnvConfig() {
-	viper.MustBindEnv(P2PMultiaddr)
 	viper.MustBindEnv(Risc0ServerEndpoint)
 	viper.MustBindEnv(Halo2ServerEndpoint)
 	viper.MustBindEnv(ZkwasmServerEndpoint)

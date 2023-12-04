@@ -16,7 +16,7 @@ func main() {
 	initLogger()
 	bindEnvConfig()
 
-	coordinator, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN), viper.GetString(P2PMultiaddr))
+	coordinator, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN))
 	if err != nil {
 		log.Fatal(err)
 	}
