@@ -10,6 +10,7 @@ import (
 
 	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
 
@@ -21,10 +22,10 @@ func main() {
 	}
 
 	vmHandler := vm.NewHandler(
-		map[vm.Type]string{
-			vm.Risc0:  viper.GetString(Risc0ServerEndpoint),
-			vm.Halo2:  viper.GetString(Halo2ServerEndpoint),
-			vm.Zkwasm: viper.GetString(ZkwasmServerEndpoint),
+		map[types.VM]string{
+			types.VMRisc0:  viper.GetString(Risc0ServerEndpoint),
+			types.VMHalo2:  viper.GetString(Halo2ServerEndpoint),
+			types.VMZkwasm: viper.GetString(ZkwasmServerEndpoint),
 		},
 	)
 	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(ProjectFileDirectory))

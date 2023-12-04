@@ -1,8 +1,7 @@
 package project
 
 import (
-	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/vm"
+	"github.com/machinefi/sprout/types"
 )
 
 type Project struct {
@@ -11,9 +10,9 @@ type Project struct {
 }
 
 type Config struct {
-	Code          string      `json:"code"`
-	CodeExpParam  string      `json:"codeExpParam,omitempty"`
-	VMType        vm.Type     `json:"vmType"`
-	OutputType    output.Type `json:"outputType"`
-	OutputAddress string      `json:"outputAddress,omitempty"`
+	Code          string       `json:"code"`
+	CodeExpParam  string       `json:"codeExpParam,omitempty"`
+	VMType        types.VM     `json:"vmType"`
+	OutputType    types.Output `json:"outputType"`
+	OutputAddress string       `json:"outputAddress,omitempty"`
 }
