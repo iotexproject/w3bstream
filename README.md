@@ -61,10 +61,10 @@ ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"priv
 ```
 
 The following example sends a message to an example project deployed on the node that makes use of a Zkwasm prover, which has project ID 10002, this may be slow and may take some time:
-Project `10003` is an example of zkWasm circuit, which can prove that two integers 'private_input' are equal.
+Project `10003` is an example of zkWasm circuit, which can prove that two integers `private_input` are equal the integer `public_input`.
 
 ```bash
-ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
+ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [2] }"
 ```
 
 ### Retrieve ZKP

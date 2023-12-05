@@ -43,7 +43,7 @@ services:
     restart: always
 
   zkwasm:
-    image: iotexdev/zkwasmserver:v0.0.2
+    image: iotexdev/zkwasmserver:v0.0.3
     container_name: zkwasm-service
     platform: linux/x86_64
     restart: always
