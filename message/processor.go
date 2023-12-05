@@ -52,6 +52,11 @@ func (r *Processor) runMessageRequest() {
 
 	for range ticker.C {
 		for _, projectID := range projectIDs {
+			if err := r.ps.Add(projectID); err != nil {
+				slog.Error("add project pubsub failed", "error", err)
+				continue
+			}
+
 			d := &p2p.Data{
 				Request: &p2p.RequestData{
 					ProjectID: projectID,
@@ -65,7 +70,7 @@ func (r *Processor) runMessageRequest() {
 }
 
 func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
-	if len(d.Message.Messages) == 0 {
+	if d.Message == nil || len(d.Message.Messages) == 0 {
 		return
 	}
 	ms := d.Message.Messages
@@ -123,6 +128,7 @@ func (r *Processor) reportFail(messageIDs []string, err error, topic *pubsub.Top
 			MessageIDs: messageIDs,
 			State:      types.MessageStateFailed,
 			Comment:    err.Error(),
+			CreatedAt:  time.Now(),
 		},
 	}
 	j, err := json.Marshal(&d)
@@ -141,6 +147,7 @@ func (r *Processor) reportSuccess(messageIDs []string, state types.MessageState,
 			MessageIDs: messageIDs,
 			State:      state,
 			Comment:    comment,
+			CreatedAt:  time.Now(),
 		},
 	}
 	j, err := json.Marshal(&d)

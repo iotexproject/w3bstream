@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/machinefi/sprout/p2p"
@@ -66,7 +67,7 @@ func (s *Coordinator) fetch(projectID uint64) (*types.Message, error) {
 func (s *Coordinator) FetchStateLog(messageID string) ([]*MessageStateLog, error) {
 	ls := []*MessageStateLog{}
 
-	if err := s.db.Where("message_id = ?", messageID).Find(&ls).Error; err != nil {
+	if err := s.db.Order("created_at").Where("message_id = ?", messageID).Find(&ls).Error; err != nil {
 		return nil, errors.Wrapf(err, "query message state log failed, messageID %s", messageID)
 	}
 	return ls, nil
@@ -91,13 +92,16 @@ func (s *Coordinator) fetchProjectIDs() ([]uint64, error) {
 	return ids, nil
 }
 
-func (s *Coordinator) updateMessageState(msgIDs []string, state types.MessageState, comment string) error {
+func (s *Coordinator) updateMessageState(msgIDs []string, state types.MessageState, comment string, createdAt time.Time) error {
 	ls := []*MessageStateLog{}
 	for _, id := range msgIDs {
 		ls = append(ls, &MessageStateLog{
 			MessageID: id,
 			State:     state,
 			Comment:   comment,
+			Model: gorm.Model{
+				CreatedAt: createdAt,
+			},
 		})
 	}
 
@@ -118,7 +122,7 @@ func (r *Coordinator) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	case d.Request != nil:
 		r.handleRequest(d.Request.ProjectID, topic)
 	case d.Response != nil:
-		r.handleResponse(d.Response.MessageIDs, d.Response.State, d.Response.Comment)
+		r.handleResponse(d.Response.MessageIDs, d.Response.State, d.Response.Comment, d.Response.CreatedAt)
 	}
 }
 
@@ -145,11 +149,11 @@ func (r *Coordinator) handleRequest(projectID uint64, topic *pubsub.Topic) {
 	}
 }
 
-func (r *Coordinator) handleResponse(messageIDs []string, state types.MessageState, comment string) {
+func (r *Coordinator) handleResponse(messageIDs []string, state types.MessageState, comment string, createdAt time.Time) {
 	if len(messageIDs) == 0 {
 		return
 	}
-	if err := r.updateMessageState(messageIDs, state, comment); err != nil {
+	if err := r.updateMessageState(messageIDs, state, comment, createdAt); err != nil {
 		slog.Error("update message state failed", "error", err, "messageIDs", messageIDs)
 		return
 	}
