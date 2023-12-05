@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
@@ -17,13 +15,15 @@ import (
 )
 
 type Coordinator struct {
-	db     *gorm.DB
-	topic  *pubsub.Topic
-	sub    *pubsub.Subscription
-	selfID peer.ID
+	db *gorm.DB
+	ps *p2p.PubSubs
 }
 
 func (s *Coordinator) Save(msg *types.Message) error {
+	if err := s.ps.Add(msg.ProjectID); err != nil {
+		return err
+	}
+
 	m := Message{
 		MessageID: msg.MessageID,
 		ProjectID: msg.ProjectID,
@@ -72,6 +72,25 @@ func (s *Coordinator) FetchStateLog(messageID string) ([]*MessageStateLog, error
 	return ls, nil
 }
 
+func (s *Coordinator) fetchProjectIDs() ([]uint64, error) {
+	ms := []*Message{}
+	ss := []types.MessageState{
+		types.MessageStateReceived,
+		types.MessageStateFetched,
+		types.MessageStateProving,
+		types.MessageStateProved,
+		types.MessageStateOutputting,
+	}
+	if err := s.db.Distinct("project_id").Where("state IN ?", ss).Find(&ms).Error; err != nil {
+		return nil, errors.Wrap(err, "query unfinished message projectID failed")
+	}
+	ids := []uint64{}
+	for _, m := range ms {
+		ids = append(ids, m.ProjectID)
+	}
+	return ids, nil
+}
+
 func (s *Coordinator) updateMessageState(msgIDs []string, state types.MessageState, comment string) error {
 	ls := []*MessageStateLog{}
 	for _, id := range msgIDs {
@@ -94,32 +113,16 @@ func (s *Coordinator) updateMessageState(msgIDs []string, state types.MessageSta
 	})
 }
 
-func (r *Coordinator) Run() {
-	for {
-		m, err := r.sub.Next(context.Background())
-		if err != nil {
-			slog.Error("get p2p data failed", "error", err)
-			continue
-		}
-		if m.ReceivedFrom == r.selfID {
-			continue
-		}
-
-		d := p2p.Data{}
-		if err := json.Unmarshal(m.Message.Data, &d); err != nil {
-			slog.Error("json unmarshal p2p data failed", "error", err)
-			continue
-		}
-		switch {
-		case d.Request != nil:
-			r.handleRequest(d.Request.ProjectID)
-		case d.Response != nil:
-			r.handleResponse(d.Response.MessageIDs, d.Response.State, d.Response.Comment)
-		}
+func (r *Coordinator) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
+	switch {
+	case d.Request != nil:
+		r.handleRequest(d.Request.ProjectID, topic)
+	case d.Response != nil:
+		r.handleResponse(d.Response.MessageIDs, d.Response.State, d.Response.Comment)
 	}
 }
 
-func (r *Coordinator) handleRequest(projectID uint64) {
+func (r *Coordinator) handleRequest(projectID uint64, topic *pubsub.Topic) {
 	m, err := r.fetch(projectID)
 	if err != nil {
 		slog.Error("fetch message failed", "error", err)
@@ -137,7 +140,7 @@ func (r *Coordinator) handleRequest(projectID uint64) {
 		return
 	}
 
-	if err := r.topic.Publish(context.Background(), j); err != nil {
+	if err := topic.Publish(context.Background(), j); err != nil {
 		slog.Error("publish data to p2p network failed", "error", err)
 	}
 }
@@ -165,45 +168,28 @@ func newDB(pgEndpoint string) (*gorm.DB, error) {
 	return db, nil
 }
 
-func newP2P() (*pubsub.Topic, *pubsub.Subscription, peer.ID, error) {
-	ctx := context.Background()
-	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"), libp2p.NoSecurity)
-	if err != nil {
-		return nil, nil, "", errors.Wrap(err, "new libp2p host failed")
-	}
-
-	ps, err := pubsub.NewGossipSub(ctx, h)
-	if err != nil {
-		return nil, nil, "", errors.Wrap(err, "new gossip subscription failed")
-	}
-	if err := p2p.SetupDiscovery(h); err != nil {
-		return nil, nil, "", errors.Wrap(err, "setup mdns discovery failed")
-	}
-	topic, err := ps.Join(p2p.Topic)
-	if err != nil {
-		return nil, nil, "", errors.Wrap(err, "join topic failed")
-	}
-	sub, err := topic.Subscribe()
-	if err != nil {
-		return nil, nil, "", errors.Wrap(err, "topic subscription failed")
-	}
-	return topic, sub, h.ID(), nil
-}
-
 func NewCoordinator(pgEndpoint string) (*Coordinator, error) {
 	db, err := newDB(pgEndpoint)
 	if err != nil {
 		return nil, err
 	}
-	topic, sub, selfID, err := newP2P()
+
+	c := &Coordinator{db: db}
+	projectIDs, err := c.fetchProjectIDs()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Coordinator{
-		db:     db,
-		topic:  topic,
-		sub:    sub,
-		selfID: selfID,
-	}, nil
+	ps, err := p2p.NewPubSubs(c.handleP2PData)
+	if err != nil {
+		return nil, err
+	}
+	for _, id := range projectIDs {
+		if err := ps.Add(id); err != nil {
+			return nil, err
+		}
+	}
+
+	c.ps = ps
+	return c, nil
 }
