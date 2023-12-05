@@ -1,6 +1,8 @@
 package p2p
 
 import (
+	"time"
+
 	"github.com/machinefi/sprout/types"
 )
 
@@ -22,4 +24,5 @@ type ResponseData struct {
 	MessageIDs []string           `json:"messageIDs,omitempty"`
 	State      types.MessageState `json:"state,omitempty"`
 	Comment    string             `json:"comment,omitempty"`
+	CreatedAt  time.Time          `json:"createdAt,omitempty"`
 }

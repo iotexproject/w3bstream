@@ -20,9 +20,9 @@ func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
 	}
 }
 
-// SetupDiscovery creates an mDNS discovery service and attaches it to the libp2p Host.
+// setupDiscovery creates an mDNS discovery service and attaches it to the libp2p Host.
 // This lets us automatically discover peers on the same LAN and connect to them.
-func SetupDiscovery(h host.Host) error {
+func setupDiscovery(h host.Host) error {
 	s := mdns.NewMdnsService(h, "w3bstream-mdns", &discoveryNotifee{h: h})
 	return s.Start()
 }

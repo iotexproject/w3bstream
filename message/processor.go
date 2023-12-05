@@ -6,16 +6,13 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/machinefi/sprout/output/chain/eth"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/test/contract"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
-	"github.com/pkg/errors"
 )
 
 type Processor struct {
@@ -23,48 +20,27 @@ type Processor struct {
 	projectManager     *project.Manager
 	chainEndpoint      string
 	operatorPrivateKey string
-	topic              *pubsub.Topic
-	sub                *pubsub.Subscription
-	selfID             peer.ID
+	ps                 *p2p.PubSubs
 }
 
 func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey string) (*Processor, error) {
-	ctx := context.Background()
-	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"), libp2p.NoSecurity)
-	if err != nil {
-		return nil, errors.Wrap(err, "new libp2p host failed")
-	}
-	ps, err := pubsub.NewGossipSub(ctx, h)
-	if err != nil {
-		return nil, errors.Wrap(err, "new gossip subscription failed")
-	}
-	if err := p2p.SetupDiscovery(h); err != nil {
-		return nil, errors.Wrap(err, "setup mdns discovery failed")
-	}
-	topic, err := ps.Join(p2p.Topic)
-	if err != nil {
-		return nil, errors.Wrap(err, "join topic failed")
-	}
-	sub, err := topic.Subscribe()
-	if err != nil {
-		return nil, errors.Wrap(err, "topic subscription failed")
-	}
-
 	p := &Processor{
 		vmHandler:          vmHandler,
 		chainEndpoint:      chainEndpoint,
 		operatorPrivateKey: operatorPrivateKey,
 		projectManager:     projectManager,
-		topic:              topic,
-		sub:                sub,
-		selfID:             h.ID(),
 	}
+
+	ps, err := p2p.NewPubSubs(p.handleP2PData)
+	if err != nil {
+		return nil, err
+	}
+	p.ps = ps
 	return p, nil
 }
 
 func (r *Processor) Run() {
 	go r.runMessageRequest()
-	go r.runMessageProcess()
 }
 
 // TODO support batch message fetch & fetch frequency define
@@ -76,105 +52,83 @@ func (r *Processor) runMessageRequest() {
 
 	for range ticker.C {
 		for _, projectID := range projectIDs {
-			d := p2p.Data{
+			if err := r.ps.Add(projectID); err != nil {
+				slog.Error("add project pubsub failed", "error", err)
+				continue
+			}
+
+			d := &p2p.Data{
 				Request: &p2p.RequestData{
 					ProjectID: projectID,
 				},
 			}
-			j, err := json.Marshal(&d)
-			if err != nil {
-				slog.Error("json marshal p2p data failed", "error", err)
-				continue
-			}
-			slog.Info("send message request", "request", string(j))
-
-			if err := r.topic.Publish(context.Background(), j); err != nil {
-				slog.Error("publish data to p2p network failed", "error", err)
+			if err := r.ps.Publish(projectID, d); err != nil {
+				slog.Error("publish data failed", "error", err)
 			}
 		}
 	}
 }
 
-func (r *Processor) runMessageProcess() {
-	for {
-		m, err := r.sub.Next(context.Background())
-		if err != nil {
-			slog.Error("get p2p data failed", "error", err)
-			continue
-		}
-		if m.ReceivedFrom == r.selfID {
-			continue
-		}
-
-		d := p2p.Data{}
-		if err := json.Unmarshal(m.Message.Data, &d); err != nil {
-			slog.Error("json unmarshal p2p data failed", "error", err)
-			continue
-		}
-		if d.Message == nil {
-			continue
-		}
-		if len(d.Message.Messages) != 0 {
-			r.process(d.Message.Messages)
-		}
+func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
+	if d.Message == nil || len(d.Message.Messages) == 0 {
+		return
 	}
-}
-
-func (r *Processor) process(ms []*types.Message) {
+	ms := d.Message.Messages
 	mids := r.getMessageIDs(ms)
 	slog.Debug("get new messages", "message_ids", mids)
-	r.reportSuccess(mids, types.MessageStateFetched, "")
+	r.reportSuccess(mids, types.MessageStateFetched, "", topic)
 
 	project, err := r.projectManager.Get(ms[0].ProjectID)
 	if err != nil {
 		slog.Error("get project failed", "error", err)
-		r.reportFail(mids, err)
+		r.reportFail(mids, err, topic)
 		return
 	}
 
-	r.reportSuccess(mids, types.MessageStateProving, "")
+	r.reportSuccess(mids, types.MessageStateProving, "", topic)
 	res, err := r.vmHandler.Handle(ms, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed", "error", err)
-		r.reportFail(mids, err)
+		r.reportFail(mids, err, topic)
 		return
 	}
 	slog.Debug("proof result", "proof_result", string(res))
-	r.reportSuccess(mids, types.MessageStateProved, string(res))
+	r.reportSuccess(mids, types.MessageStateProved, string(res), topic)
 
 	if r.operatorPrivateKey == "" {
 		info := "missing operator private key, will not write to chain"
 		slog.Debug(info)
-		r.reportSuccess(mids, types.MessageStateOutputted, info)
+		r.reportSuccess(mids, types.MessageStateOutputted, info, topic)
 		return
 	}
 
 	data, err := contract.BuildData(res)
 	if err != nil {
 		slog.Error(err.Error())
-		r.reportFail(mids, err)
+		r.reportFail(mids, err, topic)
 		return
 	}
 
 	slog.Debug("writing proof to chain")
 
-	r.reportSuccess(mids, types.MessageStateOutputting, "writing proof to chain")
+	r.reportSuccess(mids, types.MessageStateOutputting, "writing proof to chain", topic)
 	txHash, err := eth.SendTX(context.Background(), r.chainEndpoint, r.operatorPrivateKey, "0x6e30b42554DDA34bAFca9cB00Ec4B464f452a671", data)
 	if err != nil {
 		slog.Error(err.Error())
-		r.reportFail(mids, err)
+		r.reportFail(mids, err, topic)
 		return
 	}
-	r.reportSuccess(mids, types.MessageStateOutputted, txHash)
+	r.reportSuccess(mids, types.MessageStateOutputted, txHash, topic)
 	slog.Debug("transaction hash", "tx_hash", txHash)
 }
 
-func (r *Processor) reportFail(messageIDs []string, err error) {
+func (r *Processor) reportFail(messageIDs []string, err error, topic *pubsub.Topic) {
 	d := p2p.Data{
 		Response: &p2p.ResponseData{
 			MessageIDs: messageIDs,
 			State:      types.MessageStateFailed,
 			Comment:    err.Error(),
+			CreatedAt:  time.Now(),
 		},
 	}
 	j, err := json.Marshal(&d)
@@ -182,17 +136,18 @@ func (r *Processor) reportFail(messageIDs []string, err error) {
 		slog.Error("json marshal p2p response data failed", "error", err, "messageIDs", messageIDs)
 		return
 	}
-	if err := r.topic.Publish(context.Background(), j); err != nil {
+	if err := topic.Publish(context.Background(), j); err != nil {
 		slog.Error("publish response data to p2p network failed", "error", err, "messageIDs", messageIDs)
 	}
 }
 
-func (r *Processor) reportSuccess(messageIDs []string, state types.MessageState, comment string) {
+func (r *Processor) reportSuccess(messageIDs []string, state types.MessageState, comment string, topic *pubsub.Topic) {
 	d := p2p.Data{
 		Response: &p2p.ResponseData{
 			MessageIDs: messageIDs,
 			State:      state,
 			Comment:    comment,
+			CreatedAt:  time.Now(),
 		},
 	}
 	j, err := json.Marshal(&d)
@@ -200,7 +155,7 @@ func (r *Processor) reportSuccess(messageIDs []string, state types.MessageState,
 		slog.Error("json marshal p2p response data failed", "error", err, "messageIDs", messageIDs)
 		return
 	}
-	if err := r.topic.Publish(context.Background(), j); err != nil {
+	if err := topic.Publish(context.Background(), j); err != nil {
 		slog.Error("publish response data to p2p network failed", "error", err, "messageIDs", messageIDs)
 	}
 }
