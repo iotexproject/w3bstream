@@ -20,7 +20,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go coordinator.Run()
 
 	go func() {
 		if err := api.NewHttpServer(coordinator).Run(viper.GetString(HttpServiceEndpoint)); err != nil {

@@ -86,7 +86,7 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 		return
 	}
 
-	slog.Debug("message was handled", "messageID", id)
+	slog.Debug("message was received", "messageID", id)
 	c.JSON(http.StatusOK, &handleMessageResp{MessageID: id})
 }
 
