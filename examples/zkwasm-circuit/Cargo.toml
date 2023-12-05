@@ -1,0 +1,15 @@
+[package]
+name = "zkwasm-circuit"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+halo2_proofs = { git = "https://github.com/junyu0312/halo2.git", branch = "gpu", default-features = true }
+halo2aggregator-s = { git = "https://github.com/DelphinusLab/halo2aggregator-s.git",  rev = "fa32d533b617f332728dcaee0f9ecbf54e972ec4" }
+delphinus-zkwasm = { git = "https://github.com/machinefi/zkwasm.git"}
+anyhow = "1.0.75"
+data-encoding = "2.4.0"
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.107"
+clap = { version = "4.4.3", features = ["derive", "env", "unicode", "wrap_help"] }
+
