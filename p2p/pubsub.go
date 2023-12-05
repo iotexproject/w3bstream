@@ -13,14 +13,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type SubscriptionHandler func(*Data, *pubsub.Topic)
+type HandleSubscriptionMessage func(*Data, *pubsub.Topic)
 
 type PubSubs struct {
 	mux     sync.RWMutex
 	pubSubs map[uint64]*pubSub
 	ps      *pubsub.PubSub
 	selfID  peer.ID
-	handler SubscriptionHandler
+	handle  HandleSubscriptionMessage
 }
 
 func (p *PubSubs) Add(projectID uint64) error {
@@ -31,7 +31,7 @@ func (p *PubSubs) Add(projectID uint64) error {
 		return nil
 	}
 
-	nps, err := newPubSub(projectID, p.ps, p.handler, p.selfID)
+	nps, err := newPubSub(projectID, p.ps, p.handle, p.selfID)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (p *PubSubs) Publish(projectID uint64, d *Data) error {
 	return nil
 }
 
-func NewPubSubs(handler SubscriptionHandler) (*PubSubs, error) {
+func NewPubSubs(handle HandleSubscriptionMessage) (*PubSubs, error) {
 	ctx := context.Background()
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"), libp2p.NoSecurity)
 	if err != nil {
@@ -91,7 +91,7 @@ func NewPubSubs(handler SubscriptionHandler) (*PubSubs, error) {
 		ps:      ps,
 		pubSubs: make(map[uint64]*pubSub),
 		selfID:  h.ID(),
-		handler: handler,
+		handle:  handle,
 	}, nil
 }
 
@@ -99,7 +99,7 @@ type pubSub struct {
 	selfID       peer.ID
 	topic        *pubsub.Topic
 	subscription *pubsub.Subscription
-	handler      SubscriptionHandler
+	handle       HandleSubscriptionMessage
 	ctx          context.Context
 	ctxCancel    context.CancelFunc
 }
@@ -128,11 +128,11 @@ func (p *pubSub) run() {
 			slog.Error("json unmarshal p2p data failed", "error", err)
 			continue
 		}
-		p.handler(d, p.topic)
+		p.handle(d, p.topic)
 	}
 }
 
-func newPubSub(projectID uint64, ps *pubsub.PubSub, handler SubscriptionHandler, selfID peer.ID) (*pubSub, error) {
+func newPubSub(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*pubSub, error) {
 	topic, err := ps.Join(strconv.FormatUint(projectID, 10))
 	if err != nil {
 		return nil, errors.Wrapf(err, "join topic %v failed", projectID)
@@ -147,7 +147,7 @@ func newPubSub(projectID uint64, ps *pubsub.PubSub, handler SubscriptionHandler,
 		selfID:       selfID,
 		topic:        topic,
 		subscription: sub,
-		handler:      handler,
+		handle:       handle,
 		ctx:          ctx,
 		ctxCancel:    cancel,
 	}, nil
