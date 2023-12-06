@@ -16,4 +16,6 @@ func initLogger() {
 func bindEnvConfig() {
 	viper.MustBindEnv(HttpServiceEndpoint)
 	viper.MustBindEnv(DatabaseDSN)
+	viper.MustBindEnv(BootNodeMultiaddr)
+	viper.MustBindEnv(IotexChainID)
 }

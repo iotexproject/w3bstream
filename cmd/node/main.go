@@ -33,7 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(OperatorPrivateKey))
+	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(OperatorPrivateKey), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}

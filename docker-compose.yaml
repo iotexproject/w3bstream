@@ -11,6 +11,8 @@ services:
     ports:
       - "9000:9000"
     environment:
+      BOOTNODE_MULTIADDR: "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
+      IOTEX_CHAINID: 2
       HTTP_SERVICE_ENDPOINT: ":9000"
       DATABASE_DSN: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
 
@@ -33,6 +35,8 @@ services:
       PROJECT_CONTRACT_ADDRESS: "0x4F7e678B0203e0444E17512108dba4B08B39512e"
       OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
       DATABASE_DSN: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+      BOOTNODE_MULTIADDR: "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
+      IOTEX_CHAINID: 2
     volumes:
       - .:/data
 

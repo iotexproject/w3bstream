@@ -37,6 +37,8 @@ There are many ways to contribute to this project:
 
     export HTTP_SERVICE_ENDPOINT=:9000
     export DATABASE_DSN=postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable
+    export BOOTNODE_MULTIADDR="/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
+    export IOTEX_CHAINID=2
     ```
 
     ```bash
@@ -58,6 +60,8 @@ There are many ways to contribute to this project:
     export ZKWASM_SERVER_ENDPOINT=localhost:4003
     export HALO2_SERVER_ENDPOINT=localhost:4002
     export RISC0_SERVER_ENDPOINT=localhost:4001
+    export BOOTNODE_MULTIADDR="/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
+    export IOTEX_CHAINID=2
     ```
 
 3. Start required services:
