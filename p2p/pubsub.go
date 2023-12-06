@@ -134,7 +134,7 @@ func (p *pubSub) run() {
 }
 
 func newPubSub(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*pubSub, error) {
-	topic, err := ps.Join(strconv.FormatUint(projectID, 10))
+	topic, err := ps.Join("w3bstream-project-" + strconv.FormatUint(projectID, 10))
 	if err != nil {
 		return nil, errors.Wrapf(err, "join topic %v failed", projectID)
 	}
