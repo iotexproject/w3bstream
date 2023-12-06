@@ -14,6 +14,7 @@ import (
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
+	"github.com/pkg/errors"
 )
 
 type Processor struct {
@@ -102,12 +103,13 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	outCfg := r.buildProjectOutputConfig(project.Config)
 	outputter, err := r.outputFactory.NewOutputter(outCfg)
 	if err != nil {
+		err = errors.Wrap(err, "fail to init outputter")
 		slog.Error(err.Error())
 		r.reportFail(mids, err, topic)
 		return
 	}
 
-	slog.Debug("output proof", "outputter", outputter)
+	slog.Debug("output proof", "outputter", fmt.Sprintf("%T", outputter))
 
 	r.reportSuccess(mids, types.MessageStateOutputting, "output proof", topic)
 	outRes, err := outputter.Output(res)

@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"errors"
 	"log/slog"
 
 	solcommon "github.com/blocto/solana-go-sdk/common"
@@ -25,26 +26,30 @@ type (
 )
 
 // NewSolanaProgram returns a new solana program adapter
-func NewSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) *SolanaProgram {
+func NewSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) (*SolanaProgram, error) {
+	if len(secretKey) == 0 {
+		return nil, errors.New("secretkey is empty")
+	}
 	return &SolanaProgram{
 		endpoint:       endpoint,
 		programID:      programID,
 		secretKey:      secretKey,
 		stateAccountPK: stateAccountPK,
-	}
+	}, nil
 }
 
 // Output outputs the proof to the ethereum contract
 func (e *SolanaProgram) Output(proof []byte) (Result, error) {
+	slog.Debug("outputing to solana program", "chain endpoint", e.endpoint)
 	// pack instructions
-	ins := e.packInstructions(proof)
+	ins := e.packInstructions(proof[:8])
 
 	// send tx
 	txHash, err := solana.SendTX(e.endpoint, e.secretKey, ins)
 	if err != nil {
 		return nil, err
 	}
-	slog.Debug("solana contract output", "txHash", txHash)
+	slog.Debug("output success", "txHash", txHash)
 
 	return &SolanaProgramResult{TxHash: txHash}, nil
 }
