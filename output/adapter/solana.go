@@ -42,7 +42,7 @@ func NewSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) (*S
 func (e *SolanaProgram) Output(proof []byte) (Result, error) {
 	slog.Debug("outputing to solana program", "chain endpoint", e.endpoint)
 	// pack instructions
-	ins := e.packInstructions(proof[:8])
+	ins := e.packInstructions(proof)
 
 	// send tx
 	txHash, err := solana.SendTX(e.endpoint, e.secretKey, ins)
