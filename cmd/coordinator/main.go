@@ -16,7 +16,7 @@ func main() {
 	initLogger()
 	bindEnvConfig()
 
-	coordinator, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN))
+	coordinator, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}

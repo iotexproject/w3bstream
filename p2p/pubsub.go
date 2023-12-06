@@ -10,6 +10,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/p2p/muxer/yamux"
 	"github.com/pkg/errors"
 )
 
@@ -72,9 +73,9 @@ func (p *PubSubs) Publish(projectID uint64, d *Data) error {
 	return nil
 }
 
-func NewPubSubs(handle HandleSubscriptionMessage) (*PubSubs, error) {
+func NewPubSubs(handle HandleSubscriptionMessage, bootNodeMultiaddr string, iotexChainID int) (*PubSubs, error) {
 	ctx := context.Background()
-	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"), libp2p.NoSecurity)
+	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"), libp2p.Muxer("/yamux/2.0.0", yamux.DefaultTransport))
 	if err != nil {
 		return nil, errors.Wrap(err, "new libp2p host failed")
 	}
@@ -83,8 +84,8 @@ func NewPubSubs(handle HandleSubscriptionMessage) (*PubSubs, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "new gossip subscription failed")
 	}
-	if err := setupDiscovery(h); err != nil {
-		return nil, errors.Wrap(err, "setup mdns discovery failed")
+	if err := discoverPeers(ctx, h, bootNodeMultiaddr, iotexChainID); err != nil {
+		return nil, err
 	}
 
 	return &PubSubs{
@@ -133,7 +134,7 @@ func (p *pubSub) run() {
 }
 
 func newPubSub(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*pubSub, error) {
-	topic, err := ps.Join(strconv.FormatUint(projectID, 10))
+	topic, err := ps.Join("w3bstream-project-" + strconv.FormatUint(projectID, 10))
 	if err != nil {
 		return nil, errors.Wrapf(err, "join topic %v failed", projectID)
 	}
