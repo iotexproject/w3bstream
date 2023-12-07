@@ -1,21 +1,21 @@
-# IoTeX Zero-Node (Sprout Release 🍀)
+# IoTeX W3bstream (Sprout Release 🍀)
 
-## Welcome to the Zero-Node Protocol Repository
+## Welcome to the W3bstream Protocol Repository
 
-- [Introduction](#-about-zero-node-protocol)
+- [Introduction](#-about-w3bstream-protocol)
 - [Getting Started](#quickstart)
-- [Sending data](#send-testing-data-to-znode)
+- [Sending data](#send-testing-data-to-w3bstream)
 - [Contributing](#contributing)
 - [Community & Support](#community-and-support)
 
 
-#### 🌍 About Zero-Node Protocol
+#### 🌍 About W3bstream Protocol
 
-Zero-Node Protocol is an integral part of the [IoTeX network](https://iotex.io). It's a new protocol, dedicated to generating custom Zero-Knowledge (ZK) Proofs on top of machine data, forming a robust backbone for Decentralized Physical Infrastructures (**DePIN**) applications. These proofs are crucial in scaling DePIN data computation and storage, and are key in triggering token economies **based on verifiable proofs of real-world work**.
+W3bstream Protocol is an integral part of the [IoTeX network](https://iotex.io). It's a new protocol, dedicated to generating custom Zero-Knowledge (ZK) Proofs on top of machine data, forming a robust backbone for Decentralized Physical Infrastructures (**DePIN**) applications. These proofs are crucial in scaling DePIN data computation and storage, and are key in triggering token economies **based on verifiable proofs of real-world work**.
 
 #### 🔗 Integrating with Blockchains
 
-The Zero-Node Protocol sends these compact, verifiable proofs to various blockchains, activating DePIN token economies upon their verification. [Supported Blockchains →](#supported_blockchains)
+The W3bstream Protocol sends these compact, verifiable proofs to various blockchains, activating DePIN token economies upon their verification. [Supported Blockchains →](#supported_blockchains)
 
 #### 🛠 Custom Provers and VM Support
 
@@ -23,13 +23,13 @@ DePIN project owners can utilize native Halo2 circuits to create custom provers.
 
 #### Supported Blockchains
 
-Currently, all EVM blockchains are supported as the target for ZNode Proofs.
+Currently, all EVM blockchains are supported as the target for W3bstream Proofs.
 
 ## Quickstart
 
 ### Installation
 
-Install the node command line client `ioctl`:
+Install the command line client `ioctl`:
 
 ```bash
 brew tap iotexproject/ioctl-unstable
@@ -40,27 +40,27 @@ alias ioctl=`which ioctl-unstable`
 > **_NOTE_**
 > `ioctl-unstable` is the latest command-line interface for interacting with IoTeX blockchain
 > 
-> We will soon release a stable version with full support for interacting with w3bstream node. (WIP)
+> We will soon release a stable version with full support for interacting with W3bstream. (WIP)
 > 
 > For more, see [ioctl command line →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
 
-### Send testing data to znode
+### Send testing data to W3bstream
 
-The following example sends a message to an example project deployed on the node that makes use of a RISC0 prover, which has project ID 10000:
+The following example sends a message to an example project deployed on the W3bstream that makes use of a RISC0 prover, which has project ID 10000:
 Project `10000` is an example of a Risc0 circuit, which can prove that an integer `private_input` is within an interval `public_input`.
 
 ```bash
 ioctl ws message send --project-id 10000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
-The following example sends a message to an example project deployed on the node that makes use of a Halo2 prover, which has project ID 10001:
+The following example sends a message to an example project deployed on the W3bstream that makes use of a Halo2 prover, which has project ID 10001:
 Project `10001` is an example of Halo2 circuit, which can prove the product of the squares of two integers, `private_a` and `private_b`, multiplied by the constant 4.
 
 ```bash
 ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
-The following example sends a message to an example project deployed on the node that makes use of a Zkwasm prover, which has project ID 10002, this may be slow and may take some time:
+The following example sends a message to an example project deployed on the W3bstream that makes use of a Zkwasm prover, which has project ID 10002, this may be slow and may take some time:
 Project `10003` is an example of zkWasm circuit, which can prove that two integers 'private_input' are equal.
 
 ```bash
@@ -69,7 +69,7 @@ ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"priv
 
 ### Retrieve ZKP
 
-After znode received the message, a message id will return, like below:
+After W3bstream received the message, a message id will return, like below:
 
 ```json
 {
@@ -88,37 +88,28 @@ the query result like below:
 ```json
 {
 	"messageID": "4abbc43a-798f-49e8-bc05-b6baeafec630",
-	"states": [{
-		"state": "RECEIVED",
-		"time": "2023-11-24T03:41:16.946333Z",
-		"description": ""
-	}, {
-		"state": "FETCHED",
-		"time": "2023-11-24T03:41:19.579558Z",
-		"description": ""
-	}, {
-		"state": "PROVING",
-		"time": "2023-11-24T03:41:19.59012Z",
-		"description": ""
-	}, {
-		"state": "PROVED",
-		"time": "2023-11-24T03:42:23.346377Z",
-		"description": "your proof data"
-	}, {
-		"state": "OUTPUTTING",
-		"time": "2023-11-24T03:42:23.357991Z",
-		"description": "writing proof to chain"
-	}, {
-		"state": "OUTPUTTED",
-		"time": "2023-11-24T03:42:26.013841Z",
-		"description": "your transaction hash"
-	}]
+    "states": [
+      {
+        "state": "received",
+        "time": "2023-12-06T16:11:03.498785+08:00",
+        "comment": ""
+      },
+      {
+        "state": "fetched",
+        "time": "2023-12-06T16:11:04.663608+08:00",
+        "comment": ""
+      },
+      {
+        "state": "proving",
+        "time": "2023-12-06T16:11:04.664008+08:00",
+        "comment": ""
+      }]
 }
 ```
 
 ## Advancement
 - [build circuit](BUILD-CIRCUIT.md)
-- [run znode locally](RUN-LOCALLY.md)
+- [run W3bstream locally](RUN-LOCALLY.md)
 
 ## Contributing
 

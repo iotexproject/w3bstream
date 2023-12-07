@@ -1,11 +1,11 @@
 version: "3.6"
 
 services:
-  w3bcoordinator:
-    image: ghcr.io/machinefi/coordinator:latest
+  w3benode:
+    image: ghcr.io/machinefi/enode:latest
     depends_on:
       - "postgres"
-    container_name: w3bstream-coordinator
+    container_name: w3bstream-enode
     platform: linux/x86_64
     restart: always
     ports:
@@ -16,14 +16,14 @@ services:
       HTTP_SERVICE_ENDPOINT: ":9000"
       DATABASE_DSN: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
 
-  w3bnode:
-    image: ghcr.io/machinefi/node:latest
+  w3bznode:
+    image: ghcr.io/machinefi/znode:latest
     depends_on:
       - "risc0"
       - "halo2"
       - "postgres"
       - "w3bsequencer"
-    container_name: w3bstream-node
+    container_name: w3bstream-znode
     platform: linux/x86_64
     restart: always
     environment:
