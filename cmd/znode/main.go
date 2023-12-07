@@ -29,6 +29,7 @@ func main() {
 			types.VMZkwasm: viper.GetString(ZkwasmServerEndpoint),
 		},
 	)
+	// TODO: remove ChainEndpoint, use ChainConfig instead
 	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(ProjectFileDirectory))
 	if err != nil {
 		log.Fatal(err)
