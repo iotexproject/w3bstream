@@ -88,22 +88,22 @@ the query result like below:
 ```json
 {
 	"messageID": "4abbc43a-798f-49e8-bc05-b6baeafec630",
-    "states": [
-      {
-        "state": "received",
-        "time": "2023-12-06T16:11:03.498785+08:00",
-        "comment": ""
-      },
-      {
-        "state": "fetched",
-        "time": "2023-12-06T16:11:04.663608+08:00",
-        "comment": ""
-      },
-      {
-        "state": "proving",
-        "time": "2023-12-06T16:11:04.664008+08:00",
-        "comment": ""
-      }]
+	"states": [{
+			"state": "received",
+			"time": "2023-12-06T16:11:03.498785+08:00",
+			"comment": ""
+		},
+		{
+			"state": "fetched",
+			"time": "2023-12-06T16:11:04.663608+08:00",
+			"comment": ""
+		},
+		{
+			"state": "proving",
+			"time": "2023-12-06T16:11:04.664008+08:00",
+			"comment": ""
+		}
+	]
 }
 ```
 
