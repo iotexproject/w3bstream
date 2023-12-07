@@ -23,7 +23,7 @@ type Processor struct {
 	ps                 *p2p.PubSubs
 }
 
-func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey string) (*Processor, error) {
+func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainEndpoint, operatorPrivateKey, bootNodeMultiaddr string, iotexChainID int) (*Processor, error) {
 	p := &Processor{
 		vmHandler:          vmHandler,
 		chainEndpoint:      chainEndpoint,
@@ -31,7 +31,7 @@ func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, chainE
 		projectManager:     projectManager,
 	}
 
-	ps, err := p2p.NewPubSubs(p.handleP2PData)
+	ps, err := p2p.NewPubSubs(p.handleP2PData, bootNodeMultiaddr, iotexChainID)
 	if err != nil {
 		return nil, err
 	}

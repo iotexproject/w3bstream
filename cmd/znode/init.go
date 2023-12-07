@@ -24,6 +24,8 @@ func bindEnvConfig() {
 	viper.MustBindEnv(ChainEndpoint)
 	viper.MustBindEnv(ProjectContractAddress)
 	viper.MustBindEnv(DatabaseDSN)
+	viper.MustBindEnv(BootNodeMultiaddr)
+	viper.MustBindEnv(IotexChainID)
 
 	viper.BindEnv(OperatorPrivateKey)
 }

@@ -172,7 +172,7 @@ func newDB(pgEndpoint string) (*gorm.DB, error) {
 	return db, nil
 }
 
-func NewCoordinator(pgEndpoint string) (*Coordinator, error) {
+func NewCoordinator(pgEndpoint string, bootNodeMultiaddr string, iotexChainID int) (*Coordinator, error) {
 	db, err := newDB(pgEndpoint)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func NewCoordinator(pgEndpoint string) (*Coordinator, error) {
 		return nil, err
 	}
 
-	ps, err := p2p.NewPubSubs(c.handleP2PData)
+	ps, err := p2p.NewPubSubs(c.handleP2PData, bootNodeMultiaddr, iotexChainID)
 	if err != nil {
 		return nil, err
 	}

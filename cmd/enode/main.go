@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/sprout/cmd/coordinator/api"
+	"github.com/machinefi/sprout/cmd/enode/api"
 	"github.com/machinefi/sprout/coordinator"
 )
 
@@ -16,7 +16,7 @@ func main() {
 	initLogger()
 	bindEnvConfig()
 
-	coordinator, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN))
+	coordinator, err := coordinator.NewCoordinator(viper.GetString(DatabaseDSN), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}
