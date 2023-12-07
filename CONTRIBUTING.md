@@ -1,8 +1,8 @@
-# Contribution Guidelines for iotex-znode
+# Contribution Guidelines for W3bstream
 
 ## Introduction
 
-Thank you for considering contributing to the IoTeX Zero-Node! We value your contributions and want to make sure that your efforts align with the goals and standards of our project. This document provides guidelines to ensure a smooth and effective collaboration process.
+Thank you for considering contributing to the IoTeX W3bstream! We value your contributions and want to make sure that your efforts align with the goals and standards of our project. This document provides guidelines to ensure a smooth and effective collaboration process.
 
 ## How to Contribute
 
@@ -33,15 +33,16 @@ There are many ways to contribute to this project:
 
 1. Ensure all required env variables are exported:
     ```bash
-    # sequencer env
+    # enode env
 
-    export GRPC_SERVICE_ENDPOINT=:9001
     export HTTP_SERVICE_ENDPOINT=:9000
     export DATABASE_DSN=postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable
+    export BOOTNODE_MULTIADDR="/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
+    export IOTEX_CHAINID=2
     ```
 
     ```bash
-    # node env
+    # znode env
     # --- Edit the following
 
     # The RPC of the destination chain where proofs must be sent
@@ -59,7 +60,8 @@ There are many ways to contribute to this project:
     export ZKWASM_SERVER_ENDPOINT=localhost:4003
     export HALO2_SERVER_ENDPOINT=localhost:4002
     export RISC0_SERVER_ENDPOINT=localhost:4001
-    export SEQUENCER_SERVER_ENDPOINT=localhost:9001
+    export BOOTNODE_MULTIADDR="/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
+    export IOTEX_CHAINID=2
     ```
 
 3. Start required services:
@@ -68,10 +70,10 @@ There are many ways to contribute to this project:
     docker compose -f docker-compose-dev.yaml up -d
     ```
 
-4. Start sequencer server:
+4. Start enode server:
     
     ```bash
-    go build -o sequencer && ./sequencer
+    cd cmd/enode && go run .
     ```
 
 5. Open the repository in VS Code and create a launch.json file with the following content:
@@ -86,7 +88,7 @@ There are many ways to contribute to this project:
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/cmd/node"
+            "program": "${workspaceFolder}/cmd/znode"
         }
       ]
     }

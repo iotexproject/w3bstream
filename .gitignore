@@ -29,5 +29,5 @@ docker-compose.debug.yaml
 docker-compose.debug.yml
 
 # rust 
-examples/*/target/
+examples/**/target/
 examples/*/pkg/

@@ -4,7 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/machinefi/sprout/proto"
+	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/vm/proto"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -34,7 +35,7 @@ func NewInstance(ctx context.Context, endpoint string, projectID uint64, execute
 	return &Instance{conn: conn, resp: resp}, nil
 }
 
-func (i *Instance) Execute(ctx context.Context, msgs []*proto.Message) ([]byte, error) {
+func (i *Instance) Execute(ctx context.Context, msgs []*types.Message) ([]byte, error) {
 	datas := []string{}
 	for _, m := range msgs {
 		datas = append(datas, m.Data)

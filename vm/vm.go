@@ -7,16 +7,16 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/proto"
+	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm/server"
 )
 
 type Handler struct {
-	vmServerEndpoints map[Type]string
+	vmServerEndpoints map[types.VM]string
 	instanceMgr       *server.Mgr
 }
 
-func (r *Handler) Handle(msgs []*proto.Message, vmtype Type, code string, expParam string) ([]byte, error) {
+func (r *Handler) Handle(msgs []*types.Message, vmtype types.VM, code string, expParam string) ([]byte, error) {
 	if len(msgs) == 0 {
 		return nil, errors.New("missing messages")
 	}
@@ -39,7 +39,7 @@ func (r *Handler) Handle(msgs []*proto.Message, vmtype Type, code string, expPar
 	return res, nil
 }
 
-func NewHandler(vmServerEndpoints map[Type]string) *Handler {
+func NewHandler(vmServerEndpoints map[types.VM]string) *Handler {
 	return &Handler{
 		vmServerEndpoints: vmServerEndpoints,
 		instanceMgr:       server.NewMgr(),

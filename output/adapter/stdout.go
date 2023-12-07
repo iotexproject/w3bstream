@@ -14,7 +14,7 @@ func NewStdout() *Stdout {
 }
 
 // Output writes the proof to stdout.
-func (r *Stdout) Output(proof []byte) error {
+func (r *Stdout) Output(proof []byte) (Result, error) {
 	slog.Info("stdout", "proof", hex.EncodeToString(proof))
-	return nil
+	return "", nil
 }
