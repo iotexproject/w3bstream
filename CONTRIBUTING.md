@@ -1,8 +1,8 @@
-# Contribution Guidelines for iotex-znode
+# Contribution Guidelines for W3bstream
 
 ## Introduction
 
-Thank you for considering contributing to the IoTeX Zero-Node! We value your contributions and want to make sure that your efforts align with the goals and standards of our project. This document provides guidelines to ensure a smooth and effective collaboration process.
+Thank you for considering contributing to the IoTeX W3bstream! We value your contributions and want to make sure that your efforts align with the goals and standards of our project. This document provides guidelines to ensure a smooth and effective collaboration process.
 
 ## How to Contribute
 
@@ -33,7 +33,7 @@ There are many ways to contribute to this project:
 
 1. Ensure all required env variables are exported:
     ```bash
-    # coordinator env
+    # enode env
 
     export HTTP_SERVICE_ENDPOINT=:9000
     export DATABASE_DSN=postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable
@@ -42,7 +42,7 @@ There are many ways to contribute to this project:
     ```
 
     ```bash
-    # node env
+    # znode env
     # --- Edit the following
 
     # The RPC of the destination chain where proofs must be sent
@@ -70,10 +70,10 @@ There are many ways to contribute to this project:
     docker compose -f docker-compose-dev.yaml up -d
     ```
 
-4. Start coordinator server:
+4. Start enode server:
     
     ```bash
-    go build -o coordinator && ./coordinator
+    cd cmd/enode && go run .
     ```
 
 5. Open the repository in VS Code and create a launch.json file with the following content:
@@ -88,7 +88,7 @@ There are many ways to contribute to this project:
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/cmd/node"
+            "program": "${workspaceFolder}/cmd/znode"
         }
       ]
     }

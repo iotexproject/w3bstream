@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/sprout/cmd/coordinator/api"
+	"github.com/machinefi/sprout/cmd/enode/api"
 	"github.com/machinefi/sprout/coordinator"
 )
 
