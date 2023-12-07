@@ -3,16 +3,19 @@
 ## [Unreleased]
 
 ### In Process
-- Support risc0 local verify proof -- `90%` by @hunshenshi 
-- Support halo2 local verify proof -- `70%` by @hunshenshi 
-- Support libp2p -- `50%` by @huangzhiran
-- Support DID auth -- `10%` by @saitofun
+- Support DID auth -- `30%` by @saitofun
+
+---
+## [0.4.0] - 2023-12-07
 
 ### Added
+- Support risc0 local verify proof
+- Support halo2 local verify proof
+- Support zkwasm local verify proof
+- Support p2p network
 
 ### Changed
-
-### Fixed
+- Update readme, replace Zero-Node with W3bstream  
 
 ---
 ## [0.3.1] - 2023-11-30

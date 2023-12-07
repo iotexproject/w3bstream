@@ -1,7 +1,7 @@
 version: "3.6"
 
 services:
-  w3benode:
+  enode:
     image: ghcr.io/machinefi/enode:latest
     depends_on:
       - "postgres"
@@ -16,13 +16,13 @@ services:
       HTTP_SERVICE_ENDPOINT: ":9000"
       DATABASE_DSN: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
 
-  w3bznode:
+  znode:
     image: ghcr.io/machinefi/znode:latest
     depends_on:
       - "risc0"
       - "halo2"
+      - "zkwasm"
       - "postgres"
-      - "w3bsequencer"
     container_name: w3bstream-znode
     platform: linux/x86_64
     restart: always

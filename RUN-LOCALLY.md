@@ -66,7 +66,7 @@ After that, you can use ```ioctl config get wsEndpoint``` to make sure the confi
 Monitor the W3bstream instance status with:
 
 ```bash
-docker-compose logs -f w3bznode
+docker-compose logs -f enode znode
 ```
 
 Shut down the W3bstream instance with:
