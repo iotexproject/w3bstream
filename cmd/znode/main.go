@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/machinefi/sprout/message"
+	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
@@ -28,12 +29,19 @@ func main() {
 			types.VMZkwasm: viper.GetString(ZkwasmServerEndpoint),
 		},
 	)
+	// TODO: remove ChainEndpoint, use ChainConfig instead
 	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(ProjectFileDirectory))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, viper.GetString(ChainEndpoint), viper.GetString(OperatorPrivateKey), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
+	outputFactory, err := output.NewFactory([]byte(viper.GetString(ChainConfig)))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, outputFactory,
+		viper.GetString(OperatorPrivateKey), viper.GetString(OperatorPrivateKeyED25519), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}
