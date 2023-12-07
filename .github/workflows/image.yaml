@@ -7,8 +7,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  SEQUENCER_IMAGE_NAME: machinefi/sequencer
-  NODE_IMAGE_NAME: machinefi/node
+  SEQUENCER_IMAGE_NAME: machinefi/enode
+  NODE_IMAGE_NAME: machinefi/znode
 
 jobs:
   build_docker_image:
@@ -53,13 +53,13 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.SEQUENCER_IMAGE_NAME }}
 
 
-      - name: Build and push Docker image sequencer
+      - name: Build and push Docker image enode
         id: build-and-push-sequencer
         uses: docker/build-push-action@v4
         with:
           platforms: linux/amd64,linux/arm64
           context: .
-          file: ./sequencer.Dockerfile
+          file: ./enode.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-sequencer.outputs.tags }}
           labels: ${{ steps.meta-sequencer.outputs.labels }}
@@ -72,13 +72,13 @@ jobs:
           images: |
             ${{ env.REGISTRY }}/${{ env.NODE_IMAGE_NAME }}
 
-      - name: Build and push Docker image node
+      - name: Build and push Docker image znode
         id: build-and-push-node
         uses: docker/build-push-action@v4
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          file: ./node.Dockerfile
+          file: ./znode.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-node.outputs.tags }}
           labels: ${{ steps.meta-node.outputs.labels }}
