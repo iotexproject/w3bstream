@@ -62,27 +62,27 @@ More details and options for `zkWasm circuit` are given in [its README](./exampl
 ### Convert halo2 circuit to w3bstream project config
 
 ```bash
-wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm"
+ioctl ws code convert -t "halo2" -i "halo2_wasm_bg.wasm"
 ```
 
 This command will generate a file named `halo2-config.json` in the current folder. 
-Or you can run `wsctl code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/filename.json"`
+Or you can run `ioctl ws code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/filename.json"`
 
 ### Convert risc0 circuit to w3bstream project config
 
 ```bash
-wsctl code convert -t "risc0" -i "methods.rs"  -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
+ioctl ws code convert -t "risc0" -i "methods.rs"  -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
 ```
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs`.
 
 This command will generate a file named `risc0-config.json` in the current folder.
-Or you can run `wsctl code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}`
+Or you can run `ioctl ws code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}`
 
 ### Convert zkwasm circuit to w3bstream project config
 
 ```bash
-wsctl code convert -t "zkwasm" -i "zkwasm_demo.wasm"
+ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm"
 ```
 
 This command will generate a file named `zkwasm-config.json` in the current folder.
-Or you can run `wsctl code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/filename.json"`
+Or you can run `ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/filename.json"`
