@@ -60,7 +60,7 @@ Project `10001` is an example of Halo2 circuit, which can prove the product of t
 ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
-The following example sends a message to an example project deployed on the node that makes use of a Zkwasm prover, which has project ID 10002, this may be slow and may take some time:
+The following example sends a message to an example project deployed on the W3bstream that makes use of a Zkwasm prover, which has project ID 10002, this may be slow and may take some time:
 Project `10002` is an example of zkWasm circuit, which can prove that two integers `private_input` are equal the integer `public_input`.
 
 ```bash

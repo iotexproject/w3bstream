@@ -25,11 +25,11 @@ after [build circuit](BUILD-CIRCUIT.md)
 - move `halo2-config.json` to `test/project, and then rename `halo2-config.json` to `20001`(`20001` is project id).
 - move `zkwasm-config.json` to `test/project, and then rename `zkwasm-config.json` to `20002`(`20002` is project id).
 
-## Configure the node
+## Configure W3bstream
 
 ### Set your blockchain account
 
-1. To enable the node to send proofs to the destination blockchain, configure a funded account on the target chain:
+1. To enable the W3bstream instance to send proofs to the destination blockchain, configure a funded account on the target chain:
 
 ```bash
 export PRIVATE_KEY=${your private key}
