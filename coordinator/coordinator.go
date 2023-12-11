@@ -26,13 +26,13 @@ func (s *Coordinator) Save(msg *types.Message) error {
 	}
 
 	m := Message{
-		MessageID: msg.MessageID,
+		MessageID: msg.ID,
 		ProjectID: msg.ProjectID,
 		Data:      msg.Data,
 		State:     types.MessageStateReceived,
 	}
 	l := MessageStateLog{
-		MessageID: msg.MessageID,
+		MessageID: msg.ID,
 		State:     types.MessageStateReceived,
 	}
 
@@ -58,7 +58,7 @@ func (s *Coordinator) fetch(projectID uint64) (*types.Message, error) {
 	}
 
 	return &types.Message{
-		MessageID: m.MessageID,
+		ID:        m.MessageID,
 		ProjectID: m.ProjectID,
 		Data:      m.Data,
 	}, nil

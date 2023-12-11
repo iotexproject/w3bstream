@@ -78,7 +78,7 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 	id := uuid.NewString()
 	slog.Debug("received your message, handling")
 	if err := s.coordinator.Save(&types.Message{
-		MessageID: id,
+		ID:        id,
 		ProjectID: req.ProjectID,
 		Data:      req.Data,
 	}); err != nil {
