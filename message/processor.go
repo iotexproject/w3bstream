@@ -163,7 +163,7 @@ func (r *Processor) reportSuccess(messageIDs []string, state types.MessageState,
 func (r *Processor) getMessageIDs(ms []*types.Message) []string {
 	ids := []string{}
 	for _, m := range ms {
-		ids = append(ids, m.MessageID)
+		ids = append(ids, m.ID)
 	}
 	return ids
 }
