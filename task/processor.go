@@ -145,5 +145,11 @@ func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, output
 		return nil, err
 	}
 	p.ps = ps
+
+	for _, id := range projectManager.GetAllProjectID() {
+		if err := ps.Add(id); err != nil {
+			return nil, errors.Wrapf(err, "add project %d pubsub failed", id)
+		}
+	}
 	return p, nil
 }

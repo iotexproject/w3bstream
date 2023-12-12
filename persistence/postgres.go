@@ -11,14 +11,14 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-type messageModel struct {
+type message struct {
 	gorm.Model
 	MessageID string `gorm:"index:message_id,not null"`
 	ProjectID uint64 `gorm:"index:message_fetch,not null"`
 	Data      string `gorm:"size:4096"`
 }
 
-type taskModel struct {
+type task struct {
 	gorm.Model
 	TaskID    string          `gorm:"index:task_id,not null"`
 	MessageID string          `gorm:"index:message_id,not null"`
@@ -26,7 +26,7 @@ type taskModel struct {
 	State     types.TaskState `gorm:"index:task_fetch,not null"`
 }
 
-type taskStateLogModel struct {
+type taskStateLog struct {
 	gorm.Model
 	TaskID  string          `gorm:"index:task_id,not null"`
 	State   types.TaskState `gorm:"not null"`
@@ -37,24 +37,25 @@ type Postgres struct {
 	db *gorm.DB
 }
 
-func (s *Postgres) Save(msg *types.Message) error {
-	m := messageModel{
+func (p *Postgres) Save(msg *types.Message) error {
+	m := message{
 		MessageID: msg.ID,
 		ProjectID: msg.ProjectID,
 		Data:      msg.Data,
 	}
 	tid := uuid.NewString()
-	t := taskModel{
+	t := task{
 		TaskID:    tid,
 		MessageID: msg.ID,
+		ProjectID: msg.ProjectID,
 		State:     types.TaskStateReceived,
 	}
-	l := taskStateLogModel{
+	l := taskStateLog{
 		TaskID: tid,
 		State:  types.TaskStateReceived,
 	}
 
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	return p.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&m).Error; err != nil {
 			return errors.Wrap(err, "create message failed")
 		}
@@ -68,17 +69,17 @@ func (s *Postgres) Save(msg *types.Message) error {
 	})
 }
 
-func (s *Postgres) Fetch(projectID uint64) (*types.Task, error) {
-	t := taskModel{}
-	if err := s.db.Where("project_id = ? AND state = ?", projectID, types.TaskStateReceived).First(&t).Error; err != nil {
+func (p *Postgres) Fetch(projectID uint64) (*types.Task, error) {
+	t := task{}
+	if err := p.db.Where("project_id = ? AND state = ?", projectID, types.TaskStateReceived).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "query task failed, projectID %d", projectID)
 	}
 
-	m := messageModel{}
-	if err := s.db.Where("message_id = ?", t.MessageID).Take(&m).Error; err != nil {
+	m := message{}
+	if err := p.db.Where("message_id = ?", t.MessageID).Take(&m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.Errorf("missing message, messageID %s", t.MessageID)
 		}
@@ -94,9 +95,9 @@ func (s *Postgres) Fetch(projectID uint64) (*types.Task, error) {
 	}, nil
 }
 
-func (s *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error) {
-	ts := []*taskModel{}
-	if err := s.db.Where("message_id = ?", messageID).Find(&ts).Error; err != nil {
+func (p *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error) {
+	ts := []*task{}
+	if err := p.db.Where("message_id = ?", messageID).Find(&ts).Error; err != nil {
 		return nil, errors.Wrapf(err, "query task by message id failed, messageID %s", messageID)
 	}
 	tids := []string{}
@@ -107,8 +108,8 @@ func (s *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error
 		return nil, nil
 	}
 
-	ls := []*taskStateLogModel{}
-	if err := s.db.Order("created_at").Where("task_id IN ?", tids).Find(&ls).Error; err != nil {
+	ls := []*taskStateLog{}
+	if err := p.db.Order("created_at").Where("task_id IN ?", tids).Find(&ls).Error; err != nil {
 		return nil, errors.Wrapf(err, "query task state log failed, taskIDs %v", tids)
 	}
 
@@ -124,12 +125,12 @@ func (s *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error
 	return tls, nil
 }
 
-func (s *Postgres) UpdateState(taskID string, state types.TaskState, comment string, createdAt time.Time) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&taskModel{}).Where("task_id = ?", taskID).Update("state", state).Error; err != nil {
+func (p *Postgres) UpdateState(taskID string, state types.TaskState, comment string, createdAt time.Time) error {
+	return p.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&task{}).Where("task_id = ?", taskID).Update("state", state).Error; err != nil {
 			return errors.Wrapf(err, "update task state failed, task_id %s, target_state %s", taskID, state.String())
 		}
-		if err := tx.Create(&taskStateLogModel{
+		if err := tx.Create(&taskStateLog{
 			TaskID:  taskID,
 			State:   state,
 			Comment: comment,
@@ -150,7 +151,7 @@ func NewPostgres(pgEndpoint string) (*Postgres, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "connect postgres failed")
 	}
-	if err := db.AutoMigrate(&messageModel{}, &taskModel{}, &taskStateLogModel{}); err != nil {
+	if err := db.AutoMigrate(&message{}, &task{}, &taskStateLog{}); err != nil {
 		return nil, errors.Wrap(err, "migrate model failed")
 	}
 	return &Postgres{db}, nil
