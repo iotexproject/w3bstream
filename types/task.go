@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type Task struct {
 	ID       string     `json:"id"`
 	Messages []*Message `json:"messages"`
@@ -19,9 +21,10 @@ const (
 )
 
 type TaskStateLog struct {
-	TaskID  string
-	State   TaskState
-	Comment string
+	TaskID    string
+	State     TaskState
+	Comment   string
+	CreatedAt time.Time
 }
 
 func (s TaskState) String() string {

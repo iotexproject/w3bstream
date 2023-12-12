@@ -115,9 +115,10 @@ func (s *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error
 	tls := []*types.TaskStateLog{}
 	for _, l := range ls {
 		tls = append(tls, &types.TaskStateLog{
-			TaskID:  l.TaskID,
-			State:   l.State,
-			Comment: l.Comment,
+			TaskID:    l.TaskID,
+			State:     l.State,
+			Comment:   l.Comment,
+			CreatedAt: l.CreatedAt,
 		})
 	}
 	return tls, nil
