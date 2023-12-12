@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/sprout/message"
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
@@ -40,13 +40,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msgProcessor, err := message.NewProcessor(vmHandler, projectManager, outputFactory,
+	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, outputFactory,
 		viper.GetString(OperatorPrivateKey), viper.GetString(OperatorPrivateKeyED25519), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	msgProcessor.Run()
+	taskProcessor.Run()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
