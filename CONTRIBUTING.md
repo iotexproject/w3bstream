@@ -39,6 +39,9 @@ There are many ways to contribute to this project:
     export DATABASE_DSN=postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable
     export BOOTNODE_MULTIADDR="/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
     export IOTEX_CHAINID=2
+    export PROJECT_FILE_DIRECTORY=./test/data
+    export CHAIN_ENDPOINT=https://babel-api.testnet.iotex.io
+    export PROJECT_CONTRACT_ADDRESS=0x4F7e678B0203e0444E17512108dba4B08B39512e
     ```
 
     ```bash
