@@ -895,7 +895,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "halo2-circuit"
+name = "halo2-simple-circuit"
 version = "0.1.0"
 dependencies = [
  "clap",
