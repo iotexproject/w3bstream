@@ -29,12 +29,30 @@ Currently, all EVM blockchains are supported as the target for W3bstream Proofs.
 
 ### Installation
 
-Install the command line client `ioctl`:
+Install the command line client `ioctl`
+`ioctl` is an all-in-one command tool for interactive with IoTeX chain and w3bstream node
+
+#### MacOS
 
 ```bash
 brew tap iotexproject/ioctl-unstable
 brew install iotexproject/ioctl-unstable/ioctl-unstable
 alias ioctl=`which ioctl-unstable`
+```
+
+#### Build from source
+
+Ioctl's build system requires Go and some standard POSIX build tools:
+
+* GNU make
+* Git
+* Go
+
+```bash
+git clone git@github.com:iotexproject/iotex-core.git
+cd iotex-core && make ioctl
+mv bin/ioctl $GOPATH/bin
+ioctl help
 ```
 
 > **_NOTE_**
