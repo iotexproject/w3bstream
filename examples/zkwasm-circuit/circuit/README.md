@@ -12,11 +12,11 @@ npm install -g assemblyscript
 1. get template
 
 ``` shell
-git clone git@github.com:machinefi/sprout.git && cd examples/zkwasm-circuit
+git clone git@github.com:machinefi/sprout.git && cd examples/zkwasm-circuit/circuit
 ```
 
 2. build
 
 ``` shell
-asc circuit/src/add.ts -O --noAssert -o demo.wasm
+asc src/add.ts -O --noAssert -o add.wasm
 ```

@@ -14,7 +14,7 @@ Reference [install guid](https://docs.soliditylang.org/en/v0.8.9/installing-soli
 1. get template 
 
 ``` shell
-git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuits
+git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuit
 ```
 
 2. build wasm
@@ -23,7 +23,7 @@ git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuits
 wasm-pack build --target nodejs --out-dir pkg
 ```
 
-you will find `xx_bg.wasm` in the `pkg` 
+you will find `halo2_simple_bg.wasm` in the `pkg` folder.
 
 ## Advanced
 You can also develop your own halo2 circuit program.
