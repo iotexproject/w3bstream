@@ -5,7 +5,7 @@ Risc0 guest template
 1. get template 
 
 ``` shell
-git clone git@github.com:machinefi/sprout.git && cd examples/risc0-circuits
+git clone git@github.com:machinefi/sprout.git && cd examples/risc0-circuit/method
 ```
 
 2. build
@@ -16,7 +16,7 @@ cargo build --release
 
 The directory of `methods.rs` will be printed to the console, like this 
 ```shell
-warning: methods_path is: "sprout/examples/risc0-circuits/target/release/build/risc0-circuits-5efc4ff59af940ab/out/methods.rs"
+warning: methods_path is: "sprout/examples/risc0-circuit/method/target/release/build/risc0-circuits-5efc4ff59af940ab/out/methods.rs"
 ```
 
 ## Advanced

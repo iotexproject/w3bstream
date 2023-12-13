@@ -1,4 +1,4 @@
-ZKwasm locally verify proof
+Zkwasm locally verify proof
 ==================
 
 ## Verify with docker image
