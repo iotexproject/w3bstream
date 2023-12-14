@@ -4,11 +4,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/machinefi/sprout/types"
 )
 
 type message struct {

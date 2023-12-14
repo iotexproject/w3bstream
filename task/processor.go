@@ -14,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/output/chain"
 	"github.com/machinefi/sprout/p2p"
@@ -21,7 +23,6 @@ import (
 	"github.com/machinefi/sprout/test/contract/powerc20"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
-	"github.com/pkg/errors"
 )
 
 type Processor struct {

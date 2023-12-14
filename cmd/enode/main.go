@@ -22,14 +22,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	projectIDs := projectManager.GetAllProjectID()
 
 	pg, err := persistence.NewPostgres(viper.GetString(DatabaseDSN))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	dispatcher, err := task.NewDispatcher(projectIDs, pg, viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
+	dispatcher, err := task.NewDispatcher(projectManager, pg, viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,8 +1,6 @@
 package project
 
-import (
-	"github.com/machinefi/sprout/types"
-)
+import "github.com/machinefi/sprout/types"
 
 type (
 	Project struct {

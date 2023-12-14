@@ -1,6 +1,7 @@
 package project
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
@@ -58,12 +60,41 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 
 		pool[p.ID] = &p
 	}
-
-	return &Manager{
+	m := &Manager{
 		pool:            pool,
 		chainEndpoint:   chainEndpoint,
 		contractAddress: contractAddress,
-	}, nil
+	}
+
+	metas, err := m.syncProjects()
+	if err != nil {
+		return nil, errors.Wrap(err, "sync project configs from contract failed")
+	}
+
+	for _, meta := range metas {
+		if meta.Paused {
+			slog.Debug("project paused", "project_id", meta.ProjectID)
+			continue
+		}
+		c, err := meta.ProjectConfig()
+		if err != nil {
+			slog.Error(err.Error())
+			continue
+		}
+		pool[meta.ProjectID] = &Project{
+			ID:     meta.ProjectID,
+			Config: *c,
+		}
+	}
+
+	// start monitor contract
+	go func() {
+		err := m.monitorContract()
+		slog.Error(err.Error())
+		os.Exit(1)
+	}()
+
+	return m, nil
 }
 
 func (m *Manager) Get(projectID uint64) (*Project, error) {
@@ -125,4 +156,89 @@ func (m *Manager) GetAllProjectID() []uint64 {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+func (m *Manager) syncProjects() ([]*ProjectMeta, error) {
+	client, err := ethclient.Dial(m.chainEndpoint)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to dial chain endpoint")
+	}
+
+	address := common.HexToAddress(m.contractAddress)
+	instance, err := contracts.NewContracts(address, client)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to bind contract")
+	}
+
+	emptyHash := [32]byte{}
+	projects := make([]*ProjectMeta, 0)
+	for i := uint64(1); ; i++ {
+		p, err := instance.Projects(nil, i)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get project meta: %d", i)
+		}
+		// query empty, sync completed
+		if p.Uri == "" && bytes.Equal(p.Hash[:], emptyHash[:]) && !p.Paused {
+			break
+		}
+		projects = append(projects, &ProjectMeta{
+			ProjectID: i,
+			Uri:       p.Uri,
+			Hash:      p.Hash,
+			Paused:    p.Paused,
+		})
+	}
+
+	return projects, nil
+}
+
+func (m *Manager) monitorContract() error {
+	client, err := ethclient.Dial(m.chainEndpoint)
+	if err != nil {
+		return errors.Wrap(err, "failed to dial chain endpoint")
+	}
+
+	instance, err := contracts.NewContracts(common.HexToAddress(m.contractAddress), client)
+	if err != nil {
+		return errors.Wrap(err, "failed to create contract instance")
+	}
+
+	sink := make(chan *contracts.ContractsProjectUpserted)
+	subs, err := instance.WatchProjectUpserted(&bind.WatchOpts{}, sink, nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to watch event")
+	}
+	defer subs.Unsubscribe()
+
+	for {
+		select {
+		case <-subs.Err():
+			return errors.Wrap(err, "subscription canceled")
+		case ev := <-sink:
+			if ev.ProjectId == 0 {
+				slog.Debug("invalid project id")
+				continue
+			}
+			conf, err := (&ProjectMeta{
+				ProjectID: ev.ProjectId,
+				Uri:       ev.Uri,
+				Hash:      ev.Hash,
+				Paused:    true, // TODO if project can be upsert. how to confirm the state of current project?
+			}).ProjectConfig()
+			if err != nil {
+				slog.Error("fetch project config failed", "err", err)
+				continue
+			}
+			m.Upsert(ev.ProjectId, conf)
+		}
+	}
+}
+
+func (m *Manager) Upsert(projectID uint64, c *Config) {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+	m.pool[projectID] = &Project{
+		ID:     projectID,
+		Config: *c,
+	}
 }

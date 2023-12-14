@@ -5,15 +5,17 @@ import (
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence"
-	"github.com/pkg/errors"
+	"github.com/machinefi/sprout/project"
 )
 
 type Dispatcher struct {
-	ps         *p2p.PubSubs
-	pg         *persistence.Postgres
-	projectIDs []uint64
+	ps  *p2p.PubSubs
+	pg  *persistence.Postgres
+	mgr *project.Manager
 }
 
 // will block caller
@@ -22,7 +24,7 @@ func (d *Dispatcher) Dispatch() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		for _, projectID := range d.projectIDs {
+		for _, projectID := range d.mgr.GetAllProjectID() {
 			t, err := d.pg.Fetch(projectID)
 			if err != nil {
 				slog.Error("get task failed", "error", err, "projectID", projectID)
@@ -50,10 +52,10 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	}
 }
 
-func NewDispatcher(projectIDs []uint64, pg *persistence.Postgres, bootNodeMultiaddr string, iotexChainID int) (*Dispatcher, error) {
+func NewDispatcher(mgr *project.Manager, pg *persistence.Postgres, bootNodeMultiaddr string, iotexChainID int) (*Dispatcher, error) {
 	d := &Dispatcher{
-		projectIDs: projectIDs,
-		pg:         pg,
+		mgr: mgr,
+		pg:  pg,
 	}
 
 	ps, err := p2p.NewPubSubs(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
@@ -62,7 +64,7 @@ func NewDispatcher(projectIDs []uint64, pg *persistence.Postgres, bootNodeMultia
 	}
 	d.ps = ps
 
-	for _, id := range projectIDs {
+	for _, id := range d.mgr.GetAllProjectID() {
 		if err := ps.Add(id); err != nil {
 			return nil, errors.Wrapf(err, "add project %d pubsub failed", id)
 		}
