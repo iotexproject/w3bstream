@@ -4,7 +4,6 @@ pub mod poseidon;
 
 use std::io::BufReader;
 
-use eigentrust_zk::params::hasher::hex_to_field;
 use generator::{gen_pk, gen_proof};
 use halo2_curves::bn256::{Bn256, Fr};
 use halo2_proofs::{poly::{commitment::Params, kzg::commitment::ParamsKZG}, circuit::Value};
@@ -12,7 +11,7 @@ use snark_verifier::loader::evm::encode_calldata;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::poseidon::IntegratedCircuit;
+use crate::poseidon::circuit::{hex_to_field, IntegratedCircuit};
 use serde_json::Value as JsonValue;
 
 #[wasm_bindgen]
