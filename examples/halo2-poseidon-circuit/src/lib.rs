@@ -7,26 +7,28 @@ use generator::{gen_pk, gen_proof};
 use halo2_curves::bn256::{Bn256, Fr};
 use halo2_proofs::{poly::{commitment::Params, kzg::commitment::ParamsKZG}, circuit::Value};
 use snark_verifier::loader::evm::encode_calldata;
+use primitive_types::U256;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use serde_json::Value as JsonValue;
 
-use crate::eigentrust::circuit::circuit::{hex_to_field, IntegratedCircuit};
+use crate::eigentrust::circuit::circuit::{hex_to_field, IntegratedCircuit, u256_to_field};
+
 
 #[wasm_bindgen]
 pub fn prove(input: &str) -> std::string::String {
 
     // TODO parse input json, like {"private_a": 3, "private_b": 4}
     let input_v: JsonValue = serde_json::from_str(&input).unwrap();
-    let item_str = &input_v.as_array().unwrap()[0].as_str().unwrap();
-    let v: JsonValue = serde_json::from_str(item_str).unwrap();
-    let challenge = hex_to_field(v["challenge"].as_str().unwrap());
-    let address = hex_to_field(v["address"].as_str().unwrap());
-    let nonce = hex_to_field(v["nonce"].as_str().unwrap());
-    let difficulty = hex_to_field(v["difficulty"].as_str().unwrap());
-    let diff = hex_to_field(v["diff"].as_str().unwrap());
+    let item_str = input_v.as_array().unwrap()[0].as_str().unwrap();
+    let v: JsonValue = serde_json::from_str(&item_str).unwrap();
 
+    let challenge = hex_to_field(&v["challenge"].as_str().unwrap());
+    let address = hex_to_field(&v["address"].as_str().unwrap());
+    let nonce = hex_to_field(v["nonce"].as_str().unwrap());
+    let difficulty = u256_to_field(&U256::from_dec_str(&v["difficulty"].as_str().unwrap()).unwrap());
+    let diff = u256_to_field(&U256::from_dec_str(&v["diff"].as_str().unwrap()).unwrap());
 
     let inputs: Vec<Fr> = vec![challenge, address, nonce];
 
@@ -56,7 +58,6 @@ pub fn prove(input: &str) -> std::string::String {
 
     // TODO public info
     let instances = vec![vec![difficulty]];
-
 
     let proof = gen_proof(&params, &pk, circuit.clone(), &instances);
     let calldata = encode_calldata(&instances, &proof);
