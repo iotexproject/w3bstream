@@ -1,4 +1,12 @@
-use eigentrust_zk::{
+use eth_types::Field;
+use halo2_proofs::{
+    circuit::{Layouter, SimpleFloorPlanner, Value},
+    plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Selector},
+    poly::Rotation,
+};
+use primitive_types::U256;
+
+use crate::eigentrust::{
     gadgets::absorb::AbsorbChip,
     params::hasher::poseidon_bn254_5x5::Params,
     poseidon::{
@@ -7,13 +15,6 @@ use eigentrust_zk::{
     },
     Chip, Chipset, CommonConfig, FieldExt, RegionCtx, ADVICE,
 };
-use eth_types::Field;
-use halo2_proofs::{
-    circuit::{Layouter, SimpleFloorPlanner, Value},
-    plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Selector},
-    poly::Rotation,
-};
-use primitive_types::U256;
 
 const WIDTH: usize = 5;
 
@@ -151,8 +152,7 @@ pub fn u256_to_field<F: Field>(num: &U256) -> F {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::poseidon::test::init_intput;
+    use crate::eigentrust::circuit::test::init_intput;
 
     use super::*;
 

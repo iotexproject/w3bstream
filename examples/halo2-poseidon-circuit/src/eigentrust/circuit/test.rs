@@ -1,9 +1,11 @@
 use std::ops::{Shr, Sub};
 
-use eigentrust_zk::params::hasher::poseidon_bn254_5x5::Params;
-use eigentrust_zk::poseidon::native::sponge::PoseidonSponge;
 use halo2_curves::{bn256::Fr, ff::PrimeField};
 use primitive_types::U256;
+
+use crate::eigentrust::{
+    params::hasher::poseidon_bn254_5x5::Params, poseidon::native::sponge::PoseidonSponge,
+};
 
 const WIDTH: usize = 5;
 
