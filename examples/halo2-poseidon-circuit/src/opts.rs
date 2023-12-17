@@ -29,4 +29,16 @@ pub enum Subcommands {
         #[clap(long, value_name = "public-input")]
         public: u64,
     },
+
+    #[clap(name = "proof")]
+    #[clap(about = "gen proof.")]
+    Proof {
+        #[clap(
+            long,
+            short,
+            value_name = "file",
+            default_value = "proof.json"
+        )]
+        file: String,
+    },
 }
