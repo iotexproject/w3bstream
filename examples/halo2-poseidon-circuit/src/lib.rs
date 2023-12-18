@@ -51,13 +51,13 @@ pub fn prove(input: &str) -> std::string::String {
 
     // TODO instance circuit
     let circuit = IntegratedCircuit::<Fr> {
-        input: inputs.iter().map(|x| Value::known(*x)).collect(),
+        input: inputs.iter().map(|x| Value::known(*x)).collect(), // sender addre nonce   ->  private input
         diff: Value::known(diff),
         _marker: std::marker::PhantomData,
     };
 
     // TODO public info
-    let instances = vec![vec![difficulty]];
+    let instances = vec![vec![difficulty, address, nonce]];
 
     let proof = gen_proof(&params, &pk, circuit.clone(), &instances);
     let calldata = encode_calldata(&instances, &proof);

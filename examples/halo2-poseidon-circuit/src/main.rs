@@ -71,7 +71,7 @@ fn main() {
 
     match opts.sub {
         Subcommands::Solidity { file } => {
-            let sol_code = gen_sol_verifier(&params, empty_circuit, vec![1])
+            let sol_code = gen_sol_verifier(&params, empty_circuit, vec![3])
                 .expect("generate solidity file error");
             println!(
                 "Generated verifier contract size: {}",
@@ -113,7 +113,7 @@ fn main() {
         Subcommands::Proof { file: _ } => {
             let inputs: Vec<Fr> = [
                 "0x0000000000000000000000000000000000000000000000000000000000000000",
-                "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "0x470Eb48290776c370ffAd6224364a604AedfE7B9",
                 "0x0000000000000000000000000000000000000000000000000000000000000002",
             ]
             .iter()
@@ -138,6 +138,9 @@ fn main() {
             println!("{:?}", &difficulty);
             let diff = u256_to_field(&difficulty.sub(hash_result_num));
             let difficulty = u256_to_field(&difficulty);
+            println!("{:?}", &diff);
+            println!("{:?}", &difficulty);
+            println!("{:?}", &inputs);
 
             // The input data is length-fixed only
             let empty_circuit = IntegratedCircuit::<Fr> {
@@ -156,7 +159,9 @@ fn main() {
             };
 
             // TODO public info
-            let instances = vec![vec![difficulty]];
+            // let instances = vec![vec![difficulty]];
+            let instances = vec![vec![difficulty, inputs[1], inputs[2]]];
+
 
             let proof = gen_proof(&params, &pk, circuit.clone(), &instances);
             let calldata = encode_calldata(&instances, &proof);

@@ -30,8 +30,8 @@ pub fn init_intput() -> (Vec<Fr>, Fr, Fr) {
     native_poseidon_sponge.update(&inputs);
     let hash_result = native_poseidon_sponge.squeeze();
 
-    let difficulty_shift = 2;
-    let difficulty = (!U256::from(0)).shr(difficulty_shift);
+    let difficulty_shift: i32 = 2; // =  powerc contract 
+    let difficulty = (!U256::from(0)).shr(difficulty_shift); // = circuit  public input
 
     let hash_result_num = U256::from_little_endian(&hash_result.to_repr()[..]);
 
