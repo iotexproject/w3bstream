@@ -23,8 +23,6 @@ cd sprout
 
 #### Create a W3bstream Project Using Halo2
 
-[Create your ZK Circuit using halo2](examples/halo2-circuit/README.md)
-
 >For more details on creating Halo2 circuits see the [Halo2 README](./examples/halo2-circuits/README.md).
 
 Install `wasm-pack`
