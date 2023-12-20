@@ -1,10 +1,11 @@
 package output
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/output/adapter"
 	"github.com/machinefi/sprout/output/chain"
 	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
 )
 
 type (
