@@ -50,7 +50,6 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	}
 
 	r.reportSuccess(tid, types.TaskStateProving, "", topic)
-
 	res, err := r.vmHandler.Handle(ms, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed", "error", err)
@@ -102,7 +101,6 @@ func (r *Processor) writePowerc20(data, chainEndpoint, contractAddress string, p
 	if err := json.Unmarshal([]byte(data), &s); err != nil {
 		return "", err
 	}
-	fmt.Println(s)
 	n, ok := new(big.Int).SetString(strings.TrimPrefix(s.Nonce, "0x"), 16)
 	if !ok {
 		return "", errors.New("nonce format error")
