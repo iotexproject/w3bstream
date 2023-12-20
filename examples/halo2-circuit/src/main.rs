@@ -3,7 +3,7 @@ pub mod opts;
 use std::{fs, io::BufReader};
 
 use clap::Parser;
-use halo2_circuit::{
+use halo2_simple_circuit::{
     circuits::simple::SimpleCircuit,
     generator::{gen_pk, gen_sol_verifier},
 };
