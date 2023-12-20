@@ -4,6 +4,14 @@
 
 ### In Process
 - Support DID auth -- `30%` by @saitofun
+- Support project register -- `70%` by @saitofun
+
+---
+## [0.4.1] - 2023-12-20
+
+### Added
+- Support task
+- Support powerc20 miner
 
 ---
 ## [0.4.0] - 2023-12-07
