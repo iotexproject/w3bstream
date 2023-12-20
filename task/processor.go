@@ -5,13 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math/big"
+	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/output/chain"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/test/contract/powerc20"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 	"github.com/pkg/errors"
@@ -43,6 +50,7 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	}
 
 	r.reportSuccess(tid, types.TaskStateProving, "", topic)
+
 	res, err := r.vmHandler.Handle(ms, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed", "error", err)
@@ -65,14 +73,68 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	slog.Debug("output proof", "outputter", fmt.Sprintf("%T", outputter))
 
 	r.reportSuccess(tid, types.TaskStateOutputting, "output proof", topic)
-	outRes, err := outputter.Output(res)
-	if err != nil {
-		slog.Error(err.Error())
-		r.reportFail(tid, err, topic)
-		return
+	var outRes interface{}
+	if project.ID == 20000 {
+		outRes, err = r.writePowerc20(ms[0].Data, "https://babel-api.testnet.iotex.io", outCfg.ContractAddress, res)
+		if err != nil {
+			slog.Error(err.Error())
+			r.reportFail(tid, err, topic)
+			return
+		}
+	} else {
+		outRes, err = outputter.Output(res)
+		if err != nil {
+			slog.Error(err.Error())
+			r.reportFail(tid, err, topic)
+			return
+		}
 	}
 	r.reportSuccess(tid, types.TaskStateOutputted, fmt.Sprintf("output result: %+v", outRes), topic)
 	slog.Debug("output success", "result", outRes)
+}
+
+// TODO merge powerc20 to output
+func (r *Processor) writePowerc20(data, chainEndpoint, contractAddress string, proof []byte) (string, error) {
+	s := struct {
+		Nonce  string `json:"nonce,omitempty"`
+		Sender string `json:"address,omitempty"`
+	}{}
+	if err := json.Unmarshal([]byte(data), &s); err != nil {
+		return "", err
+	}
+	fmt.Println(s)
+	n, ok := new(big.Int).SetString(strings.TrimPrefix(s.Nonce, "0x"), 16)
+	if !ok {
+		return "", errors.New("nonce format error")
+	}
+	client, err := ethclient.Dial(chainEndpoint)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to connect to the Ethereum client")
+	}
+	privateKeyECDSA, err := crypto.HexToECDSA(r.operatorPrivateKeyECDSA)
+	if err != nil {
+		return "", errors.Wrap(err, "Error in parsing private key")
+	}
+	chainID, err := client.NetworkID(context.Background())
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to get chainID")
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKeyECDSA, chainID)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to create transactor")
+	}
+
+	contractAddr := common.HexToAddress(contractAddress)
+	contract, err := powerc20.NewPowerc20(contractAddr, client)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to instantiate a Token contract")
+	}
+
+	tx, err := contract.Mine(auth, n, common.HexToAddress(s.Sender), proof)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to submit mine transaction")
+	}
+	return tx.Hash().Hex(), nil
 }
 
 func (r *Processor) reportFail(taskID string, err error, topic *pubsub.Topic) {
