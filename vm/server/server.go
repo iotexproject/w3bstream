@@ -4,11 +4,12 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/machinefi/sprout/types"
-	"github.com/machinefi/sprout/vm/proto"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/vm/proto"
 )
 
 type Instance struct {

@@ -1,10 +1,11 @@
 package output
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/output/adapter"
 	"github.com/machinefi/sprout/output/chain"
 	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
 )
 
 type (
@@ -47,7 +48,7 @@ func (f *Factory) NewOutputter(cfg Config) (out Outputter, err error) {
 		if !ok {
 			return nil, errors.Errorf("invalid chain name: %s", cfg.ChainName)
 		}
-		out = adapter.NewSolanaProgram(chain.Endpoint, cfg.ContractAddress, cfg.SecretKey, cfg.StateAccountPK)
+		out, err = adapter.NewSolanaProgram(chain.Endpoint, cfg.ContractAddress, cfg.SecretKey, cfg.StateAccountPK)
 	default:
 		return nil, errors.New("invalid output type")
 	}

@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"strings"
 
@@ -54,6 +55,9 @@ func NewEthereumContract(chainEndpoint, secretKey, contractAddress string) (*Eth
 	if err != nil {
 		return nil, err
 	}
+	if len(secretKey) == 0 {
+		return nil, errors.New("secretkey is empty")
+	}
 	return &EthereumContract{
 		chainEndpoint:   chainEndpoint,
 		secretKey:       secretKey,
@@ -64,6 +68,7 @@ func NewEthereumContract(chainEndpoint, secretKey, contractAddress string) (*Eth
 
 // Output outputs the proof to the ethereum contract
 func (e *EthereumContract) Output(proof []byte) (Result, error) {
+	slog.Debug("outputing to ethereum contract", "chain endpoint", e.chainEndpoint)
 	// pack contract data
 	data, err := e.contractABI.Pack(contractMethod, proof)
 	if err != nil {
@@ -75,7 +80,7 @@ func (e *EthereumContract) Output(proof []byte) (Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	slog.Debug("ethereum contract output", "txHash", txHash)
+	slog.Debug("output success", "txHash", txHash)
 
 	return &EthereumContractResult{TxHash: txHash}, nil
 }

@@ -14,7 +14,7 @@ Reference [install guid](https://docs.soliditylang.org/en/v0.8.9/installing-soli
 1. get template 
 
 ``` shell
-git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuits
+git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuit
 ```
 
 2. build wasm
@@ -23,7 +23,7 @@ git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuits
 wasm-pack build --target nodejs --out-dir pkg
 ```
 
-you will find `xx_bg.wasm` in the `pkg` 
+you will find `halo2_simple_bg.wasm` in the `pkg` folder.
 
 ## Advanced
 You can also develop your own halo2 circuit program.
@@ -38,20 +38,26 @@ You can also develop your own halo2 circuit program.
 cargo build --release
 ```
 
+After this command is successful, a `halo2-simple-circuit` executable file(executable file corresponding to the [simple circuit](./src/circuits/simple.rs)) will be generated in the `target/release` directory.
+
+> **_NOTE:_**
+> If you want to build an executable file corresponding to your own circuit, you need to replace the `TODO` in `src/main.rs`.
+
 ## Generate verify smart contract
 
 ``` shell
-target/release/halo2-circuit solidity
+target/release/halo2-simple-circuit solidity
 ```
-you will find `Verifier.sol` under the current folder. Or you can run `target/release/halo2-circuit solidity -f path/filename.sol`.
+You will find `Verifier.sol` under the current folder. Or you can run `target/release/halo2-simple-circuit solidity -f path/filename.sol`.
+Then you can deploy the smart contract to IoTeX chain or other ETH-compatible chains.
 
 ## Local verify proof
 1. Get halo2 proof 
-if you can send messages to znode successfully, then you can execute `ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"` to obtain a halo2 proof, then put it in a file, like `halo2-proof.json`.
+if you can send messages to znode successfully, then you can execute `ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"` to obtain a halo2 proof, then put it in a file, like `halo2-simple-proof.json`.
 
 2. verify
 `--proof` is proof file, and `--public` is the public input
 
 ``` shell
-target/release/halo2-circuit verify --proof halo2-proof.json --public 900
+target/release/halo2-simple-circuit verify --proof halo2-simple-proof.json --public 900
 ```

@@ -25,11 +25,11 @@ after [build circuit](BUILD-CIRCUIT.md)
 - move `halo2-config.json` to `test/project, and then rename `halo2-config.json` to `20001`(`20001` is project id).
 - move `zkwasm-config.json` to `test/project, and then rename `zkwasm-config.json` to `20002`(`20002` is project id).
 
-## Configure the node
+## Configure W3bstream
 
 ### Set your blockchain account
 
-1. To enable the node to send proofs to the destination blockchain, configure a funded account on the target chain:
+1. To enable the W3bstream instance to send proofs to the destination blockchain, configure a funded account on the target chain:
 
 ```bash
 export PRIVATE_KEY=${your private key}
@@ -84,3 +84,25 @@ The following example sends a message to an example project deployed on the W3bs
 ```bash
 ioctl ws message send --project-id 20000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
+## Deploy your project
+
+### Create project
+
+```sh
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR create --project-config-file path/to/project_config_file --project-config-hash ${project config sha256 hash(optional)} ## the project id will be retrieved.
+```
+
+### Update project
+
+```sh
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR update --project-id $PROJECT_ID --project-config-file path/to/project_config_file --project-config-hash ${project config sha256 hash(optional)}
+```
+
+### Query project
+
+```sh
+ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR query --project-id $PROJECT_ID
+```
+
+
+
