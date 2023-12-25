@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/event"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/project/contracts"
@@ -24,77 +25,6 @@ type Manager struct {
 	pool            map[uint64]*Project
 	chainEndpoint   string
 	contractAddress string
-}
-
-func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*Manager, error) {
-	pool := make(map[uint64]*Project)
-	files, err := os.ReadDir(projectFileDirectory)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return nil, errors.Wrap(err, "read project file directory failed")
-		}
-	}
-	for _, f := range files {
-		if f.IsDir() {
-			continue
-		}
-		data, err := os.ReadFile(path.Join(projectFileDirectory, f.Name()))
-		if err != nil {
-			return nil, errors.Wrapf(err, "read project file %s failed", f.Name())
-		}
-
-		projectID, err := strconv.ParseUint(f.Name(), 10, 64)
-		if err != nil {
-			return nil, errors.Wrapf(err, "parse file name %s to projectID failed", f.Name())
-		}
-
-		c := Config{}
-		if err := json.Unmarshal(data, &c); err != nil {
-			return nil, errors.Wrapf(err, "unmarshal config file %s failed", f.Name())
-		}
-
-		p := Project{
-			ID:     projectID,
-			Config: c,
-		}
-
-		pool[p.ID] = &p
-	}
-	m := &Manager{
-		pool:            pool,
-		chainEndpoint:   chainEndpoint,
-		contractAddress: contractAddress,
-	}
-
-	metas, err := m.syncProjects()
-	if err != nil {
-		return nil, errors.Wrap(err, "sync project configs from contract failed")
-	}
-
-	for _, meta := range metas {
-		if meta.Paused {
-			slog.Debug("project paused", "project_id", meta.ProjectID)
-			continue
-		}
-		c, err := meta.ProjectConfig()
-		if err != nil {
-			slog.Error(err.Error())
-			continue
-		}
-		pool[meta.ProjectID] = &Project{
-			ID:     meta.ProjectID,
-			Config: *c,
-		}
-	}
-
-	// start monitor contract
-	go func() {
-		err := m.monitorContract()
-		slog.Error(err.Error())
-		os.Exit(1)
-	}()
-
-	return m, nil
 }
 
 func (m *Manager) Get(projectID uint64) (*Project, error) {
@@ -158,87 +88,125 @@ func (m *Manager) GetAllProjectID() []uint64 {
 	return ids
 }
 
-func (m *Manager) syncProjects() ([]*ProjectMeta, error) {
-	client, err := ethclient.Dial(m.chainEndpoint)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to dial chain endpoint")
-	}
-
-	address := common.HexToAddress(m.contractAddress)
-	instance, err := contracts.NewContracts(address, client)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to bind contract")
-	}
-
-	emptyHash := [32]byte{}
-	projects := make([]*ProjectMeta, 0)
-	for i := uint64(1); ; i++ {
-		p, err := instance.Projects(nil, i)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get project meta: %d", i)
-		}
-		// query empty, sync completed
-		if p.Uri == "" && bytes.Equal(p.Hash[:], emptyHash[:]) && !p.Paused {
-			break
-		}
-		projects = append(projects, &ProjectMeta{
-			ProjectID: i,
-			Uri:       p.Uri,
-			Hash:      p.Hash,
-			Paused:    p.Paused,
-		})
-	}
-
-	return projects, nil
-}
-
-func (m *Manager) monitorContract() error {
-	client, err := ethclient.Dial(m.chainEndpoint)
-	if err != nil {
-		return errors.Wrap(err, "failed to dial chain endpoint")
-	}
-
-	instance, err := contracts.NewContracts(common.HexToAddress(m.contractAddress), client)
-	if err != nil {
-		return errors.Wrap(err, "failed to create contract instance")
-	}
-
-	sink := make(chan *contracts.ContractsProjectUpserted)
-	subs, err := instance.WatchProjectUpserted(&bind.WatchOpts{}, sink, nil)
-	if err != nil {
-		return errors.Wrap(err, "failed to watch event")
-	}
-	defer subs.Unsubscribe()
-
+func (m *Manager) watchProjectRegistrar(events chan *contracts.ContractsProjectUpserted, subs event.Subscription) {
 	for {
 		select {
-		case <-subs.Err():
-			return errors.Wrap(err, "subscription canceled")
-		case ev := <-sink:
+		case err := <-subs.Err():
+			slog.Error("project upserted event subscription failed", "err", err)
+		case ev := <-events:
 			if ev.ProjectId == 0 {
-				slog.Debug("invalid project id")
 				continue
 			}
-			conf, err := (&ProjectMeta{
+			pm := &ProjectMeta{
 				ProjectID: ev.ProjectId,
 				Uri:       ev.Uri,
 				Hash:      ev.Hash,
-				Paused:    true, // TODO if project can be upsert. how to confirm the state of current project?
-			}).ProjectConfig()
+			}
+			p, err := pm.GetProject()
 			if err != nil {
-				slog.Error("fetch project config failed", "err", err)
+				slog.Error("fetch project failed", "err", err)
 				continue
 			}
-			m.Upsert(ev.ProjectId, conf)
+
+			m.mux.Lock()
+			m.pool[p.ID] = p
+			m.mux.Unlock()
 		}
 	}
 }
 
-func (m *Manager) Upsert(projectID uint64, c *Config) {
-	m.mux.Lock()
-	defer m.mux.Unlock()
-	m.pool[projectID] = &Project{
-		ID:     projectID,
-		Config: *c,
+func fillProjectPoolFromLocal(pool map[uint64]*Project, projectFileDirectory string) error {
+	files, err := os.ReadDir(projectFileDirectory)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return errors.Wrap(err, "read project file directory failed")
+		}
 	}
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(path.Join(projectFileDirectory, f.Name()))
+		if err != nil {
+			return errors.Wrapf(err, "read project file %s failed", f.Name())
+		}
+
+		projectID, err := strconv.ParseUint(f.Name(), 10, 64)
+		if err != nil {
+			return errors.Wrapf(err, "parse file name %s to projectID failed", f.Name())
+		}
+
+		c := Config{}
+		if err := json.Unmarshal(data, &c); err != nil {
+			return errors.Wrapf(err, "unmarshal config file %s failed", f.Name())
+		}
+
+		p := Project{
+			ID:     projectID,
+			Config: c,
+		}
+
+		pool[p.ID] = &p
+	}
+	return nil
+}
+
+func fillProjectPoolFromChain(pool map[uint64]*Project, instance *contracts.Contracts) error {
+	emptyHash := [32]byte{}
+	for i := uint64(1); ; i++ {
+		mp, err := instance.Projects(nil, i)
+		if err != nil {
+			return errors.Wrapf(err, "get project meta from chain failed, projectID %d", i)
+		}
+		// query empty, means reached the maximum projectID value
+		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
+			return nil
+		}
+		m := &ProjectMeta{
+			ProjectID: i,
+			Uri:       mp.Uri,
+			Hash:      mp.Hash,
+			Paused:    mp.Paused,
+		}
+		p, err := m.GetProject()
+		if err != nil {
+			return err
+		}
+		pool[p.ID] = p
+	}
+}
+
+func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*Manager, error) {
+	pool := make(map[uint64]*Project)
+
+	client, err := ethclient.Dial(chainEndpoint)
+	if err != nil {
+		return nil, errors.Wrapf(err, "dial chain endpoint failed, endpoint %s", chainEndpoint)
+	}
+	instance, err := contracts.NewContracts(common.HexToAddress(contractAddress), client)
+	if err != nil {
+		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
+	}
+
+	if err := fillProjectPoolFromChain(pool, instance); err != nil {
+		return nil, errors.Wrap(err, "read project file from chain failed")
+	}
+	if err := fillProjectPoolFromLocal(pool, projectFileDirectory); err != nil {
+		return nil, errors.Wrap(err, "read project file from local failed")
+	}
+
+	m := &Manager{
+		pool:            pool,
+		chainEndpoint:   chainEndpoint,
+		contractAddress: contractAddress,
+	}
+
+	events := make(chan *contracts.ContractsProjectUpserted)
+	subs, err := instance.WatchProjectUpserted(&bind.WatchOpts{}, events, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "watch project upserted event failed")
+	}
+	go m.watchProjectRegistrar(events, subs)
+
+	return m, nil
 }
