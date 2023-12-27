@@ -3,6 +3,7 @@ package output
 import (
 	"context"
 	"log/slog"
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum"
@@ -16,29 +17,6 @@ import (
 
 	"github.com/machinefi/sprout/types"
 )
-
-// // contractAbiJSON is the ABI of the contract
-// // solidity interface: function submitProof(string memory _proof) external;
-// const (
-// 	contractMethod  = "submitProof"
-// 	contractAbiJSON = `[
-// 	{
-// 		"constant": false,
-// 		"inputs": [
-// 			{
-// 				"internalType": "bytes",
-// 				"name": "_proof",
-// 				"type": "bytes"
-// 			}
-// 		],
-// 		"name": "submitProof",
-// 		"outputs": [],
-// 		"payable": false,
-// 		"stateMutability": "nonpayable",
-// 		"type": "function"
-// 	}
-// ]`
-// )
 
 type ethereumContract struct {
 	chainEndpoint   string
@@ -61,12 +39,22 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 	for _, a := range method.Inputs {
 		if a.Name == "proof" {
 			params = append(params, proof)
-		} else {
-			value := gjson.Get(m.Data, a.Name)
-			param := value.String()
-			if param == "" {
-				return "", errors.Errorf("miss param %s for contract abi", a.Name)
-			}
+			continue
+		}
+		value := gjson.Get(m.Data, a.Name)
+		param := value.String()
+		if param == "" {
+			return "", errors.Errorf("miss param %s for contract abi", a.Name)
+		}
+
+		switch a.Type.String() {
+		case "address":
+			params = append(params, common.HexToAddress(param))
+		case "uint256":
+			i := new(big.Int)
+			i.SetString(strings.TrimPrefix(param, "0x"), 16)
+			params = append(params, i)
+		default:
 			params = append(params, param)
 		}
 	}
@@ -79,7 +67,6 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 	if err != nil {
 		return "", err
 	}
-	slog.Debug("output success", "txHash", txHash)
 
 	return txHash, nil
 }

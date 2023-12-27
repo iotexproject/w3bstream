@@ -179,18 +179,18 @@ func fillProjectPoolFromChain(pool map[uint64]*Project, instance *contracts.Cont
 func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*Manager, error) {
 	pool := make(map[uint64]*Project)
 
-	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return nil, errors.Wrapf(err, "dial chain endpoint failed, endpoint %s", chainEndpoint)
-	}
-	instance, err := contracts.NewContracts(common.HexToAddress(contractAddress), client)
-	if err != nil {
-		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
-	}
+	// client, err := ethclient.Dial(chainEndpoint)
+	// if err != nil {
+	// 	return nil, errors.Wrapf(err, "dial chain endpoint failed, endpoint %s", chainEndpoint)
+	// }
+	// instance, err := contracts.NewContracts(common.HexToAddress(contractAddress), client)
+	// if err != nil {
+	// 	return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
+	// }
 
-	if err := fillProjectPoolFromChain(pool, instance); err != nil {
-		return nil, errors.Wrap(err, "read project file from chain failed")
-	}
+	// if err := fillProjectPoolFromChain(pool, instance); err != nil {
+	// 	return nil, errors.Wrap(err, "read project file from chain failed")
+	// }
 	if err := fillProjectPoolFromLocal(pool, projectFileDirectory); err != nil {
 		return nil, errors.Wrap(err, "read project file from local failed")
 	}
