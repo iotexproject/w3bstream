@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/types"
@@ -35,13 +34,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	outputFactory, err := output.NewFactory([]byte(viper.GetString(ChainConfig)))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, outputFactory,
-		viper.GetString(OperatorPrivateKey), viper.GetString(OperatorPrivateKeyED25519), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
+	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, viper.GetString(OperatorPrivateKey),
+		viper.GetString(OperatorPrivateKeyED25519), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}
