@@ -29,7 +29,6 @@ func (e *solanaProgram) Output(task *types.Task, proof []byte) (string, error) {
 		return "", err
 	}
 
-	slog.Debug("output success", "txHash", txHash)
 	return txHash, nil
 }
 
