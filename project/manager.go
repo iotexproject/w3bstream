@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
@@ -170,7 +169,8 @@ func fillProjectPoolFromChain(pool map[uint64]*Project, instance *contracts.Cont
 		}
 		p, err := m.GetProject()
 		if err != nil {
-			return err
+			slog.Error("fetch project failed", "err", err)
+			continue
 		}
 		pool[p.ID] = p
 	}
@@ -201,12 +201,12 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 		contractAddress: contractAddress,
 	}
 
-	events := make(chan *contracts.ContractsProjectUpserted)
-	subs, err := instance.WatchProjectUpserted(&bind.WatchOpts{}, events, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "watch project upserted event failed")
-	}
-	go m.watchProjectRegistrar(events, subs)
+	// events := make(chan *contracts.ContractsProjectUpserted)
+	// subs, err := instance.WatchProjectUpserted(&bind.WatchOpts{}, events, nil)
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "watch project upserted event failed")
+	// }
+	// go m.watchProjectRegistrar(events, subs)
 
 	return m, nil
 }
