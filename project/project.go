@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 )
@@ -21,23 +22,39 @@ type (
 		VMType       types.VM     `json:"vmType"`
 		Output       OutputConfig `json:"output,omitempty"`
 	}
-
-	// OutputConfig is the config for output
-	OutputConfig struct {
-		Type types.Output `json:"type"`
-
-		Ethereum struct {
-			ChainName       string `json:"chainName"`
-			ContractAddress string `json:"contractAddress"`
-		} `json:"ethereum,omitempty"`
-
-		Solana struct {
-			ChainName      string `json:"chainName"`
-			ProgramID      string `json:"programID"`
-			StateAccountPK string `json:"stateAccountPK"`
-		} `json:"solana,omitempty"`
-	}
 )
+
+type OutputConfig struct {
+	Type types.Output `json:"type"`
+
+	Ethereum struct {
+		ChainEndpoint   string `json:"chainEndpoint"`
+		ContractAddress string `json:"contractAddress"`
+		ContractMethod  string `json:"contractMethod"`
+		ContractAbiJSON string `json:"contractAbiJSON"`
+	} `json:"ethereum,omitempty"`
+
+	Solana struct {
+		ChainEndpoint  string `json:"chainEndpoint"`
+		ProgramID      string `json:"programID"`
+		StateAccountPK string `json:"stateAccountPK"`
+	} `json:"solana,omitempty"`
+}
+
+func (p *Project) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
+	outConf := p.Config.Output
+
+	switch outConf.Type {
+	case types.OutputEthereumContract:
+		ethConf := outConf.Ethereum
+		return output.NewEthereum(ethConf.ChainEndpoint, privateKeyECDSA, ethConf.ContractAddress, ethConf.ContractAbiJSON, ethConf.ContractMethod)
+	case types.OutputSolanaProgram:
+		solConf := outConf.Solana
+		return output.NewSolanaProgram(solConf.ChainEndpoint, solConf.ProgramID, privateKeyED25519, solConf.StateAccountPK)
+	default:
+		return output.NewStdout(), nil
+	}
+}
 
 type ProjectMeta struct {
 	ProjectID uint64
