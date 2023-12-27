@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
 
 	"github.com/machinefi/sprout/types"
 )
@@ -49,7 +50,27 @@ type ethereumContract struct {
 
 func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to ethereum contract", "chain endpoint", e.chainEndpoint)
-	data, err := e.contractABI.Pack(e.contractMethod, proof)
+
+	m := task.Messages[0]
+
+	method, ok := e.contractABI.Methods[e.contractMethod]
+	if !ok {
+		return "", errors.Errorf("contract abi miss the contract method %s", e.contractMethod)
+	}
+	params := []interface{}{}
+	for _, a := range method.Inputs {
+		if a.Name == "proof" {
+			params = append(params, proof)
+		} else {
+			value := gjson.Get(m.Data, a.Name)
+			param := value.String()
+			if param == "" {
+				return "", errors.Errorf("miss param %s for contract abi", a.Name)
+			}
+			params = append(params, param)
+		}
+	}
+	data, err := e.contractABI.Pack(e.contractMethod, params...)
 	if err != nil {
 		return "", err
 	}

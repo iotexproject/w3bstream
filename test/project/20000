@@ -4,8 +4,10 @@
   "output": {
     "type": "ethereumContract",
     "ethereum": {
-      "chainName": "iotex-testnet",
-      "contractAddress": "0x53870E89D4E93442ed7FACD68f7C0221B27e5958"
+      "chainEndpoint": "https://babel-api.testnet.iotex.io",
+      "contractAddress": "0xf909e67021b3A7C862905D0A44c3a0Ac54De3fb1",
+      "contractMethod": "mine",
+      "contractAbiJSON": "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_depinRC20\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"mine\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depinRC20\",\"outputs\":[{\"internalType\":\"contract IDepinRC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
     }
   }
 }
