@@ -3,8 +3,19 @@
 ## [Unreleased]
 
 ### In Process
-- Support DID auth -- `30%` by @saitofun
+- Support DID auth -- `60%` by @saitofun
 - Support project register -- `70%` by @saitofun
+- Support project watcher -- `50%` by @huangzhiran
+
+---
+## [0.5.0] - 2023-12-28
+
+### Added
+- Support project self-define contract abi and method
+- Support message raw data as output param
+
+### Changed
+- Powerc20, add a router contract, and use contract address for challenge
 
 ---
 ## [0.4.1] - 2023-12-20
