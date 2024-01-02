@@ -9,6 +9,7 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
         string uri;
         bytes32 hash;
         bool paused;
+        uint64 version;
         mapping(address => bool) operators;
     }
 
@@ -24,7 +25,7 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
     event OperatorRemoved(uint64 indexed projectId, address indexed operator);
     event ProjectPaused(uint64 indexed projectId);
     event ProjectUnpaused(uint64 indexed projectId);
-    event ProjectUpserted(uint64 indexed projectId, string uri, bytes32 hash);
+    event ProjectUpserted(uint64 indexed projectId, string uri, bytes32 hash, uint64 version);
 
     modifier onlyProjectOperator(uint64 _projectId) {
         require(canOperateProject(msg.sender, _projectId), "Not authorized to operate this project");
@@ -49,9 +50,10 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
         Project storage newProject = projects[projectId];
         newProject.uri = _uri;
         newProject.hash = _hash;
+        newProject.version = 1;
 
         _mint(msg.sender, projectId);
-        emit ProjectUpserted(projectId, _uri, _hash);
+        emit ProjectUpserted(projectId, _uri, _hash, 1);
     }
 
     function addOperator(uint64 _projectId, address _operator) public onlyProjectOwner(_projectId) {
@@ -81,6 +83,7 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
     function updateProject(uint64 _projectId, string memory _uri, bytes32 _hash) public onlyProjectOperator(_projectId) {
         projects[_projectId].uri = _uri;
         projects[_projectId].hash = _hash;
-        emit ProjectUpserted(_projectId, _uri, _hash);
+        projects[_projectId].version++;
+        emit ProjectUpserted(_projectId, _uri, _hash, projects[_projectId].version);
     }
 }
