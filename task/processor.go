@@ -33,7 +33,7 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	slog.Debug("get new task", "task_id", tid)
 	r.reportSuccess(tid, types.TaskStateFetched, "", topic)
 
-	project, err := r.projectManager.Get(ms[0].ProjectID)
+	config, err := r.projectManager.Get(ms[0].ProjectID, ms[0].ProjectVersion)
 	if err != nil {
 		slog.Error("get project failed", "error", err)
 		r.reportFail(tid, err, topic)
@@ -41,7 +41,7 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	}
 
 	r.reportSuccess(tid, types.TaskStateProving, "", topic)
-	res, err := r.vmHandler.Handle(ms, project.Config.VMType, project.Config.Code, project.Config.CodeExpParam)
+	res, err := r.vmHandler.Handle(ms, config.VMType, config.Code, config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed", "error", err)
 		r.reportFail(tid, err, topic)
@@ -50,7 +50,7 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	slog.Debug("proof result", "proof_result", string(res))
 	r.reportSuccess(tid, types.TaskStateProved, string(res), topic)
 
-	output, err := project.GetOutput(r.operatorPrivateKeyECDSA, r.operatorPrivateKeyED25519)
+	output, err := config.GetOutput(r.operatorPrivateKeyECDSA, r.operatorPrivateKeyED25519)
 	if err != nil {
 		err = errors.Wrap(err, "fail to init output")
 		slog.Error(err.Error())
