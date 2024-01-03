@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
@@ -179,18 +180,18 @@ func fillProjectPoolFromChain(pool map[uint64]*Project, instance *contracts.Cont
 func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*Manager, error) {
 	pool := make(map[uint64]*Project)
 
-	// client, err := ethclient.Dial(chainEndpoint)
-	// if err != nil {
-	// 	return nil, errors.Wrapf(err, "dial chain endpoint failed, endpoint %s", chainEndpoint)
-	// }
-	// instance, err := contracts.NewContracts(common.HexToAddress(contractAddress), client)
-	// if err != nil {
-	// 	return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
-	// }
+	client, err := ethclient.Dial(chainEndpoint)
+	if err != nil {
+		return nil, errors.Wrapf(err, "dial chain endpoint failed, endpoint %s", chainEndpoint)
+	}
+	instance, err := contracts.NewContracts(common.HexToAddress(contractAddress), client)
+	if err != nil {
+		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
+	}
 
-	// if err := fillProjectPoolFromChain(pool, instance); err != nil {
-	// 	return nil, errors.Wrap(err, "read project file from chain failed")
-	// }
+	if err := fillProjectPoolFromChain(pool, instance); err != nil {
+		return nil, errors.Wrap(err, "read project file from chain failed")
+	}
 	if err := fillProjectPoolFromLocal(pool, projectFileDirectory); err != nil {
 		return nil, errors.Wrap(err, "read project file from local failed")
 	}
@@ -201,12 +202,12 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 		contractAddress: contractAddress,
 	}
 
-	// events := make(chan *contracts.ContractsProjectUpserted)
-	// subs, err := instance.WatchProjectUpserted(&bind.WatchOpts{}, events, nil)
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "watch project upserted event failed")
-	// }
-	// go m.watchProjectRegistrar(events, subs)
+	events := make(chan *contracts.ContractsProjectUpserted)
+	subs, err := instance.WatchProjectUpserted(&bind.WatchOpts{}, events, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "watch project upserted event failed")
+	}
+	go m.watchProjectRegistrar(events, subs)
 
 	return m, nil
 }
