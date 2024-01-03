@@ -69,7 +69,7 @@ func (m *ProjectMeta) GetConfigs() ([]*Config, error) {
 		return nil, errors.Wrapf(err, "read project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
 	cs := []*Config{}
-	if err = json.Unmarshal(content, cs); err != nil {
+	if err = json.Unmarshal(content, &cs); err != nil {
 		return nil, errors.Wrapf(err, "parse project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
 

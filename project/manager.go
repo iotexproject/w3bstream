@@ -100,7 +100,7 @@ func fillProjectPoolFromLocal(pool map[key]*Config, projectFileDirectory string)
 		}
 
 		cs := []*Config{}
-		if err := json.Unmarshal(data, cs); err != nil {
+		if err := json.Unmarshal(data, &cs); err != nil {
 			return errors.Wrapf(err, "unmarshal config file %s failed", f.Name())
 		}
 
