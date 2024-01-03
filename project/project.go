@@ -2,7 +2,6 @@ package project
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -10,11 +9,6 @@ import (
 	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 )
-
-type Project struct {
-	ID     uint64 `json:"id"`
-	Config Config `json:"config"`
-}
 
 type Config struct {
 	Code         string       `json:"code"`
@@ -41,8 +35,8 @@ type OutputConfig struct {
 	} `json:"solana,omitempty"`
 }
 
-func (p *Project) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
-	outConf := p.Config.Output
+func (c *Config) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
+	outConf := c.Output
 
 	switch outConf.Type {
 	case types.OutputEthereumContract:
@@ -56,10 +50,6 @@ func (p *Project) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.O
 	}
 }
 
-func (p *Project) GetKey() string {
-	return fmt.Sprintf("%d_%s", p.ID, p.Config.Version)
-}
-
 type ProjectMeta struct {
 	ProjectID uint64
 	Uri       string
@@ -67,7 +57,7 @@ type ProjectMeta struct {
 	Paused    bool
 }
 
-func (m *ProjectMeta) GetProject() (*Project, error) {
+func (m *ProjectMeta) GetConfigs() ([]*Config, error) {
 	resp, err := http.Get(m.Uri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
@@ -78,17 +68,11 @@ func (m *ProjectMeta) GetProject() (*Project, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "read project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
-	c := &Config{}
-	if err = json.Unmarshal(content, c); err != nil {
+	cs := []*Config{}
+	if err = json.Unmarshal(content, cs); err != nil {
 		return nil, errors.Wrapf(err, "parse project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
-	// simple validation
-	if len(c.Code) == 0 || c.VMType == "" {
-		return nil, errors.Errorf("invalid project config, projectID %d, uri %s", m.ProjectID, m.Uri)
-	}
-	// TODO validate hash
-	return &Project{
-		ID:     m.ProjectID,
-		Config: *c,
-	}, nil
+
+	// TODO config validate
+	return cs, nil
 }
