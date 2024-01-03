@@ -3,5 +3,6 @@
   "vmType": "halo2",
   "output": {
     "type": "stdout"
-  }
+  },
+  "version": "0.1"
 }

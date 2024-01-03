@@ -3,5 +3,6 @@
   "vmType": "zkwasm",
   "output": {
     "type": "stdout"
-  }
+  },
+  "version": "0.1"
 }

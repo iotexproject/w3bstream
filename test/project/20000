@@ -9,5 +9,6 @@
       "contractMethod": "mine",
       "contractAbiJSON": "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"depinRC20Address\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"mine\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depinRC20\",\"outputs\":[{\"internalType\":\"contract IDepinRC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
     }
-  }
+  },
+  "version": "0.1"
 }

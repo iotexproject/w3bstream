@@ -4,5 +4,6 @@
   "vmType": "risc0",
   "output": {
     "type": "stdout"
-  }
+  },
+  "version": "0.1"
 }

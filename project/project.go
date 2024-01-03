@@ -2,6 +2,7 @@ package project
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -10,19 +11,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-type (
-	Project struct {
-		ID     uint64 `json:"id"`
-		Config Config `json:"config"`
-	}
+type Project struct {
+	ID     uint64 `json:"id"`
+	Config Config `json:"config"`
+}
 
-	Config struct {
-		Code         string       `json:"code"`
-		CodeExpParam string       `json:"codeExpParam,omitempty"`
-		VMType       types.VM     `json:"vmType"`
-		Output       OutputConfig `json:"output,omitempty"`
-	}
-)
+type Config struct {
+	Code         string       `json:"code"`
+	CodeExpParam string       `json:"codeExpParam,omitempty"`
+	VMType       types.VM     `json:"vmType"`
+	Output       OutputConfig `json:"output,omitempty"`
+	Version      string       `json:"version"`
+}
 
 type OutputConfig struct {
 	Type types.Output `json:"type"`
@@ -54,6 +54,10 @@ func (p *Project) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.O
 	default:
 		return output.NewStdout(), nil
 	}
+}
+
+func (p *Project) GetKey() string {
+	return fmt.Sprintf("%d_%s", p.ID, p.Config.Version)
 }
 
 type ProjectMeta struct {
