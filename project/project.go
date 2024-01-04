@@ -73,6 +73,14 @@ func (m *ProjectMeta) GetConfigs() ([]*Config, error) {
 		return nil, errors.Wrapf(err, "parse project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
 
-	// TODO config validate
+	if len(cs) == 0 {
+		return nil, errors.Errorf("empty project config, projectID %d, uri %s", m.ProjectID, m.Uri)
+	}
+	for _, c := range cs {
+		if c.Code == "" || c.VMType == "" || c.Version == "" {
+			return nil, errors.Errorf("invalid project config, projectID %d, uri %s", m.ProjectID, m.Uri)
+		}
+	}
+
 	return cs, nil
 }
