@@ -22,6 +22,7 @@ import (
 type Manager struct {
 	mux             sync.Mutex
 	pool            map[key]*Config
+	projectIDs      map[uint64]bool
 	chainEndpoint   string
 	contractAddress string
 }
@@ -44,7 +45,14 @@ func (m *Manager) Get(projectID uint64, version string) (*Config, error) {
 
 // TODO will delete when node konw how to fetch message
 func (m *Manager) GetAllProjectID() []uint64 {
-	return nil
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	ids := []uint64{}
+	for id := range m.projectIDs {
+		ids = append(ids, id)
+	}
+	return ids
 }
 
 func (m *Manager) watchProjectRegistrar(events chan *contracts.ContractsProjectUpserted, subs event.Subscription) {
@@ -72,13 +80,14 @@ func (m *Manager) watchProjectRegistrar(events chan *contracts.ContractsProjectU
 			for _, c := range cs {
 				m.pool[getKey(pm.ProjectID, c.Version)] = c
 			}
+			m.projectIDs[pm.ProjectID] = true
 
 			m.mux.Unlock()
 		}
 	}
 }
 
-func fillProjectPoolFromLocal(pool map[key]*Config, projectFileDirectory string) error {
+func fillProjectPoolFromLocal(pool map[key]*Config, projectIDs map[uint64]bool, projectFileDirectory string) error {
 	files, err := os.ReadDir(projectFileDirectory)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -107,11 +116,12 @@ func fillProjectPoolFromLocal(pool map[key]*Config, projectFileDirectory string)
 		for _, c := range cs {
 			pool[getKey(projectID, c.Version)] = c
 		}
+		projectIDs[projectID] = true
 	}
 	return nil
 }
 
-func fillProjectPoolFromChain(pool map[key]*Config, instance *contracts.Contracts) error {
+func fillProjectPoolFromChain(pool map[key]*Config, projectIDs map[uint64]bool, instance *contracts.Contracts) error {
 	emptyHash := [32]byte{}
 	for i := uint64(1); ; i++ {
 		mp, err := instance.Projects(nil, i)
@@ -137,11 +147,13 @@ func fillProjectPoolFromChain(pool map[key]*Config, instance *contracts.Contract
 		for _, c := range cs {
 			pool[getKey(m.ProjectID, c.Version)] = c
 		}
+		projectIDs[m.ProjectID] = true
 	}
 }
 
 func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*Manager, error) {
 	pool := make(map[key]*Config)
+	projectIDs := make(map[uint64]bool)
 
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
@@ -152,15 +164,16 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	if err := fillProjectPoolFromChain(pool, instance); err != nil {
+	if err := fillProjectPoolFromChain(pool, projectIDs, instance); err != nil {
 		return nil, errors.Wrap(err, "read project file from chain failed")
 	}
-	if err := fillProjectPoolFromLocal(pool, projectFileDirectory); err != nil {
+	if err := fillProjectPoolFromLocal(pool, projectIDs, projectFileDirectory); err != nil {
 		return nil, errors.Wrap(err, "read project file from local failed")
 	}
 
 	m := &Manager{
 		pool:            pool,
+		projectIDs:      projectIDs,
 		chainEndpoint:   chainEndpoint,
 		contractAddress: contractAddress,
 	}
