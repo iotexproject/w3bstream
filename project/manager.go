@@ -3,9 +3,8 @@ package project
 import (
 	"bytes"
 	"encoding/json"
-	"io"
+	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -22,58 +21,26 @@ import (
 
 type Manager struct {
 	mux             sync.Mutex
-	pool            map[uint64]*Project
+	pool            map[key]*Config
+	projectIDs      map[uint64]bool
 	chainEndpoint   string
 	contractAddress string
 }
 
-func (m *Manager) Get(projectID uint64) (*Project, error) {
+type key string
+
+func getKey(projectID uint64, version string) key {
+	return key(fmt.Sprintf("%d_%s", projectID, version))
+}
+
+func (m *Manager) Get(projectID uint64, version string) (*Config, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	if p, ok := m.pool[projectID]; ok {
+	if p, ok := m.pool[getKey(projectID, version)]; ok {
 		return p, nil
 	}
-
-	client, err := ethclient.Dial(m.chainEndpoint)
-	if err != nil {
-		return nil, errors.Wrap(err, "dial chain endpoint failed")
-	}
-	address := common.HexToAddress(m.contractAddress)
-	instance, err := contracts.NewContracts(address, client)
-	if err != nil {
-		return nil, errors.Wrap(err, "new contracts instance failed")
-	}
-	p, err := instance.Projects(nil, projectID)
-	if err != nil {
-		return nil, errors.Wrap(err, "get project from contracts failed")
-	}
-
-	if p.Uri == "" {
-		return nil, errors.New("project not exist")
-	}
-
-	slog.Debug("get project file uri", "projectID", projectID, "uri", p.Uri)
-
-	resp, err := http.Get(p.Uri)
-	if err != nil {
-		return nil, errors.Wrap(err, "get project config file failed")
-	}
-	defer resp.Body.Close()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "read project config file failed")
-	}
-
-	// TODO hash check
-
-	np := Project{ID: projectID}
-	if err := json.Unmarshal(data, &np.Config); err != nil {
-		return nil, errors.Wrap(err, "unmarshal project config file failed")
-	}
-	m.pool[projectID] = &np
-	return &np, nil
+	return nil, errors.Errorf("project config not exist, projectID %d, version %s", projectID, version)
 }
 
 // TODO will delete when node konw how to fetch message
@@ -82,7 +49,7 @@ func (m *Manager) GetAllProjectID() []uint64 {
 	defer m.mux.Unlock()
 
 	ids := []uint64{}
-	for id := range m.pool {
+	for id := range m.projectIDs {
 		ids = append(ids, id)
 	}
 	return ids
@@ -102,20 +69,25 @@ func (m *Manager) watchProjectRegistrar(events chan *contracts.ContractsProjectU
 				Uri:       ev.Uri,
 				Hash:      ev.Hash,
 			}
-			p, err := pm.GetProject()
+			cs, err := pm.GetConfigs()
 			if err != nil {
 				slog.Error("fetch project failed", "err", err)
 				continue
 			}
 
 			m.mux.Lock()
-			m.pool[p.ID] = p
+
+			for _, c := range cs {
+				m.pool[getKey(pm.ProjectID, c.Version)] = c
+			}
+			m.projectIDs[pm.ProjectID] = true
+
 			m.mux.Unlock()
 		}
 	}
 }
 
-func fillProjectPoolFromLocal(pool map[uint64]*Project, projectFileDirectory string) error {
+func fillProjectPoolFromLocal(pool map[key]*Config, projectIDs map[uint64]bool, projectFileDirectory string) error {
 	files, err := os.ReadDir(projectFileDirectory)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -136,22 +108,20 @@ func fillProjectPoolFromLocal(pool map[uint64]*Project, projectFileDirectory str
 			return errors.Wrapf(err, "parse file name %s to projectID failed", f.Name())
 		}
 
-		c := Config{}
-		if err := json.Unmarshal(data, &c); err != nil {
+		cs := []*Config{}
+		if err := json.Unmarshal(data, &cs); err != nil {
 			return errors.Wrapf(err, "unmarshal config file %s failed", f.Name())
 		}
 
-		p := Project{
-			ID:     projectID,
-			Config: c,
+		for _, c := range cs {
+			pool[getKey(projectID, c.Version)] = c
 		}
-
-		pool[p.ID] = &p
+		projectIDs[projectID] = true
 	}
 	return nil
 }
 
-func fillProjectPoolFromChain(pool map[uint64]*Project, instance *contracts.Contracts) error {
+func fillProjectPoolFromChain(pool map[key]*Config, projectIDs map[uint64]bool, instance *contracts.Contracts) error {
 	emptyHash := [32]byte{}
 	for i := uint64(1); ; i++ {
 		mp, err := instance.Projects(nil, i)
@@ -168,17 +138,22 @@ func fillProjectPoolFromChain(pool map[uint64]*Project, instance *contracts.Cont
 			Hash:      mp.Hash,
 			Paused:    mp.Paused,
 		}
-		p, err := m.GetProject()
+		cs, err := m.GetConfigs()
 		if err != nil {
 			slog.Error("fetch project failed", "err", err)
 			continue
 		}
-		pool[p.ID] = p
+
+		for _, c := range cs {
+			pool[getKey(m.ProjectID, c.Version)] = c
+		}
+		projectIDs[m.ProjectID] = true
 	}
 }
 
 func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*Manager, error) {
-	pool := make(map[uint64]*Project)
+	pool := make(map[key]*Config)
+	projectIDs := make(map[uint64]bool)
 
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
@@ -189,15 +164,16 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	if err := fillProjectPoolFromChain(pool, instance); err != nil {
+	if err := fillProjectPoolFromChain(pool, projectIDs, instance); err != nil {
 		return nil, errors.Wrap(err, "read project file from chain failed")
 	}
-	if err := fillProjectPoolFromLocal(pool, projectFileDirectory); err != nil {
+	if err := fillProjectPoolFromLocal(pool, projectIDs, projectFileDirectory); err != nil {
 		return nil, errors.Wrap(err, "read project file from local failed")
 	}
 
 	m := &Manager{
 		pool:            pool,
+		projectIDs:      projectIDs,
 		chainEndpoint:   chainEndpoint,
 		contractAddress: contractAddress,
 	}

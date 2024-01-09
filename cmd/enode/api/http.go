@@ -24,8 +24,7 @@ func newErrResp(err error) *errResp {
 }
 
 type handleMessageReq struct {
-	ProjectID uint64 `json:"projectID"        binding:"required"`
-	// TODO support project version
+	ProjectID      uint64 `json:"projectID"        binding:"required"`
 	ProjectVersion string `json:"projectVersion"   binding:"required"`
 	Data           string `json:"data"             binding:"required"`
 }
@@ -97,9 +96,10 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 	id := uuid.NewString()
 	slog.Debug("received your message, handling")
 	if err := s.pg.Save(&types.Message{
-		ID:        id,
-		ProjectID: req.ProjectID,
-		Data:      req.Data,
+		ID:             id,
+		ProjectID:      req.ProjectID,
+		ProjectVersion: req.ProjectVersion,
+		Data:           req.Data,
 	}); err != nil {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return

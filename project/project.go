@@ -10,19 +10,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-type (
-	Project struct {
-		ID     uint64 `json:"id"`
-		Config Config `json:"config"`
-	}
-
-	Config struct {
-		Code         string       `json:"code"`
-		CodeExpParam string       `json:"codeExpParam,omitempty"`
-		VMType       types.VM     `json:"vmType"`
-		Output       OutputConfig `json:"output,omitempty"`
-	}
-)
+type Config struct {
+	Code         string       `json:"code"`
+	CodeExpParam string       `json:"codeExpParam,omitempty"`
+	VMType       types.VM     `json:"vmType"`
+	Output       OutputConfig `json:"output,omitempty"`
+	Version      string       `json:"version"`
+}
 
 type OutputConfig struct {
 	Type types.Output `json:"type"`
@@ -41,8 +35,8 @@ type OutputConfig struct {
 	} `json:"solana,omitempty"`
 }
 
-func (p *Project) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
-	outConf := p.Config.Output
+func (c *Config) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
+	outConf := c.Output
 
 	switch outConf.Type {
 	case types.OutputEthereumContract:
@@ -63,7 +57,7 @@ type ProjectMeta struct {
 	Paused    bool
 }
 
-func (m *ProjectMeta) GetProject() (*Project, error) {
+func (m *ProjectMeta) GetConfigs() ([]*Config, error) {
 	resp, err := http.Get(m.Uri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
@@ -74,17 +68,19 @@ func (m *ProjectMeta) GetProject() (*Project, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "read project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
-	c := &Config{}
-	if err = json.Unmarshal(content, c); err != nil {
+	cs := []*Config{}
+	if err = json.Unmarshal(content, &cs); err != nil {
 		return nil, errors.Wrapf(err, "parse project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
-	// simple validation
-	if len(c.Code) == 0 || c.VMType == "" {
-		return nil, errors.Errorf("invalid project config, projectID %d, uri %s", m.ProjectID, m.Uri)
+
+	if len(cs) == 0 {
+		return nil, errors.Errorf("empty project config, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
-	// TODO validate hash
-	return &Project{
-		ID:     m.ProjectID,
-		Config: *c,
-	}, nil
+	for _, c := range cs {
+		if c.Code == "" || c.VMType == "" || c.Version == "" {
+			return nil, errors.Errorf("invalid project config, projectID %d, uri %s", m.ProjectID, m.Uri)
+		}
+	}
+
+	return cs, nil
 }

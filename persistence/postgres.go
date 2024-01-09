@@ -14,9 +14,10 @@ import (
 
 type message struct {
 	gorm.Model
-	MessageID string `gorm:"index:message_id,not null"`
-	ProjectID uint64 `gorm:"index:message_fetch,not null"`
-	Data      string `gorm:"size:4096"`
+	MessageID      string `gorm:"index:message_id,not null"`
+	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
+	ProjectVersion string `gorm:"not null"`
+	Data           string `gorm:"size:4096"`
 }
 
 type task struct {
@@ -40,9 +41,10 @@ type Postgres struct {
 
 func (p *Postgres) Save(msg *types.Message) error {
 	m := message{
-		MessageID: msg.ID,
-		ProjectID: msg.ProjectID,
-		Data:      msg.Data,
+		MessageID:      msg.ID,
+		ProjectID:      msg.ProjectID,
+		ProjectVersion: msg.ProjectVersion,
+		Data:           msg.Data,
 	}
 	tid := uuid.NewString()
 	t := task{
@@ -89,9 +91,10 @@ func (p *Postgres) Fetch(projectID uint64) (*types.Task, error) {
 	return &types.Task{
 		ID: t.TaskID,
 		Messages: []*types.Message{{
-			ID:        m.MessageID,
-			ProjectID: m.ProjectID,
-			Data:      m.Data,
+			ID:             m.MessageID,
+			ProjectID:      m.ProjectID,
+			ProjectVersion: m.ProjectVersion,
+			Data:           m.Data,
 		}},
 	}, nil
 }
