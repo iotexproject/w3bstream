@@ -36,10 +36,6 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
         _;
     }
 
-    function getMaxProjectId() public view returns (uint64) {
-        return _nextProjectId - 1;
-    }
-
     function canOperateProject(address _operator, uint64 _projectId) public view returns (bool) {
         return ownerOf(_projectId) == _operator || projects[_projectId].operators[_operator];
     }
