@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/core/types"
 	"log/slog"
 	"os"
 	"path"
 	"strconv"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
@@ -20,11 +20,10 @@ import (
 )
 
 type Manager struct {
-	mux             sync.Mutex
-	pool            map[key]*Config
-	projectIDs      map[uint64]bool
-	chainEndpoint   string
-	contractAddress string
+	mux        sync.Mutex
+	pool       map[key]*Config
+	projectIDs map[uint64]bool
+	instance   *contracts.Contracts
 }
 
 type key string
@@ -55,12 +54,17 @@ func (m *Manager) GetAllProjectID() []uint64 {
 	return ids
 }
 
-func (m *Manager) watchProjectRegistrar(events chan *contracts.ContractsProjectUpserted, subs event.Subscription) {
+func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subscription) {
 	for {
 		select {
 		case err := <-subs.Err():
 			slog.Error("project upserted event subscription failed", "err", err)
-		case ev := <-events:
+		case l := <-logs:
+			ev, err := m.instance.ParseProjectUpserted(*l)
+			if err != nil {
+				slog.Error("failed to parse target event", "msg", err)
+				continue
+			}
 			if ev.ProjectId == 0 {
 				continue
 			}
@@ -132,6 +136,7 @@ func fillProjectPoolFromChain(pool map[key]*Config, projectIDs map[uint64]bool, 
 		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
 			return nil
 		}
+		slog.Debug("queried project", "project_id", i, "uri", mp.Uri)
 		m := &ProjectMeta{
 			ProjectID: i,
 			Uri:       mp.Uri,
@@ -172,18 +177,24 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 	}
 
 	m := &Manager{
-		pool:            pool,
-		projectIDs:      projectIDs,
-		chainEndpoint:   chainEndpoint,
-		contractAddress: contractAddress,
+		pool:       pool,
+		projectIDs: projectIDs,
+		instance:   instance,
 	}
 
-	events := make(chan *contracts.ContractsProjectUpserted)
-	subs, err := instance.WatchProjectUpserted(&bind.WatchOpts{}, events, nil)
+	topic := "ProjectUpserted(uint64,string,bytes32)"
+
+	monitor, err := NewDefaultMonitor(
+		chainEndpoint,
+		[]string{contractAddress},
+		[]string{topic},
+	)
 	if err != nil {
-		return nil, errors.Wrap(err, "watch project upserted event failed")
+		slog.Error("failed to new contract monitor", "msg", err)
+		return nil, err
 	}
-	go m.watchProjectRegistrar(events, subs)
+	go monitor.run()
+	go m.watchProjectRegistrar(monitor.MustEvents(topic), monitor)
 
 	return m, nil
 }

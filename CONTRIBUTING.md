@@ -41,7 +41,7 @@ There are many ways to contribute to this project:
     export IOTEX_CHAINID=2
     export PROJECT_FILE_DIRECTORY=./test/data
     export CHAIN_ENDPOINT=https://babel-api.testnet.iotex.io
-    export PROJECT_CONTRACT_ADDRESS=0x4F7e678B0203e0444E17512108dba4B08B39512e
+    export PROJECT_CONTRACT_ADDRESS=0x184C72E39a642058CCBc369485c7fd614B40a03d
     ```
 
     ```bash
@@ -51,7 +51,7 @@ There are many ways to contribute to this project:
     # The RPC of the destination chain where proofs must be sent
     export CHAIN_ENDPOINT=https://babel-api.testnet.iotex.io
     # The contract address to which the proof will be sent
-    export PROJECT_CONTRACT_ADDRESS=0x4F7e678B0203e0444E17512108dba4B08B39512e
+    export PROJECT_CONTRACT_ADDRESS=0x184C72E39a642058CCBc369485c7fd614B40a03d
     # A funded account on the destination chain 
     export OPERATOR_PRIVATE_KEY=<your_blockchain_key>
     # Optional: Required for working with RISC0 provers
