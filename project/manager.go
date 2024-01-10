@@ -169,9 +169,9 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*M
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	if err := fillProjectPoolFromChain(pool, projectIDs, instance); err != nil {
-		return nil, errors.Wrap(err, "read project file from chain failed")
-	}
+	// if err := fillProjectPoolFromChain(pool, projectIDs, instance); err != nil {
+	// 	return nil, errors.Wrap(err, "read project file from chain failed")
+	// }
 	if err := fillProjectPoolFromLocal(pool, projectIDs, projectFileDirectory); err != nil {
 		return nil, errors.Wrap(err, "read project file from local failed")
 	}
