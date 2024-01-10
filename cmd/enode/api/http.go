@@ -110,6 +110,20 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 }
 
 func (s *HttpServer) queryStateLogByID(c *gin.Context) {
+	tok := c.GetHeader("Authorization")
+	if tok == "" {
+		tok = c.Query("authorization")
+	}
+	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
+
+	if tok != "" {
+		err := didvc.VerifyJWTCredential(s.didAuthServer, tok)
+		if err != nil {
+			c.String(http.StatusUnauthorized, err.Error())
+			return
+		}
+	}
+
 	messageID := c.Param("id")
 
 	ls, err := s.pg.FetchStateLog(messageID)
