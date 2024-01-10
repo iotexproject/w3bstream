@@ -130,6 +130,7 @@ func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, operat
 		if err := ps.Add(id); err != nil {
 			return nil, errors.Wrapf(err, "add project %d pubsub failed", id)
 		}
+		slog.Debug("project added", "project_id", id)
 	}
 	return p, nil
 }

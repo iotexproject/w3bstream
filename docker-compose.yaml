@@ -19,7 +19,8 @@ services:
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
       PROJECT_CONTRACT_ADDRESS: "0x184C72E39a642058CCBc369485c7fd614B40a03d"
       PROJECT_FILE_DIRECTORY: "/data/test/project"
-
+    volumes:
+      - .:/data
 
   znode:
     image: ghcr.io/machinefi/znode:latest
