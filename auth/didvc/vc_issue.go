@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func IssueCredential(endpoint string, r *IssueCredentialReq, jwtFormat bool) (*IssueCredentialRsp, error) {
+func IssueCredential(endpoint string, r *IssueCredentialReq, jwtFormat bool) (*IssueCredentialJWTRsp, error) {
 	body, err := json.Marshal(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse body")
@@ -22,7 +22,9 @@ func IssueCredential(endpoint string, r *IssueCredentialReq, jwtFormat bool) (*I
 		r.Options.ProofFormat = ProofFormatJWT
 	}
 
-	rsp, err := http.Post(endpoint, "application/json", bytes.NewReader(body))
+	url := "http://" + endpoint + "/issue/credentials"
+
+	rsp, err := http.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to request verifiable credential")
 	}
@@ -33,7 +35,7 @@ func IssueCredential(endpoint string, r *IssueCredentialReq, jwtFormat bool) (*I
 		return nil, errors.Wrap(err, "failed to read response")
 	}
 
-	ret := new(IssueCredentialRsp)
+	ret := new(IssueCredentialJWTRsp)
 	if err = json.Unmarshal(content, ret); err != nil {
 		return nil, errors.Wrap(err, "failed to parse response")
 	}

@@ -9,6 +9,10 @@ type IssueCredentialReq struct {
 
 type IssueCredentialRsp = VerifiableCredential
 
+type IssueCredentialJWTRsp struct {
+	VerifiableCredential string `json:"verifiableCredential"`
+}
+
 type VerifyCredentialReq struct {
 	VerifiableCredential   `json:"verifiableCredential"`
 	LinkedDataProofOptions `json:"options"`
