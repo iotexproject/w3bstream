@@ -7,6 +7,7 @@ const (
 	OperatorPrivateKey        = "OPERATOR_PRIVATE_KEY"
 	ProjectContractAddress    = "PROJECT_CONTRACT_ADDRESS"
 	ProjectFileDirectory      = "PROJECT_FILE_DIRECTORY"
+	IPFSEndpoint              = "IPFS_ENDPOINT"
 	Risc0ServerEndpoint       = "RISC0_SERVER_ENDPOINT"
 	ZkwasmServerEndpoint      = "ZKWASM_SERVER_ENDPOINT"
 	BootNodeMultiaddr         = "BOOTNODE_MULTIADDR"

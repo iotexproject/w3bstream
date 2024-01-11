@@ -9,4 +9,5 @@ const (
 	ProjectContractAddress = "PROJECT_CONTRACT_ADDRESS"
 	ProjectFileDirectory   = "PROJECT_FILE_DIRECTORY"
 	DIDAuthServerEndpoint  = "DIDAUTH_SERVER_ENDPOINT"
+	IPFSEndpoint           = "IPFS_ENDPOINT"
 )
