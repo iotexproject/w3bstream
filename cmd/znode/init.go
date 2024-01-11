@@ -27,6 +27,7 @@ func bindEnvConfig() {
 	viper.MustBindEnv(BootNodeMultiaddr)
 	viper.MustBindEnv(IotexChainID)
 	viper.MustBindEnv(ChainConfig)
+	viper.MustBindEnv(IPFSEndpoint)
 
 	viper.BindEnv(OperatorPrivateKey)
 	viper.BindEnv(OperatorPrivateKeyED25519)
