@@ -1,10 +1,14 @@
 package project
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/json"
+	"github.com/machinefi/sprout/utils/ipfs"
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/types"
@@ -58,22 +62,44 @@ type ProjectMeta struct {
 	Paused    bool
 }
 
-func (m *ProjectMeta) GetConfigs() ([]*Config, error) {
+func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 	slog.Info("project meta", "project_id", m.ProjectID, "uri", m.Uri)
 
-	// TODO support fetch from ipfs by hash
-	resp, err := http.Get(m.Uri)
-	if err != nil {
-		return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
+	var (
+		content []byte
+		err     error
+	)
+	if u, _err := url.Parse(m.Uri); _err == nil && (u.Scheme == "http" || u.Scheme == "https") {
+		// fetch content from ipfs gateway
+		resp, _err := http.Get(m.Uri)
+		if _err != nil {
+			return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
+		}
+		defer resp.Body.Close()
+
+		// TODO network error should try again
+		content, err = io.ReadAll(resp.Body)
+	} else {
+		// fetch content by ipfs cid
+		sh := ipfs.NewIPFS(ipfsEndpoint)
+		content, err = sh.Cat(m.Uri)
 	}
-	defer resp.Body.Close()
 
-	// TODO network error should try again
-
-	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrapf(err, "read project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
+
+	h := sha256.New()
+	_, err = h.Write(content)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to validate hash")
+	}
+
+	sha256sum := h.Sum(nil)
+	if !bytes.Equal(sha256sum, m.Hash[:]) {
+		return nil, errors.Wrap(err, "failed to validate hash, not equal expect")
+	}
+
 	cs := []*Config{}
 	// TODO parsing error should skip
 	if err = json.Unmarshal(content, &cs); err != nil {

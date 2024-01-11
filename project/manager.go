@@ -20,10 +20,11 @@ import (
 )
 
 type Manager struct {
-	mux        sync.Mutex
-	pool       map[key]*Config
-	projectIDs map[uint64]bool
-	instance   *contracts.Contracts
+	mux          sync.Mutex
+	pool         map[key]*Config
+	projectIDs   map[uint64]bool
+	instance     *contracts.Contracts
+	ipfsEndpoint string
 }
 
 type key string
@@ -73,7 +74,7 @@ func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subsc
 				Uri:       ev.Uri,
 				Hash:      ev.Hash,
 			}
-			cs, err := pm.GetConfigs()
+			cs, err := pm.GetConfigs(m.ipfsEndpoint)
 			if err != nil {
 				slog.Error("fetch project failed", "err", err)
 				continue
@@ -91,7 +92,7 @@ func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subsc
 	}
 }
 
-func fillProjectPoolFromLocal(pool map[key]*Config, projectIDs map[uint64]bool, projectFileDirectory string) error {
+func (m *Manager) fillProjectPoolFromLocal(projectFileDirectory string) error {
 	files, err := os.ReadDir(projectFileDirectory)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -118,17 +119,17 @@ func fillProjectPoolFromLocal(pool map[key]*Config, projectIDs map[uint64]bool, 
 		}
 
 		for _, c := range cs {
-			pool[getKey(projectID, c.Version)] = c
+			m.pool[getKey(projectID, c.Version)] = c
 		}
-		projectIDs[projectID] = true
+		m.projectIDs[projectID] = true
 	}
 	return nil
 }
 
-func fillProjectPoolFromChain(pool map[key]*Config, projectIDs map[uint64]bool, instance *contracts.Contracts) error {
+func (m *Manager) fillProjectPoolFromChain() error {
 	emptyHash := [32]byte{}
 	for i := uint64(1); ; i++ {
-		mp, err := instance.Projects(nil, i)
+		mp, err := m.instance.Projects(nil, i)
 		if err != nil {
 			return errors.Wrapf(err, "get project meta from chain failed, projectID %d", i)
 		}
@@ -137,49 +138,47 @@ func fillProjectPoolFromChain(pool map[key]*Config, projectIDs map[uint64]bool, 
 			return nil
 		}
 		slog.Debug("queried project", "project_id", i, "uri", mp.Uri)
-		m := &ProjectMeta{
+		pm := &ProjectMeta{
 			ProjectID: i,
 			Uri:       mp.Uri,
 			Hash:      mp.Hash,
 			Paused:    mp.Paused,
 		}
-		cs, err := m.GetConfigs()
+		cs, err := pm.GetConfigs(m.ipfsEndpoint)
 		if err != nil {
 			slog.Error("fetch project failed", "err", err)
 			continue
 		}
 
 		for _, c := range cs {
-			pool[getKey(m.ProjectID, c.Version)] = c
+			m.pool[getKey(pm.ProjectID, c.Version)] = c
 		}
-		projectIDs[m.ProjectID] = true
+		m.projectIDs[pm.ProjectID] = true
 	}
 }
 
-func NewManager(chainEndpoint, contractAddress, projectFileDirectory string) (*Manager, error) {
-	pool := make(map[key]*Config)
-	projectIDs := make(map[uint64]bool)
+func NewManager(chainEndpoint, contractAddress, projectFileDirectory, ipfsEndpoint string) (*Manager, error) {
+	m := &Manager{
+		mux:          sync.Mutex{},
+		pool:         make(map[key]*Config),
+		projectIDs:   make(map[uint64]bool),
+		ipfsEndpoint: ipfsEndpoint,
+	}
 
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrapf(err, "dial chain endpoint failed, endpoint %s", chainEndpoint)
 	}
-	instance, err := contracts.NewContracts(common.HexToAddress(contractAddress), client)
+	m.instance, err = contracts.NewContracts(common.HexToAddress(contractAddress), client)
 	if err != nil {
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	// if err := fillProjectPoolFromChain(pool, projectIDs, instance); err != nil {
-	// 	return nil, errors.Wrap(err, "read project file from chain failed")
-	// }
-	if err := fillProjectPoolFromLocal(pool, projectIDs, projectFileDirectory); err != nil {
-		return nil, errors.Wrap(err, "read project file from local failed")
+	if err = m.fillProjectPoolFromChain(); err != nil {
+		return nil, errors.Wrap(err, "read project file from chain failed")
 	}
-
-	m := &Manager{
-		pool:       pool,
-		projectIDs: projectIDs,
-		instance:   instance,
+	if err = m.fillProjectPoolFromLocal(projectFileDirectory); err != nil {
+		return nil, errors.Wrap(err, "read project file from local failed")
 	}
 
 	topic := "ProjectUpserted(uint64,string,bytes32)"
