@@ -3,10 +3,11 @@ package didvc
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"io"
 	"log/slog"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 func VerifyJWTCredential(endpoint string, tok string) error {

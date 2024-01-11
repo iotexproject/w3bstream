@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
-	"github.com/machinefi/sprout/utils/ipfs"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
 
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
+	"github.com/machinefi/sprout/utils/ipfs"
 )
 
 type Config struct {

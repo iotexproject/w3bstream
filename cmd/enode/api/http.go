@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/machinefi/sprout/auth/didvc"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/types"
 )
@@ -60,6 +60,7 @@ func NewHttpServer(pg *persistence.Postgres, didAuthServer string) *HttpServer {
 
 	s.engine.POST("/message", s.handleMessage)
 	s.engine.GET("/message/:id", s.queryStateLogByID)
+	s.engine.POST("/sign_credential", s.issueJWTCredential)
 
 	return s
 }
@@ -143,4 +144,21 @@ func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 
 	slog.Debug("received message querying", "message_id", messageID)
 	c.JSON(http.StatusOK, &queryMessageStateLogResp{MessageID: messageID, States: ss})
+}
+
+func (s *HttpServer) issueJWTCredential(c *gin.Context) {
+	req := new(didvc.IssueCredentialReq)
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusBadRequest, newErrResp(err))
+		return
+	}
+
+	rsp, err := didvc.IssueCredential(s.didAuthServer, req, true)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, rsp)
+	return
 }

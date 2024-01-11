@@ -3,12 +3,14 @@ package didvc_test
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/machinefi/sprout/auth/didvc"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/auth/didvc"
 )
 
 var (
