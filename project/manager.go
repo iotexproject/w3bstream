@@ -2,6 +2,7 @@ package project
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -137,7 +138,7 @@ func (m *Manager) fillProjectPoolFromChain() error {
 		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
 			return nil
 		}
-		slog.Debug("queried project", "project_id", i, "uri", mp.Uri)
+		slog.Debug("queried project", "project_id", i, "uri", mp.Uri, "hash", hex.EncodeToString(mp.Hash[:]))
 		pm := &ProjectMeta{
 			ProjectID: i,
 			Uri:       mp.Uri,
@@ -174,11 +175,11 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory, ipfsEndpoi
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	if err = m.fillProjectPoolFromChain(); err != nil {
-		return nil, errors.Wrap(err, "read project file from chain failed")
-	}
 	if err = m.fillProjectPoolFromLocal(projectFileDirectory); err != nil {
 		return nil, errors.Wrap(err, "read project file from local failed")
+	}
+	if err = m.fillProjectPoolFromChain(); err != nil {
+		return nil, errors.Wrap(err, "read project file from chain failed")
 	}
 
 	topic := "ProjectUpserted(uint64,string,bytes32)"
