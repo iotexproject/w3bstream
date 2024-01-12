@@ -2,6 +2,7 @@ package output
 
 import (
 	"context"
+	"encoding/hex"
 	"log/slog"
 	"math/big"
 	"strings"
@@ -38,7 +39,11 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 	params := []interface{}{}
 	for _, a := range method.Inputs {
 		if a.Name == "proof" {
-			params = append(params, proof)
+			p, err := hex.DecodeString(string(proof))
+			if err != nil {
+				return "", err
+			}
+			params = append(params, p)
 			continue
 		}
 		value := gjson.Get(m.Data, a.Name)
