@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/machinefi/sprout/cmd/enode/api"
-	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/persistence/postgres"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
 )
@@ -23,7 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	pg, err := persistence.NewPostgres(viper.GetString(DatabaseDSN))
+	pg, err := postgres.NewPostgres(viper.GetString(DatabaseDSN))
 	if err != nil {
 		log.Fatal(err)
 	}

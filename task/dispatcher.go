@@ -8,13 +8,13 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/persistence/postgres"
 	"github.com/machinefi/sprout/project"
 )
 
 type Dispatcher struct {
 	ps  *p2p.PubSubs
-	pg  *persistence.Postgres
+	pg  *postgres.Postgres
 	mgr *project.Manager
 }
 
@@ -52,7 +52,7 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	}
 }
 
-func NewDispatcher(mgr *project.Manager, pg *persistence.Postgres, bootNodeMultiaddr string, iotexChainID int) (*Dispatcher, error) {
+func NewDispatcher(mgr *project.Manager, pg *postgres.Postgres, bootNodeMultiaddr string, iotexChainID int) (*Dispatcher, error) {
 	d := &Dispatcher{
 		mgr: mgr,
 		pg:  pg,
