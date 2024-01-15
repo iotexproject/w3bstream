@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/auth/didvc"
-	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/persistence/postgres"
 	"github.com/machinefi/sprout/types"
 )
 
@@ -46,12 +46,12 @@ type queryMessageStateLogResp struct {
 
 type HttpServer struct {
 	engine *gin.Engine
-	pg     *persistence.Postgres
+	pg     *postgres.Postgres
 	// didAuthServer did auth server endpoint
 	didAuthServer string
 }
 
-func NewHttpServer(pg *persistence.Postgres, didAuthServer string) *HttpServer {
+func NewHttpServer(pg *postgres.Postgres, didAuthServer string) *HttpServer {
 	s := &HttpServer{
 		engine:        gin.Default(),
 		pg:            pg,

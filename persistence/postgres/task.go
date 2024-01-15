@@ -1,4 +1,4 @@
-package persistence
+package postgres
 
 import (
 	"time"
@@ -16,7 +16,7 @@ type message struct {
 	gorm.Model
 	MessageID      string `gorm:"index:message_id,not null"`
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
-	ProjectVersion string `gorm:"not null"`
+	ProjectVersion string `gorm:"not null,default:'0.0'"`
 	Data           string `gorm:"size:4096"`
 }
 
