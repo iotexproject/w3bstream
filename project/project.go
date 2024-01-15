@@ -70,9 +70,7 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 	)
 	u, _err := url.Parse(m.Uri)
 	if _err != nil {
-		// fetch content by ipfs cid with default endpoint
-		sh := ipfs.NewIPFS(ipfsEndpoint)
-		content, err = sh.Cat(m.Uri)
+		return nil, errors.Wrapf(err, "failed to parse project url: %s", m.Uri)
 	} else {
 		switch u.Scheme {
 		case "http", "https":
@@ -86,6 +84,11 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 		case "ipfs":
 			// ipfs url: ipfs://${endpoint}/${cid}
 			sh := ipfs.NewIPFS(u.Host)
+			cid := strings.Split(strings.Trim(u.Path, "/"), "/")
+			content, err = sh.Cat(cid[0])
+		default:
+			// fetch content by ipfs cid with default endpoint
+			sh := ipfs.NewIPFS(ipfsEndpoint)
 			cid := strings.Split(strings.Trim(u.Path, "/"), "/")
 			content, err = sh.Cat(cid[0])
 		}
