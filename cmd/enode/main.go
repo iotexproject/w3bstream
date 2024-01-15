@@ -18,7 +18,12 @@ func main() {
 	initLogger()
 	bindEnvConfig()
 
-	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(ProjectFileDirectory))
+	projectManager, err := project.NewManager(
+		viper.GetString(ChainEndpoint),
+		viper.GetString(ProjectContractAddress),
+		viper.GetString(ProjectFileDirectory),
+		viper.GetString(IPFSEndpoint),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
