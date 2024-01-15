@@ -2,6 +2,7 @@ package output
 
 import (
 	"context"
+	"encoding/hex"
 	"log/slog"
 	"math/big"
 	"strings"
@@ -38,7 +39,11 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 	params := []interface{}{}
 	for _, a := range method.Inputs {
 		if a.Name == "proof" {
-			params = append(params, proof)
+			p, err := hex.DecodeString(string(proof))
+			if err != nil {
+				return "", errors.Wrap(err, "proof decode failed")
+			}
+			params = append(params, p)
 			continue
 		}
 		value := gjson.Get(m.Data, a.Name)
@@ -60,12 +65,12 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 	}
 	data, err := e.contractABI.Pack(e.contractMethod, params...)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "contract ABI pack failed")
 	}
 
 	txHash, err := e.sendTX(context.Background(), e.chainEndpoint, e.secretKey, e.contractAddress, data)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "transaction failed")
 	}
 
 	return txHash, nil
