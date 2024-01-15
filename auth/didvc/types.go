@@ -10,13 +10,13 @@ type Issuer struct {
 // Credential defines a json-ld Verifiable Credential without a proof
 type Credential struct {
 	// Context the JSON-LD context of the credential
-	Context []string `json:"@context"`
+	Context string `json:"@context"`
 	// Type the JSON-LD type of the credential
 	Type []string `json:"type"`
 	// ID the ID of the credential
 	ID string `json:"id"`
 	// Issuer expressing the issuer of the VC
-	Issuer Issuer `json:"issuer"`
+	Issuer string `json:"issuer"`
 	// IssuanceDate expressing the time when a VC becomes valid
 	IssuanceDate string `json:"issuanceDate"`
 	// ExpirationDate expressing the time when a VC expired

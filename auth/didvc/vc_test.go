@@ -3,12 +3,14 @@ package didvc_test
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/machinefi/sprout/auth/didvc"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/auth/didvc"
 )
 
 var (
@@ -28,10 +30,10 @@ func DISABLED_TestVCIssueAndVerify(t *testing.T) {
 	// issue
 	issuereq := didvc.IssueCredentialReq{
 		Credential: didvc.Credential{
-			Context: []string{gDefaultContext},
+			Context: gDefaultContext,
 			Type:    []string{gDefaultCredType},
 			ID:      "urn:uuid:040d4921-4756-447b-99ad-8d4978420e91",
-			Issuer:  didvc.Issuer{ID: "did:key:z6MkgYAGxLBSXa6Ygk1PnUbK2F7zya8juE9nfsZhrvY7c9GD"},
+			Issuer:  "did:key:z6MkgYAGxLBSXa6Ygk1PnUbK2F7zya8juE9nfsZhrvY7c9GD",
 		},
 	}
 	body, err := json.Marshal(issuereq)

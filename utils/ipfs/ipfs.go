@@ -2,10 +2,11 @@ package ipfs
 
 import (
 	"bytes"
-	shell "github.com/ipfs/go-ipfs-api"
-	"github.com/pkg/errors"
 	"io"
 	"os"
+
+	shell "github.com/ipfs/go-ipfs-api"
+	"github.com/pkg/errors"
 )
 
 func NewIPFS(endpoint string) *IPFS {
