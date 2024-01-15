@@ -68,6 +68,7 @@ func NewDispatcher(mgr *project.Manager, pg *persistence.Postgres, bootNodeMulti
 		if err := ps.Add(id); err != nil {
 			return nil, errors.Wrapf(err, "add project %d pubsub failed", id)
 		}
+		slog.Debug("project added", "project_id", id)
 	}
 	return d, nil
 }

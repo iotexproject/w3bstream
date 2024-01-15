@@ -3,6 +3,7 @@ package project
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/machinefi/sprout/output"
@@ -58,17 +59,23 @@ type ProjectMeta struct {
 }
 
 func (m *ProjectMeta) GetConfigs() ([]*Config, error) {
+	slog.Info("project meta", "project_id", m.ProjectID, "uri", m.Uri)
+
+	// TODO support fetch from ipfs by hash
 	resp, err := http.Get(m.Uri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
 	defer resp.Body.Close()
 
+	// TODO network error should try again
+
 	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrapf(err, "read project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
 	cs := []*Config{}
+	// TODO parsing error should skip
 	if err = json.Unmarshal(content, &cs); err != nil {
 		return nil, errors.Wrapf(err, "parse project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 	}
@@ -80,6 +87,7 @@ func (m *ProjectMeta) GetConfigs() ([]*Config, error) {
 		if c.Code == "" || c.VMType == "" || c.Version == "" {
 			return nil, errors.Errorf("invalid project config, projectID %d, uri %s", m.ProjectID, m.Uri)
 		}
+		slog.Info("project fetched", "project_id", m.ProjectID, "vm_type", c.VMType, "version", c.Version, "code_size", len(c.Code))
 	}
 
 	return cs, nil
