@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -64,8 +63,6 @@ type ProjectMeta struct {
 }
 
 func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
-	slog.Info("project meta", "project_id", m.ProjectID, "uri", m.Uri)
-
 	var (
 		content []byte
 		err     error
@@ -114,7 +111,6 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 		if c.Code == "" || c.VMType == "" || c.Version == "" {
 			return nil, errors.Errorf("invalid project config, projectID %d, uri %s", m.ProjectID, m.Uri)
 		}
-		slog.Info("project fetched", "project_id", m.ProjectID, "vm_type", c.VMType, "version", c.Version, "code_size", len(c.Code))
 	}
 
 	return cs, nil
