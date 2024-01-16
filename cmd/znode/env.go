@@ -15,3 +15,8 @@ const (
 	ChainConfig               = "CHAIN_CONFIG"
 	OperatorPrivateKeyED25519 = "OPERATOR_PRIVATE_KEY_ED25519"
 )
+
+// defaults env
+const (
+	gDefaultIPFSEndpoint = "ipfs.mainnet.iotex.io"
+)

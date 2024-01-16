@@ -23,4 +23,7 @@ func bindEnvConfig() {
 	viper.MustBindEnv(ProjectFileDirectory)
 	viper.MustBindEnv(DIDAuthServerEndpoint)
 	viper.MustBindEnv(IPFSEndpoint)
+
+	// defaults
+	viper.SetDefault(IPFSEndpoint, gDefaultIPFSEndpoint)
 }
