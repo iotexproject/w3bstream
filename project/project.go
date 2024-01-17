@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -67,20 +68,30 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 		content []byte
 		err     error
 	)
-	if u, _err := url.Parse(m.Uri); _err == nil && (u.Scheme == "http" || u.Scheme == "https") {
-		// fetch content from ipfs gateway
-		resp, _err := http.Get(m.Uri)
-		if _err != nil {
-			return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
-		}
-		defer resp.Body.Close()
-
-		// TODO network error should try again
-		content, err = io.ReadAll(resp.Body)
+	u, _err := url.Parse(m.Uri)
+	if _err != nil {
+		return nil, errors.Wrapf(err, "failed to parse project url: %s", m.Uri)
 	} else {
-		// fetch content by ipfs cid
-		sh := ipfs.NewIPFS(ipfsEndpoint)
-		content, err = sh.Cat(m.Uri)
+		switch u.Scheme {
+		case "http", "https":
+			resp, _err := http.Get(m.Uri)
+			if _err != nil {
+				return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
+			}
+			defer resp.Body.Close()
+			// TODO network error should try again
+			content, err = io.ReadAll(resp.Body)
+		case "ipfs":
+			// ipfs url: ipfs://${endpoint}/${cid}
+			sh := ipfs.NewIPFS(u.Host)
+			cid := strings.Split(strings.Trim(u.Path, "/"), "/")
+			content, err = sh.Cat(cid[0])
+		default:
+			// fetch content by ipfs cid with default endpoint
+			sh := ipfs.NewIPFS(ipfsEndpoint)
+			cid := strings.Split(strings.Trim(u.Path, "/"), "/")
+			content, err = sh.Cat(cid[0])
+		}
 	}
 
 	if err != nil {

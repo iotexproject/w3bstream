@@ -51,7 +51,7 @@ func (m *Manager) Set(projectID uint64, version string, c *Config) {
 	old, ok := m.pool[key]
 	m.pool[key] = c
 	if ok {
-		slog.Warn("project was overwritten", "project_id", projectID, "version", version, "old", old, "new", c)
+		slog.Warn("project was overwritten", "project_id", projectID, "version", version, "old_version", old.Version)
 	}
 	m.projectIDs[projectID] = true
 }

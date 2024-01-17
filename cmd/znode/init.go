@@ -31,6 +31,9 @@ func bindEnvConfig() {
 
 	viper.BindEnv(OperatorPrivateKey)
 	viper.BindEnv(OperatorPrivateKeyED25519)
+
+	// defaults
+	viper.SetDefault(IPFSEndpoint, gDefaultIPFSEndpoint)
 }
 
 // TODO it's risc0 depend tables, will move to risc0

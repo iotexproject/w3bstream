@@ -11,3 +11,8 @@ const (
 	DIDAuthServerEndpoint  = "DIDAUTH_SERVER_ENDPOINT"
 	IPFSEndpoint           = "IPFS_ENDPOINT"
 )
+
+// defaults env
+const (
+	gDefaultIPFSEndpoint = "ipfs.mainnet.iotex.io"
+)
