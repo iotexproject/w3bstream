@@ -20,6 +20,7 @@ func bindEnvConfig() {
 	viper.MustBindEnv(IotexChainID)
 	viper.MustBindEnv(ChainEndpoint)
 	viper.MustBindEnv(ProjectContractAddress)
+	viper.MustBindEnv(ZNodeContractAddress)
 	viper.MustBindEnv(ProjectFileDirectory)
 	viper.MustBindEnv(DIDAuthServerEndpoint)
 	viper.MustBindEnv(IPFSEndpoint)
