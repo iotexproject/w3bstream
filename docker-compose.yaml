@@ -16,13 +16,6 @@ services:
       IOTEX_CHAINID: 2
       HTTP_SERVICE_ENDPOINT: ":9000"
       DATABASE_DSN: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
-      CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
-      PROJECT_CONTRACT_ADDRESS: "0x184C72E39a642058CCBc369485c7fd614B40a03d"
-      ZNode_CONTRACT_ADDRESS: "0xeEA3E65613210bB3a97987a8855534722f428ef4"
-      PROJECT_FILE_DIRECTORY: "/data/test/project"
-      IPFS_ENDPOINT: "ipfs.mainnet.iotex.io"
-    volumes:
-      - .:/data
 
   znode:
     image: ghcr.io/machinefi/znode:latest

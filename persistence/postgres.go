@@ -72,13 +72,13 @@ func (p *Postgres) Save(msg *types.Message) error {
 	})
 }
 
-func (p *Postgres) Fetch(projectID uint64) (*types.Task, error) {
+func (p *Postgres) Fetch() (*types.Task, error) {
 	t := task{}
-	if err := p.db.Where("project_id = ? AND state = ?", projectID, types.TaskStateReceived).First(&t).Error; err != nil {
+	if err := p.db.Where("state = ?", types.TaskStateReceived).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
-		return nil, errors.Wrapf(err, "query task failed, projectID %d", projectID)
+		return nil, errors.Wrap(err, "query task failed")
 	}
 
 	m := message{}
