@@ -18,13 +18,5 @@ func bindEnvConfig() {
 	viper.MustBindEnv(DatabaseDSN)
 	viper.MustBindEnv(BootNodeMultiaddr)
 	viper.MustBindEnv(IotexChainID)
-	viper.MustBindEnv(ChainEndpoint)
-	viper.MustBindEnv(ProjectContractAddress)
-	viper.MustBindEnv(ZNodeContractAddress)
-	viper.MustBindEnv(ProjectFileDirectory)
 	viper.MustBindEnv(DIDAuthServerEndpoint)
-	viper.MustBindEnv(IPFSEndpoint)
-
-	// defaults
-	viper.SetDefault(IPFSEndpoint, gDefaultIPFSEndpoint)
 }
