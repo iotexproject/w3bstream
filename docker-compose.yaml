@@ -33,14 +33,15 @@ services:
       ZKWASM_SERVER_ENDPOINT: "zkwasm:4001"
       PROJECT_FILE_DIRECTORY: "/data/test/project"
       CHAIN_ENDPOINT: "https://babel-api.testnet.iotex.io"
-      CHAIN_CONFIG: '[{"chainID":4690,"name":"iotex-testnet","endpoint":"https://babel-api.testnet.iotex.io"},{"name":"solana-testnet","endpoint":"https://api.testnet.solana.com"}]'
       PROJECT_CONTRACT_ADDRESS: "0x184C72E39a642058CCBc369485c7fd614B40a03d"
+      ZNODE_CONTRACT_ADDRESS: "0xd4F726572AA4Af9907Ccd2d0D197a30c940F92ed"
       OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
       OPERATOR_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
       DATABASE_DSN: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
       BOOTNODE_MULTIADDR: "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
       IOTEX_CHAINID: 2
       IPFS_ENDPOINT: "ipfs.mainnet.iotex.io"
+      IO_ID: "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6SNgp8"
     volumes:
       - .:/data
 

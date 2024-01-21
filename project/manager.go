@@ -2,6 +2,9 @@ package project
 
 import (
 	"bytes"
+	"math/big"
+
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -25,6 +28,8 @@ type Manager struct {
 	projectIDs   map[uint64]bool
 	instance     *contracts.Contracts
 	ipfsEndpoint string
+	znodes       []string
+	ioID         string
 }
 
 type key string
@@ -101,11 +106,11 @@ func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subsc
 	}
 }
 
-func (m *Manager) fillProjectPoolFromLocal(projectFileDirectory string) {
-	files, err := os.ReadDir(projectFileDirectory)
+func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
+	files, err := os.ReadDir(projectFileDir)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			slog.Warn("failed to read project directory", "path", projectFileDirectory, "msg", err)
+			slog.Warn("failed to read project directory", "path", projectFileDir, "msg", err)
 			return
 		}
 	}
@@ -113,7 +118,7 @@ func (m *Manager) fillProjectPoolFromLocal(projectFileDirectory string) {
 		if f.IsDir() {
 			continue
 		}
-		data, err := os.ReadFile(path.Join(projectFileDirectory, f.Name()))
+		data, err := os.ReadFile(path.Join(projectFileDir, f.Name()))
 		if err != nil {
 			slog.Error("failed to read project config", "filename", f.Name(), "msg", err)
 			continue
@@ -138,7 +143,7 @@ func (m *Manager) fillProjectPoolFromLocal(projectFileDirectory string) {
 	}
 }
 
-func (m *Manager) fillProjectPoolFromChain() {
+func (m *Manager) fillProjectPoolFromChain(ioID string, znodes []string) {
 	emptyHash := [32]byte{}
 	for i := uint64(1); ; i++ {
 		mp, err := m.instance.Projects(nil, i)
@@ -150,6 +155,25 @@ func (m *Manager) fillProjectPoolFromChain() {
 		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
 			slog.Info("project from contract read completed", "max", i-1)
 			return
+		}
+
+		znodeMap := map[[sha256.Size]byte]string{}
+		for _, n := range znodes {
+			znodeMap[sha256.Sum256([]byte(n))] = n
+		}
+
+		max := new(big.Int).SetUint64(0)
+		maxZnode := ioID
+		for h, id := range znodeMap {
+			n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetUint64(i))
+			if n.Cmp(max) > 0 {
+				max = n
+				maxZnode = id
+			}
+		}
+		if maxZnode != ioID {
+			slog.Info("the project not scheduld to this znode", "projectID", i)
+			continue
 		}
 
 		pm := &ProjectMeta{
@@ -171,17 +195,18 @@ func (m *Manager) fillProjectPoolFromChain() {
 	}
 }
 
-func (m *Manager) loadProjects(projectFileLocalDir string) {
-	m.fillProjectPoolFromLocal(projectFileLocalDir)
-	m.fillProjectPoolFromChain()
+func (m *Manager) loadProjects(projectFileDir, ioID string, znodes []string) {
+	m.fillProjectPoolFromLocal(projectFileDir)
+	m.fillProjectPoolFromChain(ioID, znodes)
 }
 
-func NewManager(chainEndpoint, contractAddress, projectFileDirectory, ipfsEndpoint string) (*Manager, error) {
+func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint string, znodes []string, ioID string) (*Manager, error) {
 	m := &Manager{
-		mux:          sync.Mutex{},
 		pool:         make(map[key]*Config),
 		projectIDs:   make(map[uint64]bool),
 		ipfsEndpoint: ipfsEndpoint,
+		znodes:       znodes,
+		ioID:         ioID,
 	}
 
 	client, err := ethclient.Dial(chainEndpoint)
@@ -193,7 +218,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDirectory, ipfsEndpoi
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	go m.loadProjects(projectFileDirectory)
+	go m.loadProjects(projectFileDir, ioID, znodes)
 
 	topic := "ProjectUpserted(uint64,string,bytes32)"
 	monitor, err := NewDefaultMonitor(

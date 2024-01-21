@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 
+	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/types"
@@ -28,13 +29,14 @@ func main() {
 			types.VMZkwasm: viper.GetString(ZkwasmServerEndpoint),
 		},
 	)
-	// TODO: remove ChainEndpoint, use ChainConfig instead
-	projectManager, err := project.NewManager(
-		viper.GetString(ChainEndpoint),
-		viper.GetString(ProjectContractAddress),
-		viper.GetString(ProjectFileDirectory),
-		viper.GetString(IPFSEndpoint),
-	)
+
+	znodes, err := persistence.NewZNode(viper.GetString(ChainEndpoint), viper.GetString(ZNodeContractAddress))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress),
+		viper.GetString(ProjectFileDirectory), viper.GetString(IPFSEndpoint), znodes.GetAll(), viper.GetString(IoID))
 	if err != nil {
 		log.Fatal(err)
 	}

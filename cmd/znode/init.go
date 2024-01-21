@@ -23,16 +23,16 @@ func bindEnvConfig() {
 	viper.MustBindEnv(ProjectFileDirectory)
 	viper.MustBindEnv(ChainEndpoint)
 	viper.MustBindEnv(ProjectContractAddress)
+	viper.MustBindEnv(ZNodeContractAddress)
 	viper.MustBindEnv(DatabaseDSN)
 	viper.MustBindEnv(BootNodeMultiaddr)
 	viper.MustBindEnv(IotexChainID)
-	viper.MustBindEnv(ChainConfig)
 	viper.MustBindEnv(IPFSEndpoint)
+	viper.MustBindEnv(IoID)
 
 	viper.BindEnv(OperatorPrivateKey)
 	viper.BindEnv(OperatorPrivateKeyED25519)
 
-	// defaults
 	viper.SetDefault(IPFSEndpoint, gDefaultIPFSEndpoint)
 }
 
