@@ -20,7 +20,6 @@ func bindEnvConfig() {
 	viper.MustBindEnv(Risc0ServerEndpoint)
 	viper.MustBindEnv(Halo2ServerEndpoint)
 	viper.MustBindEnv(ZkwasmServerEndpoint)
-	viper.MustBindEnv(ProjectFileDirectory)
 	viper.MustBindEnv(ChainEndpoint)
 	viper.MustBindEnv(ProjectContractAddress)
 	viper.MustBindEnv(ZNodeContractAddress)

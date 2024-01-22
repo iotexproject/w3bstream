@@ -64,34 +64,33 @@ type ProjectMeta struct {
 }
 
 func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
-	var (
-		content []byte
-		err     error
-	)
-	u, _err := url.Parse(m.Uri)
-	if _err != nil {
-		return nil, errors.Wrapf(err, "failed to parse project url: %s", m.Uri)
-	} else {
-		switch u.Scheme {
-		case "http", "https":
-			resp, _err := http.Get(m.Uri)
-			if _err != nil {
-				return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
-			}
-			defer resp.Body.Close()
-			// TODO network error should try again
-			content, err = io.ReadAll(resp.Body)
-		case "ipfs":
-			// ipfs url: ipfs://${endpoint}/${cid}
-			sh := ipfs.NewIPFS(u.Host)
-			cid := strings.Split(strings.Trim(u.Path, "/"), "/")
-			content, err = sh.Cat(cid[0])
-		default:
-			// fetch content by ipfs cid with default endpoint
-			sh := ipfs.NewIPFS(ipfsEndpoint)
-			cid := strings.Split(strings.Trim(u.Path, "/"), "/")
-			content, err = sh.Cat(cid[0])
+	u, err := url.Parse(m.Uri)
+	if err != nil {
+		return nil, errors.Wrapf(err, "parse project uri %s failed", m.Uri)
+	}
+
+	var content []byte
+	switch u.Scheme {
+	case "http", "https":
+		resp, _err := http.Get(m.Uri)
+		if _err != nil {
+			return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 		}
+		defer resp.Body.Close()
+		// TODO network error should try again
+		content, err = io.ReadAll(resp.Body)
+
+	case "ipfs":
+		// ipfs url: ipfs://${endpoint}/${cid}
+		sh := ipfs.NewIPFS(u.Host)
+		cid := strings.Split(strings.Trim(u.Path, "/"), "/")
+		content, err = sh.Cat(cid[0])
+
+	default:
+		// fetch content by ipfs cid with default endpoint
+		sh := ipfs.NewIPFS(ipfsEndpoint)
+		cid := strings.Split(strings.Trim(u.Path, "/"), "/")
+		content, err = sh.Cat(cid[0])
 	}
 
 	if err != nil {
@@ -99,14 +98,11 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 	}
 
 	h := sha256.New()
-	_, err = h.Write(content)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to validate hash")
+	if _, err := h.Write(content); err != nil {
+		return nil, errors.Wrap(err, "generate project config hash failed")
 	}
-
-	sha256sum := h.Sum(nil)
-	if !bytes.Equal(sha256sum, m.Hash[:]) {
-		return nil, errors.Wrap(err, "failed to validate hash, not equal expect")
+	if !bytes.Equal(h.Sum(nil), m.Hash[:]) {
+		return nil, errors.Wrap(err, "validate project config hash failed")
 	}
 
 	cs := []*Config{}
