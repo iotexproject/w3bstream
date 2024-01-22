@@ -41,6 +41,8 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
     }
 
     function createProject(string memory _uri, bytes32 _hash) public nonReentrant {
+        require(bytes(_uri).length != 0, "Empty uri value");
+
         uint64 projectId = _nextProjectId++;
         Project storage newProject = projects[projectId];
         newProject.uri = _uri;
@@ -75,6 +77,8 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
     }
 
     function updateProject(uint64 _projectId, string memory _uri, bytes32 _hash) public onlyProjectOperator(_projectId) {
+        require(bytes(_uri).length != 0, "Empty uri value");
+        
         projects[_projectId].uri = _uri;
         projects[_projectId].hash = _hash;
         emit ProjectUpserted(_projectId, _uri, _hash);
