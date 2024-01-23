@@ -8,7 +8,6 @@ contract ZNodeRegistrar is ERC721, ReentrancyGuard {
     struct ZNode {
         string did;
         bool paused;
-        bool exist;
         mapping(address => bool) operators;
     }
 
@@ -41,20 +40,6 @@ contract ZNodeRegistrar is ERC721, ReentrancyGuard {
         return ownerOf(znodeDIDs[_znodeDID]) == _operator || znodes[znodeDIDs[_znodeDID]].operators[_operator];
     }
 
-    function getRunningZNodes() public view returns (string[] memory) {
-        string[] memory dids = new string[](0);
-        for (uint64 i = 0; ; i++) {
-            ZNode storage znode = znodes[i];
-            if (!znode.exist) {
-                break;
-            }
-            if (!znode.paused) {
-                dids[i] = znode.did;
-            }
-        }
-        return dids;
-    }
-
     function createZNode(string memory _did) public nonReentrant {
         require(bytes(_did).length != 0, "Empty DID value");
         require(znodeDIDs[_did] == uint64(0), "The DID value has already been registered");
@@ -62,7 +47,6 @@ contract ZNodeRegistrar is ERC721, ReentrancyGuard {
         uint64 znodeID = _nextZNodeID++;
         ZNode storage newZNode = znodes[znodeID];
         newZNode.did = _did;
-        newZNode.exist = true;
 
         znodeDIDs[_did] = znodeID;
 

@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"log/slog"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -38,14 +39,19 @@ func NewZNode(chainEndpoint, contractAddress string) (*ZNode, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "new znode contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
-	dids, err := instance.GetRunningZNodes(nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "get running znode dids failed")
-	}
 
 	znodeDIDs := map[string]bool{}
-	for _, d := range dids {
-		znodeDIDs[d] = true
+
+	for i := uint64(1); ; i++ {
+		znode, err := instance.Znodes(nil, i)
+		if err != nil {
+			slog.Error("get znode from chain failed", "znode_id", i, "error", err)
+			continue
+		}
+		if znode.Did == "" {
+			break
+		}
+		znodeDIDs[znode.Did] = true
 	}
 
 	return &ZNode{
