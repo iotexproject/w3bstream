@@ -36,7 +36,7 @@ func main() {
 	}
 
 	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress),
-		viper.GetString(ProjectFileDirectory), viper.GetString(IPFSEndpoint), znodes.GetAll(), viper.GetString(IoID))
+		viper.GetString(IPFSEndpoint), znodes.GetAll(), viper.GetString(IoID))
 	if err != nil {
 		log.Fatal(err)
 	}
