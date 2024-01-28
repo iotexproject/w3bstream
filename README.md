@@ -19,7 +19,9 @@ The diagram represents the main components of the software and how they interact
 - ZK runtime: currently W3bstream supports three ZK runtimes: Halo2, ZkWasm, and Risc0. The project configuration defines which runtime will be used by the project.
 
 
-## Getting Started
+## Running
+
+[Quick Start](./QUICK_START.md)
 
 For the initial setup and operation of a W3bstream node, please refer to the [OPERATOR_GUIDE →](./OPERATOR_GUIDE.md)
 
