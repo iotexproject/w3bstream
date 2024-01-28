@@ -8,6 +8,17 @@ W3bstream is an integral part of the [IoTeX network](https://iotex.io). It's a L
   <img src="./docs/architecture.drawio.png"/>
 </p>
 
+The diagram represents the main components of the software and how they interact between them. Note that this reflects a single entity running a enode and znode. But there are many entities running nodes in the network. More on this later.
+
+- Enode: is short for Eage node. Enode contains a sequencer and task dispatcher. Enode receives messages from users, persists them in DA, and packs them into tasks. Enode is defined by the project, and also, how to pack messages into tasks is defined by the project.
+- Znode: is short for ZK node. Znode receives the task, constructs a ZK runtime instance, and generates a ZK proof. Znode contains a Task processor, ZK runtime manager, project manager, and output module. Everyone can stake IOTX and obtain permission to run a Znode.
+- Data availability: W3bstream uses data availability to ensure messages and task lifecycles persist.
+- P2P network: in W3bstream, all Enodes and Znodes will interact with each other over the P2P network, including dispatching, receiving, and reporting task status. Every node needs to join the project topic and then process the information related to the project.
+- IPFS: project config data is stored on IPFS. Users who want to publish a new project can use ioctl to push the project config file to IPFS.
+- Chain contract: Project meta data and Znode information are stored on the chain contract. If a project needs to be loaded by Znode, Znode needs to first fetch the project metadata from the chain contract, and then fetch the project configuration file from IPFS. 
+- ZK runtime: currently W3bstream supports three ZK runtimes: Halo2, ZkWasm, and Risc0. The project configuration defines which runtime will be used by the project.
+
+
 ## Getting Started
 
 For the initial setup and operation of a W3bstream node, please refer to the [OPERATOR_GUIDE →](./OPERATOR_GUIDE.md)
