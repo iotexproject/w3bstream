@@ -2,9 +2,7 @@ package project
 
 import (
 	"bytes"
-	"math/big"
 
-	"crypto/sha256"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -24,8 +22,8 @@ type Manager struct {
 	projectIDs   map[uint64]bool
 	instance     *contracts.Contracts
 	ipfsEndpoint string
-	znodes       []string
-	ioID         string
+	// znodes       []string
+	// ioID         string
 }
 
 type key string
@@ -102,7 +100,7 @@ func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subsc
 	}
 }
 
-func (m *Manager) fillProjectPool(ioID string, znodes []string) {
+func (m *Manager) fillProjectPool() {
 	emptyHash := [32]byte{}
 	for i := uint64(1); ; i++ {
 		mp, err := m.instance.Projects(nil, i)
@@ -116,24 +114,24 @@ func (m *Manager) fillProjectPool(ioID string, znodes []string) {
 			return
 		}
 
-		znodeMap := map[[sha256.Size]byte]string{}
-		for _, n := range znodes {
-			znodeMap[sha256.Sum256([]byte(n))] = n
-		}
+		// znodeMap := map[[sha256.Size]byte]string{}
+		// for _, n := range znodes {
+		// 	znodeMap[sha256.Sum256([]byte(n))] = n
+		// }
 
-		max := new(big.Int).SetUint64(0)
-		maxZnode := ioID
-		for h, id := range znodeMap {
-			n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetUint64(i))
-			if n.Cmp(max) > 0 {
-				max = n
-				maxZnode = id
-			}
-		}
-		if maxZnode != ioID {
-			slog.Info("the project not scheduld to this znode", "projectID", i)
-			continue
-		}
+		// max := new(big.Int).SetUint64(0)
+		// maxZnode := ioID
+		// for h, id := range znodeMap {
+		// 	n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetUint64(i))
+		// 	if n.Cmp(max) > 0 {
+		// 		max = n
+		// 		maxZnode = id
+		// 	}
+		// }
+		// if maxZnode != ioID {
+		// 	slog.Info("the project not scheduld to this znode", "projectID", i)
+		// 	continue
+		// }
 
 		pm := &ProjectMeta{
 			ProjectID: i,
@@ -154,13 +152,11 @@ func (m *Manager) fillProjectPool(ioID string, znodes []string) {
 	}
 }
 
-func NewManager(chainEndpoint, contractAddress, ipfsEndpoint string, znodes []string, ioID string) (*Manager, error) {
+func NewManager(chainEndpoint, contractAddress, ipfsEndpoint string) (*Manager, error) {
 	m := &Manager{
 		pool:         make(map[key]*Config),
 		projectIDs:   make(map[uint64]bool),
 		ipfsEndpoint: ipfsEndpoint,
-		znodes:       znodes,
-		ioID:         ioID,
 	}
 
 	client, err := ethclient.Dial(chainEndpoint)
@@ -172,7 +168,7 @@ func NewManager(chainEndpoint, contractAddress, ipfsEndpoint string, znodes []st
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	m.fillProjectPool(ioID, znodes)
+	m.fillProjectPool()
 
 	topic := "ProjectUpserted(uint64,string,bytes32)"
 	monitor, err := NewDefaultMonitor(

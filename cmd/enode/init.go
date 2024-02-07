@@ -14,9 +14,15 @@ func initLogger() {
 }
 
 func bindEnvConfig() {
+	viper.MustBindEnv(ChainEndpoint)
 	viper.MustBindEnv(HttpServiceEndpoint)
 	viper.MustBindEnv(DatabaseDSN)
 	viper.MustBindEnv(BootNodeMultiaddr)
 	viper.MustBindEnv(IotexChainID)
+	viper.MustBindEnv(ProjectContractAddress)
+	viper.MustBindEnv(IPFSEndpoint)
 	viper.MustBindEnv(DIDAuthServerEndpoint)
+
+	viper.BindEnv(OperatorPrivateKey)
+	viper.BindEnv(OperatorPrivateKeyED25519)
 }
