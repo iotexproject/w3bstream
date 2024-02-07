@@ -17,18 +17,6 @@ func initLogger() {
 }
 
 func initConfig() {
-	viper.MustBindEnv(Risc0ServerEndpoint)
-	viper.MustBindEnv(Halo2ServerEndpoint)
-	viper.MustBindEnv(ZkwasmServerEndpoint)
-	viper.MustBindEnv(ChainEndpoint)
-	viper.MustBindEnv(ProjectContractAddress)
-	viper.MustBindEnv(ZNodeContractAddress)
-	viper.MustBindEnv(DatabaseDSN)
-	viper.MustBindEnv(BootNodeMultiaddr)
-	viper.MustBindEnv(IotexChainID)
-	viper.MustBindEnv(IPFSEndpoint)
-	viper.MustBindEnv(IoID)
-
 	viper.SetDefault(Risc0ServerEndpoint, "risc0:4001")
 	viper.SetDefault(Halo2ServerEndpoint, "halo2:4001")
 	viper.SetDefault(ZkwasmServerEndpoint, "zkwasm:4001")
@@ -40,6 +28,18 @@ func initConfig() {
 	viper.SetDefault(IotexChainID, 2)
 	viper.SetDefault(IPFSEndpoint, "ipfs.mainnet.iotex.io")
 	viper.SetDefault(IoID, "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6SNgp8")
+
+	viper.MustBindEnv(Risc0ServerEndpoint)
+	viper.MustBindEnv(Halo2ServerEndpoint)
+	viper.MustBindEnv(ZkwasmServerEndpoint)
+	viper.MustBindEnv(ChainEndpoint)
+	viper.MustBindEnv(ProjectContractAddress)
+	viper.MustBindEnv(ZNodeContractAddress)
+	viper.MustBindEnv(DatabaseDSN)
+	viper.MustBindEnv(BootNodeMultiaddr)
+	viper.MustBindEnv(IotexChainID)
+	viper.MustBindEnv(IPFSEndpoint)
+	viper.MustBindEnv(IoID)
 }
 
 // TODO it's risc0 depend tables, will move to risc0
