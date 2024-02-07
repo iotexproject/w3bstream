@@ -12,6 +12,7 @@ import (
 
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
 )
 
@@ -45,17 +46,18 @@ type queryMessageStateLogResp struct {
 }
 
 type HttpServer struct {
-	engine *gin.Engine
-	pg     *persistence.Postgres
-	// didAuthServer did auth server endpoint
-	didAuthServer string
+	engine         *gin.Engine
+	pg             *persistence.Postgres
+	didAuthServer  string
+	projectManager *project.Manager
 }
 
-func NewHttpServer(pg *persistence.Postgres, didAuthServer string) *HttpServer {
+func NewHttpServer(pg *persistence.Postgres, didAuthServer string, projectManager *project.Manager) *HttpServer {
 	s := &HttpServer{
-		engine:        gin.Default(),
-		pg:            pg,
-		didAuthServer: didAuthServer,
+		engine:         gin.Default(),
+		pg:             pg,
+		didAuthServer:  didAuthServer,
+		projectManager: projectManager,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
@@ -89,19 +91,24 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 	if tok != "" {
 		err := didvc.VerifyJWTCredential(s.didAuthServer, tok)
 		if err != nil {
-			c.String(http.StatusUnauthorized, err.Error())
+			c.JSON(http.StatusUnauthorized, newErrResp(err))
 			return
 		}
 	}
 
+	config, err := s.projectManager.Get(req.ProjectID, req.ProjectVersion)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, newErrResp(err))
+		return
+	}
+
 	id := uuid.NewString()
-	slog.Debug("received your message, handling")
 	if err := s.pg.Save(&types.Message{
 		ID:             id,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           req.Data,
-	}); err != nil {
+	}, config); err != nil {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return
 	}

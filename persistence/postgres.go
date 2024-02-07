@@ -7,8 +7,10 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 
+	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
 )
 
@@ -16,8 +18,9 @@ type message struct {
 	gorm.Model
 	MessageID      string `gorm:"index:message_id,not null"`
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
-	ProjectVersion string `gorm:"not null,default:'0.0'"`
+	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
 	Data           string `gorm:"size:4096"`
+	TaskID         string `gorm:"index:task_id,not null,default:''"`
 }
 
 type task struct {
@@ -39,7 +42,7 @@ type Postgres struct {
 	db *gorm.DB
 }
 
-func (p *Postgres) Save(msg *types.Message) error {
+func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 	m := message{
 		MessageID:      msg.ID,
 		ProjectID:      msg.ProjectID,
@@ -47,22 +50,50 @@ func (p *Postgres) Save(msg *types.Message) error {
 		Data:           msg.Data,
 	}
 	tid := uuid.NewString()
-	t := task{
+	ts := []task{{
 		TaskID:    tid,
 		MessageID: msg.ID,
 		ProjectID: msg.ProjectID,
 		State:     types.TaskStateReceived,
-	}
+	}}
+
 	l := taskStateLog{
 		TaskID: tid,
 		State:  types.TaskStateReceived,
 	}
 
 	return p.db.Transaction(func(tx *gorm.DB) error {
+		if a := config.Aggregation.Amount; a > 1 {
+			ms := []*message{}
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Order("created_at").Where("project_id = ? AND project_version = ? AND task_id = ?", msg.ProjectID, msg.ProjectVersion, "").Limit(int(a - 1)).Find(&ms).Error; err != nil {
+				return errors.Wrap(err, "fetch message failed")
+			}
+			if len(ms) < int(a-1) {
+				if err := tx.Create(&m).Error; err != nil {
+					return errors.Wrap(err, "create message failed")
+				}
+				return nil
+			}
+			mids := []string{}
+			for _, m := range ms {
+				mids = append(mids, m.MessageID)
+				ts = append(ts, task{
+					TaskID:    tid,
+					MessageID: m.MessageID,
+					ProjectID: m.ProjectID,
+					State:     types.TaskStateReceived,
+				})
+			}
+			if err := tx.Model(message{}).Where("message_id IN ?", mids).Update("task_id", tid).Error; err != nil {
+				return errors.Wrap(err, "update message taskID failed")
+			}
+		}
+
+		m.TaskID = tid
 		if err := tx.Create(&m).Error; err != nil {
 			return errors.Wrap(err, "create message failed")
 		}
-		if err := tx.Create(&t).Error; err != nil {
+		if err := tx.Create(&ts).Error; err != nil {
 			return errors.Wrap(err, "create task failed")
 		}
 		if err := tx.Create(&l).Error; err != nil {
@@ -80,49 +111,41 @@ func (p *Postgres) Fetch() (*types.Task, error) {
 		}
 		return nil, errors.Wrap(err, "query task failed")
 	}
-
-	m := message{}
-	if err := p.db.Where("message_id = ?", t.MessageID).Take(&m).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.Errorf("missing message, messageID %s", t.MessageID)
-		}
-		return nil, errors.Wrapf(err, "query message failed, messageID %s", t.MessageID)
-	}
-	return &types.Task{
-		ID: t.TaskID,
-		Messages: []*types.Message{{
-			ID:             m.MessageID,
-			ProjectID:      m.ProjectID,
-			ProjectVersion: m.ProjectVersion,
-			Data:           m.Data,
-		}},
-	}, nil
+	return p.FetchByID(t.TaskID)
 }
 
 func (p *Postgres) FetchByID(taskID string) (*types.Task, error) {
-	t := task{}
-	if err := p.db.Where("task_id = ?", taskID).First(&t).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
+	ts := []*task{}
+	if err := p.db.Where("task_id = ?", taskID).Find(&ts).Error; err != nil {
 		return nil, errors.Wrap(err, "query task failed")
 	}
-
-	m := message{}
-	if err := p.db.Where("message_id = ?", t.MessageID).Take(&m).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.Errorf("missing message, messageID %s", t.MessageID)
-		}
-		return nil, errors.Wrapf(err, "query message failed, messageID %s", t.MessageID)
+	if len(ts) == 0 {
+		return nil, nil
 	}
-	return &types.Task{
-		ID: t.TaskID,
-		Messages: []*types.Message{{
+	mids := []string{}
+	for _, t := range ts {
+		mids = append(mids, t.MessageID)
+	}
+
+	ms := []*message{}
+	if err := p.db.Where("message_id IN ?", mids).Find(&ms).Error; err != nil {
+		return nil, errors.Wrapf(err, "query message failed, taskID %s", taskID)
+	}
+	if len(ms) == 0 {
+		return nil, errors.Errorf("missing message, taskID %s", taskID)
+	}
+	tms := []*types.Message{}
+	for _, m := range ms {
+		tms = append(tms, &types.Message{
 			ID:             m.MessageID,
 			ProjectID:      m.ProjectID,
 			ProjectVersion: m.ProjectVersion,
 			Data:           m.Data,
-		}},
+		})
+	}
+	return &types.Task{
+		ID:       taskID,
+		Messages: tms,
 	}, nil
 }
 
