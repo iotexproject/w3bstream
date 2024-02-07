@@ -16,7 +16,7 @@ import (
 
 func main() {
 	initLogger()
-	bindEnvConfig()
+	initConfig()
 
 	pg, err := persistence.NewPostgres(viper.GetString(DatabaseDSN))
 	if err != nil {
