@@ -6,7 +6,11 @@ pragma solidity ^0.8.19;
 interface IRouter {
     event ProjectRegistered(uint256 indexed projectId, address indexed receiver);
     event ReceiverUpdated(uint256 indexed projectId, address indexed receiver);
-    event DataReceived(address indexed operator, bool success);
+    event DataReceived(address indexed operator, bool success, bytes result);
+    event FleetManagerChanged(address indexed fleetManager);
+    event OwnerChanged(address indexed owner);
+    event AdminChanged(address indexed admin);
+    event ProjectRegistryChanged(address indexed projectRegistry);
 
     error NotProjectOwner();
     error NotOperator();

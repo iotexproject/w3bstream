@@ -39,17 +39,58 @@ contract W3bstreamRouter is IRouter {
             revert NotOperator();
         }
 
-        (bool success, ) = _receiver.call(_data);
-        emit DataReceived(msg.sender, success);
+        (bool success, bytes memory result) = _receiver.call(_data);
+        emit DataReceived(msg.sender, success, result);
     }
 
-    function update(uint256 _projectId, address _receiver) external override {}
+    function update(uint256 _projectId, address _receiver) external override {
+        if (_receiver == address(0)) revert ZeroAddress();
+        if (IERC721(projectRegistry).ownerOf(_projectId) != msg.sender) {
+            revert NotProjectOwner();
+        }
+        if (receiver[_projectId] == address(0)) revert UnregisterProject();
 
-    function setFleetManager(address _fleetManager) external override {}
+        receiver[_projectId] = _receiver;
+        emit ReceiverUpdated(_projectId, _receiver);
+    }
 
-    function setOwner(address _owner) external override {}
+    function setFleetManager(address _fleetManager) external override {
+        if (msg.sender != admin) {
+            revert NotAdmin();
+        }
+        if (_fleetManager == address(0)) revert ZeroAddress();
 
-    function setAdmin(address _admin) external override {}
+        fleetManager = _fleetManager;
+        emit FleetManagerChanged(_fleetManager);
+    }
 
-    function setProjectRegistry(address _projectRegistry) external override {}
+    function setOwner(address _owner) external override {
+        if (msg.sender != owner) {
+            revert NotOwner();
+        }
+        if (_owner == address(0)) revert ZeroAddress();
+
+        owner = _owner;
+        emit OwnerChanged(_owner);
+    }
+
+    function setAdmin(address _admin) external override {
+        if (msg.sender != owner) {
+            revert NotOwner();
+        }
+        if (_admin == address(0)) revert ZeroAddress();
+
+        admin = _admin;
+        emit AdminChanged(_admin);
+    }
+
+    function setProjectRegistry(address _projectRegistry) external override {
+        if (msg.sender != admin) {
+            revert NotAdmin();
+        }
+        if (_projectRegistry == address(0)) revert ZeroAddress();
+
+        projectRegistry = _projectRegistry;
+        emit ProjectRegistryChanged(_projectRegistry);
+    }
 }
