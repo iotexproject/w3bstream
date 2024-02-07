@@ -9,6 +9,8 @@ interface IRouter {
 
     error NotProjectOwner();
     error NotOperator();
+    error NotOwner();
+    error NotAdmin();
 
     /// @notice project receiver
     /// @param _projectId project id
@@ -34,4 +36,24 @@ interface IRouter {
     /// @param _prover prover name hash
     /// @param _data data
     function submit(uint256 _projectId, bytes32 _prover, bytes calldata _data) external;
+
+    /// @notice set fleet manager
+    /// @param _fleetManager fleet manager
+    function setFleetManager(address _fleetManager) external;
+
+    /// @notice router owner
+    /// @return router owner
+    function owner() external view returns (address);
+
+    /// @notice set router owner
+    /// @param _owner .
+    function setOwner(address _owner) external;
+
+    /// @notice router admin
+    /// @return router admin`
+    function admin() external view returns (address);
+
+    /// @notice set router admin
+    /// @param _admin .
+    function setAdmin(address _admin) external;
 }
