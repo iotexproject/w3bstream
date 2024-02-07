@@ -13,7 +13,3 @@ const (
 	IotexChainID           = "IOTEX_CHAINID"
 	IoID                   = "IO_ID"
 )
-
-const (
-	gDefaultIPFSEndpoint = "ipfs.mainnet.iotex.io"
-)

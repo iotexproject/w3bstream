@@ -16,7 +16,7 @@ import (
 
 func main() {
 	initLogger()
-	bindEnvConfig()
+	initConfig()
 	if err := migrateDatabase(); err != nil {
 		log.Fatal(err)
 	}
