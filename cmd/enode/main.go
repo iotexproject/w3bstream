@@ -10,6 +10,7 @@ import (
 
 	"github.com/machinefi/sprout/cmd/enode/api"
 	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
 )
 
@@ -22,7 +23,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dispatcher, err := task.NewDispatcher(pg, viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
+	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(IPFSEndpoint))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dispatcher, err := task.NewDispatcher(pg, projectManager, viper.GetString(BootNodeMultiaddr), viper.GetString(OperatorPrivateKey), viper.GetString(OperatorPrivateKeyED25519), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}

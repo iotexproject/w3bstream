@@ -13,9 +13,9 @@ const (
 	TaskStateInvalid TaskState = iota
 	TaskStateReceived
 	TaskStateFetched
-	TaskStateProving
+	_
 	TaskStateProved
-	TaskStateOutputting
+	_
 	TaskStateOutputted
 	TaskStateFailed
 )
@@ -33,12 +33,8 @@ func (s TaskState) String() string {
 		return "received"
 	case TaskStateFetched:
 		return "fetched"
-	case TaskStateProving:
-		return "proving"
 	case TaskStateProved:
 		return "proved"
-	case TaskStateOutputting:
-		return "outputting"
 	case TaskStateOutputted:
 		return "outputted"
 	case TaskStateFailed:

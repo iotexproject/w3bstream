@@ -99,6 +99,33 @@ func (p *Postgres) Fetch() (*types.Task, error) {
 	}, nil
 }
 
+func (p *Postgres) FetchByID(taskID string) (*types.Task, error) {
+	t := task{}
+	if err := p.db.Where("task_id = ?", taskID).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "query task failed")
+	}
+
+	m := message{}
+	if err := p.db.Where("message_id = ?", t.MessageID).Take(&m).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.Errorf("missing message, messageID %s", t.MessageID)
+		}
+		return nil, errors.Wrapf(err, "query message failed, messageID %s", t.MessageID)
+	}
+	return &types.Task{
+		ID: t.TaskID,
+		Messages: []*types.Message{{
+			ID:             m.MessageID,
+			ProjectID:      m.ProjectID,
+			ProjectVersion: m.ProjectVersion,
+			Data:           m.Data,
+		}},
+	}, nil
+}
+
 func (p *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error) {
 	ts := []*task{}
 	if err := p.db.Where("message_id = ?", messageID).Find(&ts).Error; err != nil {

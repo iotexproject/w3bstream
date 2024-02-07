@@ -29,9 +29,6 @@ func bindEnvConfig() {
 	viper.MustBindEnv(IPFSEndpoint)
 	viper.MustBindEnv(IoID)
 
-	viper.BindEnv(OperatorPrivateKey)
-	viper.BindEnv(OperatorPrivateKeyED25519)
-
 	viper.SetDefault(IPFSEndpoint, gDefaultIPFSEndpoint)
 }
 
