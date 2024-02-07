@@ -4,18 +4,26 @@ pragma solidity ^0.8.19;
 /// @title IRouter
 /// @notice W3bstream router interface.
 interface IRouter {
-    event ProjectRegister(uint256 indexed projectId, uint256 indexed receiver);
-    event ReceiverUpdated(uint256 indexed projectId, uint256 indexed receiver);
+    event ProjectRegistered(uint256 indexed projectId, address indexed receiver);
+    event ReceiverUpdated(uint256 indexed projectId, address indexed receiver);
+    event DataReceived(address indexed operator, bool success);
 
     error NotProjectOwner();
     error NotOperator();
     error NotOwner();
     error NotAdmin();
+    error ZeroAddress();
+    error AlreadyRegistered();
+    error UnregisterProject();
 
     /// @notice project receiver
     /// @param _projectId project id
     /// @return project receiver address
     function receiver(uint256 _projectId) external view returns (address);
+
+    /// @notice project regsitry contract
+    /// @return address of project regsitry
+    function projectRegistry() external view returns (address);
 
     /// @notice fleet manager
     /// @return address of fleet manager
@@ -33,9 +41,12 @@ interface IRouter {
 
     /// @notice submit data to project
     /// @param _projectId project id
-    /// @param _prover prover name hash
     /// @param _data data
-    function submit(uint256 _projectId, bytes32 _prover, bytes calldata _data) external;
+    function submit(uint256 _projectId, bytes calldata _data) external;
+
+    /// @notice set project registry
+    /// @param _projectRegistry project registry
+    function setProjectRegistry(address _projectRegistry) external;
 
     /// @notice set fleet manager
     /// @param _fleetManager fleet manager
