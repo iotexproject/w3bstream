@@ -2,17 +2,18 @@
 pragma solidity ^0.8.19;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IFleetManager} from "./interfaces/IFleetManager.sol";
 import {IRouter} from "./interfaces/IRouter.sol";
 
-contract W3bstreamRouter is IRouter {
+contract W3bstreamRouter is IRouter, Initializable {
     address public override owner;
     address public override admin;
     address public override projectRegistry;
     address public override fleetManager;
     mapping(uint256 => address) public override receiver;
 
-    constructor(address _projectRegistry, address _fleetManager) {
+    function initialize(address _projectRegistry, address _fleetManager) public initializer {
         owner = msg.sender;
         admin = msg.sender;
         projectRegistry = _projectRegistry;
