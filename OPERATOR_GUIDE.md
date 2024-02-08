@@ -63,18 +63,6 @@ export BONSAI_KEY=${your bonsai key}
 
 Refer to the W3bstream project documentation for the dApp you are joining to determine if Risc Zero proofs are required.
 
-### Set the projects folder
-
-The default path for the Docker volume, where dApp Projects are downloaded, is `./test/project`. Modify the `PROJECT_FILE_DIRECTORY` in `docker-compose.yaml` to change this path.
-
->When you change this value (or any other value inside `docker-compose.yaml) make sure you [restart](#) your node.
-
-### Join a W3bstream Project
-
-W3bstream-based dApps are registered in a "W3bstream Project Management Contract" on the IoTeX Blockchain with a unique project ID. Configure this project ID in your node [[WIP]](#). The respective W3bstream Project file will automatically download to the node's Projects Folder if missing or outdated [[WIP]](#).
-
->For testing, download project files from GitHub to the default project folder (`./test/project`).
-
 ### Manage the node
 
 To start W3bstream, run the following command in the directory containing `docker-compose.yaml`:
@@ -113,26 +101,26 @@ ioctl config set wsEndpoint localhost:9000
 
 [More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
 
-Test W3bstream projects are located in the default Projects Folder (`test/project` by default). Each file's name is its unique project ID: 10000, 10001 and 10002, containing a JSON object with the prover's binary code, VM type, and parameters. All three of them compute a range proof using the Risc0, Halo2, and ZkWASM frameworks respectively. 
+Test W3bstream projects are already registered into project contract.
 
 #### Sending messages to the node
 
-Send a message to a RISC0-based test project (ID 10000):
+Send a message to a RISC0-based test project (ID 1):
 
 ```bash
-ioctl ws message send --project-id 10000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+ioctl ws message send --project-id 1 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
-Send a message to the Halo2-based test project (ID 10001):
+Send a message to the Halo2-based test project (ID 2):
 
 ```bash
-ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
+ioctl ws message send --project-id 2 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
-Send a message to a zkWasm-based test project (ID 10002):
+Send a message to a zkWasm-based test project (ID 3):
 
 ```bash
-ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
+ioctl ws message send --project-id 3 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
 ```
 
 #### Query the status of a proof request

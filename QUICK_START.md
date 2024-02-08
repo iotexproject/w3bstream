@@ -12,22 +12,22 @@ alias ioctl=`which ioctl-unstable`
 
 ### Sending messages
 
-Send a message to a RISC0-based test project (ID 10000):
+Send a message to a RISC0-based test project (ID 1):
 
 ```bash
-ioctl ws message send --project-id 10000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+ioctl ws message send --project-id 1 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
-Send a message to the Halo2-based test project (ID 10001):
+Send a message to the Halo2-based test project (ID 2):
 
 ```bash
-ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
+ioctl ws message send --project-id 2 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
-Send a message to a zkWasm-based test project (ID 10002):
+Send a message to a zkWasm-based test project (ID 3):
 
 ```bash
-ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
+ioctl ws message send --project-id 3 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
 ```
 
 ### Query the status of a proof request
