@@ -6,8 +6,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/machinefi/sprout/persistence/znode"
 	"github.com/pkg/errors"
+
+	"github.com/machinefi/sprout/persistence/znode"
 )
 
 type ZNode struct {

@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/auth/didvc"
+	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
@@ -93,6 +94,10 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, newErrResp(err))
 			return
+		}
+		err = clients.VerifySessionAndProjectPermission(tok, req.ProjectID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, newErrResp(err))
 		}
 	}
 

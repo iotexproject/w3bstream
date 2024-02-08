@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 
+	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/enode/api"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
@@ -22,6 +23,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	_ = clients.NewManager(viper.GetString(ClientsFilePath))
 
 	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(IPFSEndpoint))
 	if err != nil {
