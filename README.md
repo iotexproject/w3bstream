@@ -21,7 +21,7 @@ The diagram represents the main components of the software and how they interact
 
 ## Running
 
-[Quick Start](./QUICK_START.md)
+Just want to give it a try, see [Quick Start →](./QUICK_START.md)
 
 For the initial setup and operation of a W3bstream node, please refer to the [OPERATOR_GUIDE →](./OPERATOR_GUIDE.md)
 
