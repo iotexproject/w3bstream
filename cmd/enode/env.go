@@ -11,4 +11,5 @@ const (
 	DIDAuthServerEndpoint     = "DIDAUTH_SERVER_ENDPOINT"
 	OperatorPrivateKey        = "OPERATOR_PRIVATE_KEY"
 	OperatorPrivateKeyED25519 = "OPERATOR_PRIVATE_KEY_ED25519"
+	ClientsFilePath           = "CLIENTS_FILE_PATH"
 )

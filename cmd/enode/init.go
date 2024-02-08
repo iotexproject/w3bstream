@@ -31,6 +31,7 @@ func initConfig() {
 	viper.MustBindEnv(ProjectContractAddress)
 	viper.MustBindEnv(IPFSEndpoint)
 	viper.MustBindEnv(DIDAuthServerEndpoint)
+	viper.MustBindEnv(ClientsFilePath)
 
 	viper.BindEnv(OperatorPrivateKey)
 	viper.BindEnv(OperatorPrivateKeyED25519)

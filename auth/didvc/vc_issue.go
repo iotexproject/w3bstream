@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+
+	"github.com/machinefi/sprout/clients"
 )
 
 func IssueCredential(endpoint string, r *IssueCredentialReq, jwtFormat bool) (*IssueCredentialJWTRsp, error) {
@@ -39,5 +41,14 @@ func IssueCredential(endpoint string, r *IssueCredentialReq, jwtFormat bool) (*I
 	if err = json.Unmarshal(content, ret); err != nil {
 		return nil, errors.Wrap(err, "failed to parse response")
 	}
+
+	if subjects, ok := r.Credential.CredentialSubject.(map[string]any); ok {
+		if clientDID, ok := subjects["id"].(string); ok && clientDID != "" {
+			if err = clients.CreateSession(ret.VerifiableCredential, clientDID); err != nil {
+				return nil, errors.Wrap(err, "failed to create session")
+			}
+		}
+	}
+
 	return ret, nil
 }
