@@ -120,6 +120,17 @@ ioctl ws code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"
 
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs` file.
 
+##### Upload your project to IPFS
+
+```bash
+# set local w3bstream enode as w3bstream endpoint
+ioctl config set wsEndpoint 'localhost:9000'
+# set the default project register contract address
+ioctl config set wsRegisterContract 0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26 
+# use the project config generated above and create project
+ioctl ws project create --project-config-file "path/to/project_config.json"
+```
+
 ### Testing your project
 
 Once you have generated a W3bstream project file that includes a custom prover for your dApp, you might want to test it.
