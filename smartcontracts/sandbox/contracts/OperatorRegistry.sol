@@ -22,6 +22,8 @@ contract OperatorRegistry {
         address rewards,
         string name
     );
+    event OperatorNodeUpdated(uint256 indexed operatorId, address indexed newNode);
+    event OperatorRewardsUpdated(uint256 indexed operatorId, address indexed rewards);
 
     modifier onlyExistingOperator(uint256 operatorId) {
         require(operators[operatorId].profile != address(0), "OperatorRegistry: unexistent operator");
@@ -52,6 +54,8 @@ contract OperatorRegistry {
         address newNode
     ) public onlyExistingOperator(operatorId) onlyOperatorOwner(operatorId) {
         operators[operatorId].node = newNode;
+
+        emit OperatorNodeUpdated(operatorId, newNode);
     }
 
     function updateRewards(
@@ -59,5 +63,10 @@ contract OperatorRegistry {
         address newRewards
     ) public onlyExistingOperator(operatorId) onlyOperatorOwner(operatorId) {
         operators[operatorId].rewards = newRewards;
+
+        emit OperatorRewardsUpdated(operatorId, newRewards);
     }
+
+    // function stake() public {}
+    // function unstake() public {}
 }

@@ -103,6 +103,10 @@ describe('OperatorRegistry', function () {
 
         await registry.updateNode(ID_0, OPERATOR_2.node);
         expect((await registry.operators(ID_0)).node).to.be.eq(OPERATOR_2.node);
+
+        await expect(registry.updateNode(ID_0, OPERATOR_1.node))
+          .to.emit(registry, 'OperatorNodeUpdated')
+          .withArgs(ID_0, OPERATOR_1.node);
       });
       it('reverts if not owner tries update operators node', async function () {
         const registry = await loadFixture(deployContractRegistry);
@@ -140,6 +144,10 @@ describe('OperatorRegistry', function () {
 
         await registry.updateRewards(ID_0, OPERATOR_2.rewards);
         expect((await registry.operators(ID_0)).rewards).to.be.eq(OPERATOR_2.rewards);
+
+        await expect(registry.updateRewards(ID_0, OPERATOR_1.rewards))
+          .to.emit(registry, 'OperatorRewardsUpdated')
+          .withArgs(ID_0, OPERATOR_1.rewards);
       });
       it('reverts if not owner tries update operators rewards', async function () {
         const registry = await loadFixture(deployContractRegistry);
@@ -163,6 +171,19 @@ describe('OperatorRegistry', function () {
 
         await expect(registry.updateRewards(ID_0, '')).to.be.rejected;
       });
+    });
+  });
+
+  describe.skip('Staking', function () {
+    it('should stake', async function () {
+      const registry = loadFixture(deployContractRegistry);
+      // await registry.stake()
+    });
+  });
+  describe.skip('Unstaking', function () {
+    it('should unstake', async function () {
+      const registry = loadFixture(deployContractRegistry);
+      // await registry.unstake()
     });
   });
 });
