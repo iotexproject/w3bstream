@@ -20,7 +20,16 @@ contract ProjectRegistry is IProjectRegistry, ERC721, ReentrancyGuard {
     event ProjectUpserted(uint256 indexed projectId, string uri, bytes32 hash);
 
     modifier onlyProjectOwner(uint256 _projectId) {
-        require(isProjectOwner(msg.sender, _projectId), "ProjectRegistry: Only the owner can perform this action");
+        if (!isProjectOwner(msg.sender, _projectId)) {
+            revert OnlyOwnerAllowed();
+        }
+        _;
+    }
+
+    modifier onlyNotEmptyUri(string memory _uri) {
+        if (bytes(_uri).length == 0) {
+            revert EmptyUriValue();
+        }
         _;
     }
 
@@ -28,9 +37,7 @@ contract ProjectRegistry is IProjectRegistry, ERC721, ReentrancyGuard {
         return ownerOf(_projectId) == _account;
     }
 
-    function createProject(string memory _uri, bytes32 _hash) public nonReentrant {
-        require(bytes(_uri).length != 0, "Empty uri value");
-
+    function createProject(string memory _uri, bytes32 _hash) public nonReentrant onlyNotEmptyUri(_uri) {
         uint256 projectId = _nextProjectId++;
         Project storage newProject = projects[projectId];
         newProject.uri = _uri;
@@ -43,21 +50,30 @@ contract ProjectRegistry is IProjectRegistry, ERC721, ReentrancyGuard {
     function pauseProject(uint256 _projectId) public onlyProjectOwner(_projectId) {
         Project storage project = projects[_projectId];
 
-        require(!project.paused, "ProjectRegistry: Project already paused");
+        if (project.paused) {
+            revert ProjectAlreadyPaused();
+        }
+
         project.paused = true;
         emit ProjectPaused(_projectId);
     }
 
     function unpauseProject(uint256 _projectId) public onlyProjectOwner(_projectId) {
         Project storage project = projects[_projectId];
-        require(project.paused, "ProjectRegistry: Project is not paused");
+
+        if (!project.paused) {
+            revert ProjectNotPaused();
+        }
+
         project.paused = false;
         emit ProjectUnpaused(_projectId);
     }
 
-    function updateProject(uint256 _projectId, string memory _uri, bytes32 _hash) public onlyProjectOwner(_projectId) {
-        require(bytes(_uri).length != 0, "ProjectRegistry: Invalid URI");
-
+    function updateProject(
+        uint256 _projectId,
+        string memory _uri,
+        bytes32 _hash
+    ) public onlyProjectOwner(_projectId) onlyNotEmptyUri(_uri) {
         projects[_projectId].uri = _uri;
         projects[_projectId].hash = _hash;
         emit ProjectUpserted(_projectId, _uri, _hash);

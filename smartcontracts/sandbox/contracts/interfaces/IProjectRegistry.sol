@@ -11,4 +11,9 @@ interface IProjectRegistry {
     function getProject(uint256 _projectId) external view returns (Project memory);
 
     function isProjectOwner(address _account, uint256 _projectId) external view returns (bool);
+
+    error OnlyOwnerAllowed();
+    error EmptyUriValue();
+    error ProjectAlreadyPaused();
+    error ProjectNotPaused();
 }

@@ -63,8 +63,9 @@ describe('ProjectRegistry', function () {
 
         const [, notOperator] = await ethers.getSigners();
 
-        await expect(registry.connect(notOperator).pauseProject(ID_1)).to.be.revertedWith(
-          'ProjectRegistry: Only the owner can perform this action',
+        await expect(registry.connect(notOperator).pauseProject(ID_1)).to.be.revertedWithCustomError(
+          registry,
+          'OnlyOwnerAllowed',
         );
       });
       it('reverts if project doesnt exist', async function () {
@@ -78,7 +79,7 @@ describe('ProjectRegistry', function () {
 
         await registry.pauseProject(ID_1);
 
-        await expect(registry.pauseProject(ID_1)).to.be.revertedWith('ProjectRegistry: Project already paused');
+        await expect(registry.pauseProject(ID_1)).to.be.revertedWithCustomError(registry, 'ProjectAlreadyPaused');
       });
     });
     describe('unpausing project', function () {
@@ -104,8 +105,9 @@ describe('ProjectRegistry', function () {
 
         const [, notOperator] = await ethers.getSigners();
 
-        await expect(registry.connect(notOperator).unpauseProject(ID_1)).to.be.revertedWith(
-          'ProjectRegistry: Only the owner can perform this action',
+        await expect(registry.connect(notOperator).unpauseProject(ID_1)).to.be.revertedWithCustomError(
+          registry,
+          'OnlyOwnerAllowed',
         );
       });
       it('reverts if project doesnt exist', async function () {
@@ -117,7 +119,7 @@ describe('ProjectRegistry', function () {
         const registry = await loadFixture(deployProjectRegistry);
         await registry.createProject(PROJECT_1.uri, PROJECT_1.hash);
 
-        await expect(registry.unpauseProject(ID_1)).to.be.revertedWith('ProjectRegistry: Project is not paused');
+        await expect(registry.unpauseProject(ID_1)).to.be.revertedWithCustomError(registry, 'ProjectNotPaused');
       });
     });
     describe('updating project uri', function () {
@@ -141,9 +143,9 @@ describe('ProjectRegistry', function () {
 
         const [, notOperator] = await ethers.getSigners();
 
-        await expect(registry.connect(notOperator).updateProject(ID_1, NEW_URI, NEW_HASH)).to.be.revertedWith(
-          'ProjectRegistry: Only the owner can perform this action',
-        );
+        await expect(
+          registry.connect(notOperator).updateProject(ID_1, NEW_URI, NEW_HASH),
+        ).to.be.revertedWithCustomError(registry, 'OnlyOwnerAllowed');
       });
       it('reverts if project doesnt exist', async function () {
         const registry = await loadFixture(deployProjectRegistry);
@@ -154,7 +156,10 @@ describe('ProjectRegistry', function () {
         const registry = await loadFixture(deployProjectRegistry);
         await registry.createProject(PROJECT_1.uri, PROJECT_1.hash);
 
-        await expect(registry.updateProject(ID_1, '', NEW_HASH)).to.be.revertedWith('ProjectRegistry: Invalid URI');
+        await expect(registry.updateProject(ID_1, '', NEW_HASH)).to.be.revertedWithCustomError(
+          registry,
+          'EmptyUriValue',
+        );
       });
     });
   });
