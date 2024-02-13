@@ -20,16 +20,17 @@ contract FleetManager is IFleetManager {
     }
 
     modifier onlyProjectOwner(uint256 _projectId) {
-        require(
-            IProjectRegistry(projectRegistry).isProjectOwner(msg.sender, _projectId),
-            "FleetManager: not project owner"
-        );
+        if (!IProjectRegistry(projectRegistry).isProjectOwner(msg.sender, _projectId)) {
+            revert NotProjectOwner();
+        }
         _;
     }
 
     modifier onlyValidOperator(address _operator) {
         address node = IOperatorRegistry(operatorRegistry).getOperator(_operator).node;
-        require(node != address(0), "FleetManager: operator not registered");
+        if (node == address(0)) {
+            revert OperatorNotRegistered();
+        }
 
         // NEED TO CHECK IF THE OPERATOR HAS ENOUGH STAKE
         _;
@@ -39,7 +40,9 @@ contract FleetManager is IFleetManager {
         address[] memory projectOperators = operators[_projectId];
 
         for (uint256 i = 0; i < projectOperators.length; i++) {
-            require(projectOperators[i] != _operator, "FleetManager: operator already allowed");
+            if (projectOperators[i] == _operator) {
+                revert OperatorAlreadyAllowed();
+            }
         }
         _;
     }
@@ -66,13 +69,17 @@ contract FleetManager is IFleetManager {
             }
         }
 
-        require(found, "FleetManager: operator not found");
+        if (!found) {
+            revert OperatorNotFound();
+        }
 
         emit OperatorRemoved(_projectId, _operator);
     }
 
     function isAllowed(address _node, uint256 _projectId) external view returns (bool) {
-        require(_node != address(0), "FleetManager: invalid node");
+        if (_node == address(0)) {
+            revert InvalidNodeAddress();
+        }
 
         address[] memory projectOperators = operators[_projectId];
 

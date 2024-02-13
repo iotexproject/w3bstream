@@ -7,4 +7,10 @@ interface IFleetManager {
     /// @param _node operator address
     /// @param _projectId project id
     function isAllowed(address _node, uint256 _projectId) external view returns (bool);
+
+    error NotProjectOwner();
+    error OperatorNotRegistered();
+    error OperatorAlreadyAllowed();
+    error OperatorNotFound();
+    error InvalidNodeAddress();
 }

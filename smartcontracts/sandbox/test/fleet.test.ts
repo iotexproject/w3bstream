@@ -39,7 +39,7 @@ describe('FleetManager', function () {
     it('reverts if node address is zero', async function () {
       const fleet = await loadFixture(deployFleetManager);
 
-      await expect(fleet.isAllowed(ethers.ZeroAddress, 1)).to.be.revertedWith('FleetManager: invalid node');
+      await expect(fleet.isAllowed(ethers.ZeroAddress, 1)).to.be.revertedWithCustomError(fleet, 'InvalidNodeAddress');
     });
   });
   describe('allow', function () {
@@ -62,8 +62,9 @@ describe('FleetManager', function () {
 
       await registerProject(await fleet.projectRegistry(), projectOwner, PROJECT_1.uri, PROJECT_1.hash);
 
-      await expect(fleet.connect(profile).allow(PROJECT_ID_1, profile.address)).to.be.revertedWith(
-        'FleetManager: not project owner',
+      await expect(fleet.connect(profile).allow(PROJECT_ID_1, profile.address)).to.be.revertedWithCustomError(
+        fleet,
+        'NotProjectOwner',
       );
     });
     it('reverts if operator is not registered', async function () {
@@ -72,21 +73,23 @@ describe('FleetManager', function () {
 
       await registerProject(await fleet.projectRegistry(), projectOwner, PROJECT_1.uri, PROJECT_1.hash);
 
-      await expect(fleet.connect(projectOwner).allow(PROJECT_ID_1, profile.address)).to.be.revertedWith(
-        'FleetManager: operator not registered',
+      await expect(fleet.connect(projectOwner).allow(PROJECT_ID_1, profile.address)).to.be.revertedWithCustomError(
+        fleet,
+        'OperatorNotRegistered',
       );
     });
     it('reverts if operator is already allowed', async function () {
-        const fleet = await loadFixture(deployFleetManager);
-        const [projectOwner, profile, node, rewards] = await ethers.getSigners();
-    
-        await registerOperator(await fleet.operatorRegistry(), profile, node, rewards);
-        await registerProject(await fleet.projectRegistry(), projectOwner, PROJECT_1.uri, PROJECT_1.hash);
-    
-        await fleet.connect(projectOwner).allow(PROJECT_ID_1, profile.address);
-        await expect(fleet.connect(projectOwner).allow(PROJECT_ID_1, profile.address)).to.be.revertedWith(
-            'FleetManager: operator already allowed',
-        );
+      const fleet = await loadFixture(deployFleetManager);
+      const [projectOwner, profile, node, rewards] = await ethers.getSigners();
+
+      await registerOperator(await fleet.operatorRegistry(), profile, node, rewards);
+      await registerProject(await fleet.projectRegistry(), projectOwner, PROJECT_1.uri, PROJECT_1.hash);
+
+      await fleet.connect(projectOwner).allow(PROJECT_ID_1, profile.address);
+      await expect(fleet.connect(projectOwner).allow(PROJECT_ID_1, profile.address)).to.be.revertedWithCustomError(
+        fleet,
+        'OperatorAlreadyAllowed',
+      );
     });
   });
   describe('disallow', function () {
@@ -110,8 +113,9 @@ describe('FleetManager', function () {
 
       await registerProject(await fleet.projectRegistry(), projectOwner, PROJECT_1.uri, PROJECT_1.hash);
 
-      await expect(fleet.connect(profile).disallow(PROJECT_ID_1, profile.address)).to.be.revertedWith(
-        'FleetManager: not project owner',
+      await expect(fleet.connect(profile).disallow(PROJECT_ID_1, profile.address)).to.be.revertedWithCustomError(
+        fleet,
+        'NotProjectOwner',
       );
     });
     it('reverts if operator is not allowed', async function () {
@@ -120,8 +124,9 @@ describe('FleetManager', function () {
 
       await registerProject(await fleet.projectRegistry(), projectOwner, PROJECT_1.uri, PROJECT_1.hash);
 
-      await expect(fleet.connect(projectOwner).disallow(PROJECT_ID_1, profile.address)).to.be.revertedWith(
-        'FleetManager: operator not found',
+      await expect(fleet.connect(projectOwner).disallow(PROJECT_ID_1, profile.address)).to.be.revertedWithCustomError(
+        fleet,
+        'OperatorNotFound',
       );
     });
   });
