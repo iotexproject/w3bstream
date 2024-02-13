@@ -17,22 +17,20 @@ describe('OperatorRegistry', function () {
     node: '0x17e49637113da9A63004C545894b23A3434976b0',
     rewards: '0x0236cc9daBcD2c3CB2dAcE7a183EDfA553Ef4405',
   };
-  const ID_0 = 0;
-  const ID_1 = 1;
 
   describe('registering new operator', function () {
     it('works with a single operator', async function () {
       const registry = await loadFixture(deployContractRegistry);
       const [profile] = await ethers.getSigners();
 
-      let firstOperator = await registry.operators(profile.address);
+      let firstOperator = await registry.getOperator(profile.address);
       expect(firstOperator.node).to.eq(ethers.ZeroAddress);
 
       await expect(registry.registerOperator(OPERATOR_1))
         .to.emit(registry, 'OperatorRegistered')
         .withArgs(profile.address, OPERATOR_1.node, OPERATOR_1.rewards);
 
-      firstOperator = await registry.operators(profile.address);
+      firstOperator = await registry.getOperator(profile.address);
       expect(firstOperator.node).to.eq(OPERATOR_1.node);
       expect(firstOperator.rewards).to.eq(OPERATOR_1.rewards);
     });
@@ -42,11 +40,11 @@ describe('OperatorRegistry', function () {
 
       await registry.connect(firstProfile).registerOperator(OPERATOR_1);
 
-      let secondOperator = await registry.operators(secondProfile.address);
+      let secondOperator = await registry.getOperator(secondProfile.address);
       expect(secondOperator.node).to.be.eq(ethers.ZeroAddress);
 
       await registry.connect(secondProfile).registerOperator(OPERATOR_2);
-      secondOperator = await registry.operators(secondProfile.address);
+      secondOperator = await registry.getOperator(secondProfile.address);
       expect(secondOperator.node).to.be.eq(OPERATOR_2.node);
     });
     it('should fail if nodeAddress missing', async function () {
@@ -80,13 +78,13 @@ describe('OperatorRegistry', function () {
         await registry.registerOperator(OPERATOR_1);
 
         const oldNode = OPERATOR_1.node;
-        expect((await registry.operators(profile.address)).node).to.be.eq(oldNode);
+        expect((await registry.getOperator(profile.address)).node).to.be.eq(oldNode);
 
         await expect(registry.updateNode(OPERATOR_2.node))
           .to.emit(registry, 'OperatorNodeUpdated')
           .withArgs(profile.address, OPERATOR_2.node);
 
-        expect((await registry.operators(profile.address)).node).to.be.eq(OPERATOR_2.node);
+        expect((await registry.getOperator(profile.address)).node).to.be.eq(OPERATOR_2.node);
       });
       it('reverts if unexisting operator', async function () {
         const registry = await loadFixture(deployContractRegistry);
@@ -107,13 +105,13 @@ describe('OperatorRegistry', function () {
 
         await registry.registerOperator(OPERATOR_1);
 
-        expect((await registry.operators(profile.address)).rewards).to.be.eq(OPERATOR_1.rewards);
+        expect((await registry.getOperator(profile.address)).rewards).to.be.eq(OPERATOR_1.rewards);
 
         await expect(registry.updateRewards(OPERATOR_2.rewards))
           .to.emit(registry, 'OperatorRewardsUpdated')
           .withArgs(profile.address, OPERATOR_2.rewards);
 
-        expect((await registry.operators(profile.address)).rewards).to.be.eq(OPERATOR_2.rewards);
+        expect((await registry.getOperator(profile.address)).rewards).to.be.eq(OPERATOR_2.rewards);
       });
       it('reverts if unexisting operator', async function () {
         const registry = await loadFixture(deployContractRegistry);

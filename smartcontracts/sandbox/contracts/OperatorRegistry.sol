@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-contract OperatorRegistry {
-    mapping(address => Operator) public operators;
+import {IOperatorRegistry} from "./interfaces/IOperatorRegistry.sol";
 
-    struct Operator {
-        address node;
-        address rewards;
-    }
+contract OperatorRegistry is IOperatorRegistry {
+    mapping(address => Operator) internal operators;
 
     event OperatorRegistered(address indexed profile, address indexed node, address rewards);
     event OperatorNodeUpdated(address indexed profile, address indexed newNode);
@@ -39,6 +36,10 @@ contract OperatorRegistry {
         address profile = msg.sender;
         operators[profile].rewards = _newRewards;
         emit OperatorRewardsUpdated(profile, _newRewards);
+    }
+
+    function getOperator(address _profile) external view returns (Operator memory) {
+        return operators[_profile];
     }
 
     // function stake() public {}
