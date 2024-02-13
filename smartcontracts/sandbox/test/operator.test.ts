@@ -63,8 +63,9 @@ describe('OperatorRegistry', function () {
       const registry = await loadFixture(deployContractRegistry);
       await registry.registerOperator(OPERATOR_1);
 
-      await expect(registry.registerOperator(OPERATOR_2)).to.be.revertedWith(
-        'OperatorRegistry: operator already registered',
+      await expect(registry.registerOperator(OPERATOR_2)).to.be.revertedWithCustomError(
+        registry,
+        'OperatorAlreadyRegistered',
       );
     });
   });
@@ -89,7 +90,10 @@ describe('OperatorRegistry', function () {
       it('reverts if unexisting operator', async function () {
         const registry = await loadFixture(deployContractRegistry);
 
-        await expect(registry.updateNode(OPERATOR_2.node)).to.be.revertedWith('OperatorRegistry: unexistent operator');
+        await expect(registry.updateNode(OPERATOR_2.node)).to.be.revertedWithCustomError(
+          registry,
+          'UnexistentOperator',
+        );
       });
       it('rejects if invalid node address', async function () {
         const registry = await loadFixture(deployContractRegistry);
@@ -116,8 +120,9 @@ describe('OperatorRegistry', function () {
       it('reverts if unexisting operator', async function () {
         const registry = await loadFixture(deployContractRegistry);
 
-        await expect(registry.updateRewards(OPERATOR_2.rewards)).to.be.revertedWith(
-          'OperatorRegistry: unexistent operator',
+        await expect(registry.updateRewards(OPERATOR_2.rewards)).to.be.revertedWithCustomError(
+          registry,
+          'UnexistentOperator',
         );
       });
       it('rejects if invalid rewards address', async function () {

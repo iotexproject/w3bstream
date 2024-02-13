@@ -8,4 +8,7 @@ interface IOperatorRegistry {
     }
 
     function getOperator(address) external view returns (Operator memory);
+
+    error UnexistentOperator();
+    error OperatorAlreadyRegistered();
 }

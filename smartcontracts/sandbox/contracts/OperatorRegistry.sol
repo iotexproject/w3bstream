@@ -11,12 +11,16 @@ contract OperatorRegistry is IOperatorRegistry {
     event OperatorRewardsUpdated(address indexed profile, address indexed rewards);
 
     modifier onlyExistingOperator() {
-        require(operators[msg.sender].node != address(0), "OperatorRegistry: unexistent operator");
+        if (operators[msg.sender].node == address(0)) {
+            revert UnexistentOperator();
+        }
         _;
     }
 
     modifier onlyNewOperator() {
-        require(operators[msg.sender].node == address(0), "OperatorRegistry: operator already registered");
+        if (operators[msg.sender].node != address(0)) {
+            revert OperatorAlreadyRegistered();
+        }
         _;
     }
 
