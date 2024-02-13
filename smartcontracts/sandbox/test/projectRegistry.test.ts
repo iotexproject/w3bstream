@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { ethers } from 'hardhat';
 
-describe.only('ProjectRegistry', function () {
+describe('ProjectRegistry', function () {
   it('should be initialized', async function () {
     const registry = await loadFixture(deployProjectRegistry);
 
