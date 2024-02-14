@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IWSReceiver} from "../interfaces/IReceiver.sol";
+import {IWSReceiver} from "../interfaces/IWSReceiver.sol";
 
 contract WSReceiver is IWSReceiver {
     address public deviceNFTRegistry;
