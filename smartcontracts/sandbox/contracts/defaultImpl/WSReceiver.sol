@@ -15,7 +15,9 @@ contract WSReceiver is IWSReceiver {
     function receiveData(uint256 _tunnelId, bytes32 _batchMR, bytes32 _devicesMR, bytes calldata _zkProof) external {
         _verify(_zkProof);
 
+        uint256 newHeight = tunnels[_tunnelId].currentBatchHeight + 1;
         tunnels[_tunnelId].batches[tunnels[_tunnelId].currentBatchHeight] = Batch(_batchMR, _devicesMR);
+        tunnels[_tunnelId].currentBatchHeight = newHeight;
     }
 
     function getBatchHeight(uint256 _tunnelId) external view returns (uint256) {
