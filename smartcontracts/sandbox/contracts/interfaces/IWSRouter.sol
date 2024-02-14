@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-/// @title IRouter
+/// @title IWSRouter
 /// @notice W3bstream router interface.
-interface IRouter {
-    event ReceiverRegistered(uint256 indexed projectId, address indexed receiver);
-    event ReceiverUnregistered(uint256 indexed projectId, address indexed receiver);
+interface IWSRouter {
     event DataReceived(address indexed operator, bool success, string revertReason);
     event FleetManagerChanged(address indexed fleetManager);
     event OwnerChanged(address indexed owner);
@@ -17,13 +15,6 @@ interface IRouter {
     error NotOwner();
     error NotAdmin();
     error ZeroAddress();
-    error AlreadyRegistered();
-    error ReceiverUnregister();
-
-    /// @notice check project receiver
-    /// @param _projectId project id
-    /// @return project receiver address
-    function isReceiver(uint256 _projectId, address _receiver) external view returns (bool);
 
     /// @notice project regsitry contract
     /// @return address of project regsitry
@@ -33,21 +24,21 @@ interface IRouter {
     /// @return address of fleet manager
     function fleetManager() external view returns (address);
 
-    /// @notice register project data receiver
-    /// @param _projectId project id
-    /// @param _receiver project data reveiver
-    function register(uint256 _projectId, address _receiver) external;
-
-    /// @notice unregister project data receiver
-    /// @param _projectId project id
-    /// @param _receiver project data reveiver
-    function unregister(uint256 _projectId, address _receiver) external;
-
     /// @notice submit data to project
     /// @param _projectId project id
     /// @param _receiver project data reveiver
-    /// @param _data data
-    function submit(uint256 _projectId, address _receiver, bytes calldata _data) external;
+    /// @param _tunnelId tunnel id
+    /// @param _batchMR batch merkle root
+    /// @param _devicesMR devices merkle root
+    /// @param _zkProof zk proof
+    function submit(
+        uint256 _projectId,
+        address _receiver,
+        uint256 _tunnelId,
+        bytes32 _batchMR,
+        bytes32 _devicesMR,
+        bytes calldata _zkProof
+    ) external;
 
     /// @notice set project registry
     /// @param _projectRegistry project registry
