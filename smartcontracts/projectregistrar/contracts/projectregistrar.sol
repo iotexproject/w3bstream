@@ -9,7 +9,6 @@ contract ProjectRegistrar is ERC721, ReentrancyGuard {
         string uri;
         bytes32 hash;
         bool paused;
-        // operators are not addresses, but uint256 from operator registry
         mapping(address => bool) operators;
     }
 
