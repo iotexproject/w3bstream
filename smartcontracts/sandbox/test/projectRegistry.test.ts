@@ -2,21 +2,15 @@ import { expect } from 'chai';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { ethers } from 'hardhat';
 
+import { deployProjectRegistry } from './deployers';
+import { PROJECT_1, PROJECT_2 } from './testData';
+
 describe('ProjectRegistry', function () {
   it('should be initialized', async function () {
     const registry = await loadFixture(deployProjectRegistry);
 
     expect(await registry.getAddress()).to.not.eq(ethers.ZeroAddress);
   });
-
-  const PROJECT_1 = {
-    uri: 'project1',
-    hash: '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
-  };
-  const PROJECT_2 = {
-    uri: 'project2',
-    hash: '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381388',
-  };
 
   const ID_1 = 1;
 
@@ -164,8 +158,3 @@ describe('ProjectRegistry', function () {
     });
   });
 });
-
-async function deployProjectRegistry() {
-  const factory = await ethers.getContractFactory('ProjectRegistry');
-  return factory.deploy();
-}

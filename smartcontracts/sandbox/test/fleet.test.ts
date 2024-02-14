@@ -1,8 +1,9 @@
 import { expect } from 'chai';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { ethers } from 'hardhat';
-import { Signer } from 'ethers';
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+
+import { deployFleetManager } from './deployers';
+import { registerOperator, registerProject } from './helpers';
 
 describe('FleetManager', function () {
   it('should be initialized with project and operator registry', async function () {
@@ -131,42 +132,3 @@ describe('FleetManager', function () {
     });
   });
 });
-
-async function deployFleetManager() {
-  const projectRegistry = await deployProjectRegistry();
-  const projectRegistryAddress = await projectRegistry.getAddress();
-
-  const operatorRegistry = await deployOperatorRegistry();
-  const operatorRegistryAddress = await operatorRegistry.getAddress();
-
-  const factory = await ethers.getContractFactory('FleetManager');
-  return factory.deploy(projectRegistryAddress, operatorRegistryAddress);
-}
-
-async function deployProjectRegistry() {
-  const factory = await ethers.getContractFactory('ProjectRegistry');
-  return factory.deploy();
-}
-
-async function deployOperatorRegistry() {
-  const factory = await ethers.getContractFactory('OperatorRegistry');
-  return factory.deploy();
-}
-
-async function registerOperator(
-  operatorRegistry: string,
-  profile: Signer,
-  node: SignerWithAddress,
-  rewards: SignerWithAddress,
-) {
-  const registry = await ethers.getContractAt('OperatorRegistry', operatorRegistry);
-  await registry.connect(profile).registerOperator({
-    node: node.address,
-    rewards: rewards.address,
-  });
-}
-
-async function registerProject(projectRegistry: string, projectOwner: Signer, uri: string, hash: string) {
-  const registry = await ethers.getContractAt('ProjectRegistry', projectRegistry);
-  await registry.connect(projectOwner).createProject(uri, hash);
-}
