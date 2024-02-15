@@ -1,4 +1,4 @@
-# IoTeX W3bstream (Node Operator Guide)
+# IoTeX W3bstream Sprout Node Operator Guide
 
 W3bstream is a permissionless, decentralized protocol within the IoTeX Network, where node operators contribute computing power to support verifiable computations for blockchain applications. These applications rely on insights from real-world data to trigger their token economies. Anyone can become a W3bstream Node Operator in the IoTeX Network, choosing which dApps to support in processing data and generating ZK (Zero Knowledge) Proofs. This guide covers how to operate a W3bstream node, register it in the IoTeX Network, join specific projects, and claim rewards.
 
@@ -10,24 +10,23 @@ The recommended method to run a W3bstream node is using official Docker images f
 
 - Docker Engine (version 18.02 or higher):
 
-    Check your Docker version:
+  Check your Docker version:
 
   ```bash
-    docker version
-    ```
+  docker version
+  ```
 
-    Installation instructions → <https://docs.docker.com/engine/install/>
+  [Docker installation instructions →](https://docs.docker.com/engine/install/)
 
 - Docker Compose Plugin
   
   Verify Docker Compose installation:
 
   ```bash
-    docker compose version
-    # Install with → sudo apt install docker-compose-plugin
+  docker compose version # Install with → sudo apt install docker-compose-plugin
   ```
 
-- **Blockchain Wallet**: A funded wallet on the target blockchain is required for your W3bstream node to dispatch proofs to blockchain contracts. For IoTeX Testnet, see [create a wallet](https://docs.iotex.io/the-iotex-stack/wallets/metamask), and [claim test IOTX](https://docs.iotex.io/the-iotex-stack/iotx-faucets/testnet-tokens#the-iotex-developer-portal)
+- **Blockchain Wallet**: A funded wallet on the target blockchain is required for your W3bstream node to dispatch proofs to blockchain contracts. For IoTeX Testnet, see [create a wallet](https://docs.iotex.io/the-iotex-stack/wallets/metamask), and claim test IOTX via [faucet](https://docs.iotex.io/the-iotex-stack/iotx-faucets/testnet-tokens#the-iotex-developer-portal).
 
 - **Bonsai API Key**: If you are joining a project requiring RISC0 snark proofs, as the W3bstream protocol currently utilizes the [Bonsai API](https://dev.risczero.com/api/bonsai/), obtain an [API key here](https://docs.google.com/forms/d/e/1FAIpQLSf9mu18V65862GS4PLYd7tFTEKrl90J5GTyzw_d14ASxrruFQ/viewform).
 
