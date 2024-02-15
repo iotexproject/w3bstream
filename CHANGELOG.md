@@ -1,11 +1,11 @@
 # Changelog
 
-## [Unreleased]
+---
+## [0.6.0] - 2024-02-15
 
-### In Process
-- Support DID auth -- `60%` by @saitofun
-- Support project register -- `70%` by @saitofun
-- Support project watcher -- `50%` by @huangzhiran
+### Added
+- Support project define message aggregation strategy
+- Support did auth token
 
 ---
 ## [0.5.0] - 2023-12-28
