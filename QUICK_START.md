@@ -23,7 +23,7 @@ export DID_TOKEN=`echo '{
     "issuer": "did:key:z6MkjP2Pa1pkUgz2rP6yTXpATe4qd7ahwsGAQuU697JpcCLf",
     "issuanceDate": "2020-08-19T21:41:50Z",
     "credentialSubject": {
-      "id": "$CLIENT_DID"
+      "id": "'$CLIENT_DID'"
     }
   },
   "options": {
