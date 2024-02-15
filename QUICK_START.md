@@ -11,7 +11,7 @@ alias ioctl=`which ioctl-unstable`
 [More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
 
 ### Get verifiable credential token
-
+Assuming that we are going to interact with server `http://sprout-staging.w3bstream.com`, and env `CLIENT_DID` has been set, the following command is used to exchange a DID token:
 ```bash
 export DID_TOKEN=`echo '{
   "credential": {
@@ -31,7 +31,7 @@ export DID_TOKEN=`echo '{
     "proofPurpose": "assertionMethod",
     "proofFormat": "jwt"
   }
-}' | http post :9000/sign_credential | jq -r '.verifiableCredential'`
+}' | http post http://sprout-staging.w3bstream.com:9000/sign_credential | jq -r '.verifiableCredential'`
 ```
 
 > note: client(device) and project binding contract is WIP, you can use the following mock client did to get vc token.
@@ -42,7 +42,7 @@ export DID_TOKEN=`echo '{
 > 
 > did:ethr:0x9d9250fb4e08ba7a858fe7196a6ba946c6083ff0 
 > 
-> these three client did already binding to project 1 to 20. you can change the env var $CLIENT_ID to set current client.
+> these three client dids have already been bind to project 1 to 20. You can change the env var $CLIENT_ID to set current client.
 
 ### Sending messages
 
