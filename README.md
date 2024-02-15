@@ -7,23 +7,24 @@ W3bstream is an integral part of the IoTeX network. It is a Layer-2 protocol orc
   <img src="./docs/architecture.drawio.png"/>
 </p>
 
-The diagram represents the main components of the software and how they interact with each other. Note that this reflects a single entity running an enode and a znode. However, there are many entities running nodes in the network. More on this later.
+The diagram represents the main components of the software and how they interact with each other. Note that this reflects a single entity running a sequencer and a prover. However, there are many entities running nodes in the network. More on this later.
 
-- Enode: short for Edge node. An enode contains a sequencer and task dispatcher. It receives messages from users, persists them in DA, and packs them into tasks. The enode is defined by the project, and how messages are packed into tasks is also defined by the project.
-- Znode: short for ZK node. A znode receives the task, constructs a ZK runtime instance, and generates a ZK proof. It contains a task processor, ZK runtime manager, project manager, and output module. Anyone can stake IOTX and obtain permission to run a znode.
-- Data availability: W3bstream uses data availability to ensure that messages and task lifecycles persist.
-- P2P network: In W3bstream, all enodes and znodes interact with each other over the P2P network, including dispatching, receiving, and reporting task status. Every node needs to join the project topic and then process the information related to the project.
-- IPFS: Project config data is stored on IPFS. Users who want to publish a new project can use ioctl to push the project config file to IPFS.
-- Chain contract: Project metadata and znode information are stored on the chain contract. If a project needs to be loaded by a znode, the znode needs to first fetch the project metadata from the chain contract, and then fetch the project configuration file from IPFS.
-- ZK runtime: Currently, W3bstream supports three ZK runtimes: Halo2, ZkWasm, and Risc0. The project configuration defines which runtime will be used by the project.
+- Sequencer: A sequencer assembles a set of input messages of the same project as a task and assigns the task to a prover. It receives messages from clients, persists them in data availability (DA), and packs them into tasks. The tasks will be sent to prover to generate proves, and the returned proves will be output to destination defined by the project.
+- Prover: A prover generates proves with ZK virtual machines. It contains a task processor, ZK runtime manager, project manager. Receiving a task, the prover constructs a ZK runtime instance according to the corresponding project config and generates a ZK proof accordingly. Anyone can stake IOTX and obtain permission to run a prover.
+- Data availability: data availability refers to a storage which ensures the lifecycle persist of messages and tasks. It could be a database, a file system, a blockchain or a decentralized storage system, which implements the predefined interface.
+- P2P network: In W3bstream, all sequencers and provers interact with each other over the P2P network, including dispatching, receiving, and reporting task status. To participate the processing of a project, a node needs to join the project topic and then process the information related to the project.
+- IPFS: Project config data is stored on IPFS. Users who want to publish a new project can use [ioctl](https://docs.iotex.io/the-iotex-stack/reference/ioctl-cli-reference) to push the project config file to IPFS.
+- Chain contract: Projects and provers are registered in IoTeX contracts. They are publicly available and open to all to register.
+- ZK runtime: Three ZK runtimes are supported, including Halo2, ZkWasm, and Risc0. A project could specify the runtime to be used in the project.
 
 ## Running
 
-Just want to give it a try, see Quick Start →
+For users who just want to give it a try, please refer to [Quick Start →](./QUICK_START.md), which will guide you through how to interact with existing projects deployed on staging.
 
-For the initial setup and operation of a W3bstream node, please refer to the OPERATOR_GUIDE →
+Developers looking to build circuits and deploy W3bstream projects should consult the [DEVELOPER_GUIDE →](./DEVELOPER_GUIDE.md)
 
-Developers looking to build circuits and deploy W3bstream projects should consult the DEVELOPER_GUIDE →
+Developers who want to run a Sprout node could refer to the [OPERATOR_GUIDE →](./OPERATOR_GUIDE.md)
+
 
 ## Contributing
 
