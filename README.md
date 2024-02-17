@@ -19,16 +19,16 @@ The diagram represents the main components of the software and how they interact
 
 ## Running
 
-For users who just want to give it a try, please refer to [Quick Start →](./QUICK_START.md), which will guide you through how to interact with existing projects deployed on staging.
+For users who just want to give it a try, please refer to [Quick Start →](./docs/QUICK_START.md), which will guide you through how to interact with existing projects deployed on staging.
 
-Developers looking to build circuits and deploy W3bstream projects should consult the [DEVELOPER_GUIDE →](./DEVELOPER_GUIDE.md)
+Developers looking to build circuits and deploy W3bstream projects should consult the [DEVELOPER_GUIDE →](./docs/DEVELOPER_GUIDE.md)
 
-Developers who want to run a Sprout node could refer to the [OPERATOR_GUIDE →](./OPERATOR_GUIDE.md)
+Developers who want to run a Sprout node could refer to the [OPERATOR_GUIDE →](./docs/OPERATOR_GUIDE.md)
 
 
 ## Contributing
 
-We welcome contributions! Please read our contributing guidelines and submit pull requests to our GitHub repository.
+We welcome contributions! Please read our [contributing guidelines](./docs/CONTRIBUTING.md) and submit pull requests to our GitHub repository.
 
 ## Community and Support
 
