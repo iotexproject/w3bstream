@@ -98,6 +98,7 @@ ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR create --pro
 ioctl ws project --contract-address $PROJECT_REGISTER_CONTRACT_ADDR update --project-id $PROJECT_ID --project-config-file path/to/project_config_file --project-config-hash ${project config sha256 hash(optional)}
 ```
 
+
 ### Query project
 
 ```sh
