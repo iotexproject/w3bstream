@@ -1,7 +1,14 @@
 package clients
 
 import (
+	_ "embed" // embed mock clients configuration
+	"encoding/json"
 	"sync"
+)
+
+var (
+	//go:embed clients
+	mockClientsConfig []byte
 )
 
 type Client struct {
@@ -48,82 +55,9 @@ func (mgr *Manager) AddClient(c *Client) {
 func (mgr *Manager) syncFromContract() {}
 
 func (mgr *Manager) fillByMockClients() {
-	clients := []*Client{
-		{
-			ClientDID: "did:ethr:0x9d9250fb4e08ba7a858fe7196a6ba946c6083ff0",
-			Projects: []uint64{
-				1,
-				2,
-				3,
-				4,
-				5,
-				6,
-				7,
-				8,
-				9,
-				10,
-				11,
-				12,
-				13,
-				14,
-				15,
-				16,
-				17,
-				18,
-				19,
-				20,
-			},
-		},
-		{
-			ClientDID: "did:key:z6MkeeChrUs1EoKkNNzoy9FwJJb9gNQ92UT8kcXZHMbwj67B",
-			Projects: []uint64{
-				1,
-				2,
-				3,
-				4,
-				5,
-				6,
-				7,
-				8,
-				9,
-				10,
-				11,
-				12,
-				13,
-				14,
-				15,
-				16,
-				17,
-				18,
-				19,
-				20,
-			},
-		},
-		{
-			ClientDID: "did:example:d23dd687a7dc6787646f2eb98d0",
-			Projects: []uint64{
-				1,
-				2,
-				3,
-				4,
-				5,
-				6,
-				7,
-				8,
-				9,
-				10,
-				11,
-				12,
-				13,
-				14,
-				15,
-				16,
-				17,
-				18,
-				19,
-				20,
-			},
-		},
+	clients := make([]*Client, 0)
+	if err := json.Unmarshal(mockClientsConfig, &clients); err != nil {
+		panic(err)
 	}
 	for _, c := range clients {
 		c.projects = make(map[uint64]struct{})
