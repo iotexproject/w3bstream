@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import {IFleetManager} from "./interfaces/IFleetManager.sol";
 import {IOperatorRegistry} from "./interfaces/IOperatorRegistry.sol";
-import {IProjectRegistry} from "./interfaces/IProjectRegistry.sol";
 
-contract FleetManager is IFleetManager {
+contract FleetManager is IFleetManager, Initializable {
     address public projectRegistry;
     address public operatorRegistry;
 
@@ -14,13 +16,13 @@ contract FleetManager is IFleetManager {
     event OperatorAdded(uint256 indexed projectId, address indexed operator);
     event OperatorRemoved(uint256 indexed projectId, address indexed operator);
 
-    constructor(address _projectRegistry, address _operatorRegistry) {
+    function initialize(address _projectRegistry, address _operatorRegistry) public initializer {
         projectRegistry = _projectRegistry;
         operatorRegistry = _operatorRegistry;
     }
 
     modifier onlyProjectOwner(uint256 _projectId) {
-        if (!IProjectRegistry(projectRegistry).isProjectOwner(msg.sender, _projectId)) {
+        if (IERC721(projectRegistry).ownerOf(_projectId) != msg.sender) {
             revert NotProjectOwner();
         }
         _;
