@@ -11,8 +11,8 @@ type TaskState uint8
 
 const (
 	TaskStateInvalid TaskState = iota
-	TaskStateReceived
-	TaskStateFetched
+	TaskStatePacked
+	TaskStateDispatched
 	_
 	TaskStateProved
 	_
@@ -29,10 +29,10 @@ type TaskStateLog struct {
 
 func (s TaskState) String() string {
 	switch s {
-	case TaskStateReceived:
-		return "received"
-	case TaskStateFetched:
-		return "fetched"
+	case TaskStatePacked:
+		return "packed"
+	case TaskStateDispatched:
+		return "dispatched"
 	case TaskStateProved:
 		return "proved"
 	case TaskStateOutputted:
