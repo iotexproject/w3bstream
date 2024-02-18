@@ -27,14 +27,12 @@ interface IWSRouter {
     /// @notice submit data to project
     /// @param _projectId project id
     /// @param _receiver project data reveiver
-    /// @param _tunnelId tunnel id
     /// @param _batchMR batch merkle root
     /// @param _devicesMR devices merkle root
     /// @param _zkProof zk proof
     function submit(
         uint256 _projectId,
         address _receiver,
-        uint256 _tunnelId,
         bytes32 _batchMR,
         bytes32 _devicesMR,
         bytes calldata _zkProof

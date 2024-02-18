@@ -5,8 +5,8 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IFleetManager} from "./interfaces/IFleetManager.sol";
-import {IWSRouter} from "./interfaces/IWSRouter.sol";
-import {IWSReceiver} from "./interfaces/IWSReceiver.sol";
+import {IWSRouter} from "./interfaces/IRouter.sol";
+import {IWSReceiver} from "./interfaces/IReceiver.sol";
 
 contract W3bstreamRouter is IWSRouter, Initializable {
     address public override owner;
@@ -24,7 +24,6 @@ contract W3bstreamRouter is IWSRouter, Initializable {
     function submit(
         uint256 _projectId,
         address _receiver,
-        uint256 _tunnelId,
         bytes32 _batchMR,
         bytes32 _devicesMR,
         bytes calldata _zkProof
@@ -33,7 +32,7 @@ contract W3bstreamRouter is IWSRouter, Initializable {
             revert NotOperator();
         }
 
-        try IWSReceiver(_receiver).receiveData(_tunnelId, _batchMR, _devicesMR, _zkProof) {
+        try IWSReceiver(_receiver).receiveData(_batchMR, _devicesMR, _zkProof) {
             emit DataReceived(msg.sender, true, "");
         } catch Error(string memory revertReason) {
             emit DataReceived(msg.sender, false, revertReason);
