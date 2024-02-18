@@ -1,12 +1,7 @@
 package clients
 
 import (
-	"encoding/json"
-	"log/slog"
-	"os"
 	"sync"
-
-	"github.com/pkg/errors"
 )
 
 type Client struct {
@@ -18,7 +13,7 @@ type Client struct {
 
 var manager *Manager
 
-func NewManager(confPath string) *Manager {
+func NewManager() *Manager {
 	if manager != nil {
 		return manager
 	}
@@ -26,9 +21,7 @@ func NewManager(confPath string) *Manager {
 		mux:  sync.Mutex{},
 		pool: make(map[string]*Client),
 	}
-	if err := m.syncFromLocal(confPath); err != nil {
-		slog.Error("failed to sync clients from local", "msg", err)
-	}
+	m.fillByMockClients()
 	manager = m
 	return manager
 }
@@ -54,14 +47,83 @@ func (mgr *Manager) AddClient(c *Client) {
 // TODO syncFromContract
 func (mgr *Manager) syncFromContract() {}
 
-func (mgr *Manager) syncFromLocal(path string) error {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		panic(errors.Wrap(err, "failed to read local config"))
-	}
-	clients := make([]*Client, 0)
-	if err = json.Unmarshal(content, &clients); err != nil {
-		return errors.Wrap(err, "failed to parse local config")
+func (mgr *Manager) fillByMockClients() {
+	clients := []*Client{
+		{
+			ClientDID: "did:ethr:0x9d9250fb4e08ba7a858fe7196a6ba946c6083ff0",
+			Projects: []uint64{
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+			},
+		},
+		{
+			ClientDID: "did:key:z6MkeeChrUs1EoKkNNzoy9FwJJb9gNQ92UT8kcXZHMbwj67B",
+			Projects: []uint64{
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+			},
+		},
+		{
+			ClientDID: "did:example:d23dd687a7dc6787646f2eb98d0",
+			Projects: []uint64{
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+			},
+		},
 	}
 	for _, c := range clients {
 		c.projects = make(map[uint64]struct{})
@@ -70,5 +132,4 @@ func (mgr *Manager) syncFromLocal(path string) error {
 		}
 		mgr.pool[c.ClientDID] = c
 	}
-	return nil
 }

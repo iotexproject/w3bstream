@@ -13,9 +13,6 @@ services:
     environment:
       OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
       OPERATOR_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
-      CLIENTS_FILE_PATH: /data/test/clients/clients
-    volumes:
-      - .:/data
 
   znode:
     image: ghcr.io/machinefi/znode:latest

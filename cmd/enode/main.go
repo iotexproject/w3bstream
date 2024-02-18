@@ -24,7 +24,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_ = clients.NewManager(viper.GetString(ClientsFilePath))
+	_ = clients.NewManager()
 
 	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(IPFSEndpoint))
 	if err != nil {
