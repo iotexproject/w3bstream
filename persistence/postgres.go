@@ -54,12 +54,12 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 		TaskID:    tid,
 		MessageID: msg.ID,
 		ProjectID: msg.ProjectID,
-		State:     types.TaskStateReceived,
+		State:     types.TaskStatePacked,
 	}}
 
 	l := taskStateLog{
 		TaskID: tid,
-		State:  types.TaskStateReceived,
+		State:  types.TaskStatePacked,
 	}
 
 	return p.db.Transaction(func(tx *gorm.DB) error {
@@ -81,7 +81,7 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 					TaskID:    tid,
 					MessageID: m.MessageID,
 					ProjectID: m.ProjectID,
-					State:     types.TaskStateReceived,
+					State:     types.TaskStatePacked,
 				})
 			}
 			if err := tx.Model(message{}).Where("message_id IN ?", mids).Update("task_id", tid).Error; err != nil {
@@ -105,7 +105,7 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 
 func (p *Postgres) Fetch() (*types.Task, error) {
 	t := task{}
-	if err := p.db.Where("state = ?", types.TaskStateReceived).First(&t).Error; err != nil {
+	if err := p.db.Where("state = ?", types.TaskStatePacked).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -149,10 +149,31 @@ func (p *Postgres) FetchByID(taskID string) (*types.Task, error) {
 	}, nil
 }
 
+func (p *Postgres) FetchMessage(messageID string) ([]*types.MessageWithTime, error) {
+	ms := []*message{}
+	if err := p.db.Where("message_id = ?", messageID).Find(&ms).Error; err != nil {
+		return nil, errors.Wrapf(err, "query message by messageID failed, messageID %s", messageID)
+	}
+
+	tms := []*types.MessageWithTime{}
+	for _, m := range ms {
+		tms = append(tms, &types.MessageWithTime{
+			Message: types.Message{
+				ID:             m.MessageID,
+				ProjectID:      m.ProjectID,
+				ProjectVersion: m.ProjectVersion,
+				Data:           m.Data,
+			},
+			CreatedAt: m.CreatedAt,
+		})
+	}
+	return tms, nil
+}
+
 func (p *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error) {
 	ts := []*task{}
 	if err := p.db.Where("message_id = ?", messageID).Find(&ts).Error; err != nil {
-		return nil, errors.Wrapf(err, "query task by message id failed, messageID %s", messageID)
+		return nil, errors.Wrapf(err, "query task by messageID failed, messageID %s", messageID)
 	}
 	tids := []string{}
 	for _, t := range ts {

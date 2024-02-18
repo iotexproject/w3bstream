@@ -139,13 +139,27 @@ func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 
 	messageID := c.Param("id")
 
+	ms, err := s.pg.FetchMessage(messageID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, newErrResp(err))
+		return
+	}
+	if len(ms) == 0 {
+		c.JSON(http.StatusOK, &queryMessageStateLogResp{MessageID: messageID})
+		return
+	}
+
 	ls, err := s.pg.FetchStateLog(messageID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return
 	}
 
-	ss := []*stateLog{}
+	ss := []*stateLog{
+		{
+			State: "received",
+			Time:  ms[0].CreatedAt,
+		}}
 	for _, l := range ls {
 		ss = append(ss, &stateLog{
 			State:   l.State.String(),
@@ -154,7 +168,6 @@ func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 		})
 	}
 
-	slog.Debug("received message querying", "message_id", messageID)
 	c.JSON(http.StatusOK, &queryMessageStateLogResp{MessageID: messageID, States: ss})
 }
 

@@ -28,7 +28,7 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	tid := d.Task.ID
 	ms := d.Task.Messages
 	slog.Debug("get new task", "task_id", tid)
-	r.reportSuccess(tid, types.TaskStateFetched, "", topic)
+	r.reportSuccess(tid, types.TaskStateDispatched, "", topic)
 
 	config, err := r.projectManager.Get(ms[0].ProjectID, ms[0].ProjectVersion)
 	if err != nil {
