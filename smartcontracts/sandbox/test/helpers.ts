@@ -16,6 +16,6 @@ export async function registerOperator(
 }
 
 export async function registerProject(projectRegistry: string, projectOwner: Signer, uri: string, hash: string) {
-  const registry = await ethers.getContractAt('ProjectRegistry', projectRegistry);
+  const registry = await ethers.getContractAt('ProjectRegistrar', projectRegistry);
   await registry.connect(projectOwner).createProject(uri, hash);
 }

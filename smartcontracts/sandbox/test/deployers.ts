@@ -8,11 +8,13 @@ export async function deployFleetManager() {
   const operatorRegistryAddress = await operatorRegistry.getAddress();
 
   const factory = await ethers.getContractFactory('FleetManager');
-  return factory.deploy(projectRegistryAddress, operatorRegistryAddress);
+  const fleet = await factory.deploy();
+  await fleet.initialize(projectRegistryAddress, operatorRegistryAddress);
+  return fleet;
 }
 
 export async function deployProjectRegistry() {
-  const factory = await ethers.getContractFactory('ProjectRegistry');
+  const factory = await ethers.getContractFactory('ProjectRegistrar');
   return factory.deploy();
 }
 

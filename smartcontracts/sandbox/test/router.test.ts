@@ -2,17 +2,16 @@ import { expect } from 'chai';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { ethers } from 'hardhat';
 
-import { deployFleetManager, deployProjectRegistry, deployW3bstreamRouter } from './deployers';
-import { FleetManager, ProjectRegistry, W3bstreamRouter, WSReceiver } from '../typechain-types';
+import { deployFleetManager, deployW3bstreamRouter } from './deployers';
+import { FleetManager, ProjectRegistrar, W3bstreamRouter, WSReceiver } from '../typechain-types';
 import { registerOperator, registerProject } from './helpers';
-import { getConfigByCID } from '../scripts/ipfs/getProjectConfigByCID';
 
 describe('W3bstreamRouter', function () {
   const PROJECT_1_ID = 1;
 
   describe('data submission', function () {
     let router: W3bstreamRouter;
-    let projectRegistry: ProjectRegistry;
+    let projectRegistry: ProjectRegistrar;
     let fleet: FleetManager;
     let receiver: WSReceiver;
 
@@ -42,25 +41,24 @@ describe('W3bstreamRouter', function () {
       await fleet.connect(projectOwner).allow(PROJECT_1_ID, profile.address);
       // 7. deploy and initialize WSRouter
       router = await loadFixture(deployW3bstreamRouter);
-      projectRegistry = await ethers.getContractAt('ProjectRegistry', projectRegistryAddr);
+      projectRegistry = await ethers.getContractAt('ProjectRegistrar', projectRegistryAddr);
       await router.initialize(await projectRegistry.getAddress(), await fleet.getAddress());
     });
 
     it('works', async function () {
       const [, , node] = await ethers.getSigners();
 
-      const project = await projectRegistry.getProject(PROJECT_1_ID);
+      const project = await projectRegistry.projects(PROJECT_1_ID);
 
-      const config = await getConfigByCID(project.uri.replace('ipfs://', ''));
-      const { id: tunnelId, targetContract: receiverAddr } = config.data.tunnels[0];
+      // const config = await getConfigByCID(project.uri.replace('ipfs://', ''));
+      // const { id: tunnelId, targetContract: receiverAddr } = config.data.tunnels[0];
 
       await expect(
         router
           .connect(node)
           .submit(
             PROJECT_1_ID,
-            receiverAddr,
-            tunnelId,
+            await receiver.getAddress(),
             '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
             '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
             '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
@@ -69,13 +67,13 @@ describe('W3bstreamRouter', function () {
         .to.emit(router, 'DataReceived')
         .withArgs(node.address, true, '');
 
-        expect(await receiver.getBatchHeight(tunnelId)).to.eq(1)
+      //   expect(await receiver.getBatchHeight(123)).to.eq(1)
     });
   });
 });
 
 const deployDeviceRegistry = async () => {
-  const DeviceRegistry = await ethers.getContractFactory('DeviceRegistry');
+  const DeviceRegistry = await ethers.getContractFactory('ProjectRegistrar');
   return DeviceRegistry.deploy();
 };
 

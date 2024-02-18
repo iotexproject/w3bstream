@@ -19,7 +19,7 @@ describe('ProjectRegistry', function () {
       const registry = await loadFixture(deployProjectRegistry);
       await registry.createProject(PROJECT_1.uri, PROJECT_1.hash);
 
-      const firstProject = await registry.getProject(ID_1);
+      const firstProject = await registry.projects(ID_1);
 
       expect(firstProject.uri).to.eq(PROJECT_1.uri);
       expect(firstProject.hash).to.eq(PROJECT_1.hash);
@@ -30,8 +30,8 @@ describe('ProjectRegistry', function () {
       await registry.createProject(PROJECT_1.uri, PROJECT_1.hash);
       await registry.createProject(PROJECT_2.uri, PROJECT_2.hash);
 
-      const firstProject = await registry.getProject(ID_1);
-      const secondProject = await registry.getProject(ID_1 + 1);
+      const firstProject = await registry.projects(ID_1);
+      const secondProject = await registry.projects(ID_1 + 1);
 
       expect(firstProject.uri).to.eq(PROJECT_1.uri);
       expect(secondProject.uri).to.eq(PROJECT_2.uri);
@@ -43,12 +43,12 @@ describe('ProjectRegistry', function () {
         const registry = await loadFixture(deployProjectRegistry);
         await registry.createProject(PROJECT_1.uri, PROJECT_1.hash);
 
-        const project = await registry.getProject(ID_1);
+        const project = await registry.projects(ID_1);
         expect(project.paused).to.eq(false);
 
         await expect(registry.pauseProject(ID_1)).to.emit(registry, 'ProjectPaused').withArgs(ID_1);
 
-        const firstProject = await registry.getProject(ID_1);
+        const firstProject = await registry.projects(ID_1);
         expect(firstProject.paused).to.eq(true);
       });
       it('reverts if not project owner', async function () {
@@ -57,9 +57,8 @@ describe('ProjectRegistry', function () {
 
         const [, notOperator] = await ethers.getSigners();
 
-        await expect(registry.connect(notOperator).pauseProject(ID_1)).to.be.revertedWithCustomError(
-          registry,
-          'OnlyOwnerAllowed',
+        await expect(registry.connect(notOperator).pauseProject(ID_1)).to.be.revertedWith(
+          'Not authorized to operate this project',
         );
       });
       it('reverts if project doesnt exist', async function () {
@@ -73,7 +72,7 @@ describe('ProjectRegistry', function () {
 
         await registry.pauseProject(ID_1);
 
-        await expect(registry.pauseProject(ID_1)).to.be.revertedWithCustomError(registry, 'ProjectAlreadyPaused');
+        await expect(registry.pauseProject(ID_1)).to.be.revertedWith('Project is already paused');
       });
     });
     describe('unpausing project', function () {
@@ -83,12 +82,12 @@ describe('ProjectRegistry', function () {
 
         await registry.pauseProject(ID_1);
 
-        const project = await registry.getProject(ID_1);
+        const project = await registry.projects(ID_1);
         expect(project.paused).to.eq(true);
 
         await expect(registry.unpauseProject(ID_1)).to.emit(registry, 'ProjectUnpaused').withArgs(ID_1);
 
-        const firstProject = await registry.getProject(ID_1);
+        const firstProject = await registry.projects(ID_1);
         expect(firstProject.paused).to.eq(false);
       });
       it('reverts if not project owner', async function () {
@@ -99,9 +98,8 @@ describe('ProjectRegistry', function () {
 
         const [, notOperator] = await ethers.getSigners();
 
-        await expect(registry.connect(notOperator).unpauseProject(ID_1)).to.be.revertedWithCustomError(
-          registry,
-          'OnlyOwnerAllowed',
+        await expect(registry.connect(notOperator).unpauseProject(ID_1)).to.be.revertedWith(
+          'Not authorized to operate this project',
         );
       });
       it('reverts if project doesnt exist', async function () {
@@ -113,7 +111,7 @@ describe('ProjectRegistry', function () {
         const registry = await loadFixture(deployProjectRegistry);
         await registry.createProject(PROJECT_1.uri, PROJECT_1.hash);
 
-        await expect(registry.unpauseProject(ID_1)).to.be.revertedWithCustomError(registry, 'ProjectNotPaused');
+        await expect(registry.unpauseProject(ID_1)).to.be.revertedWith('Project is not paused');
       });
     });
     describe('updating project uri', function () {
@@ -128,7 +126,7 @@ describe('ProjectRegistry', function () {
           .to.emit(registry, 'ProjectUpserted')
           .withArgs(ID_1, NEW_URI, NEW_HASH);
 
-        const firstProject = await registry.getProject(ID_1);
+        const firstProject = await registry.projects(ID_1);
         expect(firstProject.uri).to.eq(NEW_URI);
       });
       it('reverts if not project owner', async function () {
@@ -137,9 +135,9 @@ describe('ProjectRegistry', function () {
 
         const [, notOperator] = await ethers.getSigners();
 
-        await expect(
-          registry.connect(notOperator).updateProject(ID_1, NEW_URI, NEW_HASH),
-        ).to.be.revertedWithCustomError(registry, 'OnlyOwnerAllowed');
+        await expect(registry.connect(notOperator).updateProject(ID_1, NEW_URI, NEW_HASH)).to.be.revertedWith(
+          'Not authorized to operate this project',
+        );
       });
       it('reverts if project doesnt exist', async function () {
         const registry = await loadFixture(deployProjectRegistry);
@@ -150,10 +148,7 @@ describe('ProjectRegistry', function () {
         const registry = await loadFixture(deployProjectRegistry);
         await registry.createProject(PROJECT_1.uri, PROJECT_1.hash);
 
-        await expect(registry.updateProject(ID_1, '', NEW_HASH)).to.be.revertedWithCustomError(
-          registry,
-          'EmptyUriValue',
-        );
+        await expect(registry.updateProject(ID_1, '', NEW_HASH)).to.be.revertedWith('Empty uri value');
       });
     });
   });
