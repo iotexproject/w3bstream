@@ -1,12 +1,14 @@
 package clients
 
 import (
+	_ "embed" // embed mock clients configuration
 	"encoding/json"
-	"log/slog"
-	"os"
 	"sync"
+)
 
-	"github.com/pkg/errors"
+var (
+	//go:embed clients
+	mockClientsConfig []byte
 )
 
 type Client struct {
@@ -18,7 +20,7 @@ type Client struct {
 
 var manager *Manager
 
-func NewManager(confPath string) *Manager {
+func NewManager() *Manager {
 	if manager != nil {
 		return manager
 	}
@@ -26,9 +28,7 @@ func NewManager(confPath string) *Manager {
 		mux:  sync.Mutex{},
 		pool: make(map[string]*Client),
 	}
-	if err := m.syncFromLocal(confPath); err != nil {
-		slog.Error("failed to sync clients from local", "msg", err)
-	}
+	m.fillByMockClients()
 	manager = m
 	return manager
 }
@@ -54,14 +54,10 @@ func (mgr *Manager) AddClient(c *Client) {
 // TODO syncFromContract
 func (mgr *Manager) syncFromContract() {}
 
-func (mgr *Manager) syncFromLocal(path string) error {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		panic(errors.Wrap(err, "failed to read local config"))
-	}
+func (mgr *Manager) fillByMockClients() {
 	clients := make([]*Client, 0)
-	if err = json.Unmarshal(content, &clients); err != nil {
-		return errors.Wrap(err, "failed to parse local config")
+	if err := json.Unmarshal(mockClientsConfig, &clients); err != nil {
+		panic(err)
 	}
 	for _, c := range clients {
 		c.projects = make(map[uint64]struct{})
@@ -70,5 +66,4 @@ func (mgr *Manager) syncFromLocal(path string) error {
 		}
 		mgr.pool[c.ClientDID] = c
 	}
-	return nil
 }
