@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import {IOperatorRegistry} from "./interfaces/IOperatorRegistry.sol";
 
-contract OperatorRegistry is IOperatorRegistry {
+contract OperatorRegistry is IOperatorRegistry, Initializable {
     mapping(address => Operator) internal operators;
 
     event OperatorRegistered(address indexed profile, address indexed node, address rewards);
     event OperatorNodeUpdated(address indexed profile, address indexed newNode);
     event OperatorRewardsUpdated(address indexed profile, address indexed rewards);
+
+    function initialize() public initializer {}
 
     modifier onlyExistingOperator() {
         if (operators[msg.sender].node == address(0)) {
