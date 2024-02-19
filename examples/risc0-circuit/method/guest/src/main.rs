@@ -16,14 +16,22 @@
 // #![no_std]
 
 use risc0_zkvm::guest::env;
+use serde_json::Value as JsonValue;
 
 risc0_zkvm::guest::entry!(main);
 
 pub fn main() {
-    // Load the first value from the host, is a private key
-    let a: String = env::read();
-    // Load the second value from the host, is a public key
-    let b: String = env::read();
+    let input: String = env::read();
+
+    // the string is a json array
+    let input_v: JsonValue = serde_json::from_str(&input).unwrap();
+    let item_str = input_v.as_array().unwrap()[0].as_str().unwrap();
+    let v: JsonValue = serde_json::from_str(item_str).unwrap();
+ 
+    // Load the first number from the host, is a private key
+    let a: String = v["private_input"].as_str().unwrap().to_string();
+    // Load the second number from the host, is a public key
+    let b: String = v["public_input"].as_str().unwrap().to_string();
 
     let pri_a = a.trim().parse::<u64>().unwrap();
     let mut pub_b: u64 = 0;
