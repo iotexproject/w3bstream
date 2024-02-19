@@ -9,6 +9,10 @@ interface IWSRouter {
     event OwnerChanged(address indexed owner);
     event AdminChanged(address indexed admin);
     event ProjectRegistryChanged(address indexed projectRegistry);
+    event ReceiverRegistered(uint256 indexed projectId, address indexed receiver);
+    event ReceiverUnregistered(uint256 indexed projectId, address indexed receiver);
+    error AlreadyRegistered();
+    error ReceiverUnregister();
 
     error NotProjectOwner();
     error NotOperator();
@@ -27,16 +31,11 @@ interface IWSRouter {
     /// @notice submit data to project
     /// @param _projectId project id
     /// @param _receiver project data reveiver
-    /// @param _batchMR batch merkle root
-    /// @param _devicesMR devices merkle root
-    /// @param _zkProof zk proof
-    function submit(
-        uint256 _projectId,
-        address _receiver,
-        bytes32 _batchMR,
-        bytes32 _devicesMR,
-        bytes calldata _zkProof
-    ) external;
+    /// @param _data:
+    /// first 32bytes: batch merkle root
+    /// second 32bytes: devices merkle root
+    /// the rest: zkProof
+    function submit(uint256 _projectId, address _receiver, bytes calldata _data) external;
 
     /// @notice set project registry
     /// @param _projectRegistry project registry

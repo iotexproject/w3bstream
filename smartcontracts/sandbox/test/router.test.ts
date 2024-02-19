@@ -53,15 +53,15 @@ describe('W3bstreamRouter', function () {
       // const config = await getConfigByCID(project.uri.replace('ipfs://', ''));
       // const { id: tunnelId, targetContract: receiverAddr } = config.data.tunnels[0];
 
+      await router.register(PROJECT_1_ID, await receiver.getAddress());
+
       await expect(
         router
           .connect(node)
           .submit(
             PROJECT_1_ID,
             await receiver.getAddress(),
-            '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
-            '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
-            '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
+            '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b38138992f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b38138993f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
           ),
       )
         .to.emit(router, 'DataReceived')

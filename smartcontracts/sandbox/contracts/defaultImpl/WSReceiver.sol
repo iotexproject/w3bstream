@@ -13,8 +13,11 @@ contract WSReceiver is IWSReceiver {
         deviceNFTRegistry = _deviceNFTRegistry;
     }
 
-    function receiveData(bytes32 _batchMR, bytes32 _devicesMR, bytes calldata _zkProof) external {
-        _verify(_zkProof);
+    function receiveData(bytes calldata _data) external {
+        _verify(_data[64:]);
+
+        bytes32 _batchMR = bytes32(_data[:32]);
+        bytes32 _devicesMR = bytes32(_data[32:64]);
 
         uint256 newHeight = currentBatchHeight + 1;
         batches[currentBatchHeight] = Batch(_batchMR, _devicesMR);

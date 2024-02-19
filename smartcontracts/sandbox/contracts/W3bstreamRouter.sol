@@ -13,6 +13,7 @@ contract W3bstreamRouter is IWSRouter, Initializable {
     address public override admin;
     address public override projectRegistry;
     address public override fleetManager;
+    mapping(uint256 => mapping(address => bool)) internal _receivers;
 
     function initialize(address _projectRegistry, address _fleetManager) public initializer {
         owner = msg.sender;
@@ -21,18 +22,37 @@ contract W3bstreamRouter is IWSRouter, Initializable {
         fleetManager = _fleetManager;
     }
 
-    function submit(
-        uint256 _projectId,
-        address _receiver,
-        bytes32 _batchMR,
-        bytes32 _devicesMR,
-        bytes calldata _zkProof
-    ) external {
+    function register(uint256 _projectId, address _receiver) external {
+        if (_receiver == address(0)) revert ZeroAddress();
+        if (_receivers[_projectId][_receiver]) revert AlreadyRegistered();
+        if (IERC721(projectRegistry).ownerOf(_projectId) != msg.sender) {
+            revert NotProjectOwner();
+        }
+
+        _receivers[_projectId][_receiver] = true;
+        emit ReceiverRegistered(_projectId, _receiver);
+    }
+
+    function unregister(uint256 _projectId, address _receiver) external {
+        if (!_receivers[_projectId][_receiver]) revert ReceiverUnregister();
+        if (IERC721(projectRegistry).ownerOf(_projectId) != msg.sender) {
+            revert NotProjectOwner();
+        }
+
+        _receivers[_projectId][_receiver] = false;
+        emit ReceiverUnregistered(_projectId, _receiver);
+    }
+
+    function submit(uint256 _projectId, address _receiver, bytes calldata _data) external {
+        if (!_receivers[_projectId][_receiver]) {
+            revert ReceiverUnregister();
+        }
+
         if (!IFleetManager(fleetManager).isAllowed(msg.sender, _projectId)) {
             revert NotOperator();
         }
 
-        try IWSReceiver(_receiver).receiveData(_batchMR, _devicesMR, _zkProof) {
+        try IWSReceiver(_receiver).receiveData(_data) {
             emit DataReceived(msg.sender, true, "");
         } catch Error(string memory revertReason) {
             emit DataReceived(msg.sender, false, revertReason);
