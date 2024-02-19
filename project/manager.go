@@ -21,6 +21,7 @@ type Manager struct {
 	projectIDs   map[uint64]bool
 	instance     *contracts.Contracts
 	ipfsEndpoint string
+	notify       chan uint64
 	// znodes       []string
 	// ioID         string
 }
@@ -66,6 +67,10 @@ func (m *Manager) GetAllProjectID() []uint64 {
 	return ids
 }
 
+func (m *Manager) GetNotify() <-chan uint64 {
+	return m.notify
+}
+
 func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subscription) {
 	for {
 		select {
@@ -92,8 +97,13 @@ func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subsc
 			}
 
 			for _, c := range cs {
-				slog.Info("monitor project", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
+				slog.Info("monitor project", "projectID", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
 				m.Set(pm.ProjectID, c.Version, c)
+			}
+			select {
+			case m.notify <- pm.ProjectID:
+			default:
+				slog.Info("project notify channel full", "projectID", pm.ProjectID)
 			}
 		}
 	}
@@ -156,6 +166,7 @@ func NewManager(chainEndpoint, contractAddress, ipfsEndpoint string) (*Manager, 
 		pool:         make(map[key]*Config),
 		projectIDs:   make(map[uint64]bool),
 		ipfsEndpoint: ipfsEndpoint,
+		notify:       make(chan uint64, 32),
 	}
 
 	client, err := ethclient.Dial(chainEndpoint)
