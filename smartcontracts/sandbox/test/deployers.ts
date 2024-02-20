@@ -19,7 +19,7 @@ export async function deployProjectRegistry() {
 }
 
 export async function deployOperatorRegistry() {
-  const factory = await ethers.getContractFactory('OperatorRegistry');
+  const factory = await ethers.getContractFactory('NodeRegistry');
   return factory.deploy();
 }
 
