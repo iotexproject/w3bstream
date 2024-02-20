@@ -23,5 +23,7 @@ interface INodeRegistry {
 
     function getNode(uint256 _tokenId) external view returns (Node memory);
 
+    function getNodeAddress(uint256 _tokenId) external view returns (address);
+
     function getNodeByOperator(address _operator) external view returns (uint256 _nodeId, Node memory _node);
 }
