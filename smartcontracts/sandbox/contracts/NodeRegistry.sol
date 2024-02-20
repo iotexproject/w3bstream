@@ -1,50 +1,58 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 import {INodeRegistry} from "./interfaces/INodeRegistry.sol";
 
-contract NodeRegistry is INodeRegistry, Initializable {
-    // operator => node
-    mapping(address => address) internal _nodes;
-    // node => operator
-    mapping(address => address) internal _operators;
+contract NodeRegistry is INodeRegistry, ERC721Upgradeable {
+    uint256 internal nextTokenId;
+    mapping(uint256 => Node) internal _nodes;
+    mapping(address => uint256) internal _operators;
 
-    function initialize() public initializer {}
+    function initialize() public initializer {
+        __ERC721_init("W3bstream node registry", "WNR");
+        nextTokenId = 0;
+    }
 
-    function register(address _operator) public {
-        if (_operators[msg.sender] != address(0)) {
-            revert NodeAlreadyRegistered();
+    function register(address _operator) external override {
+        if (_operator == address(0)) {
+            revert InvalidAddress();
         }
-        if (_nodes[_operator] != address(0)) {
+
+        ++nextTokenId;
+        _nodes[nextTokenId] = Node(nextTokenId, true, _operator);
+        _operators[_operator] = nextTokenId;
+        _safeMint(msg.sender, nextTokenId);
+
+        emit NodeRegistered(msg.sender, nextTokenId, _operator);
+    }
+
+    function updateOperator(uint256 _tokenId, address _operator) external override {
+        if (ownerOf(_tokenId) != msg.sender) {
+            revert NotNodeOwner();
+        }
+        if (_operator == address(0)) {
+            revert InvalidAddress();
+        }
+        if (_operators[_operator] != 0) {
             revert OperatorAlreadyRegistered();
         }
 
-        _nodes[_operator] = msg.sender;
-        _operators[msg.sender] = _operator;
-
-        emit NodeRegistered(msg.sender, _operator);
+        _nodes[_tokenId].operator = _operator;
+        _operators[_operator] = _tokenId;
+        emit NodeUpdated(_tokenId, _operator);
     }
 
-    function updateOperator(address _operator) public {
-        if (_operators[msg.sender] == address(0)) {
-            revert NodeUnregister();
-        }
-        if (_nodes[_operator] != address(0)) {
-            revert OperatorAlreadyRegistered();
-        }
-
-        _operators[msg.sender] = _operator;
-        emit NodeUpdated(msg.sender, _operator);
+    function getNode(uint256 _tokenId) external view override returns (Node memory) {
+        return _nodes[_tokenId];
     }
 
-    function getNode(address _operator) external view returns (Node memory) {
-        address _node = _nodes[_operator];
-        if (_node == address(0)) {
-            revert NodeUnregister();
+    function getNodeByOperator(address _operator) external view override returns (Node memory) {
+        uint256 _tokenId = _operators[_operator];
+        if (_tokenId == 0) {
+            revert OperatorUnregister();
         }
-
-        return Node(_node, _operator);
+        return _nodes[_tokenId];
     }
 }

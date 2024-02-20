@@ -4,19 +4,25 @@ pragma solidity ^0.8.19;
 /// @notice Web3stream node registry
 interface INodeRegistry {
     struct Node {
-        address node;
+        uint256 id;
+        bool active;
         address operator;
         // add stake field future
     }
 
-    error NodeAlreadyRegistered();
+    event NodeRegistered(address indexed node, uint256 indexed nodeId, address indexed operator);
+    event NodeUpdated(uint256 indexed nodeId, address indexed operator);
+
+    error InvalidAddress();
+    error NotNodeOwner();
     error OperatorAlreadyRegistered();
-    error NodeUnregister();
+    error OperatorUnregister();
 
-    event NodeRegistered(address indexed node, address indexed operator);
-    event NodeUpdated(address indexed node, address indexed operator);
+    function register(address _operator) external;
 
-    /// @notice get Node by operator address
-    /// @param _operator operator address
-    function getNode(address _operator) external view returns (Node memory);
+    function updateOperator(uint256 _tokenId, address _operator) external;
+
+    function getNode(uint256 _tokenId) external view returns (Node memory);
+
+    function getNodeByOperator(address _operator) external view returns (Node memory);
 }
