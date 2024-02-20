@@ -57,6 +57,7 @@ contract FleetManager is IFleetManager, Initializable {
     }
 
     function _getOperatorNodeId(address _operator) internal view returns (uint256) {
-        return INodeRegistry(nodeRegistry).getNodeByOperator(_operator).id;
+        (uint256 _nodeId, ) = INodeRegistry(nodeRegistry).getNodeByOperator(_operator);
+        return _nodeId;
     }
 }

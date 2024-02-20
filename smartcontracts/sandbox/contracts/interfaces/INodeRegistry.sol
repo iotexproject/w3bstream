@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 /// @notice Web3stream node registry
 interface INodeRegistry {
     struct Node {
-        uint256 id;
         bool active;
         address operator;
         // add stake field future
@@ -24,5 +23,5 @@ interface INodeRegistry {
 
     function getNode(uint256 _tokenId) external view returns (Node memory);
 
-    function getNodeByOperator(address _operator) external view returns (Node memory);
+    function getNodeByOperator(address _operator) external view returns (uint256 _nodeId, Node memory _node);
 }

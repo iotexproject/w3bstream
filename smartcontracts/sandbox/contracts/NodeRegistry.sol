@@ -21,7 +21,7 @@ contract NodeRegistry is INodeRegistry, ERC721Upgradeable {
         }
 
         ++nextTokenId;
-        _nodes[nextTokenId] = Node(nextTokenId, true, _operator);
+        _nodes[nextTokenId] = Node(true, _operator);
         _operators[_operator] = nextTokenId;
         _safeMint(msg.sender, nextTokenId);
 
@@ -48,11 +48,11 @@ contract NodeRegistry is INodeRegistry, ERC721Upgradeable {
         return _nodes[_tokenId];
     }
 
-    function getNodeByOperator(address _operator) external view override returns (Node memory) {
+    function getNodeByOperator(address _operator) external view override returns (uint256, Node memory) {
         uint256 _tokenId = _operators[_operator];
         if (_tokenId == 0) {
             revert OperatorUnregister();
         }
-        return _nodes[_tokenId];
+        return (_tokenId, _nodes[_tokenId]);
     }
 }
