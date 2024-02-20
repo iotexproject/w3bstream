@@ -1,4 +1,4 @@
-package main
+package constant
 
 const (
 	ChainEndpoint             = "CHAIN_ENDPOINT"

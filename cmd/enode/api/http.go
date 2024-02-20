@@ -6,12 +6,17 @@ import (
 	"strings"
 	"time"
 
+	solanaTypes "github.com/blocto/solana-go-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
+	"github.com/machinefi/sprout/cmd/enode/constant"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
@@ -46,6 +51,19 @@ type queryMessageStateLogResp struct {
 	States    []*stateLog `json:"states"`
 }
 
+type configInfoResp struct {
+	ChainEndpoint          string `json:"chainEndpoint"`
+	HttpServerEndpoint     string `json:"httpServerEndpoint"`
+	DataBaseDSN            string `json:"dataBaseDSN"`
+	BootNodeMultiaddr      string `json:"bootNodeMultiaddr"`
+	IotexChainID           int    `json:"iotexChainID"`
+	ProjectContractAddress string `json:"projectContractAddress"`
+	IPFSEndpoint           string `json:"IPFSEndpoint"`
+	DIDAuthServerEndpoint  string `json:"DIDAuthServerEndpoint"`
+	OperatorIoTeXAddress   string `json:"OperatorIoTeXAddress"`
+	OperatorSolanaAddress  string `json:"operatorSolanaAddress"`
+}
+
 type HttpServer struct {
 	engine         *gin.Engine
 	pg             *persistence.Postgres
@@ -64,6 +82,7 @@ func NewHttpServer(pg *persistence.Postgres, didAuthServer string, projectManage
 	s.engine.POST("/message", s.handleMessage)
 	s.engine.GET("/message/:id", s.queryStateLogByID)
 	s.engine.POST("/sign_credential", s.issueJWTCredential)
+	s.engine.GET("/config", s.getConfigInfo)
 
 	return s
 }
@@ -186,4 +205,34 @@ func (s *HttpServer) issueJWTCredential(c *gin.Context) {
 
 	c.JSON(http.StatusOK, rsp)
 	return
+}
+
+func (s *HttpServer) getConfigInfo(c *gin.Context) {
+	configInfo := &configInfoResp{
+		ChainEndpoint:          viper.GetString(constant.ChainEndpoint),
+		HttpServerEndpoint:     viper.GetString(constant.HttpServiceEndpoint),
+		DataBaseDSN:            viper.GetString(constant.DatabaseDSN),
+		BootNodeMultiaddr:      viper.GetString(constant.BootNodeMultiaddr),
+		IotexChainID:           viper.GetInt(constant.IotexChainID),
+		ProjectContractAddress: viper.GetString(constant.ProjectContractAddress),
+		IPFSEndpoint:           viper.GetString(constant.IPFSEndpoint),
+		DIDAuthServerEndpoint:  viper.GetString(constant.DIDAuthServerEndpoint),
+	}
+
+	if len(viper.GetString(constant.OperatorPrivateKey)) > 0 {
+		pk := crypto.ToECDSAUnsafe(common.FromHex(viper.GetString(constant.OperatorPrivateKey)))
+		sender := crypto.PubkeyToAddress(pk.PublicKey)
+		configInfo.OperatorIoTeXAddress = sender.String()
+	}
+
+	if len(viper.GetString(constant.OperatorPrivateKeyED25519)) > 0 {
+		wallet, err := solanaTypes.AccountFromHex(viper.GetString(constant.OperatorPrivateKeyED25519))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, newErrResp(err))
+			return
+		}
+		configInfo.OperatorSolanaAddress = wallet.PublicKey.String()
+	}
+
+	c.JSON(http.StatusOK, configInfo)
 }
