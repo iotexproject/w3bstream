@@ -8,6 +8,7 @@ import { registerOperator, registerProject } from './helpers';
 
 describe('W3bstreamRouter', function () {
   const PROJECT_1_ID = 1;
+  const NODE_ID_1 = 1;
 
   describe('data submission', function () {
     let router: W3bstreamRouter;
@@ -16,12 +17,12 @@ describe('W3bstreamRouter', function () {
     let receiver: WSReceiver;
 
     beforeEach(async function () {
-      const [projectOwner, profile, node, rewards] = await ethers.getSigners();
+      const [projectOwner, node, operator] = await ethers.getSigners();
 
       // 1. deploy operator registry and fleet manager (once)
       fleet = await loadFixture(deployFleetManager);
       // 2. register operator (each new operator) from Profile account
-      await registerOperator(await fleet.operatorRegistry(), profile, node, rewards);
+      await registerOperator(await fleet.nodeRegistry(), node, operator);
       // 3. deploy device registry and WSreceiver (each depin project)
       receiver = await loadFixture(deployWSReceiver);
       const deviceRegistry = await receiver.deviceNFTRegistry();
@@ -38,7 +39,7 @@ describe('W3bstreamRouter', function () {
         '0x91f11349770aadcc135213916bf429e39f7419b25d5fe6a2623115b35b381389',
       );
       // 6. allow operator in fleet manager, from ProjectOwner account
-      await fleet.connect(projectOwner).allow(PROJECT_1_ID, profile.address);
+      await fleet.connect(projectOwner).allow(PROJECT_1_ID, NODE_ID_1);
       // 7. deploy and initialize WSRouter
       router = await loadFixture(deployW3bstreamRouter);
       projectRegistry = await ethers.getContractAt('ProjectRegistrar', projectRegistryAddr);
