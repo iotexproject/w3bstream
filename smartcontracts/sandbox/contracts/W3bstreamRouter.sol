@@ -5,8 +5,8 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IFleetManager} from "./interfaces/IFleetManager.sol";
-import {IWSRouter} from "./interfaces/IRouter.sol";
-import {IWSReceiver} from "./interfaces/IReceiver.sol";
+import {IWSRouter} from "./interfaces/IWSRouter.sol";
+import {IWSReceiver} from "./interfaces/IWSReceiver.sol";
 
 contract W3bstreamRouter is IWSRouter, Initializable {
     address public override owner;

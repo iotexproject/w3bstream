@@ -5,20 +5,17 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IFleetManager} from "./interfaces/IFleetManager.sol";
-import {IOperatorRegistry} from "./interfaces/IOperatorRegistry.sol";
+import {INodeRegistry} from "./interfaces/INodeRegistry.sol";
 
 contract FleetManager is IFleetManager, Initializable {
     address public projectRegistry;
-    address public operatorRegistry;
+    address public nodeRegistry;
 
-    mapping(uint256 => address[]) public operators;
+    mapping(uint256 => mapping(address => bool)) internal _nodes;
 
-    event OperatorAdded(uint256 indexed projectId, address indexed operator);
-    event OperatorRemoved(uint256 indexed projectId, address indexed operator);
-
-    function initialize(address _projectRegistry, address _operatorRegistry) public initializer {
+    function initialize(address _projectRegistry, address _nodeRegistry) public initializer {
         projectRegistry = _projectRegistry;
-        operatorRegistry = _operatorRegistry;
+        nodeRegistry = _nodeRegistry;
     }
 
     modifier onlyProjectOwner(uint256 _projectId) {
@@ -28,73 +25,37 @@ contract FleetManager is IFleetManager, Initializable {
         _;
     }
 
-    modifier onlyValidOperator(address _operator) {
-        address node = IOperatorRegistry(operatorRegistry).getOperator(_operator).node;
-        if (node == address(0)) {
-            revert OperatorNotRegistered();
+    function allow(uint256 _projectId, address _node) external override onlyProjectOwner(_projectId) {
+        if (_nodes[_projectId][_node]) {
+            revert NodeAlreadyAllowed();
         }
 
-        // NEED TO CHECK IF THE OPERATOR HAS ENOUGH STAKE
-        _;
+        _nodes[_projectId][_node] = true;
+        emit NodeAllowed(_projectId, _node);
     }
 
-    modifier notAlreadyAllowed(uint256 _projectId, address _operator) {
-        address[] memory projectOperators = operators[_projectId];
-
-        for (uint256 i = 0; i < projectOperators.length; i++) {
-            if (projectOperators[i] == _operator) {
-                revert OperatorAlreadyAllowed();
-            }
-        }
-        _;
-    }
-
-    function allow(
-        uint256 _projectId,
-        address _operator
-    ) external onlyProjectOwner(_projectId) onlyValidOperator(_operator) notAlreadyAllowed(_projectId, _operator) {
-        operators[_projectId].push(_operator);
-        emit OperatorAdded(_projectId, _operator);
-    }
-
-    function disallow(uint256 _projectId, address _operator) external onlyProjectOwner(_projectId) {
-        address[] storage projectOperators = operators[_projectId];
-
-        bool found;
-
-        for (uint256 i = 0; i < projectOperators.length; i++) {
-            if (projectOperators[i] == _operator) {
-                projectOperators[i] = projectOperators[projectOperators.length - 1];
-                projectOperators.pop();
-                found = true;
-                break;
-            }
+    function disallow(uint256 _projectId, address _node) external override onlyProjectOwner(_projectId) {
+        if (!_nodes[_projectId][_node]) {
+            revert NodeNotAllow();
         }
 
-        if (!found) {
-            revert OperatorNotFound();
-        }
-
-        emit OperatorRemoved(_projectId, _operator);
+        emit NodeDisallowed(_projectId, _node);
     }
 
-    function isAllowed(address _node, uint256 _projectId) external view returns (bool) {
+    function isAllowed(address _operator, uint256 _projectId) external view returns (bool) {
+        if (_operator == address(0)) {
+            revert InvalidOperatorAddress();
+        }
+
+        address _node = _getOperatorNode(_operator);
         if (_node == address(0)) {
-            revert InvalidNodeAddress();
+            revert NodeUnregister();
         }
 
-        address[] memory projectOperators = operators[_projectId];
-
-        for (uint256 i = 0; i < projectOperators.length; i++) {
-            if (_getOperatorNode(projectOperators[i]) == _node) {
-                return true;
-            }
-        }
-
-        return false;
+        return _nodes[_projectId][_node];
     }
 
     function _getOperatorNode(address _operator) internal view returns (address) {
-        return IOperatorRegistry(operatorRegistry).getOperator(_operator).node;
+        return INodeRegistry(nodeRegistry).getNode(_operator).node;
     }
 }

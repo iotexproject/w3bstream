@@ -28,6 +28,16 @@ interface IWSRouter {
     /// @return address of fleet manager
     function fleetManager() external view returns (address);
 
+    /// @notice register project data receiver
+    /// @param _projectId project id
+    /// @param _receiver project data reveiver
+    function register(uint256 _projectId, address _receiver) external;
+
+    /// @notice unregister project data receiver
+    /// @param _projectId project id
+    /// @param _receiver project data reveiver
+    function unregister(uint256 _projectId, address _receiver) external;
+
     /// @notice submit data to project
     /// @param _projectId project id
     /// @param _receiver project data reveiver
