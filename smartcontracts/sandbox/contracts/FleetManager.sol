@@ -39,6 +39,7 @@ contract FleetManager is IFleetManager, Initializable {
             revert NodeNotAllow();
         }
 
+        _nodes[_projectId][_nodeId] = false;
         emit NodeDisallowed(_projectId, _nodeId);
     }
 
