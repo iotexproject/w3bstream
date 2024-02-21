@@ -1,5 +1,19 @@
 # DePIN SandBox Contracts
 
+## Design
+
+### NodeRegistry
+
+Register node and operator contract, one node can only register once and will get an NFT, the NFT tokenId is node id. One operator address can only bind to one node, and through operator address can query node info.
+
+### FleetManager
+
+The contract that manage node and project relationship.
+
+### W3bstreamRouter
+
+The router that route node message to project recevier contract.
+
 ## Deployment
 
 ### Testnet
