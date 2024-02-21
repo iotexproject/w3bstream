@@ -16,7 +16,19 @@ func initLogger() {
 	slog.SetDefault(slog.New(h))
 }
 
-func bindEnvConfig() {
+func initConfig() {
+	viper.SetDefault(Risc0ServerEndpoint, "risc0:4001")
+	viper.SetDefault(Halo2ServerEndpoint, "halo2:4001")
+	viper.SetDefault(ZkwasmServerEndpoint, "zkwasm:4001")
+	viper.SetDefault(ChainEndpoint, "https://babel-api.testnet.iotex.io")
+	viper.SetDefault(ProjectContractAddress, "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26")
+	viper.SetDefault(ZNodeContractAddress, "0x45fe67CB442B2e88Ab18229a1992AA134C05c7C9")
+	viper.SetDefault(DatabaseDSN, "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable")
+	viper.SetDefault(BootNodeMultiaddr, "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o")
+	viper.SetDefault(IotexChainID, 2)
+	viper.SetDefault(IPFSEndpoint, "ipfs.mainnet.iotex.io")
+	viper.SetDefault(IoID, "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6SNgp8")
+
 	viper.MustBindEnv(Risc0ServerEndpoint)
 	viper.MustBindEnv(Halo2ServerEndpoint)
 	viper.MustBindEnv(ZkwasmServerEndpoint)
@@ -28,11 +40,6 @@ func bindEnvConfig() {
 	viper.MustBindEnv(IotexChainID)
 	viper.MustBindEnv(IPFSEndpoint)
 	viper.MustBindEnv(IoID)
-
-	viper.BindEnv(OperatorPrivateKey)
-	viper.BindEnv(OperatorPrivateKeyED25519)
-
-	viper.SetDefault(IPFSEndpoint, gDefaultIPFSEndpoint)
 }
 
 // TODO it's risc0 depend tables, will move to risc0

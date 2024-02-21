@@ -17,11 +17,16 @@ import (
 )
 
 type Config struct {
-	Code         string       `json:"code"`
-	CodeExpParam string       `json:"codeExpParam,omitempty"`
-	VMType       types.VM     `json:"vmType"`
-	Output       OutputConfig `json:"output,omitempty"`
-	Version      string       `json:"version"`
+	Code         string            `json:"code"`
+	CodeExpParam string            `json:"codeExpParam,omitempty"`
+	VMType       types.VM          `json:"vmType"`
+	Output       OutputConfig      `json:"output"`
+	Aggregation  AggregationConfig `json:"aggregation"`
+	Version      string            `json:"version"`
+}
+
+type AggregationConfig struct {
+	Amount uint `json:"amount,omitempty"`
 }
 
 type OutputConfig struct {

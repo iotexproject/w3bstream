@@ -1,4 +1,4 @@
-# IoTeX W3bstream (Node Operator Guide)
+# IoTeX W3bstream Sprout Node Operator Guide
 
 W3bstream is a permissionless, decentralized protocol within the IoTeX Network, where node operators contribute computing power to support verifiable computations for blockchain applications. These applications rely on insights from real-world data to trigger their token economies. Anyone can become a W3bstream Node Operator in the IoTeX Network, choosing which dApps to support in processing data and generating ZK (Zero Knowledge) Proofs. This guide covers how to operate a W3bstream node, register it in the IoTeX Network, join specific projects, and claim rewards.
 
@@ -10,24 +10,23 @@ The recommended method to run a W3bstream node is using official Docker images f
 
 - Docker Engine (version 18.02 or higher):
 
-    Check your Docker version:
+  Check your Docker version:
 
   ```bash
-    docker version
-    ```
+  docker version
+  ```
 
-    Installation instructions → <https://docs.docker.com/engine/install/>
+  [Docker installation instructions →](https://docs.docker.com/engine/install/)
 
 - Docker Compose Plugin
   
   Verify Docker Compose installation:
 
   ```bash
-    docker compose version
-    # Install with → sudo apt install docker-compose-plugin
+  docker compose version # Install with → sudo apt install docker-compose-plugin
   ```
 
-- **Blockchain Wallet**: A funded wallet on the target blockchain is required for your W3bstream node to dispatch proofs to blockchain contracts. For IoTeX Testnet, see [create a wallet](https://docs.iotex.io/the-iotex-stack/wallets/metamask), and [claim test IOTX](https://docs.iotex.io/the-iotex-stack/iotx-faucets/testnet-tokens#the-iotex-developer-portal)
+- **Blockchain Wallet**: A funded wallet on the target blockchain is required for your W3bstream node to dispatch proofs to blockchain contracts. For IoTeX Testnet, see [create a wallet](https://docs.iotex.io/the-iotex-stack/wallets/metamask), and claim test IOTX via [faucet](https://docs.iotex.io/the-iotex-stack/iotx-faucets/testnet-tokens#the-iotex-developer-portal).
 
 - **Bonsai API Key**: If you are joining a project requiring RISC0 snark proofs, as the W3bstream protocol currently utilizes the [Bonsai API](https://dev.risczero.com/api/bonsai/), obtain an [API key here](https://docs.google.com/forms/d/e/1FAIpQLSf9mu18V65862GS4PLYd7tFTEKrl90J5GTyzw_d14ASxrruFQ/viewform).
 
@@ -62,18 +61,6 @@ export BONSAI_KEY=${your bonsai key}
 ```
 
 Refer to the W3bstream project documentation for the dApp you are joining to determine if Risc Zero proofs are required.
-
-### Set the projects folder
-
-The default path for the Docker volume, where dApp Projects are downloaded, is `./test/project`. Modify the `PROJECT_FILE_DIRECTORY` in `docker-compose.yaml` to change this path.
-
->When you change this value (or any other value inside `docker-compose.yaml) make sure you [restart](#) your node.
-
-### Join a W3bstream Project
-
-W3bstream-based dApps are registered in a "W3bstream Project Management Contract" on the IoTeX Blockchain with a unique project ID. Configure this project ID in your node [[WIP]](#). The respective W3bstream Project file will automatically download to the node's Projects Folder if missing or outdated [[WIP]](#).
-
->For testing, download project files from GitHub to the default project folder (`./test/project`).
 
 ### Manage the node
 
@@ -113,26 +100,26 @@ ioctl config set wsEndpoint localhost:9000
 
 [More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
 
-Test W3bstream projects are located in the default Projects Folder (`test/project` by default). Each file's name is its unique project ID: 10000, 10001 and 10002, containing a JSON object with the prover's binary code, VM type, and parameters. All three of them compute a range proof using the Risc0, Halo2, and ZkWASM frameworks respectively. 
+Test W3bstream projects are already registered into project contract.
 
 #### Sending messages to the node
 
-Send a message to a RISC0-based test project (ID 10000):
+Send a message to a RISC0-based test project (ID 1):
 
 ```bash
-ioctl ws message send --project-id 10000 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+ioctl ws message send --project-id 1 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
 ```
 
-Send a message to the Halo2-based test project (ID 10001):
+Send a message to the Halo2-based test project (ID 2):
 
 ```bash
-ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
+ioctl ws message send --project-id 2 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
 ```
 
-Send a message to a zkWasm-based test project (ID 10002):
+Send a message to a zkWasm-based test project (ID 3):
 
 ```bash
-ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
+ioctl ws message send --project-id 3 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
 ```
 
 #### Query the status of a proof request

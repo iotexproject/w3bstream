@@ -3,7 +3,6 @@ package task
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -17,11 +16,9 @@ import (
 )
 
 type Processor struct {
-	vmHandler                 *vm.Handler
-	projectManager            *project.Manager
-	operatorPrivateKeyECDSA   string
-	operatorPrivateKeyED25519 string
-	ps                        *p2p.PubSubs
+	vmHandler      *vm.Handler
+	projectManager *project.Manager
+	ps             *p2p.PubSubs
 }
 
 func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
@@ -31,7 +28,7 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	tid := d.Task.ID
 	ms := d.Task.Messages
 	slog.Debug("get new task", "task_id", tid)
-	r.reportSuccess(tid, types.TaskStateFetched, "", topic)
+	r.reportSuccess(tid, types.TaskStateDispatched, "", topic)
 
 	config, err := r.projectManager.Get(ms[0].ProjectID, ms[0].ProjectVersion)
 	if err != nil {
@@ -40,7 +37,6 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 
-	r.reportSuccess(tid, types.TaskStateProving, "", topic)
 	res, err := r.vmHandler.Handle(ms, config.VMType, config.Code, config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed", "error", err)
@@ -49,27 +45,6 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	}
 	slog.Debug("proof result", "proof_result", string(res))
 	r.reportSuccess(tid, types.TaskStateProved, string(res), topic)
-
-	output, err := config.GetOutput(r.operatorPrivateKeyECDSA, r.operatorPrivateKeyED25519)
-	if err != nil {
-		err = errors.Wrap(err, "fail to init output")
-		slog.Error(err.Error())
-		r.reportFail(tid, err, topic)
-		return
-	}
-
-	slog.Debug("output proof", "outputter", fmt.Sprintf("%T", output))
-
-	r.reportSuccess(tid, types.TaskStateOutputting, "output proof", topic)
-	outRes, err := output.Output(d.Task, res)
-	if err != nil {
-		slog.Error(err.Error())
-		r.reportFail(tid, err, topic)
-		return
-	}
-
-	r.reportSuccess(tid, types.TaskStateOutputted, fmt.Sprintf("output result: %s", outRes), topic)
-	slog.Debug("output success", "result", outRes)
 }
 
 func (r *Processor) reportFail(taskID string, err error, topic *pubsub.Topic) {
@@ -112,12 +87,10 @@ func (r *Processor) Run() {
 	// TODO project load & delete
 }
 
-func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr string, iotexChainID int) (*Processor, error) {
+func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, bootNodeMultiaddr string, iotexChainID int) (*Processor, error) {
 	p := &Processor{
-		vmHandler:                 vmHandler,
-		operatorPrivateKeyECDSA:   operatorPrivateKey,
-		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
-		projectManager:            projectManager,
+		vmHandler:      vmHandler,
+		projectManager: projectManager,
 	}
 
 	ps, err := p2p.NewPubSubs(p.handleP2PData, bootNodeMultiaddr, iotexChainID)
@@ -130,7 +103,18 @@ func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, operat
 		if err := ps.Add(id); err != nil {
 			return nil, errors.Wrapf(err, "add project %d pubsub failed", id)
 		}
-		slog.Debug("processor project added", "project_id", id)
+		slog.Debug("processor project added", "projectID", id)
 	}
+
+	notify := projectManager.GetNotify()
+	go func() {
+		for id := range notify {
+			if err := ps.Add(id); err != nil {
+				slog.Error("add project pubsub failed", "projectID", id, "error", err)
+			}
+			slog.Debug("processor project added", "projectID", id)
+		}
+	}()
+
 	return p, nil
 }

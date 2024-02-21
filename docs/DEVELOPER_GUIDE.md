@@ -1,4 +1,4 @@
-# IoTeX W3bstream (Developer Guide)
+# IoTeX W3bstream Project Developer Guide
 
 W3bstream significantly enhances scalability and trust for dApps where the token economy depends on verifiable processing of real-world data. By providing a decentralized infrastructure to process raw data and generate custom Zero-Knowledge (ZK) Proofs, W3bstream ensures data authenticity and reliability in dApps' token economies.
 
@@ -6,9 +6,9 @@ W3bstream significantly enhances scalability and trust for dApps where the token
 
 Dapps looking to utilize W3bstream capabilities should:
 
-1. [Create a W3bstream project](create-a-w3bstream-project)
-2. [Test the project](test-your-w3bstream-project)
-3. [Register it on the IoTeX blockchain](register-your-project)
+1. [Create a W3bstream project](#create-a-w3bstream-project)
+2. [Test the project](#test-your-w3bstream-project)
+3. [Register it on the IoTeX blockchain](#register-your-project)
 
 ### Create a W3bstream Project
 
@@ -23,7 +23,7 @@ cd sprout
 
 #### Create a W3bstream Project Using Halo2
 
->For more details on creating Halo2 circuits see the [Halo2 README](./examples/halo2-circuits/README.md).
+>For more details on creating Halo2 circuits see the [Halo2 README](./examples/halo2-circuit/README.md).
 
 Install `wasm-pack`
 
@@ -34,7 +34,7 @@ curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 Write your own circuit following the [halo2 development documentation](https://zcash.github.io/halo2/user/simple-example.html), place it in `src/circuits`, adapt the code corresponding to `TODO` lines in `src/lib.rs` and build the wasm prover with:
 
 ```bash
-cd examples/halo2-circuits/
+cd examples/halo2-circuit/
 wasm-pack build --target nodejs --out-dir pkg
 ```
 
@@ -44,7 +44,7 @@ Generate the W3bstream project file:
 
 ```bash
 # Customize the output project file name "$ID" with a unique number
-ioctl ws code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/$ID"
+ioctl ws code convert -t "halo2" -i "halo2_wasm_bg.wasm" -c "path/$ID"
 ```
 
 Create the blockchain verifier (Solidity)
@@ -53,7 +53,7 @@ target/release/halo2-circuit solidity -f path/filename.sol
 
 #### Create a ZK Circuit Using zkWASM
 
-For more details on zkWASM circuits see the [zkWASM README](./examples/zkwasm-circuits/README.md).
+For more details on zkWASM circuits see the [zkWASM README](./examples/zkwasm-circuit/README.md).
 
 Ensure you have AssemblyScript installed:
 
@@ -64,7 +64,7 @@ npm install -g assemblyscript
 Build the circuit:
 
 ```bash
-cd examples/zkwasm-circuits/
+cd examples/zkwasm-circuit/
 asc src/add.ts -O --noAssert -o zkwasm_demo.wasm
 ```
 
@@ -83,9 +83,9 @@ ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID"`
 
 ##### Using RISC0
 
-More details and options for `Risc0 circuit` are given in [its README](./examples/risc0-circuits/README.md).
+More details and options for `Risc0 circuit` are given in [its README](./examples/risc0-circuit/README.md).
 
-Make sure you have cargo 1.7.0 or higher
+Make sure you have cargo 1.72.0 or higher
 
    ```bash
    cargo version
@@ -102,7 +102,7 @@ Install the rustzero toolchain
 Build the circuit
 
 ```bash
-cd examples/risc0-circuits/
+cd examples/risc0-circuit/
 cargo build --release
 ```
 
@@ -119,6 +119,17 @@ ioctl ws code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"
 ```
 
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs` file.
+
+##### Upload your project to IPFS
+
+```bash
+# set local w3bstream enode as w3bstream endpoint
+ioctl config set wsEndpoint 'localhost:9000'
+# set the default project register contract address
+ioctl config set wsRegisterContract 0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26 
+# use the project config generated above and create project
+ioctl ws project create --project-config-file "path/to/project_config.json"
+```
 
 ### Testing your project
 

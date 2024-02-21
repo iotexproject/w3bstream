@@ -12,12 +12,12 @@ func Test_bindEnvConfig(t *testing.T) {
 	r := require.New(t)
 
 	err := os.Unsetenv(IPFSEndpoint)
-	bindEnvConfig()
+	initConfig()
 	r.NoError(err)
-	r.Equal(viper.Get(IPFSEndpoint), gDefaultIPFSEndpoint)
+	r.Equal(viper.Get(IPFSEndpoint), "ipfs.mainnet.iotex.io")
 
 	err = os.Setenv(IPFSEndpoint, "any")
-	bindEnvConfig()
+	initConfig()
 	r.NoError(err)
 	r.Equal(viper.Get(IPFSEndpoint), "any")
 }

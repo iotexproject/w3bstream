@@ -1,11 +1,18 @@
 # Changelog
 
-## [Unreleased]
+---
+## [0.6.1] - 2024-02-19
 
-### In Process
-- Support DID auth -- `60%` by @saitofun
-- Support project register -- `70%` by @saitofun
-- Support project watcher -- `50%` by @huangzhiran
+### Changed
+- When message have not packed to task, query message will return reveived state
+- Znode will auto join project p2p topic
+
+---
+## [0.6.0] - 2024-02-15
+
+### Added
+- Support project define message aggregation strategy
+- Support did auth token
 
 ---
 ## [0.5.0] - 2023-12-28

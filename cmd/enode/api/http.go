@@ -11,7 +11,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/auth/didvc"
+	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
 )
 
@@ -45,17 +47,18 @@ type queryMessageStateLogResp struct {
 }
 
 type HttpServer struct {
-	engine *gin.Engine
-	pg     *persistence.Postgres
-	// didAuthServer did auth server endpoint
-	didAuthServer string
+	engine         *gin.Engine
+	pg             *persistence.Postgres
+	didAuthServer  string
+	projectManager *project.Manager
 }
 
-func NewHttpServer(pg *persistence.Postgres, didAuthServer string) *HttpServer {
+func NewHttpServer(pg *persistence.Postgres, didAuthServer string, projectManager *project.Manager) *HttpServer {
 	s := &HttpServer{
-		engine:        gin.Default(),
-		pg:            pg,
-		didAuthServer: didAuthServer,
+		engine:         gin.Default(),
+		pg:             pg,
+		didAuthServer:  didAuthServer,
+		projectManager: projectManager,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
@@ -89,19 +92,28 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 	if tok != "" {
 		err := didvc.VerifyJWTCredential(s.didAuthServer, tok)
 		if err != nil {
-			c.String(http.StatusUnauthorized, err.Error())
+			c.JSON(http.StatusUnauthorized, newErrResp(err))
 			return
+		}
+		err = clients.VerifySessionAndProjectPermission(tok, req.ProjectID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, newErrResp(err))
 		}
 	}
 
+	config, err := s.projectManager.Get(req.ProjectID, req.ProjectVersion)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, newErrResp(err))
+		return
+	}
+
 	id := uuid.NewString()
-	slog.Debug("received your message, handling")
 	if err := s.pg.Save(&types.Message{
 		ID:             id,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           req.Data,
-	}); err != nil {
+	}, config); err != nil {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return
 	}
@@ -127,13 +139,27 @@ func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 
 	messageID := c.Param("id")
 
+	ms, err := s.pg.FetchMessage(messageID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, newErrResp(err))
+		return
+	}
+	if len(ms) == 0 {
+		c.JSON(http.StatusOK, &queryMessageStateLogResp{MessageID: messageID})
+		return
+	}
+
 	ls, err := s.pg.FetchStateLog(messageID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, newErrResp(err))
 		return
 	}
 
-	ss := []*stateLog{}
+	ss := []*stateLog{
+		{
+			State: "received",
+			Time:  ms[0].CreatedAt,
+		}}
 	for _, l := range ls {
 		ss = append(ss, &stateLog{
 			State:   l.State.String(),
@@ -142,7 +168,6 @@ func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 		})
 	}
 
-	slog.Debug("received message querying", "message_id", messageID)
 	c.JSON(http.StatusOK, &queryMessageStateLogResp{MessageID: messageID, States: ss})
 }
 

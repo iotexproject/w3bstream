@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/types"
@@ -17,7 +16,7 @@ import (
 
 func main() {
 	initLogger()
-	bindEnvConfig()
+	initConfig()
 	if err := migrateDatabase(); err != nil {
 		log.Fatal(err)
 	}
@@ -30,19 +29,17 @@ func main() {
 		},
 	)
 
-	znodes, err := persistence.NewZNode(viper.GetString(ChainEndpoint), viper.GetString(ZNodeContractAddress))
+	// znodes, err := persistence.NewZNode(viper.GetString(ChainEndpoint), viper.GetString(ZNodeContractAddress))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(IPFSEndpoint))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress),
-		viper.GetString(IPFSEndpoint), znodes.GetAll(), viper.GetString(IoID))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, viper.GetString(OperatorPrivateKey),
-		viper.GetString(OperatorPrivateKeyED25519), viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
+	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
 	if err != nil {
 		log.Fatal(err)
 	}
