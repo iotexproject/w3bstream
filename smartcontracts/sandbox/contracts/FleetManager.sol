@@ -29,6 +29,9 @@ contract FleetManager is IFleetManager, Initializable {
         if (_nodes[_projectId][_nodeId]) {
             revert NodeAlreadyAllowed();
         }
+        if (INodeRegistry(nodeRegistry).getNodeAddress(_nodeId) == address(0)) {
+            revert NodeNotExist();
+        }
 
         _nodes[_projectId][_nodeId] = true;
         emit NodeAllowed(_projectId, _nodeId);

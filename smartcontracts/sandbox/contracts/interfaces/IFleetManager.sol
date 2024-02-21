@@ -20,4 +20,5 @@ interface IFleetManager {
     error NodeNotAllow();
     error NodeUnregister();
     error InvalidOperatorAddress();
+    error NodeNotExist();
 }

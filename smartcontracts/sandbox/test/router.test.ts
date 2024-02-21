@@ -49,11 +49,6 @@ describe('W3bstreamRouter', function () {
     it('works', async function () {
       const [, , node] = await ethers.getSigners();
 
-      const project = await projectRegistry.projects(PROJECT_1_ID);
-
-      // const config = await getConfigByCID(project.uri.replace('ipfs://', ''));
-      // const { id: tunnelId, targetContract: receiverAddr } = config.data.tunnels[0];
-
       await router.register(PROJECT_1_ID, await receiver.getAddress());
 
       await expect(
@@ -67,8 +62,6 @@ describe('W3bstreamRouter', function () {
       )
         .to.emit(router, 'DataReceived')
         .withArgs(node.address, true, '');
-
-      //   expect(await receiver.getBatchHeight(123)).to.eq(1)
     });
   });
 });

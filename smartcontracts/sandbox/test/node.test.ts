@@ -2,14 +2,14 @@ import { expect } from 'chai';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { ethers } from 'hardhat';
 
-import { deployOperatorRegistry } from './deployers';
+import { deployNodeRegistry } from './deployers';
 
 describe('NodeRegistry', function () {
   const TOKEN_ID_1 = 1;
 
   describe('registering new node', function () {
     it('works with a single operator', async function () {
-      const registry = await loadFixture(deployOperatorRegistry);
+      const registry = await loadFixture(deployNodeRegistry);
       const [, node, operator] = await ethers.getSigners();
 
       let firstNode = await registry.getNode(0);
@@ -24,7 +24,7 @@ describe('NodeRegistry', function () {
       expect(firstNode.operator).to.eq(operator.address);
     });
     it('works with multiple operators', async function () {
-      const registry = await loadFixture(deployOperatorRegistry);
+      const registry = await loadFixture(deployNodeRegistry);
       const [, node1, operator1, node2, operator2] = await ethers.getSigners();
 
       await registry.connect(node1).register(operator1.address);
@@ -40,7 +40,7 @@ describe('NodeRegistry', function () {
     });
     it('reverts if sender alerady has a registered operator', async function () {
       const [, node, operator] = await ethers.getSigners();
-      const registry = await loadFixture(deployOperatorRegistry);
+      const registry = await loadFixture(deployNodeRegistry);
       await registry.connect(node).register(operator.address);
 
       await expect(registry.register(operator.address)).to.be.revertedWithCustomError(
@@ -53,7 +53,7 @@ describe('NodeRegistry', function () {
   describe('operator updates', function () {
     describe('updating node address', function () {
       it('works when called by owner', async function () {
-        const registry = await loadFixture(deployOperatorRegistry);
+        const registry = await loadFixture(deployNodeRegistry);
 
         const [, node, operator, operator2] = await ethers.getSigners();
         await registry.connect(node).register(operator.address);
@@ -68,13 +68,13 @@ describe('NodeRegistry', function () {
         expect((await registry.getNode(TOKEN_ID_1)).operator).to.be.eq(operator2.address);
       });
       it('reverts if unexisting operator', async function () {
-        const registry = await loadFixture(deployOperatorRegistry);
+        const registry = await loadFixture(deployNodeRegistry);
         const [, operator, operator2] = await ethers.getSigners();
 
         await expect(registry.updateOperator(TOKEN_ID_1, operator2.address)).to.be.reverted;
       });
       it('reverts if invalid operator address', async function () {
-        const registry = await loadFixture(deployOperatorRegistry);
+        const registry = await loadFixture(deployNodeRegistry);
         const [, node, operator] = await ethers.getSigners();
         await registry.connect(node).register(operator.address);
 
@@ -83,7 +83,7 @@ describe('NodeRegistry', function () {
         ).to.be.revertedWithCustomError(registry, 'InvalidAddress');
       });
       it('reverts if called not by owner', async function () {
-        const registry = await loadFixture(deployOperatorRegistry);
+        const registry = await loadFixture(deployNodeRegistry);
         const [, node, operator] = await ethers.getSigners();
         await registry.connect(node).register(operator.address);
 
@@ -97,13 +97,13 @@ describe('NodeRegistry', function () {
 
   describe.skip('Staking', function () {
     it('should stake', async function () {
-      const registry = loadFixture(deployOperatorRegistry);
+      const registry = loadFixture(deployNodeRegistry);
       // await registry.stake()
     });
   });
   describe.skip('Unstaking', function () {
     it('should unstake', async function () {
-      const registry = loadFixture(deployOperatorRegistry);
+      const registry = loadFixture(deployNodeRegistry);
       // await registry.unstake()
     });
   });
