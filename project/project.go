@@ -30,20 +30,22 @@ type AggregationConfig struct {
 }
 
 type OutputConfig struct {
-	Type types.Output `json:"type"`
+	Type     types.Output   `json:"type"`
+	Ethereum EthereumConfig `json:"ethereum,omitempty"`
+	Solana   SolanaConfig   `json:"solana,omitempty"`
+}
 
-	Ethereum struct {
-		ChainEndpoint   string `json:"chainEndpoint"`
-		ContractAddress string `json:"contractAddress"`
-		ContractMethod  string `json:"contractMethod"`
-		ContractAbiJSON string `json:"contractAbiJSON"`
-	} `json:"ethereum,omitempty"`
+type EthereumConfig struct {
+	ChainEndpoint   string `json:"chainEndpoint"`
+	ContractAddress string `json:"contractAddress"`
+	ContractMethod  string `json:"contractMethod"`
+	ContractAbiJSON string `json:"contractAbiJSON"`
+}
 
-	Solana struct {
-		ChainEndpoint  string `json:"chainEndpoint"`
-		ProgramID      string `json:"programID"`
-		StateAccountPK string `json:"stateAccountPK"`
-	} `json:"solana,omitempty"`
+type SolanaConfig struct {
+	ChainEndpoint  string `json:"chainEndpoint"`
+	ProgramID      string `json:"programID"`
+	StateAccountPK string `json:"stateAccountPK"`
 }
 
 func (c *Config) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
