@@ -3,10 +3,10 @@ pragma solidity ^0.8.19;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract ProjectRegistrar is ERC721 {
+contract ProjectRegistry is ERC721 {
     uint256 internal nextTokenId;
 
-    constructor() ERC721("Test Project Registrar", "") {
+    constructor() ERC721("Test Project Registry", "") {
         nextTokenId = 0;
     }
 

@@ -3,7 +3,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { ethers } from 'hardhat';
 
 import { deployFleetManager, deployW3bstreamRouter } from './deployers';
-import { FleetManager, ProjectRegistrar, W3bstreamRouter, WSReceiver } from '../typechain-types';
+import { FleetManager, ProjectRegistry, W3bstreamRouter, WSReceiver } from '../typechain-types';
 import { registerOperator, registerProject } from './helpers';
 
 describe('W3bstreamRouter', function () {
@@ -12,7 +12,7 @@ describe('W3bstreamRouter', function () {
 
   describe('data submission', function () {
     let router: W3bstreamRouter;
-    let projectRegistry: ProjectRegistrar;
+    let projectRegistry: ProjectRegistry;
     let fleet: FleetManager;
     let receiver: WSReceiver;
 
@@ -42,7 +42,7 @@ describe('W3bstreamRouter', function () {
       await fleet.connect(projectOwner).allow(PROJECT_1_ID, NODE_ID_1);
       // 7. deploy and initialize WSRouter
       router = await loadFixture(deployW3bstreamRouter);
-      projectRegistry = await ethers.getContractAt('ProjectRegistrar', projectRegistryAddr);
+      projectRegistry = await ethers.getContractAt('ProjectRegistry', projectRegistryAddr);
       await router.initialize(await projectRegistry.getAddress(), await fleet.getAddress());
     });
 
@@ -67,7 +67,7 @@ describe('W3bstreamRouter', function () {
 });
 
 const deployDeviceRegistry = async () => {
-  const DeviceRegistry = await ethers.getContractFactory('ProjectRegistrar');
+  const DeviceRegistry = await ethers.getContractFactory('ProjectRegistry');
   return DeviceRegistry.deploy();
 };
 

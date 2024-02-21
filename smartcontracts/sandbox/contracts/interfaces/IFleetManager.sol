@@ -6,6 +6,10 @@ interface IFleetManager {
     event NodeAllowed(uint256 indexed projectId, uint256 indexed nodeId);
     event NodeDisallowed(uint256 indexed projectId, uint256 indexed nodeId);
 
+    function projectRegistry() external view returns (address);
+
+    function nodeRegistry() external view returns (address);
+
     function allow(uint256 _projectId, uint256 _nodeId) external;
 
     function disallow(uint256 _projectId, uint256 _nodeId) external;

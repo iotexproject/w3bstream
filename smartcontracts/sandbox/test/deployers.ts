@@ -1,20 +1,20 @@
 import { ethers } from 'hardhat';
 
 export async function deployFleetManager() {
-  const projectRegistrar = await deployProjectRegistrar();
-  const projectRegistrarAddress = await projectRegistrar.getAddress();
+  const projectRegistry = await deployProjectRegistry();
+  const projectRegistryAddress = await projectRegistry.getAddress();
 
   const nodeRegistry = await deployNodeRegistry();
   const nodeRegistryAddress = await nodeRegistry.getAddress();
 
   const factory = await ethers.getContractFactory('FleetManager');
   const fleet = await factory.deploy();
-  await fleet.initialize(projectRegistrarAddress, nodeRegistryAddress);
+  await fleet.initialize(projectRegistryAddress, nodeRegistryAddress);
   return fleet;
 }
 
-export async function deployProjectRegistrar() {
-  const factory = await ethers.getContractFactory('ProjectRegistrar');
+export async function deployProjectRegistry() {
+  const factory = await ethers.getContractFactory('ProjectRegistry');
   return factory.deploy();
 }
 

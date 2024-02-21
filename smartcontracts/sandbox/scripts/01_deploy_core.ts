@@ -6,8 +6,14 @@ async function main() {
     return;
   }
 
+  const NodeRegistry = await ethers.getContractFactory('NodeRegistry');
+  const nodeRegistry = await upgrades.deployProxy(NodeRegistry, [], {
+    initializer: 'initialize',
+  });
+  console.log(`NodeRegistry deployed to ${nodeRegistry.target}`);
+
   const FleetManager = await ethers.getContractFactory('FleetManager');
-  const fleetManager = await upgrades.deployProxy(FleetManager, [], {
+  const fleetManager = await upgrades.deployProxy(FleetManager, [process.env.PROJECT_REGISTRY, nodeRegistry.target], {
     initializer: 'initialize',
   });
   console.log(`FleetManager deployed to ${fleetManager.target}`);
