@@ -17,14 +17,14 @@ func CreateSession(vctoken string, clientdid string) error {
 	return nil
 }
 
-func VerifySessionAndProjectPermission(vctoken string, projectID uint64) error {
+func VerifySessionAndProjectPermission(vctoken string, projectID uint64) (string, error) {
 	v, exists := sessions.Load(vctoken)
 	if !exists || v == nil {
-		return errors.Errorf("invalid token or expired")
+		return "", errors.Errorf("invalid token or expired")
 	}
 
 	if _, exists = v.(*Client).projects[projectID]; !exists {
-		return errors.Errorf("project permission denied")
+		return "", errors.Errorf("project permission denied")
 	}
-	return nil
+	return v.(*Client).ClientDID, nil
 }

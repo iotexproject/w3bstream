@@ -17,6 +17,7 @@ import (
 type message struct {
 	gorm.Model
 	MessageID      string `gorm:"index:message_id,not null"`
+	ClientDID      string `gorm:"column:client_did;index:message_fetch,not null,default:''"`
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
 	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
 	Data           string `gorm:"size:4096"`
@@ -27,7 +28,6 @@ type task struct {
 	gorm.Model
 	TaskID    string          `gorm:"index:task_id,not null"`
 	MessageID string          `gorm:"index:message_id,not null"`
-	ProjectID uint64          `gorm:"index:task_fetch,not null"`
 	State     types.TaskState `gorm:"index:task_fetch,not null"`
 }
 
@@ -45,6 +45,7 @@ type Postgres struct {
 func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 	m := message{
 		MessageID:      msg.ID,
+		ClientDID:      msg.ClientDID,
 		ProjectID:      msg.ProjectID,
 		ProjectVersion: msg.ProjectVersion,
 		Data:           msg.Data,
@@ -53,7 +54,6 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 	ts := []task{{
 		TaskID:    tid,
 		MessageID: msg.ID,
-		ProjectID: msg.ProjectID,
 		State:     types.TaskStatePacked,
 	}}
 
@@ -65,7 +65,12 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 	return p.db.Transaction(func(tx *gorm.DB) error {
 		if a := config.Aggregation.Amount; a > 1 {
 			ms := []*message{}
-			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Order("created_at").Where("project_id = ? AND project_version = ? AND task_id = ?", msg.ProjectID, msg.ProjectVersion, "").Limit(int(a - 1)).Find(&ms).Error; err != nil {
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+				Order("created_at").
+				Where(
+					"project_id = ? AND project_version = ? AND client_did = ? AND task_id = ?",
+					msg.ProjectID, msg.ProjectVersion, msg.ClientDID, "",
+				).Limit(int(a - 1)).Find(&ms).Error; err != nil {
 				return errors.Wrap(err, "fetch message failed")
 			}
 			if len(ms) < int(a-1) {
@@ -80,7 +85,6 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 				ts = append(ts, task{
 					TaskID:    tid,
 					MessageID: m.MessageID,
-					ProjectID: m.ProjectID,
 					State:     types.TaskStatePacked,
 				})
 			}
@@ -138,6 +142,7 @@ func (p *Postgres) FetchByID(taskID string) (*types.Task, error) {
 	for _, m := range ms {
 		tms = append(tms, &types.Message{
 			ID:             m.MessageID,
+			ClientDID:      m.ClientDID,
 			ProjectID:      m.ProjectID,
 			ProjectVersion: m.ProjectVersion,
 			Data:           m.Data,
@@ -160,6 +165,7 @@ func (p *Postgres) FetchMessage(messageID string) ([]*types.MessageWithTime, err
 		tms = append(tms, &types.MessageWithTime{
 			Message: types.Message{
 				ID:             m.MessageID,
+				ClientDID:      m.ClientDID,
 				ProjectID:      m.ProjectID,
 				ProjectVersion: m.ProjectVersion,
 				Data:           m.Data,
