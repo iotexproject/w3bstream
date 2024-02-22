@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"runtime"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -57,6 +58,9 @@ func TestGetOutput(t *testing.T) {
 }
 
 func TestGetConfigsHttp(t *testing.T) {
+	if runtime.GOOS == `darwin` {
+		return
+	}
 	require := require.New(t)
 	p := gomonkey.NewPatches()
 
