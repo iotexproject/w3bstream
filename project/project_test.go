@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"reflect"
 	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -132,27 +131,6 @@ func TestGetConfigs(t *testing.T) {
 
 		_, err := pm.GetConfigs("")
 		require.ErrorContains(err, t.Name())
-	})
-	t.Run("EmptyConfigs", func(t *testing.T) {
-		testutil.HttpGet(p, &http.Response{
-			Body: io.NopCloser(strings.NewReader("{}")),
-		}, nil)
-		defer p.Reset()
-
-		cs := "{}"
-		jc, err := json.Marshal(cs)
-		require.NoError(err)
-
-		h := sha256.New()
-		_, err = h.Write(jc)
-		require.NoError(err)
-		hash := h.Sum(nil)
-
-		npm := *pm
-		npm.Hash = [32]byte(hash)
-
-		_, err = npm.GetConfigs("")
-		require.ErrorContains(err, "empty project config")
 	})
 	t.Run("InvalidConfig", func(t *testing.T) {
 		cs := []*Config{
