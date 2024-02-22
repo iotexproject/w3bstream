@@ -139,7 +139,10 @@ func TestGetConfigs(t *testing.T) {
 		})
 		defer p.Reset()
 
-		_, err := pm.GetConfigs("")
+		npm := *pm
+		npm.Uri = "ipfs://test.com/123"
+
+		_, err := npm.GetConfigs("")
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("DefaultFailed", func(t *testing.T) {
