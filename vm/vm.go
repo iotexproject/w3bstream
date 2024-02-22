@@ -2,6 +2,7 @@ package vm
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 
@@ -36,7 +37,11 @@ func (r *Handler) Handle(msgs []*types.Message, vmtype types.VM, code string, ex
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute instance")
 	}
-	return res, nil
+	raw, err := hex.DecodeString(string(res))
+	if err != nil {
+		return nil, errors.Wrap(err, "hex decode proof failed")
+	}
+	return raw, nil
 }
 
 func NewHandler(vmServerEndpoints map[types.VM]string) *Handler {

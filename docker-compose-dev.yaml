@@ -18,7 +18,7 @@ services:
       - 4003:4001
 
   risc0:
-    image: wangweixiaohao2944/risc0server:v0.8.1.rc5
+    image: wangweixiaohao2944/risc0server:v0.8.1.rc6
     depends_on:
       - "postgres"
     container_name: risc0-service
