@@ -134,7 +134,7 @@ func TestGetConfigs(t *testing.T) {
 	})
 	t.Run("GetIPFSFailed", func(t *testing.T) {
 		i := &ipfs.IPFS{}
-		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(*ipfs.IPFS, string) ([]byte, error) {
 			return nil, errors.New(t.Name())
 		})
 		defer p.Reset()
@@ -144,7 +144,7 @@ func TestGetConfigs(t *testing.T) {
 	})
 	t.Run("DefaultFailed", func(t *testing.T) {
 		i := &ipfs.IPFS{}
-		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(*ipfs.IPFS, string) ([]byte, error) {
 			return nil, errors.New(t.Name())
 		})
 		defer p.Reset()
@@ -168,7 +168,7 @@ func TestGetConfigs(t *testing.T) {
 	})
 	t.Run("IPFSSuccess", func(t *testing.T) {
 		i := &ipfs.IPFS{}
-		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(*ipfs.IPFS, string) ([]byte, error) {
 			return jc, nil
 		})
 		defer p.Reset()
@@ -180,7 +180,7 @@ func TestGetConfigs(t *testing.T) {
 	})
 	t.Run("DefaultSuccess", func(t *testing.T) {
 		i := &ipfs.IPFS{}
-		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(*ipfs.IPFS, string) ([]byte, error) {
 			return jc, nil
 		})
 		defer p.Reset()
