@@ -25,16 +25,14 @@ func TestIssueCredential(t *testing.T) {
 	t.Run("FailedToMarshalRequest", func(t *testing.T) {
 		p = testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
 		_, err := didvc.IssueCredential("any", req, true)
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 	})
 	p = testutil.JsonMarshal(p, []byte("any"), nil)
 
 	t.Run("FailedToDoPost", func(t *testing.T) {
 		p = testutil.HttpPost(p, &http.Response{}, errors.New(t.Name()))
 		_, err := didvc.IssueCredential("any", req, true)
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 		r.NotNil(req.Options)
 		r.Equal(req.Options.ProofFormat, didvc.ProofFormatJWT)
 	})
@@ -43,16 +41,14 @@ func TestIssueCredential(t *testing.T) {
 	t.Run("FailedToReadHttpBody", func(t *testing.T) {
 		p = testutil.IoReadAll(p, []byte("any"), errors.New(t.Name()))
 		_, err := didvc.IssueCredential("any", req, true)
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 	})
 	p = testutil.IoReadAll(p, []byte("any"), nil)
 
 	t.Run("FailedToParseHttpBody", func(t *testing.T) {
 		p = testutil.JsonUnmarshal(p, errors.New(t.Name()))
 		_, err := didvc.IssueCredential("any", req, true)
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 	})
 	p = testutil.JsonUnmarshal(p, nil)
 
@@ -62,8 +58,7 @@ func TestIssueCredential(t *testing.T) {
 	t.Run("FailedToCreateClientSession", func(t *testing.T) {
 		p = testutil.ClientsCreateSession(p, errors.New(t.Name()))
 		_, err := didvc.IssueCredential("any", req, true)
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 	})
 	p = testutil.ClientsCreateSession(p, nil)
 	_, err := didvc.IssueCredential("any", req, true)

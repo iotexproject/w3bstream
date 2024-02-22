@@ -12,5 +12,14 @@ coverage:
     50..100
 ## ignore packages
 ignore:
+  - scripts
+  - examples
+  # generated proto
+  - vm/proto
+  # generated contracts
+  - project/contracts
+  - smartcontracts
+  - persistence/znode
+  # test utils
   - test
   - testutil

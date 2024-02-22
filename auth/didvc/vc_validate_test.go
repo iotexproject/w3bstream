@@ -24,16 +24,14 @@ func TestVerifyJWTCredential(t *testing.T) {
 	t.Run("FailedToMarshalRequest", func(t *testing.T) {
 		p = testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
 		err := didvc.VerifyJWTCredential("any", "any")
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 	})
 	p = testutil.JsonMarshal(p, []byte("any"), nil)
 
 	t.Run("FailedToDoPost", func(t *testing.T) {
 		p = testutil.HttpPost(p, nil, errors.New(t.Name()))
 		err := didvc.VerifyJWTCredential("any", "any")
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 	})
 
 	t.Run("UnexpectedRespondedStatus", func(t *testing.T) {
@@ -52,16 +50,14 @@ func TestVerifyJWTCredential(t *testing.T) {
 	t.Run("FailedToReadHttpBody", func(t *testing.T) {
 		p = testutil.IoReadAll(p, []byte("any"), errors.New(t.Name()))
 		err := didvc.VerifyJWTCredential("any", "any")
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 	})
 	p = testutil.IoReadAll(p, []byte("any"), nil)
 
 	t.Run("FailedToParseHttpBody", func(t *testing.T) {
 		p = testutil.JsonUnmarshal(p, errors.New(t.Name()))
 		err := didvc.VerifyJWTCredential("any", "any")
-		r.Error(err)
-		r.Contains(err.Error(), t.Name())
+		r.ErrorContains(err, t.Name())
 	})
 	p = testutil.JsonUnmarshal(p, nil)
 	r.NoError(didvc.VerifyJWTCredential("any", "any"))
