@@ -139,7 +139,19 @@ func TestGetConfigs(t *testing.T) {
 		}, nil)
 		defer p.Reset()
 
-		_, err := pm.GetConfigs("")
+		cs := "{}"
+		jc, err := json.Marshal(cs)
+		require.NoError(err)
+
+		h := sha256.New()
+		_, err = h.Write(jc)
+		require.NoError(err)
+		hash := h.Sum(nil)
+
+		npm := *pm
+		npm.Hash = [32]byte(hash)
+
+		_, err = npm.GetConfigs("")
 		require.ErrorContains(err, "empty project config")
 	})
 	t.Run("InvalidConfig", func(t *testing.T) {
