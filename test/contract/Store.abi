@@ -1,6 +1,5 @@
 [
 	{
-		"constant": true,
 		"inputs": [],
 		"name": "getProof",
 		"outputs": [
@@ -10,12 +9,10 @@
 				"type": "bytes"
 			}
 		],
-		"payable": false,
 		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"constant": false,
 		"inputs": [
 			{
 				"internalType": "bytes",
@@ -25,7 +22,29 @@
 		],
 		"name": "setProof",
 		"outputs": [],
-		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "proof_snark_seal",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "proof_snark_post_state_digest",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "proof_snark_journal",
+				"type": "bytes"
+			}
+		],
+		"name": "setProofSnark",
+		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
