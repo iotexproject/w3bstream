@@ -6,12 +6,15 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/machinefi/sprout/testutil"
 	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/utils/ipfs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -57,7 +60,7 @@ func TestGetOutput(t *testing.T) {
 	})
 }
 
-func TestGetConfigsHttp(t *testing.T) {
+func TestGetConfigs(t *testing.T) {
 	if runtime.GOOS == `darwin` {
 		return
 	}
@@ -120,13 +123,101 @@ func TestGetConfigsHttp(t *testing.T) {
 		_, err := npm.GetConfigs("")
 		require.ErrorContains(err, "validate project config hash failed")
 	})
-	t.Run("Success", func(t *testing.T) {
+	t.Run("JsonUnmarshalFailed", func(t *testing.T) {
+		testutil.HttpGet(p, &http.Response{
+			Body: io.NopCloser(bytes.NewReader(jc)),
+		}, nil)
+		testutil.JsonUnmarshal(p, errors.New(t.Name()))
+		defer p.Reset()
+
+		_, err := pm.GetConfigs("")
+		require.ErrorContains(err, t.Name())
+	})
+	t.Run("EmptyConfigs", func(t *testing.T) {
+		testutil.HttpGet(p, &http.Response{
+			Body: io.NopCloser(strings.NewReader("{}")),
+		}, nil)
+		defer p.Reset()
+
+		_, err := pm.GetConfigs("")
+		require.ErrorContains(err, "empty project config")
+	})
+	t.Run("InvalidConfig", func(t *testing.T) {
+		cs := []*Config{
+			{
+				Code:    "",
+				VMType:  types.VMHalo2,
+				Version: "0.1",
+			},
+		}
+		jc, err := json.Marshal(cs)
+		require.NoError(err)
+
+		testutil.HttpGet(p, &http.Response{
+			Body: io.NopCloser(bytes.NewReader(jc)),
+		}, nil)
+		defer p.Reset()
+
+		_, err = pm.GetConfigs("")
+		require.ErrorContains(err, "invalid project config")
+	})
+	t.Run("GetIPFSFailed", func(t *testing.T) {
+		i := &ipfs.IPFS{}
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
+			return nil, errors.New(t.Name())
+		})
+		defer p.Reset()
+
+		_, err := pm.GetConfigs("")
+		require.ErrorContains(err, t.Name())
+	})
+	t.Run("DefaultFailed", func(t *testing.T) {
+		i := &ipfs.IPFS{}
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
+			return nil, errors.New(t.Name())
+		})
+		defer p.Reset()
+
+		npm := *pm
+		npm.Uri = "test.com/123"
+
+		_, err := npm.GetConfigs("")
+		require.ErrorContains(err, t.Name())
+	})
+	t.Run("HTTPSuccess", func(t *testing.T) {
 		testutil.HttpGet(p, &http.Response{
 			Body: io.NopCloser(bytes.NewReader(jc)),
 		}, nil)
 		defer p.Reset()
 
 		resultConfigs, err := pm.GetConfigs("")
+		require.NoError(err)
+		require.Equal(len(resultConfigs), len(cs))
+		require.Equal(resultConfigs[0].Code, "i am code")
+	})
+	t.Run("IPFSSuccess", func(t *testing.T) {
+		i := &ipfs.IPFS{}
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
+			return jc, nil
+		})
+		defer p.Reset()
+
+		resultConfigs, err := pm.GetConfigs("")
+		require.NoError(err)
+		require.Equal(len(resultConfigs), len(cs))
+		require.Equal(resultConfigs[0].Code, "i am code")
+	})
+	t.Run("DefaultSuccess", func(t *testing.T) {
+		i := &ipfs.IPFS{}
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
+			return jc, nil
+		})
+		defer p.Reset()
+
+		npm := *pm
+		npm.Uri = "test.com/123"
+
+		resultConfigs, err := npm.GetConfigs("")
 		require.NoError(err)
 		require.Equal(len(resultConfigs), len(cs))
 		require.Equal(resultConfigs[0].Code, "i am code")
