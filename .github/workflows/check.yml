@@ -1,15 +1,17 @@
 name: pr_check
 
 on:
+  push:
+    branches: [ "develop", "pull-request" ]
   pull_request:
-    branches: ["main"]
-    
+    branches: [ "develop", "pull-request" ]
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ ubuntu-latest ]
     permissions:
       contents: read
       packages: write
@@ -26,5 +28,11 @@ jobs:
         with:
           go-version: 1.21
 
-      - name: Test
-        run: go test ./... 
+      - name: Run Unit tests.
+        run: go test -gcflags=all=-l ./... -coverprofile cover.out -covermode=atomic
+
+      - name: Upload Coverage report to CodeCov
+        uses: codecov/codecov-action@v1.0.0
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          file: ./cover.out

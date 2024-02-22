@@ -3,8 +3,9 @@ package project
 import (
 	"testing"
 
-	"github.com/machinefi/sprout/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/machinefi/sprout/types"
 )
 
 func TestGetOutputDefault(t *testing.T) {
