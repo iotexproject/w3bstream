@@ -2,7 +2,6 @@ package output
 
 import (
 	"context"
-	"encoding/hex"
 	"log/slog"
 	"math/big"
 	"strings"
@@ -36,31 +35,40 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 	if !ok {
 		return "", errors.Errorf("contract abi miss the contract method %s", e.contractMethod)
 	}
+
 	params := []interface{}{}
 	for _, a := range method.Inputs {
-		if a.Name == "proof" {
-			p, err := hex.DecodeString(string(proof))
-			if err != nil {
-				return "", errors.Wrap(err, "proof decode failed")
-			}
-			params = append(params, p)
-			continue
-		}
-		value := gjson.Get(m.Data, a.Name)
-		param := value.String()
-		if param == "" {
-			return "", errors.Errorf("miss param %s for contract abi", a.Name)
-		}
+		switch a.Name {
+		case "proof":
+			params = append(params, proof)
 
-		switch a.Type.String() {
-		case "address":
-			params = append(params, common.HexToAddress(param))
-		case "uint256":
-			i := new(big.Int)
-			i.SetString(strings.TrimPrefix(param, "0x"), 16)
-			params = append(params, i)
+		case "proof_snark_seal", "proof_snark_post_state_digest", "proof_snark_journal":
+			name := strings.TrimPrefix(a.Name, "proof_snark_")
+			if name == "seal" {
+				name = "snark"
+			}
+			value := gjson.GetBytes(proof, "Snark."+name).String()
+			if value == "" {
+				return "", errors.Errorf("miss param %s for contract abi", a.Name)
+			}
+			params = append(params, []byte(value))
+
 		default:
-			params = append(params, param)
+			value := gjson.Get(m.Data, a.Name)
+			param := value.String()
+			if param == "" {
+				return "", errors.Errorf("miss param %s for contract abi", a.Name)
+			}
+			switch a.Type.String() {
+			case "address":
+				params = append(params, common.HexToAddress(param))
+			case "uint256":
+				i := new(big.Int)
+				i.SetString(strings.TrimPrefix(param, "0x"), 16)
+				params = append(params, i)
+			default:
+				params = append(params, param)
+			}
 		}
 	}
 	data, err := e.contractABI.Pack(e.contractMethod, params...)
