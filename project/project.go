@@ -81,7 +81,7 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 	case "http", "https":
 		resp, _err := http.Get(m.Uri)
 		if _err != nil {
-			return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
+			return nil, errors.Wrapf(_err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 		}
 		defer resp.Body.Close()
 		// TODO network error should try again
@@ -109,7 +109,7 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 		return nil, errors.Wrap(err, "generate project config hash failed")
 	}
 	if !bytes.Equal(h.Sum(nil), m.Hash[:]) {
-		return nil, errors.Wrap(err, "validate project config hash failed")
+		return nil, errors.New("validate project config hash failed")
 	}
 
 	cs := []*Config{}
