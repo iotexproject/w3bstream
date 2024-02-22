@@ -1,11 +1,15 @@
 package project
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"io"
+	"net/http"
 	"testing"
 
-	"github.com/jarcoal/httpmock"
+	"github.com/agiledragon/gomonkey/v2"
+	"github.com/machinefi/sprout/testutil"
 	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -14,12 +18,12 @@ import (
 func TestGetOutput(t *testing.T) {
 	require := require.New(t)
 
-	t.Run("default", func(t *testing.T) {
+	t.Run("Default", func(t *testing.T) {
 		c := &Config{}
 		_, err := c.GetOutput("", "")
 		require.NoError(err)
 	})
-	t.Run("stdout", func(t *testing.T) {
+	t.Run("Stdout", func(t *testing.T) {
 		c := &Config{
 			Output: OutputConfig{
 				Type: types.OutputStdout,
@@ -28,7 +32,7 @@ func TestGetOutput(t *testing.T) {
 		_, err := c.GetOutput("", "")
 		require.NoError(err)
 	})
-	t.Run("ethereum", func(t *testing.T) {
+	t.Run("Ethereum", func(t *testing.T) {
 		c := &Config{
 			Output: OutputConfig{
 				Type: types.OutputEthereumContract,
@@ -40,7 +44,7 @@ func TestGetOutput(t *testing.T) {
 		_, err := c.GetOutput("c47bbade736b0f82788aa6eaa06140cdf41a544707edef944299642e0d708cab", "")
 		require.NoError(err)
 	})
-	t.Run("solana", func(t *testing.T) {
+	t.Run("Solana", func(t *testing.T) {
 		c := &Config{
 			Output: OutputConfig{
 				Type:   types.OutputSolanaProgram,
@@ -54,6 +58,7 @@ func TestGetOutput(t *testing.T) {
 
 func TestGetConfigsHttp(t *testing.T) {
 	require := require.New(t)
+	p := gomonkey.NewPatches()
 
 	cs := []*Config{
 		{
@@ -76,32 +81,42 @@ func TestGetConfigsHttp(t *testing.T) {
 		Hash:      [32]byte(hash),
 	}
 
-	t.Run("success", func(t *testing.T) {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-		httpmock.RegisterResponder("GET", "https://localhost/project_config", httpmock.NewBytesResponder(200, jc))
-
-		resultConfigs, err := pm.GetConfigs("")
-		require.NoError(err)
-		require.Equal(len(resultConfigs), len(cs))
-		require.Equal(resultConfigs[0].Code, "i am code")
-	})
-	t.Run("http error", func(t *testing.T) {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-		httpmock.RegisterResponder("GET", "https://localhost/project_config", httpmock.NewErrorResponder(errors.New("http error")))
-
+	t.Run("InvalidUri", func(t *testing.T) {
+		testutil.URLParse(p, nil, errors.New(t.Name()))
 		_, err := pm.GetConfigs("")
-		require.ErrorContains(err, "http error")
+		require.ErrorContains(err, t.Name())
 	})
-	t.Run("hash mismatch", func(t *testing.T) {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-		httpmock.RegisterResponder("GET", "https://localhost/project_config", httpmock.NewBytesResponder(200, jc))
+	t.Run("GetHTTPFailed", func(t *testing.T) {
+		testutil.HttpGet(p, nil, errors.New(t.Name()))
+		_, err := pm.GetConfigs("")
+		require.ErrorContains(err, t.Name())
+	})
+	t.Run("IOReadAllFailed", func(t *testing.T) {
+		testutil.HttpGet(p, &http.Response{
+			Body: io.NopCloser(bytes.NewReader(jc)),
+		}, nil)
+		testutil.IoReadAll(p, nil, errors.New(t.Name()))
+		_, err := pm.GetConfigs("")
+		require.ErrorContains(err, t.Name())
+	})
+	t.Run("HashMismatch", func(t *testing.T) {
+		testutil.HttpGet(p, &http.Response{
+			Body: io.NopCloser(bytes.NewReader(jc)),
+		}, nil)
 
 		npm := *pm
 		npm.Hash = [32]byte{}
 		_, err := npm.GetConfigs("")
 		require.ErrorContains(err, "validate project config hash failed")
+	})
+	t.Run("Success", func(t *testing.T) {
+		testutil.HttpGet(p, &http.Response{
+			Body: io.NopCloser(bytes.NewReader(jc)),
+		}, nil)
+
+		resultConfigs, err := pm.GetConfigs("")
+		require.NoError(err)
+		require.Equal(len(resultConfigs), len(cs))
+		require.Equal(resultConfigs[0].Code, "i am code")
 	})
 }
