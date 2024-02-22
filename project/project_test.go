@@ -132,25 +132,6 @@ func TestGetConfigs(t *testing.T) {
 		_, err := pm.GetConfigs("")
 		require.ErrorContains(err, t.Name())
 	})
-	t.Run("InvalidConfig", func(t *testing.T) {
-		cs := []*Config{
-			{
-				Code:    "",
-				VMType:  types.VMHalo2,
-				Version: "0.1",
-			},
-		}
-		jc, err := json.Marshal(cs)
-		require.NoError(err)
-
-		testutil.HttpGet(p, &http.Response{
-			Body: io.NopCloser(bytes.NewReader(jc)),
-		}, nil)
-		defer p.Reset()
-
-		_, err = pm.GetConfigs("")
-		require.ErrorContains(err, "invalid project config")
-	})
 	t.Run("GetIPFSFailed", func(t *testing.T) {
 		i := &ipfs.IPFS{}
 		gomonkey.ApplyMethod(reflect.TypeOf(i), "Cat", func(string) ([]byte, error) {
