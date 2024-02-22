@@ -87,11 +87,15 @@ func TestGetConfigsHttp(t *testing.T) {
 
 	t.Run("InvalidUri", func(t *testing.T) {
 		testutil.URLParse(p, nil, errors.New(t.Name()))
+		defer p.Reset()
+
 		_, err := pm.GetConfigs("")
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("GetHTTPFailed", func(t *testing.T) {
 		testutil.HttpGet(p, nil, errors.New(t.Name()))
+		defer p.Reset()
+
 		_, err := pm.GetConfigs("")
 		require.ErrorContains(err, t.Name())
 	})
@@ -100,6 +104,8 @@ func TestGetConfigsHttp(t *testing.T) {
 			Body: io.NopCloser(bytes.NewReader(jc)),
 		}, nil)
 		testutil.IoReadAll(p, nil, errors.New(t.Name()))
+		defer p.Reset()
+
 		_, err := pm.GetConfigs("")
 		require.ErrorContains(err, t.Name())
 	})
@@ -107,6 +113,7 @@ func TestGetConfigsHttp(t *testing.T) {
 		testutil.HttpGet(p, &http.Response{
 			Body: io.NopCloser(bytes.NewReader(jc)),
 		}, nil)
+		defer p.Reset()
 
 		npm := *pm
 		npm.Hash = [32]byte{}
@@ -117,6 +124,7 @@ func TestGetConfigsHttp(t *testing.T) {
 		testutil.HttpGet(p, &http.Response{
 			Body: io.NopCloser(bytes.NewReader(jc)),
 		}, nil)
+		defer p.Reset()
 
 		resultConfigs, err := pm.GetConfigs("")
 		require.NoError(err)
