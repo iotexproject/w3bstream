@@ -176,7 +176,10 @@ func TestGetConfigs(t *testing.T) {
 		})
 		defer p.Reset()
 
-		resultConfigs, err := pm.GetConfigs("")
+		npm := *pm
+		npm.Uri = "ipfs://test.com/123"
+
+		resultConfigs, err := npm.GetConfigs("")
 		require.NoError(err)
 		require.Equal(len(resultConfigs), len(cs))
 		require.Equal(resultConfigs[0].Code, "i am code")
