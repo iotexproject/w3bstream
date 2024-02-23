@@ -42,7 +42,7 @@ type Postgres struct {
 	db *gorm.DB
 }
 
-func (p *Postgres) CreateMessage(msg *types.Message) (*message, error) {
+func txCreateMessage(tx *gorm.DB, msg *types.Message) (*message, error) {
 	m := &message{
 		MessageID:      msg.ID,
 		ClientDID:      msg.ClientDID,
@@ -50,7 +50,7 @@ func (p *Postgres) CreateMessage(msg *types.Message) (*message, error) {
 		ProjectVersion: msg.ProjectVersion,
 		Data:           msg.Data,
 	}
-	if err := p.db.Create(m).Error; err != nil {
+	if err := tx.Create(m).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to create message")
 	}
 	return m, nil
@@ -111,12 +111,12 @@ func txCreateTaskLog(tx *gorm.DB, taskID string) error {
 }
 
 func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
-	_, err := p.CreateMessage(msg)
-	if err != nil {
-		return err
-	}
-
 	return p.db.Transaction(func(tx *gorm.DB) error {
+		_, err := txCreateMessage(tx, msg)
+		if err != nil {
+			return err
+		}
+
 		taskID, err := txAggregateTask(tx, int(config.Aggregation.Amount), msg)
 		if err != nil {
 			return err
@@ -149,6 +149,9 @@ func (p *Postgres) FetchTasksByTaskID(taskID string) ([]*task, error) {
 }
 
 func (p *Postgres) FetchMessagesByMessageIDs(messageIDs ...string) ([]*message, error) {
+	if len(messageIDs) == 0 {
+		return nil, nil
+	}
 	messages := make([]*message, 0)
 	if err := p.db.Where("message_id IN ?", messageIDs).Find(&messages).Error; err != nil {
 		return nil, errors.Wrapf(err, "query message failed")
@@ -216,11 +219,28 @@ func (p *Postgres) FetchMessage(messageID string) ([]*types.MessageWithTime, err
 	return tms, nil
 }
 
-func (p *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error) {
+func (p *Postgres) FetchTasksByMessageID(messageID string) ([]*task, error) {
 	ts := []*task{}
 	if err := p.db.Where("message_id = ?", messageID).Find(&ts).Error; err != nil {
 		return nil, errors.Wrapf(err, "query task by messageID failed, messageID %s", messageID)
 	}
+	return ts, nil
+}
+
+func (p *Postgres) FetchTaskStateLogsByTaskIDs(taskIDs ...string) ([]*taskStateLog, error) {
+	ls := []*taskStateLog{}
+	if err := p.db.Order("created_at").Where("task_id IN ?", taskIDs).Find(&ls).Error; err != nil {
+		return nil, errors.Wrapf(err, "query task state log failed, taskIDs %v", taskIDs)
+	}
+	return ls, nil
+}
+
+func (p *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error) {
+	ts, err := p.FetchTasksByMessageID(messageID)
+	if err != nil {
+		return nil, err
+	}
+
 	tids := []string{}
 	for _, t := range ts {
 		tids = append(tids, t.TaskID)
@@ -229,9 +249,9 @@ func (p *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error
 		return nil, nil
 	}
 
-	ls := []*taskStateLog{}
-	if err := p.db.Order("created_at").Where("task_id IN ?", tids).Find(&ls).Error; err != nil {
-		return nil, errors.Wrapf(err, "query task state log failed, taskIDs %v", tids)
+	ls, err := p.FetchTaskStateLogsByTaskIDs(tids...)
+	if err != nil {
+		return nil, err
 	}
 
 	tls := []*types.TaskStateLog{}

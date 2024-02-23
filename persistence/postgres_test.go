@@ -22,7 +22,7 @@ func PatchNewPostgres(p *Patches, v *Postgres, err error) *Patches {
 	)
 }
 
-func patchTxAggregateTask(p *Patches, taskID string, err error) *Patches {
+func PatchTxAggregateTask(p *Patches, taskID string, err error) *Patches {
 	return p.ApplyFunc(
 		txAggregateTask,
 		func(_ *gorm.DB, _ int, _ *types.Message) (string, error) {
@@ -31,7 +31,7 @@ func patchTxAggregateTask(p *Patches, taskID string, err error) *Patches {
 	)
 }
 
-func patchTxCreateTaskLog(p *Patches, err error) *Patches {
+func PatchTxCreateTaskLog(p *Patches, err error) *Patches {
 	return p.ApplyFunc(
 		txCreateTaskLog,
 		func(_ *gorm.DB, _ string) error {
@@ -40,17 +40,16 @@ func patchTxCreateTaskLog(p *Patches, err error) *Patches {
 	)
 }
 
-var _targetPersistencePostgres = reflect.TypeOf(&Postgres{})
-
-func patchPostgresCreateMessage(p *Patches, msg *message, err error) *Patches {
-	return p.ApplyMethod(
-		_targetPersistencePostgres,
-		"CreateMessage",
-		func(_ *Postgres, _ *types.Message) (*message, error) {
+func PatchTxCreateMessage(p *Patches, msg *message, err error) *Patches {
+	return p.ApplyFunc(
+		txCreateMessage,
+		func(_ *gorm.DB, _ *types.Message) (*message, error) {
 			return msg, err
 		},
 	)
 }
+
+var _targetPersistencePostgres = reflect.TypeOf(&Postgres{})
 
 func PatchPostgresFetchByID(p *Patches, task *types.Task, err error) *Patches {
 	return p.ApplyMethod(
@@ -72,7 +71,7 @@ func PatchPostgresFetchTasksByTaskID(p *Patches, tasks []*task, err error) *Patc
 	)
 }
 
-func patchPostgresFetchMessagesByMessageIDs(p *Patches, messages []*message, err error) *Patches {
+func PatchPostgresFetchMessagesByMessageIDs(p *Patches, messages []*message, err error) *Patches {
 	return p.ApplyMethod(
 		_targetPersistencePostgres,
 		"FetchMessagesByMessageIDs",
@@ -105,29 +104,29 @@ func TestPostgres_Save(t *testing.T) {
 	p = testutil.GormDBRollback(p, db)
 
 	t.Run("FailedToCreateMessage", func(t *testing.T) {
-		p = patchPostgresCreateMessage(p, nil, errors.New(t.Name()))
+		p = PatchTxCreateMessage(p, nil, errors.New(t.Name()))
 		err := v.Save(&types.Message{}, &project.Config{})
 		r.ErrorContains(err, t.Name())
 	})
-	p = patchPostgresCreateMessage(p, &message{}, nil)
+	p = PatchTxCreateMessage(p, &message{}, nil)
 
 	t.Run("InTx", func(t *testing.T) {
 		t.Run("FailedToAggregateTask", func(t *testing.T) {
-			p = patchTxAggregateTask(p, "", errors.New(t.Name()))
+			p = PatchTxAggregateTask(p, "", errors.New(t.Name()))
 			err := v.Save(&types.Message{}, &project.Config{})
 			r.ErrorContains(err, t.Name())
 		})
 
 		t.Run("FailedToCreateTaskLog", func(t *testing.T) {
 			taskID := uuid.NewString()
-			p = patchTxAggregateTask(p, taskID, nil)
-			p = patchTxCreateTaskLog(p, errors.New(t.Name()))
+			p = PatchTxAggregateTask(p, taskID, nil)
+			p = PatchTxCreateTaskLog(p, errors.New(t.Name()))
 			err := v.Save(&types.Message{}, &project.Config{})
 			r.ErrorContains(err, t.Name())
 		})
 
 		t.Run("NoNeedCreateTaskLog", func(t *testing.T) {
-			p = patchTxAggregateTask(p, "", nil)
+			p = PatchTxAggregateTask(p, "", nil)
 			err := v.Save(&types.Message{}, &project.Config{})
 			r.NoError(err)
 		})
@@ -185,11 +184,10 @@ func TestPostgres_FetchByID(t *testing.T) {
 	v := &Postgres{db: &gorm.DB{}}
 
 	t.Run("FailedToFetchTasks", func(t *testing.T) {
-		p = PatchPostgresFetchTasksByTaskID(p, nil, errors.New("FailedToFetchTasks"))
+		p = PatchPostgresFetchTasksByTaskID(p, nil, errors.New(t.Name()))
 		_task, err := v.FetchByID("any")
 		r.Nil(_task)
 		r.ErrorContains(err, t.Name())
-
 	})
 
 	t.Run("FetchTaskListEmpty", func(t *testing.T) {
@@ -201,21 +199,21 @@ func TestPostgres_FetchByID(t *testing.T) {
 	p = PatchPostgresFetchTasksByTaskID(p, []*task{{}}, nil)
 
 	t.Run("FailedToFetchMessages", func(t *testing.T) {
-		p = patchPostgresFetchMessagesByMessageIDs(p, nil, errors.New(t.Name()))
+		p = PatchPostgresFetchMessagesByMessageIDs(p, nil, errors.New(t.Name()))
 		_task, err := v.FetchByID("any")
 		r.Nil(_task)
 		r.ErrorContains(err, t.Name())
 	})
 
 	t.Run("FetchMessageListEmpty", func(t *testing.T) {
-		p = patchPostgresFetchMessagesByMessageIDs(p, nil, nil)
+		p = PatchPostgresFetchMessagesByMessageIDs(p, nil, nil)
 		_task, err := v.FetchByID("any")
 		r.Nil(_task)
 		r.Error(err)
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		p = patchPostgresFetchMessagesByMessageIDs(p, []*message{{}}, nil)
+		p = PatchPostgresFetchMessagesByMessageIDs(p, []*message{{}}, nil)
 		_task, err := v.FetchByID("any")
 		r.NotNil(_task)
 		r.NoError(err)
@@ -247,8 +245,18 @@ func TestPostgres_FetchStateLog(t *testing.T) {
 	// p := NewPatches()
 	// v := &Postgres{db: &gorm.DB{}}
 
-	// p = testutil.GormDBWhere(p, v.db)
-	// p = testutil.GormDBOrder(p, v.db)
+	// t.Run("FailedToFetchTasks", func(t *testing.T) {
+	// 	p = PatchFetchTasksByMessageID()
+	// })
+
+	// t.Run("FetchTasksListEmpty", func(t *testing.T) {
+	// })
+
+	// t.Run("FailedToFetchTaskStateLogs", func(t *testing.T) {
+	// })
+
+	// t.Run("Success", func(t *testing.T) {
+	// })
 
 }
 
