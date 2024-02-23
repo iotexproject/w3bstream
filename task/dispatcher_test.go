@@ -7,7 +7,9 @@ import (
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence"
-	"github.com/machinefi/sprout/testutil"
+	testp2p "github.com/machinefi/sprout/testutil/p2p"
+	testpersistence "github.com/machinefi/sprout/testutil/persistence"
+	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -18,11 +20,11 @@ func TestNewDispatcher(t *testing.T) {
 	patches := NewPatches()
 
 	t.Run("NewFailed", func(t *testing.T) {
-		patches = testutil.P2pNewPubSubs(patches, nil, errors.New(t.Name()))
+		patches = testp2p.P2pNewPubSubs(patches, nil, errors.New(t.Name()))
 		_, err := NewDispatcher(nil, nil, "", "", "", 0)
 		require.ErrorContains(err, t.Name())
 	})
-	patches = testutil.P2pNewPubSubs(patches, nil, nil)
+	patches = testp2p.P2pNewPubSubs(patches, nil, nil)
 
 	t.Run("New", func(t *testing.T) {
 		_, err := NewDispatcher(nil, nil, "", "", "", 0)
@@ -60,10 +62,10 @@ func TestHandleP2PData(t *testing.T) {
 	}
 
 	t.Run("UpdateStateFailed", func(t *testing.T) {
-		patches = testutil.PersistencePostgresUpdateState(patches, errors.New(t.Name()))
+		patches = testpersistence.PersistencePostgresUpdateState(patches, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
-	patches = testutil.PersistencePostgresUpdateState(patches, nil)
+	patches = testpersistence.PersistencePostgresUpdateState(patches, nil)
 
 	t.Run("TaskStateProved", func(t *testing.T) {
 		d.handleP2PData(data, nil)
@@ -71,7 +73,7 @@ func TestHandleP2PData(t *testing.T) {
 
 	t.Run("FetchTaskFailed", func(t *testing.T) {
 		data.TaskStateLog.State = types.TaskStateProved
-		patches = testutil.PersistencePostgresFetchByID(patches, nil, errors.New(t.Name()))
+		patches = testpersistence.PersistencePostgresFetchByID(patches, nil, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
 
@@ -84,16 +86,16 @@ func TestHandleP2PData(t *testing.T) {
 			Data:           "data",
 		}},
 	}
-	patches = testutil.PersistencePostgresFetchByID(patches, task, nil)
+	patches = testpersistence.PersistencePostgresFetchByID(patches, task, nil)
 
 	t.Run("GetProjectFailed", func(t *testing.T) {
-		patches = testutil.ProjectManagerGet(patches, errors.New(t.Name()))
+		patches = testproject.ProjectManagerGet(patches, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
-	patches = testutil.ProjectManagerGet(patches, nil)
+	patches = testproject.ProjectManagerGet(patches, nil)
 
 	t.Run("InitOutputFailed", func(t *testing.T) {
-		patches = testutil.ProjectConfigGetOutput(patches, errors.New(t.Name()))
+		patches = testproject.ProjectConfigGetOutput(patches, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
 }

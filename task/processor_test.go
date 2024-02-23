@@ -1,14 +1,16 @@
 package task
 
 import (
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/machinefi/sprout/testutil"
-	"github.com/machinefi/sprout/types"
-	"github.com/machinefi/sprout/vm"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/testutil"
+	testp2p "github.com/machinefi/sprout/testutil/p2p"
+	testproject "github.com/machinefi/sprout/testutil/project"
+	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/vm"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -20,15 +22,15 @@ func TestNewProcessor(t *testing.T) {
 	ps := &p2p.PubSubs{}
 
 	t.Run("NewFailed", func(t *testing.T) {
-		patches = testutil.P2pNewPubSubs(patches, nil, errors.New(t.Name()))
+		patches = testp2p.P2pNewPubSubs(patches, nil, errors.New(t.Name()))
 		_, err := NewProcessor(nil, nil, "", 0)
 		require.ErrorContains(err, t.Name())
 	})
-	patches = testutil.P2pNewPubSubs(patches, ps, nil)
+	patches = testp2p.P2pNewPubSubs(patches, ps, nil)
 
 	t.Run("AddProjectFailed", func(t *testing.T) {
-		patches = testutil.ProjectManagerGetAllProjectID(patches, append([]uint64{}, 1))
-		patches = testutil.P2pPubSubsAdd(patches, errors.New(t.Name()))
+		patches = testproject.ProjectManagerGetAllProjectID(patches, append([]uint64{}, 1))
+		patches = testp2p.P2pPubSubsAdd(patches, errors.New(t.Name()))
 		_, err := NewProcessor(nil, nil, "", 0)
 		require.ErrorContains(err, t.Name())
 	})
@@ -97,7 +99,7 @@ func TestProcessorHandleP2PData(t *testing.T) {
 			TaskStateLog: nil,
 		}
 		patches = processorReportSuccess(patches)
-		patches = testutil.ProjectManagerGet(patches, errors.New(t.Name()))
+		patches = testproject.ProjectManagerGet(patches, errors.New(t.Name()))
 		patches = processorReportFail(patches)
 		p.handleP2PData(data, nil)
 	})

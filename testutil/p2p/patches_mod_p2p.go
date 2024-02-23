@@ -1,4 +1,4 @@
-package testutil
+package p2p
 
 import (
 	"reflect"
