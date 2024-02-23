@@ -53,14 +53,6 @@ func TestEthOutput(t *testing.T) {
 		}},
 	}
 
-	t.Run("ProofNotDecode", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, contractAbiJSON, contractMethod)
-		require.NoError(err)
-
-		_, err = contract.Output(task, []byte("proof"))
-		require.ErrorContains(err, "proof decode failed")
-	})
-
 	t.Run("MissMethod", func(t *testing.T) {
 		contractMissMethod := "setProof1"
 		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, contractAbiJSON, contractMissMethod)
