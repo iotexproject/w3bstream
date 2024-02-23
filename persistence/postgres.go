@@ -100,14 +100,15 @@ func txAggregateTask(tx *gorm.DB, amount int, m *types.Message) (string, error) 
 	return taskID, nil
 }
 
-func txCreateTaskLog(tx *gorm.DB, taskID string) error {
-	if err := tx.Create(&taskStateLog{
+func txCreateTaskLog(tx *gorm.DB, taskID string, state types.TaskState) (*taskStateLog, error) {
+	tl := &taskStateLog{
 		TaskID: taskID,
-		State:  types.TaskStatePacked,
-	}).Error; err != nil {
-		return errors.Wrap(err, "create task state log failed")
+		State:  state,
 	}
-	return nil
+	if err := tx.Create(tl).Error; err != nil {
+		return nil, errors.Wrap(err, "create task state log failed")
+	}
+	return tl, nil
 }
 
 func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
@@ -123,7 +124,9 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 		}
 
 		if taskID != "" {
-			return txCreateTaskLog(tx, taskID)
+			if _, err = txCreateTaskLog(tx, taskID, types.TaskStatePacked); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
