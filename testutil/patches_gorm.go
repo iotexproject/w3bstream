@@ -89,12 +89,36 @@ func GormDBRollback(p *Patches, ret *gorm.DB) *Patches {
 	)
 }
 
+func GormDBModel(p *Patches, ret *gorm.DB) *Patches {
+	return p.ApplyMethod(
+		_targetGormDatabase,
+		"Model",
+		func(_ *gorm.DB, _ any) *gorm.DB {
+			return ret
+		},
+	)
+}
+
+func GormDBUpdate(p *Patches, ret *gorm.DB) *Patches {
+	return p.ApplyMethod(
+		_targetGormDatabase,
+		"Update",
+		func(_ *gorm.DB, _string, _ any) *gorm.DB {
+			return ret
+		},
+	)
+}
+
 func GormDBFind(p *Patches, inputmut any, ret *gorm.DB) *Patches {
 	return p.ApplyMethod(
 		_targetGormDatabase,
 		"Find",
 		func(_ *gorm.DB, v any) *gorm.DB {
-			v = inputmut
+			vi := reflect.ValueOf(inputmut)
+			vo := reflect.ValueOf(v)
+			if vi.IsValid() && vo.IsValid() {
+				vo.Elem().Set(vi.Elem())
+			}
 			return ret
 		},
 	)
@@ -107,6 +131,36 @@ func GormDBFirst(p *Patches, inputmut any, ret *gorm.DB) *Patches {
 		func(_ *gorm.DB, dst any, _ ...any) *gorm.DB {
 			dst = inputmut
 			return ret
+		},
+	)
+}
+
+func GormDBCreate(p *Patches, inputmut any, ret *gorm.DB) *Patches {
+	return p.ApplyMethod(
+		_targetGormDatabase,
+		"Create",
+		func(_ *gorm.DB, dst any) *gorm.DB {
+			dst = inputmut
+			return ret
+		},
+	)
+}
+
+func GormDBAutoMigrate(p *Patches, err error) *Patches {
+	return p.ApplyMethod(
+		_targetGormDatabase,
+		"AutoMigrate",
+		func(_ *gorm.DB, _ ...any) error {
+			return err
+		},
+	)
+}
+
+func GormOpen(p *Patches, db *gorm.DB, err error) *Patches {
+	return p.ApplyFunc(
+		gorm.Open,
+		func(_ gorm.Dialector, _ ...gorm.Option) (*gorm.DB, error) {
+			return db, err
 		},
 	)
 }
