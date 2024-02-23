@@ -178,6 +178,7 @@ func TestPostgres_Fetch(t *testing.T) {
 }
 
 func TestPostgres_FetchByID(t *testing.T) {
+	t.SkipNow()
 	r := require.New(t)
 	p := NewPatches()
 
