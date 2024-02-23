@@ -124,8 +124,7 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 		}
 
 		if taskID != "" {
-			_, err = txCreateTaskLog(tx, taskID, types.TaskStatePacked)
-			if err != nil {
+			if _, err = txCreateTaskLog(tx, taskID, types.TaskStatePacked); err != nil {
 				return err
 			}
 		}
