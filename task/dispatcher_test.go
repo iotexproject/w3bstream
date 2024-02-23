@@ -1,12 +1,13 @@
 package task
 
 import (
-	"github.com/machinefi/sprout/persistence"
 	"testing"
 	"time"
 
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/testutil"
 	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -17,11 +18,11 @@ func TestNewDispatcher(t *testing.T) {
 	patches := NewPatches()
 
 	t.Run("NewFailed", func(t *testing.T) {
-		patches = p2pNewPubSubs(patches, nil, errors.New(t.Name()))
+		patches = testutil.P2pNewPubSubs(patches, nil, errors.New(t.Name()))
 		_, err := NewDispatcher(nil, nil, "", "", "", 0)
 		require.ErrorContains(err, t.Name())
 	})
-	patches = p2pNewPubSubs(patches, nil, nil)
+	patches = testutil.P2pNewPubSubs(patches, nil, nil)
 
 	t.Run("New", func(t *testing.T) {
 		_, err := NewDispatcher(nil, nil, "", "", "", 0)
@@ -59,10 +60,10 @@ func TestHandleP2PData(t *testing.T) {
 	}
 
 	t.Run("UpdateStateFailed", func(t *testing.T) {
-		patches = persistencePostgresUpdateState(patches, errors.New(t.Name()))
+		patches = testutil.PersistencePostgresUpdateState(patches, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
-	patches = persistencePostgresUpdateState(patches, nil)
+	patches = testutil.PersistencePostgresUpdateState(patches, nil)
 
 	t.Run("TaskStateProved", func(t *testing.T) {
 		d.handleP2PData(data, nil)
@@ -70,7 +71,7 @@ func TestHandleP2PData(t *testing.T) {
 
 	t.Run("FetchTaskFailed", func(t *testing.T) {
 		data.TaskStateLog.State = types.TaskStateProved
-		patches = persistencePostgresFetchByID(patches, nil, errors.New(t.Name()))
+		patches = testutil.PersistencePostgresFetchByID(patches, nil, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
 
@@ -83,21 +84,16 @@ func TestHandleP2PData(t *testing.T) {
 			Data:           "data",
 		}},
 	}
-	patches = persistencePostgresFetchByID(patches, task, nil)
+	patches = testutil.PersistencePostgresFetchByID(patches, task, nil)
 
 	t.Run("GetProjectFailed", func(t *testing.T) {
-		patches = projectManagerGet(patches, errors.New(t.Name()))
+		patches = testutil.ProjectManagerGet(patches, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
-	patches = projectManagerGet(patches, nil)
+	patches = testutil.ProjectManagerGet(patches, nil)
 
 	t.Run("InitOutputFailed", func(t *testing.T) {
-		patches = projectConfigGetOutput(patches, errors.New(t.Name()))
+		patches = testutil.ProjectConfigGetOutput(patches, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
-	//patches = projectConfigGetOutput(patches, nil)
-	//
-	//t.Run("", func(t *testing.T) {
-	//
-	//})
 }
