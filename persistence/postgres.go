@@ -228,6 +228,10 @@ func (p *Postgres) FetchTasksByMessageID(messageID string) ([]*task, error) {
 }
 
 func (p *Postgres) FetchTaskStateLogsByTaskIDs(taskIDs ...string) ([]*taskStateLog, error) {
+	if len(taskIDs) == 0 {
+		return nil, nil
+	}
+
 	ls := []*taskStateLog{}
 	if err := p.db.Order("created_at").Where("task_id IN ?", taskIDs).Find(&ls).Error; err != nil {
 		return nil, errors.Wrapf(err, "query task state log failed, taskIDs %v", taskIDs)
