@@ -2,8 +2,9 @@ package output
 
 import (
 	"encoding/hex"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/types"
 )
@@ -18,17 +19,17 @@ func TestNewEthereum(t *testing.T) {
 	contractMethod := "setProof"
 
 	t.Run("NewEthereum", func(t *testing.T) {
-		_, err := NewEthereum(chainEndpoint, secretKey, contractAddress, contractAbiJSON, contractMethod)
+		_, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMethod)
 		require.NoError(err)
 	})
 
 	t.Run("AbiNil", func(t *testing.T) {
-		_, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractMethod)
+		_, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", "", contractMethod)
 		require.EqualError(err, "EOF")
 	})
 
 	t.Run("SecretKeyNil", func(t *testing.T) {
-		_, err := NewEthereum(chainEndpoint, "", contractAddress, contractAbiJSON, contractMethod)
+		_, err := NewEthereum(chainEndpoint, "", contractAddress, "", contractAbiJSON, contractMethod)
 		require.EqualError(err, "secretkey is empty")
 	})
 
@@ -55,7 +56,7 @@ func TestEthOutput(t *testing.T) {
 
 	t.Run("MissMethod", func(t *testing.T) {
 		contractMissMethod := "setProof1"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, contractAbiJSON, contractMissMethod)
+		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMissMethod)
 		require.NoError(err)
 
 		_, err = contract.Output(task, []byte("proof"))
@@ -65,7 +66,7 @@ func TestEthOutput(t *testing.T) {
 	t.Run("MissParam", func(t *testing.T) {
 		contractMissParamAbiJSON := `[{"inputs":[{"internalType":"address","name":"depinRC20Address","type":"address"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"sender","type":"address"},{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"mine","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"depinRC20","outputs":[{"internalType":"contract IDepinRC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}]`
 		contractMissParamMethod := "mine"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, contractMissParamAbiJSON, contractMissParamMethod)
+		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractMissParamAbiJSON, contractMissParamMethod)
 		require.NoError(err)
 
 		_, err = contract.Output(task, []byte(hex.EncodeToString([]byte("this is proof"))))
@@ -73,7 +74,7 @@ func TestEthOutput(t *testing.T) {
 	})
 
 	t.Run("TransactionFailed", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, contractAbiJSON, contractMethod)
+		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMethod)
 		require.NoError(err)
 
 		_, err = contract.Output(task, []byte(hex.EncodeToString([]byte("this is proof"))))

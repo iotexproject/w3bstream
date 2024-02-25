@@ -38,6 +38,7 @@ type OutputConfig struct {
 type EthereumConfig struct {
 	ChainEndpoint   string `json:"chainEndpoint"`
 	ContractAddress string `json:"contractAddress"`
+	ReceiverAddress string `json:"receiverAddress,omitempty"`
 	ContractMethod  string `json:"contractMethod"`
 	ContractAbiJSON string `json:"contractAbiJSON"`
 }
@@ -54,7 +55,7 @@ func (c *Config) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Ou
 	switch outConf.Type {
 	case types.OutputEthereumContract:
 		ethConf := outConf.Ethereum
-		return output.NewEthereum(ethConf.ChainEndpoint, privateKeyECDSA, ethConf.ContractAddress, ethConf.ContractAbiJSON, ethConf.ContractMethod)
+		return output.NewEthereum(ethConf.ChainEndpoint, privateKeyECDSA, ethConf.ContractAddress, ethConf.ReceiverAddress, ethConf.ContractAbiJSON, ethConf.ContractMethod)
 	case types.OutputSolanaProgram:
 		solConf := outConf.Solana
 		return output.NewSolanaProgram(solConf.ChainEndpoint, solConf.ProgramID, privateKeyED25519, solConf.StateAccountPK)

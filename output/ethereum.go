@@ -21,6 +21,7 @@ import (
 type ethereumContract struct {
 	chainEndpoint   string
 	contractAddress string
+	receiverAddress string
 	secretKey       string
 	contractABI     abi.ABI
 	contractMethod  string
@@ -41,6 +42,51 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 		switch a.Name {
 		case "proof":
 			params = append(params, proof)
+
+		case "projectId", "_projectId":
+			i := new(big.Int).SetUint64(m.ProjectID)
+			params = append(params, i)
+
+		case "receiver", "_receiver":
+			if e.receiverAddress == "" {
+				return "", errors.Errorf("miss param %s for contract abi", a.Name)
+			}
+			params = append(params, common.HexToAddress(e.receiverAddress))
+
+		case "data_snark", "_data_snark":
+			name := strings.TrimPrefix(a.Name, "proof_snark_")
+			if name == "seal" {
+				name = "snark"
+			}
+			valueSeal := gjson.GetBytes(proof, "Snark.snark").String()
+			if valueSeal == "" {
+				return "", errors.New("get Snark.snark failed")
+			}
+			valueDigest := gjson.GetBytes(proof, "Snark.post_state_digest").String()
+			if valueDigest == "" {
+				return "", errors.New("get Snark.post_state_digest failed")
+			}
+			valueJournal := gjson.GetBytes(proof, "Snark.journal").String()
+			if valueJournal == "" {
+				return "", errors.New("get Snark.journal failed")
+			}
+
+			Bytes, err := abi.NewType("bytes", "", nil)
+			if err != nil {
+				return "", errors.Wrap(err, "new ethereum accounts abi pack failed")
+			}
+			args := abi.Arguments{
+				{Type: Bytes, Name: "proof_snark_seal"},
+				{Type: Bytes, Name: "proof_snark_post_state_digest"},
+				{Type: Bytes, Name: "proof_snark_journal"},
+			}
+
+			packed, err := args.Pack([]byte(valueSeal), []byte(valueDigest), []byte(valueJournal))
+			if err != nil {
+				return "", errors.Wrap(err, "ethereum accounts abi pack failed")
+			}
+
+			params = append(params, packed)
 
 		case "proof_snark_seal", "proof_snark_post_state_digest", "proof_snark_journal":
 			name := strings.TrimPrefix(a.Name, "proof_snark_")
@@ -141,7 +187,7 @@ func (e *ethereumContract) sendTX(ctx context.Context, endpoint, privateKey, toS
 	return signedTx.Hash().Hex(), nil
 }
 
-func NewEthereum(chainEndpoint, secretKey, contractAddress, contractAbiJSON, contractMethod string) (Output, error) {
+func NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod string) (Output, error) {
 	contractABI, err := abi.JSON(strings.NewReader(contractAbiJSON))
 	if err != nil {
 		return nil, err
@@ -153,6 +199,7 @@ func NewEthereum(chainEndpoint, secretKey, contractAddress, contractAbiJSON, con
 		chainEndpoint:   chainEndpoint,
 		secretKey:       secretKey,
 		contractAddress: contractAddress,
+		receiverAddress: receiverAddress,
 		contractABI:     contractABI,
 		contractMethod:  contractMethod,
 	}, nil
