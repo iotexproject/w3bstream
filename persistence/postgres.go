@@ -58,6 +58,9 @@ func txCreateMessage(tx *gorm.DB, msg *types.Message) (*message, error) {
 
 func txAggregateTask(tx *gorm.DB, amount int, m *types.Message) (string, error) {
 	messages := make([]*message, 0)
+	if amount == 0 {
+		amount = 1
+	}
 
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Order("created_at").
@@ -68,12 +71,8 @@ func txAggregateTask(tx *gorm.DB, amount int, m *types.Message) (string, error) 
 		return "", errors.Wrap(err, "failed to fetch unpacked messages")
 	}
 
-	if len(messages) == 0 {
-		return "", nil
-	}
-
-	// not enough message for pack task
-	if amount > 1 && len(messages) < amount {
+	// no enough message for pack task
+	if len(messages) < amount {
 		return "", nil
 	}
 
