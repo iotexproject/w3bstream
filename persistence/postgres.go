@@ -118,7 +118,12 @@ func (p *Postgres) Save(msg *types.Message, config *project.Config) error {
 			return err
 		}
 
-		taskID, err := txAggregateTask(tx, int(config.Aggregation.Amount), msg)
+		amount := config.Aggregation.Amount
+		if amount == 0 {
+			amount = 1
+		}
+
+		taskID, err := txAggregateTask(tx, int(amount), msg)
 		if err != nil {
 			return err
 		}
