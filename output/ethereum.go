@@ -54,10 +54,6 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			params = append(params, common.HexToAddress(e.receiverAddress))
 
 		case "data_snark", "_data_snark":
-			name := strings.TrimPrefix(a.Name, "proof_snark_")
-			if name == "seal" {
-				name = "snark"
-			}
 			valueSeal := gjson.GetBytes(proof, "Snark.snark").String()
 			if valueSeal == "" {
 				return "", errors.New("get Snark.snark failed")
@@ -71,14 +67,14 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 				return "", errors.New("get Snark.journal failed")
 			}
 
-			Bytes, err := abi.NewType("bytes", "", nil)
+			abiBytes, err := abi.NewType("bytes", "", nil)
 			if err != nil {
 				return "", errors.Wrap(err, "new ethereum accounts abi pack failed")
 			}
 			args := abi.Arguments{
-				{Type: Bytes, Name: "proof_snark_seal"},
-				{Type: Bytes, Name: "proof_snark_post_state_digest"},
-				{Type: Bytes, Name: "proof_snark_journal"},
+				{Type: abiBytes, Name: "proof_snark_seal"},
+				{Type: abiBytes, Name: "proof_snark_post_state_digest"},
+				{Type: abiBytes, Name: "proof_snark_journal"},
 			}
 
 			packed, err := args.Pack([]byte(valueSeal), []byte(valueDigest), []byte(valueJournal))
