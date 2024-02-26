@@ -15,6 +15,11 @@
       "address": "0x1BFf17c79b5fa910cC77e95Ca82C7De26fC3C3b0",
       "txHash": "0xec535c90f463dbd71443fb3834831cb8c768877ccd15c2f5294fd315d086ec03",
       "kind": "transparent"
+    },
+    {
+      "address": "0xC3e814db991924c64d94EfCb7a1ad6A479b1D728",
+      "txHash": "0xff3790e73baf4c630e30cef255fb30b55cfd39352fbbcac39da3fc664bd765ee",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -369,6 +374,83 @@
           },
           "t_uint256": {
             "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "557989067d216bbda39165aaa50aacc5cc3a3cda3944ecadc1fdd8ef9b359e6f": {
+      "address": "0x9e030Ff2c8bBb5e99f7bc88Acf1f877E2A70aAB3",
+      "txHash": "0xfec4ef67c04e4a62fc3c540decfc84495a95e85d2ca4a9c2ec86a03e776e34e8",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "_verify",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "MockRisc0SnarkReceiver",
+            "src": "contracts/defaultImpl/MockReceiver.sol:7"
+          },
+          {
+            "label": "proof_seal",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_bytes_storage",
+            "contract": "MockRisc0SnarkReceiver",
+            "src": "contracts/defaultImpl/MockReceiver.sol:13"
+          },
+          {
+            "label": "proof_post_state_digest",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_bytes_storage",
+            "contract": "MockRisc0SnarkReceiver",
+            "src": "contracts/defaultImpl/MockReceiver.sol:14"
+          },
+          {
+            "label": "proof_journal",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_bytes_storage",
+            "contract": "MockRisc0SnarkReceiver",
+            "src": "contracts/defaultImpl/MockReceiver.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes_storage": {
+            "label": "bytes",
             "numberOfBytes": "32"
           },
           "t_uint8": {
