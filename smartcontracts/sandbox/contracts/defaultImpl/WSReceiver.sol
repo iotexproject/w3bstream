@@ -45,6 +45,8 @@ contract WSReceiver is IWSReceiver {
             address owner = IERC721(deviceNFTRegistry).ownerOf(deviceId);
             IDeviceReward(tokenAddress).mint(owner, devices[i].reward);
         }
+
+        currentBatchHeight++;
     }
 
     function getBatchHeight() external view returns (uint256) {
