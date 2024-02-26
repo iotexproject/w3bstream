@@ -32,9 +32,29 @@ MockRisc0SnarkReceiver deployed to 0xC3e814db991924c64d94EfCb7a1ad6A479b1D728
 1. Register project in ProjectRegistrar
 
 ```
-
+./ioctl ws project create -u $CONFIG_FILE_PATH
 ```
 
 2. Register node in NodeRegistry
 
-2. Register node and 
+```
+export ETH_RPC_URL=https://babel-api.testnet.iotex.io
+export PRIVATE_KEY=$PROJECT_OWNER_PRIVATE_KEY
+cast send 0x16ca331641a9537e346e12C7403fDA014Da72F16 "register(address)" $ENODE_OPERATOR_ADDRESS --legacy --private-key=$PRIVATE_KEY
+```
+
+3. Allow enode for project
+
+```
+export ETH_RPC_URL=https://babel-api.testnet.iotex.io
+export PRIVATE_KEY=$PROJECT_OWNER_PRIVATE_KEY
+cast send 0x8D3c113805f970839940546D5ef88afE98Ba76E4 "allow(uint256,uint256)" $PROJECT_ID $NODE_ID --legacy --private-key=$PRIVATE_KEY
+```
+
+4. Register project receiver
+
+```
+export ETH_RPC_URL=https://babel-api.testnet.iotex.io
+export PRIVATE_KEY=$PROJECT_OWNER_PRIVATE_KEY
+cast send 0x1BFf17c79b5fa910cC77e95Ca82C7De26fC3C3b0 "register(uint256,address)" $PROJECT_ID $REVEIVER_ADDRESS --legacy --private-key=$PRIVATE_KEY
+```
