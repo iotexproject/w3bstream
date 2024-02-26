@@ -1,6 +1,16 @@
 # Changelog
 
 ---
+## [0.6.4] - 2024-02-26
+
+### Added
+- Sandbox contract support
+- More unit test
+
+### Changed
+- Output support snark proof pack
+
+---
 ## [0.6.1] - 2024-02-19
 
 ### Changed
