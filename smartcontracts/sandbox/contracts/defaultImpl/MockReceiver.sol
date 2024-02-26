@@ -38,6 +38,6 @@ contract MockRisc0SnarkReceiver is Initializable {
     }
 
     function setVerify(address _risc0Verify) external {
-      _verify = _risc0Verify;
+        _verify = _risc0Verify;
     }
 }
