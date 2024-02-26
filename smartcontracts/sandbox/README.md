@@ -24,3 +24,15 @@ NodeRegistry: 0x16ca331641a9537e346e12C7403fDA014Da72F16
 FleetManager: 0x8D3c113805f970839940546D5ef88afE98Ba76E4
 W3bstreamRouter: 0x1BFf17c79b5fa910cC77e95Ca82C7De26fC3C3b0
 ```
+
+## Getting started
+
+1. Register project in ProjectRegistrar
+
+```
+
+```
+
+2. Register node in NodeRegistry
+
+2. Register node and 
