@@ -23,7 +23,7 @@ contract WSReceiver is IWSReceiver {
         batches[currentBatchHeight] = Batch(_batchMR, _devicesMR);
         currentBatchHeight = newHeight;
 
-        // TODO verify proof
+        // TODO verify proof by risc0
     }
 
     function getBatchHeight() external view returns (uint256) {
