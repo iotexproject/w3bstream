@@ -30,24 +30,24 @@ func ProjectManagerGetNotify(p *Patches, c <-chan uint64) *Patches {
 	)
 }
 
-func ProjectManagerGet(p *Patches, err error) *Patches {
+func ProjectManagerGet(p *Patches, conf *project.Config, err error) *Patches {
 	var pm *project.Manager
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(pm),
 		"Get",
 		func(projectID uint64, version string) (*project.Config, error) {
-			return nil, err
+			return conf, err
 		},
 	)
 }
 
-func ProjectConfigGetOutput(p *Patches, err error) *Patches {
+func ProjectConfigGetOutput(p *Patches, ot output.Output, err error) *Patches {
 	var config *project.Config
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(config),
 		"GetOutput",
 		func(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
-			return nil, err
+			return ot, err
 		},
 	)
 }

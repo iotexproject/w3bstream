@@ -1,7 +1,6 @@
 package persistence
 
 import (
-	"fmt"
 	"reflect"
 	"time"
 
@@ -16,7 +15,6 @@ func PersistencePostgresUpdateState(p *Patches, err error) *Patches {
 		reflect.TypeOf(pg),
 		"UpdateState",
 		func(taskID string, state types.TaskState, comment string, createdAt time.Time) error {
-			fmt.Println("up")
 			return err
 		},
 	)
