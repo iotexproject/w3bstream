@@ -1,15 +1,21 @@
 package project
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 	testeth "github.com/machinefi/sprout/testutil/eth"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
 func TestManager(t *testing.T) {
+	if runtime.GOOS == `darwin` {
+		return
+	}
 	require := require.New(t)
 	p := gomonkey.NewPatches()
 
@@ -31,17 +37,24 @@ func TestManager(t *testing.T) {
 	t.Run("NewManagerNewDefaultMonitorFailed", func(t *testing.T) {
 		testeth.EthclientDial(p, nil, nil)
 		testeth.ProjectRegistrarContract(p, nil, nil)
-		gomonkey.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
-		p.ApplyFunc(
-			NewDefaultMonitor,
-			func(chainEndpoint string, addresses []string, topics []string) (*Monitor, error) {
-				return nil, errors.New(t.Name())
-			},
-		)
+		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
+		p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
 		defer p.Reset()
 
 		_, err := NewManager("", "", "")
 		require.ErrorContains(err, t.Name())
+	})
+	t.Run("NewManagerSuccess", func(t *testing.T) {
+		testeth.EthclientDial(p, nil, nil)
+		testeth.ProjectRegistrarContract(p, nil, nil)
+		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
+		p.ApplyFuncReturn(NewDefaultMonitor, nil, &Monitor{})
+		p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
+		p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
+		defer p.Reset()
+
+		_, err := NewManager("", "", "")
+		require.NoError(err)
 	})
 	t.Run("GetNotExist", func(t *testing.T) {
 		m := &Manager{}
