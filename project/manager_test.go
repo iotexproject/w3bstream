@@ -1,7 +1,6 @@
 package project
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -32,8 +31,7 @@ func TestManager(t *testing.T) {
 	t.Run("NewManagerNewDefaultMonitorFailed", func(t *testing.T) {
 		testeth.EthclientDial(p, nil, nil)
 		testeth.ProjectRegistrarContract(p, nil, nil)
-		i := &Manager{}
-		gomonkey.ApplyMethod(reflect.TypeOf(i), "fillProjectPool", func() {})
+		gomonkey.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
 		p.ApplyFunc(
 			NewDefaultMonitor,
 			func(chainEndpoint string, addresses []string, topics []string) (*Monitor, error) {
