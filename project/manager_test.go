@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/machinefi/sprout/project/contracts"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -36,7 +37,7 @@ func TestManager(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("NewManagerSuccess", func(t *testing.T) {
-		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
 		p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
 		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
 		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), nil)
