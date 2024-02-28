@@ -36,7 +36,7 @@ func TestManager(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("NewManagerSuccess", func(t *testing.T) {
-		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
 		p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
 		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
 		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), nil)
