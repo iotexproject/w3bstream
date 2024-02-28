@@ -1,11 +1,13 @@
 package task
 
 import (
+	"reflect"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil"
 	testp2p "github.com/machinefi/sprout/testutil/p2p"
 	testproject "github.com/machinefi/sprout/testutil/project"
@@ -85,24 +87,48 @@ func TestProcessorHandleP2PData(t *testing.T) {
 		p.handleP2PData(data, nil)
 	})
 
+	data := &p2p.Data{
+		Task: &types.Task{
+			ID: "",
+			Messages: []*types.Message{{
+				ID:             "id1",
+				ProjectID:      uint64(0x1),
+				ProjectVersion: "0.1",
+				Data:           "data",
+			}},
+		},
+		TaskStateLog: nil,
+	}
+
 	t.Run("GetProjectFailed", func(t *testing.T) {
-		data := &p2p.Data{
-			Task: &types.Task{
-				ID: "",
-				Messages: []*types.Message{{
-					ID:             "id1",
-					ProjectID:      uint64(0x1),
-					ProjectVersion: "0.1",
-					Data:           "data",
-				}},
-			},
-			TaskStateLog: nil,
-		}
 		patches = processorReportSuccess(patches)
-		patches = testproject.ProjectManagerGet(patches, errors.New(t.Name()))
+		patches = testproject.ProjectManagerGet(patches, nil, errors.New(t.Name()))
 		patches = processorReportFail(patches)
 		p.handleP2PData(data, nil)
 	})
+	conf := &project.Config{
+		Code:         "code",
+		CodeExpParam: "codeExpParam",
+		VMType:       "vmType",
+		Output:       project.OutputConfig{},
+		Aggregation:  project.AggregationConfig{},
+		Version:      "",
+	}
+	patches = testproject.ProjectManagerGet(patches, conf, nil)
+
+	t.Run("ProofFailed", func(t *testing.T) {
+		patches = processorReportSuccess(patches)
+		patches = vmHandlerHandle(patches, nil, errors.New(t.Name()))
+		patches = processorReportFail(patches)
+		p.handleP2PData(data, nil)
+	})
+	patches = vmHandlerHandle(patches, []byte("res"), nil)
+
+	t.Run("HandleOK", func(t *testing.T) {
+		patches = processorReportSuccess(patches)
+		p.handleP2PData(data, nil)
+	})
+
 }
 
 func processorReportSuccess(p *Patches) *Patches {
@@ -113,4 +139,15 @@ func processorReportSuccess(p *Patches) *Patches {
 func processorReportFail(p *Patches) *Patches {
 	var pro *Processor
 	return ApplyPrivateMethod(pro, "reportFail", func(taskID string, err error, topic *pubsub.Topic) {})
+}
+
+func vmHandlerHandle(p *Patches, res []byte, err error) *Patches {
+	var handler *vm.Handler
+	return p.ApplyMethodFunc(
+		reflect.TypeOf(handler),
+		"Handle",
+		func(msgs []*types.Message, vmtype types.VM, code string, expParam string) ([]byte, error) {
+			return res, err
+		},
+	)
 }
