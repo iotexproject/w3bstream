@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -14,13 +15,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
+	"github.com/tablelandnetwork/basin-cli/pkg/signing"
+	"github.com/tidwall/gjson"
 
-	signing "github.com/machinefi/sprout/output/textile_tmp"
 	"github.com/machinefi/sprout/types"
-)
-
-const (
-	vaultId = "test_signer_impl.data"
 )
 
 type textileDB struct {
@@ -30,7 +28,10 @@ type textileDB struct {
 
 func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to textileDB", "chain endpoint", t.endpoint)
-	encodedData := t.packData(task, proof)
+	encodedData, err := t.packData(proof)
+	if err != nil {
+		return "", err
+	}
 	txHash, err := t.write(encodedData)
 	if err != nil {
 		return "", err
@@ -38,22 +39,40 @@ func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
 	return txHash, nil
 }
 
-func (t *textileDB) packData(task *types.Task, proof []byte) []byte {
-	// TODO
-	return nil
+func (t *textileDB) packData(proof []byte) ([]byte, error) {
+	valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes")
+	if !valueJournal.Exists() {
+		return nil, errors.New("proof does not contain journal")
+	}
+
+	// get result from proof
+	var result string
+	for _, value := range valueJournal.Array() {
+		result += string(value.Int())
+	}
+
+	data := map[string]string{
+		"result": result,
+		"proof":  string(proof),
+	}
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return nil, errors.Wrap(err, "marshal pack data error")
+	}
+
+	return jsonData, nil
 }
 
 func (t *textileDB) write(data []byte) (string, error) {
-	timestampStr := strconv.FormatInt(time.Now().Unix(), 10)
-
-	// Sign the data
-	signer := signing.NewSigner(t.secretKey)
-	signature, err := signer.SignData(data)
+	signature, err := signing.NewSigner(t.secretKey).SignBytes(data)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to sign data")
 	}
 
-	url := fmt.Sprintf("%s?timestamp=%s&signature=%s", t.endpoint, timestampStr, signature)
+	url := fmt.Sprintf("%s?timestamp=%s&signature=%s",
+		t.endpoint,
+		strconv.FormatInt(time.Now().Unix(), 10),
+		signature)
 	err = writeEvent(url, data)
 	return "", err
 }
@@ -67,7 +86,7 @@ func writeEvent(url string, fileData []byte) error {
 
 	hn := sha256.New()
 	hr := hn.Sum(fileData)
-	req.Header.Set("filename", string(hr))
+	req.Header.Set("filename", string(hr)[0:7])
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -85,7 +104,8 @@ func writeEvent(url string, fileData []byte) error {
 	return nil
 }
 
-func NewTextileDBAdapter(secretKey string) (Output, error) {
+// TODO: refactor textile with a KV database adapter
+func NewTextileDBAdapter(vaultID string, secretKey string) (Output, error) {
 	if len(secretKey) == 0 {
 		return nil, errors.New("secretkey is empty")
 	}
@@ -93,7 +113,7 @@ func NewTextileDBAdapter(secretKey string) (Output, error) {
 	pk := crypto.ToECDSAUnsafe(common.FromHex(secretKey))
 
 	return &textileDB{
-		endpoint:  fmt.Sprintf("https://basin.tableland.xyz/vaults/%s/events", vaultId),
+		endpoint:  fmt.Sprintf("https://basin.tableland.xyz/vaults/%s/events", vaultID),
 		secretKey: pk,
 	}, nil
 }
