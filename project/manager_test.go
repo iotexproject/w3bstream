@@ -39,7 +39,7 @@ func TestManager(t *testing.T) {
 		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
 		p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
 		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
-		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", 0, nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), nil)
 		p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
 		p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 		defer p.Reset()
