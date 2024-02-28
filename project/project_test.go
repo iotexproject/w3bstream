@@ -132,7 +132,7 @@ func TestGetConfigs(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("GetIPFSFailed", func(t *testing.T) {
-		gomonkey.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 		defer p.Reset()
 
 		npm := *pm
@@ -142,7 +142,7 @@ func TestGetConfigs(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("DefaultFailed", func(t *testing.T) {
-		gomonkey.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 		defer p.Reset()
 
 		npm := *pm
@@ -163,7 +163,7 @@ func TestGetConfigs(t *testing.T) {
 		require.Equal(resultConfigs[0].Code, "i am code")
 	})
 	t.Run("IPFSSuccess", func(t *testing.T) {
-		gomonkey.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", jc, nil)
+		p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", jc, nil)
 		defer p.Reset()
 
 		npm := *pm
@@ -175,7 +175,7 @@ func TestGetConfigs(t *testing.T) {
 		require.Equal(resultConfigs[0].Code, "i am code")
 	})
 	t.Run("DefaultSuccess", func(t *testing.T) {
-		gomonkey.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", jc, nil)
+		p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", jc, nil)
 		defer p.Reset()
 
 		npm := *pm
