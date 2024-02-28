@@ -48,7 +48,7 @@ func TestManager(t *testing.T) {
 		testeth.EthclientDial(p, nil, nil)
 		testeth.ProjectRegistrarContract(p, nil, nil)
 		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
-		p.ApplyFuncReturn(NewDefaultMonitor, nil, &Monitor{})
+		p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
 		p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
 		p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 		defer p.Reset()
