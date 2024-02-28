@@ -1,8 +1,8 @@
 package project
 
 import (
+	"reflect"
 	"testing"
-	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	testeth "github.com/machinefi/sprout/testutil/eth"
@@ -18,7 +18,31 @@ func TestManager(t *testing.T) {
 		testeth.EthclientDial(p, nil, errors.New(t.Name()))
 		defer p.Reset()
 
-		_, err := NewMonitor("", []string{}, []string{}, 1, 100, 3*time.Second)
+		_, err := NewManager("", "", "")
+		require.ErrorContains(err, t.Name())
+	})
+	t.Run("NewManagerNewContractsFailed", func(t *testing.T) {
+		testeth.EthclientDial(p, nil, nil)
+		testeth.ProjectRegistrarContract(p, nil, errors.New(t.Name()))
+		defer p.Reset()
+
+		_, err := NewManager("", "", "")
+		require.ErrorContains(err, t.Name())
+	})
+	t.Run("NewManagerNewDefaultMonitorFailed", func(t *testing.T) {
+		testeth.EthclientDial(p, nil, nil)
+		testeth.ProjectRegistrarContract(p, nil, nil)
+		i := &Manager{}
+		gomonkey.ApplyMethod(reflect.TypeOf(i), "fillProjectPool", func() {})
+		p.ApplyFunc(
+			NewDefaultMonitor,
+			func(chainEndpoint string, addresses []string, topics []string) (*Monitor, error) {
+				return nil, errors.New(t.Name())
+			},
+		)
+		defer p.Reset()
+
+		_, err := NewManager("", "", "")
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("GetNotExist", func(t *testing.T) {
