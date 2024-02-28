@@ -6,8 +6,9 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
-	testeth "github.com/machinefi/sprout/testutil/eth"
+	"github.com/machinefi/sprout/project/contracts"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -20,35 +21,25 @@ func TestManager(t *testing.T) {
 	p := gomonkey.NewPatches()
 
 	t.Run("NewManagerDialChainFailed", func(t *testing.T) {
-		testeth.EthclientDial(p, nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 		defer p.Reset()
 
 		_, err := NewManager("", "", "")
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("NewManagerNewContractsFailed", func(t *testing.T) {
-		testeth.EthclientDial(p, nil, nil)
-		testeth.ProjectRegistrarContract(p, nil, errors.New(t.Name()))
-		defer p.Reset()
-
-		_, err := NewManager("", "", "")
-		require.ErrorContains(err, t.Name())
-	})
-	t.Run("NewManagerNewDefaultMonitorFailed", func(t *testing.T) {
-		testeth.EthclientDial(p, nil, nil)
-		testeth.ProjectRegistrarContract(p, nil, nil)
-		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
-		p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
+		p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
 		defer p.Reset()
 
 		_, err := NewManager("", "", "")
 		require.ErrorContains(err, t.Name())
 	})
 	t.Run("NewManagerSuccess", func(t *testing.T) {
-		testeth.EthclientDial(p, nil, nil)
-		testeth.ProjectRegistrarContract(p, nil, nil)
+		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
+		p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
 		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
-		p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", 0, nil)
 		p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
 		p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 		defer p.Reset()
