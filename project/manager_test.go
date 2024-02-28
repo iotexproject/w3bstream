@@ -38,7 +38,7 @@ func TestManager(t *testing.T) {
 		testeth.EthclientDial(p, nil, nil)
 		testeth.ProjectRegistrarContract(p, nil, nil)
 		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
-		p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, errors.New(t.Name()))
 		defer p.Reset()
 
 		_, err := NewManager("", "", "")
