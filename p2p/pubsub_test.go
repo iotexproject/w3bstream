@@ -145,6 +145,12 @@ func TestPublish(t *testing.T) {
 		err := p.Publish(projectID, d)
 		require.ErrorContains(err, t.Name())
 	})
+
+	t.Run("PublishDataOk", func(t *testing.T) {
+		patches = pubsubTopicPublish(patches, nil)
+		err := p.Publish(projectID, d)
+		require.NoError(err)
+	})
 }
 
 func libp2pNew(p *Patches, h host.Host, err error) *Patches {
