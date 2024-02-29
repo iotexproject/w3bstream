@@ -113,10 +113,11 @@ func TestManager(t *testing.T) {
 		require.Equal(len(m.GetAllProjectID()), 0)
 	})
 	t.Run("FillProjectPoolSuccess", func(t *testing.T) {
+		instance := &contracts.Contracts{}
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
 			pool:       map[key]*Config{},
-			instance:   &contracts.Contracts{},
+			instance:   instance,
 		}
 		data := []struct {
 			Uri    string
@@ -129,11 +130,10 @@ func TestManager(t *testing.T) {
 			},
 			{},
 		}
-		p.ApplyMethodSeq(&contracts.Contracts{}, "Projects", []gomonkey.OutputCell{
+		p.ApplyMethodSeq(instance, "Projects", []gomonkey.OutputCell{
 			{Values: gomonkey.Params{data[0], nil}},
 			{Values: gomonkey.Params{data[1], nil}},
 		})
-
 		p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
 		defer p.Reset()
 
