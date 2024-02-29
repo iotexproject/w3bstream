@@ -97,4 +97,44 @@ func TestManager(t *testing.T) {
 		d := <-notify
 		require.Equal(d, uint64(1))
 	})
+	t.Run("FillProjectPoolEmpty", func(t *testing.T) {
+		m := &Manager{
+			projectIDs: map[uint64]bool{1: true},
+			instance:   &contracts.Contracts{},
+		}
+		p.ApplyMethodReturn(&contracts.Contracts{}, "Projects", &struct {
+			Uri    string
+			Hash   [32]byte
+			Paused bool
+		}{}, nil)
+		defer p.Reset()
+
+		require.Equal(len(m.GetAllProjectID()), 0)
+	})
+	t.Run("FillProjectPoolSuccess", func(t *testing.T) {
+		m := &Manager{
+			projectIDs: map[uint64]bool{1: true},
+			instance:   &contracts.Contracts{},
+		}
+		data := []struct {
+			Uri    string
+			Hash   [32]byte
+			Paused bool
+		}{
+			{
+				Uri:  "test",
+				Hash: [32]byte{1},
+			},
+			{},
+		}
+		p.ApplyMethodSeq(&contracts.Contracts{}, "Projects", []gomonkey.OutputCell{
+			{Values: gomonkey.Params{data[0], nil}},
+			{Values: gomonkey.Params{data[1], nil}},
+		})
+
+		p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
+		defer p.Reset()
+
+		require.Equal(len(m.GetAllProjectID()), 1)
+	})
 }
