@@ -1,9 +1,11 @@
 package clients_test
 
 import (
-	"github.com/machinefi/sprout/clients"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/clients"
 )
 
 func TestCreateSession(t *testing.T) {

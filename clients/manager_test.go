@@ -2,12 +2,14 @@ package clients_test
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/machinefi/sprout/clients"
-	"github.com/machinefi/sprout/testutil"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/machinefi/sprout/clients"
+	"github.com/machinefi/sprout/testutil"
 )
 
 func TestClientManager(t *testing.T) {

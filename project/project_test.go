@@ -10,11 +10,12 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+
 	"github.com/machinefi/sprout/testutil"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/utils/ipfs"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetOutput(t *testing.T) {
