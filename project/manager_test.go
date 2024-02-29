@@ -72,4 +72,29 @@ func TestManager(t *testing.T) {
 		require.Equal(len(ids), 1)
 		require.Equal(ids[0], uint64(1))
 	})
+	t.Run("GetNotifySuccess", func(t *testing.T) {
+		m := &Manager{
+			projectIDs: map[uint64]bool{1: true},
+			notify:     make(chan uint64, 1),
+		}
+		notify := m.GetNotify()
+		m.notify <- uint64(1)
+		d := <-notify
+		require.Equal(d, uint64(1))
+	})
+	t.Run("WatchProjectRegistrarSuccess", func(t *testing.T) {
+		m := &Manager{
+			projectIDs: map[uint64]bool{1: true},
+			notify:     make(chan uint64, 1),
+			instance:   &contracts.Contracts{},
+		}
+		p.ApplyMethodReturn(&contracts.Contracts{}, "ParseProjectUpserted", &contracts.ContractsProjectUpserted{ProjectId: 1}, nil)
+		p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
+		defer p.Reset()
+
+		notify := m.GetNotify()
+		m.notify <- uint64(1)
+		d := <-notify
+		require.Equal(d, uint64(1))
+	})
 }
