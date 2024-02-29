@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/machinefi/sprout/project/contracts"
 	"github.com/pkg/errors"
@@ -41,8 +39,8 @@ func TestManager(t *testing.T) {
 		p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
 		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
 		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), nil)
-		p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
-		p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
+		//p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
+		//p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 		defer p.Reset()
 
 		_, err := NewManager("", "", "")
