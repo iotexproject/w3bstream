@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"context"
+	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
 	"reflect"
 	"testing"
 
@@ -29,7 +30,8 @@ func TestNewPubSubs(t *testing.T) {
 	//	_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
 	//	require.ErrorContains(err, t.Name())
 	//})
-	patches = libp2pNew(patches, nil)
+	h := &basichost.BasicHost{}
+	patches = libp2pNew(patches, h, nil)
 
 	t.Run("NewGossipFailed", func(t *testing.T) {
 		patches = pubsubNewGossipSub(patches, errors.New(t.Name()))
@@ -133,11 +135,11 @@ func TestPublish(t *testing.T) {
 	})
 }
 
-func libp2pNew(p *Patches, err error) *Patches {
+func libp2pNew(p *Patches, h host.Host, err error) *Patches {
 	return p.ApplyFunc(
 		libp2p.New,
 		func(opts ...libp2p.Option) (host.Host, error) {
-			return nil, err
+			return h, err
 		},
 	)
 }

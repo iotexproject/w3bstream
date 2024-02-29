@@ -3,6 +3,7 @@ package p2p
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"sync"
@@ -88,6 +89,8 @@ func NewPubSubs(handle HandleSubscriptionMessage, bootNodeMultiaddr string, iote
 		return nil, err
 	}
 
+	fmt.Println("h.ID().String()")
+	fmt.Println(h.ID().String())
 	return &PubSubs{
 		ps:      ps,
 		pubSubs: make(map[uint64]*pubSub),
