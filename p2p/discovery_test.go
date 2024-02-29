@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/golang/mock/gomock"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/machinefi/sprout/testutil/mock"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -44,19 +46,23 @@ func TestDiscoverPeers(t *testing.T) {
 	patches = multiaddrNewMultiaddr(patches, nil)
 
 	t.Run("GetBootnodeFailed", func(t *testing.T) {
-		patches = peerAddrInfoFromP2pAddr(patches, errors.New(t.Name()))
+		patches = peerAddrInfoFromP2pAddr(patches, nil, errors.New(t.Name()))
 		err := discoverPeers(ctx, nil, bootNodeMultiaddr, iotexChainID)
 		require.ErrorContains(err, t.Name())
 	})
-	patches = peerAddrInfoFromP2pAddr(patches, nil)
+	patches = peerAddrInfoFromP2pAddr(patches, &peer.AddrInfo{}, nil)
 
-	//t.Run("ConnectBootnodeFailed", func(t *testing.T) {
-	//	patches = hostConnect(patches, errors.New(t.Name()))
-	//	err := discoverPeers(ctx, nil, bootNodeMultiaddr, iotexChainID)
-	//	require.ErrorContains(err, t.Name())
-	//})
+	ctrl := gomock.NewController(t)
+	host := mock.NewMockHost(ctrl)
+
+	t.Run("ConnectBootNodeFailed", func(t *testing.T) {
+		host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(errors.New(t.Name())).Times(1)
+		err := discoverPeers(ctx, host, bootNodeMultiaddr, iotexChainID)
+		require.ErrorContains(err, t.Name())
+	})
 
 	//t.Run("DiscoverOK", func(t *testing.T) {
+	//	host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 	//	err := discoverPeers(ctx, nil, bootNodeMultiaddr, iotexChainID)
 	//	require.NoError(err)
 	//})
@@ -91,22 +97,11 @@ func multiaddrNewMultiaddr(p *Patches, err error) *Patches {
 	)
 }
 
-func peerAddrInfoFromP2pAddr(p *Patches, err error) *Patches {
+func peerAddrInfoFromP2pAddr(p *Patches, addrInfo *peer.AddrInfo, err error) *Patches {
 	return p.ApplyFunc(
 		peer.AddrInfoFromP2pAddr,
 		func(m multiaddr.Multiaddr) (*peer.AddrInfo, error) {
-			return nil, err
-		},
-	)
-}
-
-func hostConnect(p *Patches, err error) *Patches {
-	var h *host.Host
-	return p.ApplyMethodFunc(
-		reflect.TypeOf(h),
-		"Connect",
-		func(ctx context.Context, pi peer.AddrInfo) error {
-			return err
+			return addrInfo, err
 		},
 	)
 }

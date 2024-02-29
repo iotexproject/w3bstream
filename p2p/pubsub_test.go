@@ -2,7 +2,8 @@ package p2p
 
 import (
 	"context"
-	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
+	"github.com/golang/mock/gomock"
+	"github.com/machinefi/sprout/testutil/mock"
 	"reflect"
 	"testing"
 
@@ -25,20 +26,25 @@ func TestNewPubSubs(t *testing.T) {
 	bootNodeMultiaddr := "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
 	iotexChainID := 2
 
+	ctrl := gomock.NewController(t)
+	host := mock.NewMockHost(ctrl)
+
 	//t.Run("NewP2pHostFailed", func(t *testing.T) {
-	//	patches = libp2pNew(patches, errors.New(t.Name()))
+	//	patches = libp2pNew(patches, host, errors.New(t.Name()))
 	//	_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
 	//	require.ErrorContains(err, t.Name())
 	//})
-	h := &basichost.BasicHost{}
-	patches = libp2pNew(patches, h, nil)
+	//h := &basichost.BasicHost{}
+	//patches = libp2pNew(patches, h, nil)
+
+	patches = libp2pNew(patches, host, nil)
 
 	t.Run("NewGossipFailed", func(t *testing.T) {
-		patches = pubsubNewGossipSub(patches, errors.New(t.Name()))
+		patches = pubsubNewGossipSub(patches, nil, errors.New(t.Name()))
 		_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
 		require.ErrorContains(err, t.Name())
 	})
-	patches = pubsubNewGossipSub(patches, nil)
+	patches = pubsubNewGossipSub(patches, &pubsub.PubSub{}, nil)
 
 	t.Run("DiscoveryFailed", func(t *testing.T) {
 		patches = p2pDiscoverPeers(patches, errors.New(t.Name()))
@@ -48,6 +54,7 @@ func TestNewPubSubs(t *testing.T) {
 	patches = p2pDiscoverPeers(patches, nil)
 
 	t.Run("NewPubSubs", func(t *testing.T) {
+		host.EXPECT().ID().Return(peer.ID("ID")).Times(1)
 		_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
 		require.NoError(err)
 	})
@@ -144,11 +151,11 @@ func libp2pNew(p *Patches, h host.Host, err error) *Patches {
 	)
 }
 
-func pubsubNewGossipSub(p *Patches, err error) *Patches {
+func pubsubNewGossipSub(p *Patches, ps *pubsub.PubSub, err error) *Patches {
 	return p.ApplyFunc(
 		pubsub.NewGossipSub,
 		func(ctx context.Context, h host.Host, opts ...pubsub.Option) (*pubsub.PubSub, error) {
-			return nil, err
+			return ps, err
 		},
 	)
 }

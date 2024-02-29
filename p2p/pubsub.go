@@ -83,14 +83,14 @@ func NewPubSubs(handle HandleSubscriptionMessage, bootNodeMultiaddr string, iote
 
 	ps, err := pubsub.NewGossipSub(ctx, h)
 	if err != nil {
+		fmt.Println("NewGossipFailed")
 		return nil, errors.Wrap(err, "new gossip subscription failed")
 	}
 	if err := discoverPeers(ctx, h, bootNodeMultiaddr, iotexChainID); err != nil {
+		fmt.Println("DiscoveryFailed")
 		return nil, err
 	}
 
-	fmt.Println("h.ID().String()")
-	fmt.Println(h.ID().String())
 	return &PubSubs{
 		ps:      ps,
 		pubSubs: make(map[uint64]*pubSub),
