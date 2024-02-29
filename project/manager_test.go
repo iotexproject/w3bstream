@@ -99,7 +99,8 @@ func TestManager(t *testing.T) {
 	})
 	t.Run("FillProjectPoolEmpty", func(t *testing.T) {
 		m := &Manager{
-			projectIDs: map[uint64]bool{1: true},
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
 		p.ApplyMethodReturn(&contracts.Contracts{}, "Projects", &struct {
@@ -113,7 +114,8 @@ func TestManager(t *testing.T) {
 	})
 	t.Run("FillProjectPoolSuccess", func(t *testing.T) {
 		m := &Manager{
-			projectIDs: map[uint64]bool{1: true},
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
 		data := []struct {
