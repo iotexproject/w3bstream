@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 func JsonMarshal(p *Patches, data []byte, err error) *Patches {
@@ -59,6 +60,15 @@ func IoReadAll(p *Patches, data []byte, err error) *Patches {
 		io.ReadAll,
 		func(io.Reader) ([]byte, error) {
 			return data, err
+		},
+	)
+}
+
+func EthClientDial(p *Patches, c *ethclient.Client, err error) *Patches {
+	return p.ApplyFunc(
+		ethclient.Dial,
+		func(_ string) (*ethclient.Client, error) {
+			return c, err
 		},
 	)
 }
