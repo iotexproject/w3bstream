@@ -7,6 +7,7 @@ require (
 	github.com/blocto/solana-go-sdk v1.26.0
 	github.com/ethereum/go-ethereum v1.13.4
 	github.com/gin-gonic/gin v1.9.1
+	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.5.0
 	github.com/ipfs/go-ipfs-api v0.7.0
 	github.com/jmoiron/sqlx v1.3.5

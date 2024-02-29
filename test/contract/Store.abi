@@ -1,8 +1,7 @@
 [
 	{
-		"constant": true,
 		"inputs": [],
-		"name": "getProof",
+		"name": "getJournal",
 		"outputs": [
 			{
 				"internalType": "bytes",
@@ -10,12 +9,62 @@
 				"type": "bytes"
 			}
 		],
-		"payable": false,
 		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"constant": false,
+		"inputs": [],
+		"name": "getPostStateDigest",
+		"outputs": [
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getProjectId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getReceiver",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getSeal",
+		"outputs": [
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "bytes",
@@ -25,7 +74,29 @@
 		],
 		"name": "setProof",
 		"outputs": [],
-		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_projectId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_receiver",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes",
+				"name": "_data_snark",
+				"type": "bytes"
+			}
+		],
+		"name": "submit",
+		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}

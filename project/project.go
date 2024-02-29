@@ -38,6 +38,7 @@ type OutputConfig struct {
 type EthereumConfig struct {
 	ChainEndpoint   string `json:"chainEndpoint"`
 	ContractAddress string `json:"contractAddress"`
+	ReceiverAddress string `json:"receiverAddress,omitempty"`
 	ContractMethod  string `json:"contractMethod"`
 	ContractAbiJSON string `json:"contractAbiJSON"`
 }
@@ -54,7 +55,7 @@ func (c *Config) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Ou
 	switch outConf.Type {
 	case types.OutputEthereumContract:
 		ethConf := outConf.Ethereum
-		return output.NewEthereum(ethConf.ChainEndpoint, privateKeyECDSA, ethConf.ContractAddress, ethConf.ContractAbiJSON, ethConf.ContractMethod)
+		return output.NewEthereum(ethConf.ChainEndpoint, privateKeyECDSA, ethConf.ContractAddress, ethConf.ReceiverAddress, ethConf.ContractAbiJSON, ethConf.ContractMethod)
 	case types.OutputSolanaProgram:
 		solConf := outConf.Solana
 		return output.NewSolanaProgram(solConf.ChainEndpoint, solConf.ProgramID, privateKeyED25519, solConf.StateAccountPK)
@@ -81,7 +82,7 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 	case "http", "https":
 		resp, _err := http.Get(m.Uri)
 		if _err != nil {
-			return nil, errors.Wrapf(err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
+			return nil, errors.Wrapf(_err, "fetch project config failed, projectID %d, uri %s", m.ProjectID, m.Uri)
 		}
 		defer resp.Body.Close()
 		// TODO network error should try again
@@ -109,7 +110,7 @@ func (m *ProjectMeta) GetConfigs(ipfsEndpoint string) ([]*Config, error) {
 		return nil, errors.Wrap(err, "generate project config hash failed")
 	}
 	if !bytes.Equal(h.Sum(nil), m.Hash[:]) {
-		return nil, errors.Wrap(err, "validate project config hash failed")
+		return nil, errors.New("validate project config hash failed")
 	}
 
 	cs := []*Config{}
