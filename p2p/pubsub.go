@@ -3,7 +3,6 @@ package p2p
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"strconv"
 	"sync"
@@ -83,11 +82,9 @@ func NewPubSubs(handle HandleSubscriptionMessage, bootNodeMultiaddr string, iote
 
 	ps, err := pubsub.NewGossipSub(ctx, h)
 	if err != nil {
-		fmt.Println("NewGossipFailed")
 		return nil, errors.Wrap(err, "new gossip subscription failed")
 	}
 	if err := discoverPeers(ctx, h, bootNodeMultiaddr, iotexChainID); err != nil {
-		fmt.Println("DiscoveryFailed")
 		return nil, err
 	}
 

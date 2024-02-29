@@ -2,17 +2,19 @@ package p2p
 
 import (
 	"context"
-	"github.com/golang/mock/gomock"
-	"github.com/machinefi/sprout/testutil/mock"
 	"reflect"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/bytedance/mockey"
+	"github.com/golang/mock/gomock"
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/machinefi/sprout/testutil/mock"
 	"github.com/pkg/errors"
+	"github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/testutil"
@@ -29,13 +31,13 @@ func TestNewPubSubs(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	host := mock.NewMockHost(ctrl)
 
-	//t.Run("NewP2pHostFailed", func(t *testing.T) {
-	//	patches = libp2pNew(patches, host, errors.New(t.Name()))
-	//	_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
-	//	require.ErrorContains(err, t.Name())
-	//})
-	//h := &basichost.BasicHost{}
-	//patches = libp2pNew(patches, h, nil)
+	t.Run("NewP2pHostFailed", func(t *testing.T) {
+		mockey.PatchConvey("NewP2pHostFailed", t, func() {
+			mockey.Mock(libp2p.New).Return(nil, errors.New(t.Name())).Build()
+			_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
+			convey.So(err.Error(), convey.ShouldContainSubstring, t.Name())
+		})
+	})
 
 	patches = libp2pNew(patches, host, nil)
 
@@ -61,35 +63,35 @@ func TestNewPubSubs(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	require := require.New(t)
-	patches := NewPatches()
-
 	projectID := uint64(0x1)
 	p := &PubSubs{pubSubs: make(map[uint64]*pubSub)}
 
 	t.Run("NewPubSubFailed", func(t *testing.T) {
-		patches = p2pNewPubSub(patches, &pubSub{}, errors.New(t.Name()))
-		err := p.Add(projectID)
-		require.ErrorContains(err, t.Name())
+		mockey.PatchConvey("NewPubSubFailed", t, func() {
+			mockey.Mock(newPubSub).Return(&pubSub{}, errors.New(t.Name())).Build()
+			err := p.Add(projectID)
+			convey.So(err.Error(), convey.ShouldEqual, t.Name())
+		})
 	})
-	patches = p2pNewPubSub(patches, &pubSub{}, nil)
 
-	t.Run("Add", func(t *testing.T) {
-		err := p.Add(projectID)
-		require.NoError(err)
+	t.Run("AddOk", func(t *testing.T) {
+		mockey.PatchConvey("AddOk", t, func() {
+			mockey.Mock(newPubSub).Return(&pubSub{}, nil).Build()
+			mockey.Mock((*pubSub).run).Return().Build()
+			err := p.Add(projectID)
+			convey.So(err, convey.ShouldBeEmpty)
+		})
 	})
 
 	t.Run("AddRepeat", func(t *testing.T) {
-		err := p.Add(projectID)
-		require.NoError(err)
+		mockey.PatchConvey("AddOk", t, func() {
+			err := p.Add(projectID)
+			convey.So(err, convey.ShouldBeEmpty)
+		})
 	})
-
 }
 
 func TestDelete(t *testing.T) {
-	//require := require.New(t)
-	//patches := NewPatches()
-
 	projectID := uint64(0x1)
 	p := &PubSubs{pubSubs: make(map[uint64]*pubSub)}
 
@@ -97,14 +99,17 @@ func TestDelete(t *testing.T) {
 		p.Delete(projectID)
 	})
 
-	//t.Run("Delete", func(t *testing.T) {
-	//	patches = p2pNewPubSub(patches, &pubSub{}, nil)
-	//	patches = pubSubRun(patches)
-	//	err := p.Add(projectID)
-	//	require.NoError(err)
-	//	patches = pubSubRelease(patches)
-	//	p.Delete(projectID)
-	//})
+	t.Run("DeleteOk", func(t *testing.T) {
+		mockey.PatchConvey("DeleteOk", t, func() {
+			mockey.Mock(newPubSub).Return(&pubSub{}, nil).Build()
+			mockey.Mock((*pubSub).run).Return().Build()
+			err := p.Add(projectID)
+			convey.So(err, convey.ShouldBeEmpty)
+
+			mockey.Mock((*pubSub).release).Return().Build()
+			p.Delete(projectID)
+		})
+	})
 }
 
 func TestPublish(t *testing.T) {
@@ -124,7 +129,7 @@ func TestPublish(t *testing.T) {
 	})
 
 	patches = p2pNewPubSub(patches, &pubSub{}, nil)
-	//patches = pubSubRun(patches)
+	mockey.Mock((*pubSub).run).Return().Build()
 	err := p.Add(projectID)
 	require.NoError(err)
 

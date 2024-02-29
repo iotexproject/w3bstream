@@ -6,10 +6,13 @@ import (
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
+	"github.com/libp2p/go-libp2p/p2p/discovery/util"
 	"github.com/machinefi/sprout/testutil/mock"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
@@ -61,11 +64,15 @@ func TestDiscoverPeers(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 
-	//t.Run("DiscoverOK", func(t *testing.T) {
-	//	host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-	//	err := discoverPeers(ctx, nil, bootNodeMultiaddr, iotexChainID)
-	//	require.NoError(err)
-	//})
+	t.Run("DiscoverOK", func(t *testing.T) {
+		mockey.PatchConvey("DiscoverOK", t, func() {
+			host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			mockey.Mock(routing.NewRoutingDiscovery).Return(nil).Build()
+			mockey.Mock(util.Advertise).Return().Build()
+			err := discoverPeers(ctx, host, bootNodeMultiaddr, iotexChainID)
+			require.NoError(err)
+		})
+	})
 }
 
 func newDht(p *Patches, err error) *Patches {
