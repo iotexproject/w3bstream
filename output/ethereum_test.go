@@ -3,8 +3,11 @@ package output
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
+	"math/big"
 	"reflect"
 	"strings"
 	"testing"
@@ -211,6 +214,83 @@ func TestEthSendTX(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 
+	t.Run("SuggestGasFailed", func(t *testing.T) {
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", nil, errors.New(t.Name()))
+		defer patches.Reset()
+
+		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		require.ErrorContains(err, t.Name())
+	})
+
+	t.Run("GetChainIdFailed", func(t *testing.T) {
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, errors.New(t.Name()))
+		defer patches.Reset()
+
+		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		require.ErrorContains(err, t.Name())
+	})
+
+	t.Run("GetNonceFailed", func(t *testing.T) {
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", nil, errors.New(t.Name()))
+		defer patches.Reset()
+
+		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		require.ErrorContains(err, t.Name())
+	})
+
+	t.Run("EstimateGasFailed", func(t *testing.T) {
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", nil, errors.New(t.Name()))
+		defer patches.Reset()
+
+		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		require.ErrorContains(err, t.Name())
+	})
+
+	t.Run("SignTxFailed", func(t *testing.T) {
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
+		patches.ApplyFuncReturn(ethtypes.SignTx, nil, errors.New(t.Name()))
+		defer patches.Reset()
+
+		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		require.ErrorContains(err, t.Name())
+	})
+
+	t.Run("TransactionFailed", func(t *testing.T) {
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
+		patches.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", errors.New(t.Name()))
+		defer patches.Reset()
+
+		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		require.ErrorContains(err, t.Name())
+	})
+
+	t.Run("TransactionOk", func(t *testing.T) {
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
+		patches.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
+		patches.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", nil)
+		patches.ApplyMethodReturn(&ethtypes.Transaction{}, "Hash", common.Hash{})
+		defer patches.Reset()
+
+		tx, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		require.NoError(err)
+		require.Equal(tx, "0x0000000000000000000000000000000000000000000000000000000000000000")
+	})
 }
 
 func ethArgumentsPack(p *Patches, err error) *Patches {
