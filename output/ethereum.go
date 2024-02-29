@@ -2,6 +2,7 @@ package output
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"math/big"
 	"strings"
@@ -49,6 +50,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 
 		case "receiver", "_receiver":
 			if e.receiverAddress == "" {
+				fmt.Println("receiver nil")
 				return "", errors.Errorf("miss param %s for contract abi", a.Name)
 			}
 			params = append(params, common.HexToAddress(e.receiverAddress))
@@ -56,19 +58,23 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 		case "data_snark", "_data_snark":
 			valueSeal := gjson.GetBytes(proof, "Snark.snark").String()
 			if valueSeal == "" {
+				fmt.Println("Snark.snark nil")
 				return "", errors.New("get Snark.snark failed")
 			}
 			valueDigest := gjson.GetBytes(proof, "Snark.post_state_digest").String()
 			if valueDigest == "" {
+				fmt.Println("post_state_digest nil")
 				return "", errors.New("get Snark.post_state_digest failed")
 			}
 			valueJournal := gjson.GetBytes(proof, "Snark.journal").String()
 			if valueJournal == "" {
+				fmt.Println("journal nil")
 				return "", errors.New("get Snark.journal failed")
 			}
 
 			abiBytes, err := abi.NewType("bytes", "", nil)
 			if err != nil {
+				fmt.Println("new type error")
 				return "", errors.Wrap(err, "new ethereum accounts abi pack failed")
 			}
 			args := abi.Arguments{
@@ -79,6 +85,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 
 			packed, err := args.Pack([]byte(valueSeal), []byte(valueDigest), []byte(valueJournal))
 			if err != nil {
+				fmt.Println("abi pack error")
 				return "", errors.Wrap(err, "ethereum accounts abi pack failed")
 			}
 
@@ -91,6 +98,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			}
 			value := gjson.GetBytes(proof, "Snark."+name).String()
 			if value == "" {
+				fmt.Println("proof_snark_seal nil")
 				return "", errors.Errorf("miss param %s for contract abi", a.Name)
 			}
 			params = append(params, []byte(value))
@@ -115,8 +123,10 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 	}
 	data, err := e.contractABI.Pack(e.contractMethod, params...)
 	if err != nil {
+		fmt.Println("contract ABI pack nil")
 		return "", errors.Wrap(err, "contract ABI pack failed")
 	}
+	fmt.Println("contract ABI pack")
 
 	txHash, err := e.sendTX(context.Background(), e.chainEndpoint, e.secretKey, e.contractAddress, data)
 	if err != nil {
@@ -129,6 +139,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 func (e *ethereumContract) sendTX(ctx context.Context, endpoint, privateKey, toStr string, data []byte) (string, error) {
 	cli, err := ethclient.Dial(endpoint)
 	if err != nil {
+		fmt.Println("dail failed")
 		return "", errors.Wrapf(err, "dial eth endpoint %s failed", endpoint)
 	}
 
