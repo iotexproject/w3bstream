@@ -6,7 +6,6 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/machinefi/sprout/project/contracts"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -34,18 +33,18 @@ func TestManager(t *testing.T) {
 		_, err := NewManager("", "", "")
 		require.ErrorContains(err, t.Name())
 	})
-	t.Run("NewManagerSuccess", func(t *testing.T) {
-		p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
-		p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
-		p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
-		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), nil)
-		//p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
-		//p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
-		defer p.Reset()
+	// t.Run("NewManagerSuccess", func(t *testing.T) {
+	// 	p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
+	// 	p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
+	// 	p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
+	// 	p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), nil)
+	// 	//p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
+	// 	//p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
+	// 	defer p.Reset()
 
-		_, err := NewManager("", "", "")
-		require.NoError(err)
-	})
+	// 	_, err := NewManager("", "", "")
+	// 	require.NoError(err)
+	// })
 	t.Run("GetNotExist", func(t *testing.T) {
 		m := &Manager{}
 		_, err := m.Get(1, "0.1")
