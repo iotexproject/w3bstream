@@ -134,6 +134,8 @@ func TestManager(t *testing.T) {
 			{Values: gomonkey.Params{data[0], nil}},
 			{Values: gomonkey.Params{data[1], nil}},
 		})
+		p.ApplyMethodReturn(instance, "Projects", data[0], nil)
+
 		p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
 		defer p.Reset()
 
