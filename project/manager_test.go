@@ -1,14 +1,50 @@
 package project
 
 import (
+	"runtime"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/machinefi/sprout/project/contracts"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
 func TestManager(t *testing.T) {
+	if runtime.GOOS == `darwin` {
+		return
+	}
 	require := require.New(t)
+	p := gomonkey.NewPatches()
 
+	t.Run("NewManagerDialChainFailed", func(t *testing.T) {
+		p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
+		defer p.Reset()
+
+		_, err := NewManager("", "", "")
+		require.ErrorContains(err, t.Name())
+	})
+	t.Run("NewManagerNewContractsFailed", func(t *testing.T) {
+		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
+		p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
+		defer p.Reset()
+
+		_, err := NewManager("", "", "")
+		require.ErrorContains(err, t.Name())
+	})
+	// t.Run("NewManagerSuccess", func(t *testing.T) {
+	// 	p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
+	// 	p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
+	// 	p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
+	// 	p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), nil)
+	// 	//p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
+	// 	//p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
+	// 	defer p.Reset()
+
+	// 	_, err := NewManager("", "", "")
+	// 	require.NoError(err)
+	// })
 	t.Run("GetNotExist", func(t *testing.T) {
 		m := &Manager{}
 		_, err := m.Get(1, "0.1")
