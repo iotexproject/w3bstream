@@ -5,9 +5,13 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/bytedance/mockey"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/machinefi/sprout/project/contracts"
 	"github.com/pkg/errors"
+	"github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 )
 
@@ -99,5 +103,20 @@ func TestManager(t *testing.T) {
 		defer p.Reset()
 
 		require.Equal(len(m.GetAllProjectID()), 0)
+	})
+}
+
+func TestNewManager(t *testing.T) {
+	mockey.PatchConvey("NewManagerSuccess", t, func() {
+		mockey.Mock(ethclient.Dial).Return(ethclient.NewClient(&rpc.Client{}), nil).Build()
+		mockey.Mock(contracts.NewContracts).Return(nil, nil).Build()
+		mockey.Mock((*Manager).fillProjectPool).Return().Build()
+		mockey.Mock(NewDefaultMonitor).Return(&Monitor{}, nil).Build()
+		mockey.Mock((*Monitor).run).Return().Build()
+		mockey.Mock((*Monitor).MustEvents).Return(make(chan *types.Log)).Build()
+		mockey.Mock((*Manager).watchProjectRegistrar).Return().Build()
+
+		_, err := NewManager("", "", "")
+		convey.So(err, convey.ShouldBeEmpty)
 	})
 }
