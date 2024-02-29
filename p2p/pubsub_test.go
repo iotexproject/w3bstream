@@ -1,12 +1,13 @@
 package p2p
 
 import (
-	"github.com/machinefi/sprout/testutil"
-	"github.com/pkg/errors"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/testutil"
 )
 
 func TestNewPubSubs(t *testing.T) {
