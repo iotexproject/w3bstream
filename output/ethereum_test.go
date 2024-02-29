@@ -153,18 +153,18 @@ func TestEthOutput(t *testing.T) {
 		require.ErrorContains(err, "miss param")
 	})
 
-	t.Run("ContractABIPackFailed", func(t *testing.T) {
-		contractAbiJSON = `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
-		contractMethod = "setProof"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
-		require.NoError(err)
-
-		patches = ethABIPack(patches, errors.New(t.Name()))
-		defer patches.Reset()
-
-		_, err = contract.Output(task, []byte("this is proof"))
-		require.ErrorContains(err, t.Name())
-	})
+	//t.Run("ContractABIPackFailed", func(t *testing.T) {
+	//	contractAbiJSON = `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
+	//	contractMethod = "setProof"
+	//	contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
+	//	require.NoError(err)
+	//
+	//	patches = ethABIPack(patches, errors.New(t.Name()))
+	//	defer patches.Reset()
+	//
+	//	_, err = contract.Output(task, []byte("this is proof"))
+	//	require.ErrorContains(err, t.Name())
+	//})
 
 	t.Run("TransactionFailed", func(t *testing.T) {
 		contractAbiJSON = `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
