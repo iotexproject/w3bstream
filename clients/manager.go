@@ -40,6 +40,7 @@ func NewManager() *Manager {
 		mux:  sync.Mutex{},
 		pool: make(map[string]*Client),
 	}
+	m.syncFromContract()
 	m.fillByMockClients()
 	manager = m
 	return manager
