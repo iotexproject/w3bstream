@@ -7,10 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/machinefi/sprout/project/contracts"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
-
-	"github.com/machinefi/sprout/project/contracts"
 )
 
 func TestNewManager(t *testing.T) {
@@ -99,7 +98,7 @@ func TestManagerMethod(t *testing.T) {
 		So(d, ShouldEqual, uint64(1))
 	})
 	PatchConvey("DoProjectRegistrarWatchSuccess", t, func() {
-		Mock((*contracts.Contracts).ParseProjectUpserted).Return(&contracts.ContractsProjectUpserted{ProjectId: 1}, nil).Build()
+		Mock((*contracts.ContractsFilterer).ParseProjectUpserted).Return(&contracts.ContractsProjectUpserted{ProjectId: 1}, nil).Build()
 		Mock((*ProjectMeta).GetConfigs).Return([]*Config{{}}, nil).Build()
 
 		m := &Manager{
@@ -115,7 +114,6 @@ func TestManagerMethod(t *testing.T) {
 
 		m.doProjectRegistrarWatch(logChain, testSubscription{errChain})
 		notify := m.GetNotify()
-		m.notify <- uint64(1)
 		d := <-notify
 		So(d, ShouldEqual, uint64(1))
 	})
