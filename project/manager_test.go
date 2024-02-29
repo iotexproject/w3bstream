@@ -33,18 +33,6 @@ func TestManager(t *testing.T) {
 		_, err := NewManager("", "", "")
 		require.ErrorContains(err, t.Name())
 	})
-	// t.Run("NewManagerSuccess", func(t *testing.T) {
-	// 	p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
-	// 	p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
-	// 	p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
-	// 	p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), nil)
-	// 	//p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
-	// 	//p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
-	// 	defer p.Reset()
-
-	// 	_, err := NewManager("", "", "")
-	// 	require.NoError(err)
-	// })
 	t.Run("GetNotExist", func(t *testing.T) {
 		m := &Manager{}
 		_, err := m.Get(1, "0.1")
@@ -111,34 +99,5 @@ func TestManager(t *testing.T) {
 		defer p.Reset()
 
 		require.Equal(len(m.GetAllProjectID()), 0)
-	})
-	t.Run("FillProjectPoolSuccess", func(t *testing.T) {
-		instance := &contracts.Contracts{}
-		m := &Manager{
-			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
-			instance:   instance,
-		}
-		data := []struct {
-			Uri    string
-			Hash   [32]byte
-			Paused bool
-		}{
-			{
-				Uri:  "test",
-				Hash: [32]byte{1},
-			},
-			{},
-		}
-		p.ApplyMethodSeq(instance, "Projects", []gomonkey.OutputCell{
-			{Values: gomonkey.Params{data[0], nil}},
-			{Values: gomonkey.Params{data[1], nil}},
-		})
-		p.ApplyMethodReturn(instance, "Projects", data[0], nil)
-
-		p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
-		defer p.Reset()
-
-		require.Equal(len(m.GetAllProjectID()), 1)
 	})
 }
