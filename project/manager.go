@@ -71,92 +71,103 @@ func (m *Manager) GetNotify() <-chan uint64 {
 	return m.notify
 }
 
-func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subscription) {
-	for {
-		select {
-		case err := <-subs.Err():
-			slog.Error("project upserted event subscription failed", "err", err)
-		case l := <-logs:
-			ev, err := m.instance.ParseProjectUpserted(*l)
-			if err != nil {
-				slog.Error("failed to parse target event", "msg", err)
-				continue
-			}
-			if ev.ProjectId == 0 {
-				continue
-			}
-			pm := &ProjectMeta{
-				ProjectID: ev.ProjectId,
-				Uri:       ev.Uri,
-				Hash:      ev.Hash,
-			}
-			cs, err := pm.GetConfigs(m.ipfsEndpoint)
-			if err != nil {
-				slog.Error("fetch project failed", "err", err)
-				continue
-			}
-
-			for _, c := range cs {
-				slog.Info("monitor project", "projectID", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
-				m.Set(pm.ProjectID, c.Version, c)
-			}
-			select {
-			case m.notify <- pm.ProjectID:
-			default:
-				slog.Info("project notify channel full", "projectID", pm.ProjectID)
-			}
-		}
-	}
-}
-
-func (m *Manager) fillProjectPool() {
-	emptyHash := [32]byte{}
-	for i := uint64(1); ; i++ {
-		mp, err := m.instance.Projects(nil, i)
+func (m *Manager) doProjectRegistrarWatch(logs <-chan *types.Log, subs event.Subscription) {
+	select {
+	case err := <-subs.Err():
+		slog.Error("project upserted event subscription failed", "err", err)
+	case l := <-logs:
+		ev, err := m.instance.ParseProjectUpserted(*l)
 		if err != nil {
-			slog.Error("get project meta from chain failed", "project_id", i, "error", err)
-			continue
-		}
-		// query empty, means reached the maximum projectID value
-		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
-			slog.Info("project from contract read completed", "max", i-1)
+			slog.Error("failed to parse target event", "msg", err)
 			return
 		}
-
-		// znodeMap := map[[sha256.Size]byte]string{}
-		// for _, n := range znodes {
-		// 	znodeMap[sha256.Sum256([]byte(n))] = n
-		// }
-
-		// max := new(big.Int).SetUint64(0)
-		// maxZnode := ioID
-		// for h, id := range znodeMap {
-		// 	n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetUint64(i))
-		// 	if n.Cmp(max) > 0 {
-		// 		max = n
-		// 		maxZnode = id
-		// 	}
-		// }
-		// if maxZnode != ioID {
-		// 	slog.Info("the project not scheduld to this znode", "projectID", i)
-		// 	continue
-		// }
-
+		if ev.ProjectId == 0 {
+			return
+		}
 		pm := &ProjectMeta{
-			ProjectID: i,
-			Uri:       mp.Uri,
-			Hash:      mp.Hash,
-			Paused:    mp.Paused,
+			ProjectID: ev.ProjectId,
+			Uri:       ev.Uri,
+			Hash:      ev.Hash,
 		}
 		cs, err := pm.GetConfigs(m.ipfsEndpoint)
 		if err != nil {
 			slog.Error("fetch project failed", "err", err)
-			continue
+			return
 		}
 
 		for _, c := range cs {
-			slog.Debug("contract project loaded", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
-			m.Set(i, c.Version, c)
+			slog.Info("monitor project", "projectID", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
+			m.Set(pm.ProjectID, c.Version, c)
+		}
+		select {
+		case m.notify <- pm.ProjectID:
+		default:
+			slog.Info("project notify channel full", "projectID", pm.ProjectID)
+		}
+	}
+}
+
+func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subscription) {
+	for {
+		m.doProjectRegistrarWatch(logs, subs)
+	}
+}
+
+func (m *Manager) doProjectPoolFill(projectID uint64) bool {
+	emptyHash := [32]byte{}
+	mp, err := m.instance.Projects(nil, projectID)
+	if err != nil {
+		slog.Error("get project meta from chain failed", "project_id", projectID, "error", err)
+		return false
+	}
+	// query empty, means reached the maximum projectID value
+	if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
+		slog.Info("project from contract read completed", "max", projectID-1)
+		return true
+	}
+
+	// znodeMap := map[[sha256.Size]byte]string{}
+	// for _, n := range znodes {
+	// 	znodeMap[sha256.Sum256([]byte(n))] = n
+	// }
+
+	// max := new(big.Int).SetUint64(0)
+	// maxZnode := ioID
+	// for h, id := range znodeMap {
+	// 	n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetUint64(i))
+	// 	if n.Cmp(max) > 0 {
+	// 		max = n
+	// 		maxZnode = id
+	// 	}
+	// }
+	// if maxZnode != ioID {
+	// 	slog.Info("the project not scheduld to this znode", "projectID", i)
+	// 	continue
+	// }
+
+	pm := &ProjectMeta{
+		ProjectID: projectID,
+		Uri:       mp.Uri,
+		Hash:      mp.Hash,
+		Paused:    mp.Paused,
+	}
+	cs, err := pm.GetConfigs(m.ipfsEndpoint)
+	if err != nil {
+		slog.Error("fetch project failed", "err", err)
+		return false
+	}
+
+	for _, c := range cs {
+		slog.Debug("contract project loaded", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
+		m.Set(projectID, c.Version, c)
+	}
+	return false
+}
+
+func (m *Manager) fillProjectPool() {
+	for i := uint64(1); ; i++ {
+		if finished := m.doProjectPoolFill(i); finished {
+			return
 		}
 	}
 }
