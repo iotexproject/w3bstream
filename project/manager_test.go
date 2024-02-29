@@ -1,70 +1,93 @@
 package project
 
 import (
-	"runtime"
 	"testing"
 
-	"github.com/agiledragon/gomonkey/v2"
-	"github.com/bytedance/mockey"
+	. "github.com/bytedance/mockey"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/machinefi/sprout/project/contracts"
 	"github.com/pkg/errors"
-	"github.com/smartystreets/goconvey/convey"
-	"github.com/stretchr/testify/require"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestManager(t *testing.T) {
-	if runtime.GOOS == `darwin` {
-		return
-	}
-	require := require.New(t)
-	p := gomonkey.NewPatches()
-
-	t.Run("NewManagerDialChainFailed", func(t *testing.T) {
-		p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
-		defer p.Reset()
+func TestNewManager(t *testing.T) {
+	PatchConvey("NewManagerDialChainFailed", t, func() {
+		Mock(ethclient.Dial).Return(nil, errors.New(t.Name())).Build()
 
 		_, err := NewManager("", "", "")
-		require.ErrorContains(err, t.Name())
+		So(err.Error(), ShouldContainSubstring, t.Name())
 	})
-	t.Run("NewManagerNewContractsFailed", func(t *testing.T) {
-		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-		p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
-		defer p.Reset()
+	PatchConvey("NewManagerNewContractsFailed", t, func() {
+		Mock(ethclient.Dial).Return(nil, nil).Build()
+		Mock(contracts.NewContracts).Return(nil, errors.New(t.Name())).Build()
 
 		_, err := NewManager("", "", "")
-		require.ErrorContains(err, t.Name())
+		So(err.Error(), ShouldContainSubstring, t.Name())
 	})
-	t.Run("GetNotExist", func(t *testing.T) {
+	PatchConvey("NewManagerNewDefaultMonitorFailed", t, func() {
+		Mock(ethclient.Dial).Return(ethclient.NewClient(&rpc.Client{}), nil).Build()
+		Mock(contracts.NewContracts).Return(nil, nil).Build()
+		Mock((*Manager).fillProjectPool).Return().Build()
+		Mock(NewDefaultMonitor).Return(nil, errors.New(t.Name())).Build()
+
+		_, err := NewManager("", "", "")
+		So(err.Error(), ShouldContainSubstring, t.Name())
+	})
+	PatchConvey("NewManagerSuccess", t, func() {
+		Mock(ethclient.Dial).Return(ethclient.NewClient(&rpc.Client{}), nil).Build()
+		Mock(contracts.NewContracts).Return(nil, nil).Build()
+		Mock((*Manager).fillProjectPool).Return().Build()
+		Mock(NewDefaultMonitor).Return(&Monitor{}, nil).Build()
+		Mock((*Monitor).run).Return().Build()
+		Mock((*Monitor).MustEvents).Return(make(chan *types.Log)).Build()
+		Mock((*Manager).watchProjectRegistrar).Return().Build()
+
+		_, err := NewManager("", "", "")
+		So(err, ShouldBeEmpty)
+	})
+}
+
+type testSubscription struct {
+	errChain chan error
+}
+
+func (s testSubscription) Err() <-chan error {
+	return s.errChain
+}
+
+func (s testSubscription) Unsubscribe() {}
+
+func TestManagerMethod(t *testing.T) {
+	Convey("GetNotExist", t, func() {
 		m := &Manager{}
 		_, err := m.Get(1, "0.1")
-		require.ErrorContains(err, "project config not exist")
+		So(err.Error(), ShouldContainSubstring, "project config not exist")
 	})
-	t.Run("GetSuccess", func(t *testing.T) {
+	Convey("GetSuccess", t, func() {
 		m := &Manager{
 			pool: map[key]*Config{getKey(1, "0.1"): {}},
 		}
 		_, err := m.Get(1, "0.1")
-		require.NoError(err)
+		So(err, ShouldBeEmpty)
 	})
-	t.Run("SetSuccess", func(t *testing.T) {
+	Convey("SetSuccess", t, func() {
 		m := &Manager{
 			pool:       map[key]*Config{},
 			projectIDs: map[uint64]bool{},
 		}
 		m.Set(1, "0.1", &Config{})
 	})
-	t.Run("GetAllSuccess", func(t *testing.T) {
+	Convey("GetAllSuccess", t, func() {
 		m := &Manager{
 			projectIDs: map[uint64]bool{1: true},
 		}
 		ids := m.GetAllProjectID()
-		require.Equal(len(ids), 1)
-		require.Equal(ids[0], uint64(1))
+		So(len(ids), ShouldEqual, 1)
+		So(ids[0], ShouldEqual, uint64(1))
 	})
-	t.Run("GetNotifySuccess", func(t *testing.T) {
+	Convey("GetNotifySuccess", t, func() {
 		m := &Manager{
 			projectIDs: map[uint64]bool{1: true},
 			notify:     make(chan uint64, 1),
@@ -72,51 +95,106 @@ func TestManager(t *testing.T) {
 		notify := m.GetNotify()
 		m.notify <- uint64(1)
 		d := <-notify
-		require.Equal(d, uint64(1))
+		So(d, ShouldEqual, uint64(1))
 	})
-	t.Run("WatchProjectRegistrarSuccess", func(t *testing.T) {
+	PatchConvey("DoProjectRegistrarWatchSuccess", t, func() {
+		Mock((*contracts.Contracts).ParseProjectUpserted).Return(&contracts.ContractsProjectUpserted{ProjectId: 1}, nil).Build()
+		Mock((*ProjectMeta).GetConfigs).Return([]*Config{{}}, nil).Build()
+
 		m := &Manager{
-			projectIDs: map[uint64]bool{1: true},
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
 			notify:     make(chan uint64, 1),
 			instance:   &contracts.Contracts{},
 		}
-		p.ApplyMethodReturn(&contracts.Contracts{}, "ParseProjectUpserted", &contracts.ContractsProjectUpserted{ProjectId: 1}, nil)
-		p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
-		defer p.Reset()
 
+		errChain := make(chan error)
+		logChain := make(chan *types.Log, 1)
+		logChain <- &types.Log{}
+
+		m.doProjectRegistrarWatch(logChain, testSubscription{errChain})
 		notify := m.GetNotify()
 		m.notify <- uint64(1)
 		d := <-notify
-		require.Equal(d, uint64(1))
+		So(d, ShouldEqual, uint64(1))
 	})
-	t.Run("FillProjectPoolEmpty", func(t *testing.T) {
+	PatchConvey("DoProjectPoolFillReadChainFailed", t, func() {
+		Mock((*contracts.ContractsCaller).Projects).Return(nil, errors.New(t.Name())).Build()
+
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
 			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
-		p.ApplyMethodReturn(&contracts.Contracts{}, "Projects", &struct {
+		finished := m.doProjectPoolFill(1)
+		So(finished, ShouldBeFalse)
+		So(len(m.GetAllProjectID()), ShouldEqual, 0)
+	})
+	PatchConvey("DoProjectPoolFillFinished", t, func() {
+		Mock((*contracts.ContractsCaller).Projects).Return(struct {
 			Uri    string
 			Hash   [32]byte
 			Paused bool
-		}{}, nil)
-		defer p.Reset()
+		}{}, nil).Build()
 
-		require.Equal(len(m.GetAllProjectID()), 0)
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+			instance:   &contracts.Contracts{},
+		}
+		finished := m.doProjectPoolFill(1)
+		So(finished, ShouldBeTrue)
+		So(len(m.GetAllProjectID()), ShouldEqual, 0)
 	})
-}
+	PatchConvey("DoProjectPoolFillGetConfigFailed", t, func() {
+		Mock((*contracts.ContractsCaller).Projects).Return(struct {
+			Uri    string
+			Hash   [32]byte
+			Paused bool
+		}{
+			Uri:  "test",
+			Hash: [32]byte{1},
+		}, nil).Build()
+		Mock((*ProjectMeta).GetConfigs).Return(nil, errors.New(t.Name())).Build()
 
-func TestNewManager(t *testing.T) {
-	mockey.PatchConvey("NewManagerSuccess", t, func() {
-		mockey.Mock(ethclient.Dial).Return(ethclient.NewClient(&rpc.Client{}), nil).Build()
-		mockey.Mock(contracts.NewContracts).Return(nil, nil).Build()
-		mockey.Mock((*Manager).fillProjectPool).Return().Build()
-		mockey.Mock(NewDefaultMonitor).Return(&Monitor{}, nil).Build()
-		mockey.Mock((*Monitor).run).Return().Build()
-		mockey.Mock((*Monitor).MustEvents).Return(make(chan *types.Log)).Build()
-		mockey.Mock((*Manager).watchProjectRegistrar).Return().Build()
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+			instance:   &contracts.Contracts{},
+		}
+		finished := m.doProjectPoolFill(1)
+		So(finished, ShouldBeFalse)
+		So(len(m.GetAllProjectID()), ShouldEqual, 0)
+	})
+	PatchConvey("DoProjectPoolFillSuccess", t, func() {
+		Mock((*contracts.ContractsCaller).Projects).Return(struct {
+			Uri    string
+			Hash   [32]byte
+			Paused bool
+		}{
+			Uri:  "test",
+			Hash: [32]byte{1},
+		}, nil).Build()
+		Mock((*ProjectMeta).GetConfigs).Return([]*Config{{}}, nil).Build()
 
-		_, err := NewManager("", "", "")
-		convey.So(err, convey.ShouldBeEmpty)
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+			instance:   &contracts.Contracts{},
+		}
+		finished := m.doProjectPoolFill(1)
+		So(finished, ShouldBeFalse)
+		So(len(m.GetAllProjectID()), ShouldEqual, 1)
+	})
+	PatchConvey("FillProjectPoolSuccess", t, func() {
+		Mock((*Manager).doProjectPoolFill).Return(true).Build()
+
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+			instance:   &contracts.Contracts{},
+		}
+		m.fillProjectPool()
+		So(len(m.GetAllProjectID()), ShouldEqual, 0)
 	})
 }
