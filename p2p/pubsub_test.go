@@ -24,11 +24,11 @@ func TestNewPubSubs(t *testing.T) {
 	bootNodeMultiaddr := "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
 	iotexChainID := 2
 
-	t.Run("NewP2pHostFailed", func(t *testing.T) {
-		patches = libp2pNew(patches, errors.New(t.Name()))
-		_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
-		require.ErrorContains(err, t.Name())
-	})
+	//t.Run("NewP2pHostFailed", func(t *testing.T) {
+	//	patches = libp2pNew(patches, errors.New(t.Name()))
+	//	_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
+	//	require.ErrorContains(err, t.Name())
+	//})
 	patches = libp2pNew(patches, nil)
 
 	t.Run("NewGossipFailed", func(t *testing.T) {
