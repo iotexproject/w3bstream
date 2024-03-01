@@ -6,6 +6,7 @@ import (
 	"time"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	. "github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,43 @@ import (
 	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/types"
 )
+
+func TestPubTask(t *testing.T) {
+
+	d := &Dispatcher{}
+	task := &types.Task{
+		ID: "",
+		Messages: []*types.Message{{
+			ID:             "id1",
+			ProjectID:      uint64(0x1),
+			ProjectVersion: "0.1",
+			Data:           "data",
+		}},
+	}
+
+	PatchConvey("GetTaskFailed", t, func() {
+		Mock((*persistence.Postgres).Fetch).Return(nil, errors.New(t.Name())).Build()
+		d.pubTask()
+	})
+
+	PatchConvey("TaskNil", t, func() {
+		Mock((*persistence.Postgres).Fetch).Return(nil, nil).Build()
+		d.pubTask()
+	})
+
+	PatchConvey("AddPubsubFailed", t, func() {
+		Mock((*persistence.Postgres).Fetch).Return(task, nil).Build()
+		Mock((*p2p.PubSubs).Add).Return(errors.New(t.Name())).Build()
+		d.pubTask()
+	})
+
+	PatchConvey("PublishFailed", t, func() {
+		Mock((*persistence.Postgres).Fetch).Return(task, nil).Build()
+		Mock((*p2p.PubSubs).Add).Return(nil).Build()
+		Mock((*p2p.PubSubs).Publish).Return(errors.New(t.Name())).Build()
+		d.pubTask()
+	})
+}
 
 func TestNewDispatcher(t *testing.T) {
 	require := require.New(t)
