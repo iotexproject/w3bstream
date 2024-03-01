@@ -6,6 +6,9 @@ import (
 
 	. "github.com/agiledragon/gomonkey/v2"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil"
@@ -13,8 +16,6 @@ import (
 	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewProcessor(t *testing.T) {
