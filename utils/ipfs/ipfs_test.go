@@ -17,12 +17,12 @@ func TestIPFS(t *testing.T) {
 	s := ipfs.NewIPFS("ipfs.mainnet.iotex.io")
 
 	content := []byte("test data")
-	f, err := os.OpenFile("test", os.O_CREATE|os.O_RDWR, 0666)
+	f, err := os.CreateTemp("", "test")
 	r.Nil(err)
 	r.NotNil(f)
-	defer os.RemoveAll("test")
+	defer os.RemoveAll(f.Name())
 
-	cid, err := s.AddFile("test")
+	cid, err := s.AddFile(f.Name())
 	r.NoError(err)
 	r.NotEqual(cid, "")
 	t.Log(cid)
