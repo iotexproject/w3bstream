@@ -3,7 +3,6 @@ package output
 import (
 	"context"
 	"crypto/ed25519"
-	"fmt"
 	"log/slog"
 
 	"github.com/blocto/solana-go-sdk/client"
@@ -42,13 +41,11 @@ func (e *solanaProgram) sendTX(endpoint, privateKey string, ins []soltypes.Instr
 		PrivateKey: pk,
 	}
 	if len(ins) == 0 {
-		fmt.Println("MissingInstructionData")
 		return "", errors.New("missing instruction data")
 	}
 
 	resp, err := cli.GetLatestBlockhash(context.Background())
 	if err != nil {
-		fmt.Println("GetSolanaBlockFailed")
 		return "", errors.Wrap(err, "failed to get solana latest block hash")
 	}
 	tx, err := soltypes.NewTransaction(soltypes.NewTransactionParam{
@@ -60,13 +57,11 @@ func (e *solanaProgram) sendTX(endpoint, privateKey string, ins []soltypes.Instr
 		Signers: []soltypes.Account{account},
 	})
 	if err != nil {
-		fmt.Println("BuildSolanaTxFailed")
 		return "", errors.Wrap(err, "failed to build solana raw tx")
 	}
 
 	hash, err := cli.SendTransaction(context.Background(), tx)
 	if err != nil {
-		fmt.Println("SendSolanaTxFailed")
 		return "", errors.Wrap(err, "failed to send solana tx")
 	}
 	return hash, nil

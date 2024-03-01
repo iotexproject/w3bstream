@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	. "github.com/agiledragon/gomonkey/v2"
+
 	"github.com/machinefi/sprout/p2p"
 )
 

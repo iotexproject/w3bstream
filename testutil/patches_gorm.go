@@ -2,10 +2,11 @@ package testutil
 
 import (
 	"database/sql"
+	"reflect"
+
 	. "github.com/agiledragon/gomonkey/v2"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"reflect"
 )
 
 var _targetGormDatabase = reflect.TypeOf(&gorm.DB{})

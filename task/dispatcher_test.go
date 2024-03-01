@@ -7,6 +7,9 @@ import (
 
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/testutil/mock"
@@ -14,8 +17,6 @@ import (
 	testpersistence "github.com/machinefi/sprout/testutil/persistence"
 	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewDispatcher(t *testing.T) {

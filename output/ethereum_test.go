@@ -2,17 +2,17 @@ package output
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pkg/errors"
 	"math/big"
 	"reflect"
 	"strings"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/types"
@@ -75,8 +75,6 @@ func TestEthOutput(t *testing.T) {
 	})
 
 	t.Run("MissReceiverAddress", func(t *testing.T) {
-		//contractMissParamAbiJSON := `[{"inputs":[],"name":"getJournal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getPostStateDigest","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getProjectId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getSeal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes","name":"_proof","type":"bytes"}],"name":"setProof","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_projectId","type":"uint256"},{"internalType":"address","name":"_receiver","type":"address"},{"internalType":"bytes","name":"_data_snark","type":"bytes"}],"name":"submit","outputs":[],"stateMutability":"nonpayable","type":"function"}]`
-		//contractMissParamMethod := "submit"
 		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMethod)
 		require.NoError(err)
 
@@ -96,8 +94,6 @@ func TestEthOutput(t *testing.T) {
 		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
 		require.NoError(err)
 
-		//task.Messages[0].Data = "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"post_state_digest\":[244,204,22,124,129,242],\"journal\":[82,0,0,0,73,32]}}"
-		//task.Messages[0].Data = "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"journal\":[82,0,0,0,73,32]}}"
 		proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"journal\":[82,0,0,0,73,32]}}"
 		_, err = contract.Output(task, []byte(proof))
 		require.ErrorContains(err, "get Snark.post_state_digest failed")
@@ -156,19 +152,6 @@ func TestEthOutput(t *testing.T) {
 		require.ErrorContains(err, "miss param")
 	})
 
-	//t.Run("ContractABIPackFailed", func(t *testing.T) {
-	//	contractAbiJSON = `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
-	//	contractMethod = "setProof"
-	//	contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
-	//	require.NoError(err)
-	//
-	//	patches = ethABIPack(patches, errors.New(t.Name()))
-	//	defer patches.Reset()
-	//
-	//	_, err = contract.Output(task, []byte("this is proof"))
-	//	require.ErrorContains(err, t.Name())
-	//})
-
 	t.Run("TransactionFailed", func(t *testing.T) {
 		contractAbiJSON = `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
 		contractMethod = "setProof"
@@ -185,7 +168,6 @@ func TestEthSendTX(t *testing.T) {
 	patches := NewPatches()
 
 	chainEndpoint := "https://iotex"
-	//chainEndpoint := "https://babel-api.testnet.iotex.io"
 	secretKey := "b7255a24"
 	contractAddress := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
 	receiverAddress := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"

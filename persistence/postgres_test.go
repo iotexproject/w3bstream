@@ -1,17 +1,19 @@
 package persistence
 
 import (
-	. "github.com/agiledragon/gomonkey/v2"
-	"github.com/google/uuid"
-	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/testutil"
-	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 	"reflect"
 	"testing"
 	"time"
+
+	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
+
+	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/testutil"
+	"github.com/machinefi/sprout/types"
 )
 
 func PatchNewPostgres(p *Patches, v *Postgres, err error) *Patches {
@@ -105,6 +107,7 @@ func PatchPostgresFetchMessagesByMessageIDs(p *Patches, messages []*message, err
 func TestTxCreateMessage(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 	d := &gorm.DB{}
 
 	t.Run("FailedToCreate", func(t *testing.T) {
@@ -124,6 +127,7 @@ func TestTxCreateMessage(t *testing.T) {
 func TestTxCreateTaskLog(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 	d := &gorm.DB{}
 
 	t.Run("FailedToCreate", func(t *testing.T) {
@@ -144,6 +148,7 @@ func TestTxCreateTaskLog(t *testing.T) {
 func TestTxAggregateTask(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 	d := &gorm.DB{}
 
 	t.Run("FailedToFindMessages", func(t *testing.T) {
@@ -201,6 +206,7 @@ func TestTxAggregateTask(t *testing.T) {
 func TestPostgres_Save(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 
 	db := &gorm.DB{
 		Error:     nil,
@@ -253,6 +259,7 @@ func TestPostgres_Save(t *testing.T) {
 func TestPostgres_Fetch(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 
 	v := &Postgres{
 		db: &gorm.DB{
@@ -296,6 +303,7 @@ func TestPostgres_Fetch(t *testing.T) {
 func TestPostgres_FetchTasksByTaskID(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 
 	v := &Postgres{db: &gorm.DB{}}
 	p = testutil.GormDBWhere(p, v.db)
@@ -316,6 +324,7 @@ func TestPostgres_FetchTasksByTaskID(t *testing.T) {
 func TestPostgres_FetchMessagesByMessageIDs(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 
 	v := &Postgres{db: &gorm.DB{}}
 	p = testutil.GormDBWhere(p, v.db)
@@ -340,9 +349,9 @@ func TestPostgres_FetchMessagesByMessageIDs(t *testing.T) {
 }
 
 func TestPostgres_FetchByID(t *testing.T) {
-	t.SkipNow()
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 
 	v := &Postgres{db: &gorm.DB{}}
 
@@ -359,6 +368,7 @@ func TestPostgres_FetchByID(t *testing.T) {
 		r.Nil(_task)
 		r.NoError(err)
 	})
+	p.Reset()
 	p = PatchPostgresFetchTasksByTaskID(p, []*task{{}}, nil)
 
 	t.Run("FailedToFetchMessages", func(t *testing.T) {
@@ -386,6 +396,7 @@ func TestPostgres_FetchByID(t *testing.T) {
 func TestPostgres_FetchMessage(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 	v := &Postgres{db: &gorm.DB{}}
 
 	p = testutil.GormDBWhere(p, v.db)
@@ -406,6 +417,7 @@ func TestPostgres_FetchMessage(t *testing.T) {
 func TestPostgres_FetchTasksByMessageID(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 
 	v := &Postgres{db: &gorm.DB{}}
 	p = testutil.GormDBWhere(p, v.db)
@@ -426,6 +438,7 @@ func TestPostgres_FetchTasksByMessageID(t *testing.T) {
 func TestPostgres_FetchTaskStateLogsByTaskIDs(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 
 	v := &Postgres{db: &gorm.DB{}}
 	p = testutil.GormDBWhere(p, v.db)
@@ -455,6 +468,7 @@ func TestPostgres_FetchTaskStateLogsByTaskIDs(t *testing.T) {
 func TestPostgres_FetchStateLog(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 	v := &Postgres{db: &gorm.DB{}}
 
 	t.Run("FailedToFetchTasks", func(t *testing.T) {
@@ -489,6 +503,7 @@ func TestPostgres_FetchStateLog(t *testing.T) {
 func TestPostgres_UpdateState(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 	d := &gorm.DB{Statement: &gorm.Statement{}}
 	v := &Postgres{db: d}
 
@@ -523,10 +538,9 @@ func TestPostgres_UpdateState(t *testing.T) {
 }
 
 func TestNewPostgres(t *testing.T) {
-	t.SkipNow()
-
 	r := require.New(t)
 	p := NewPatches()
+	defer p.Reset()
 	d := &gorm.DB{}
 
 	t.Run("FailedToOpenDSN", func(t *testing.T) {

@@ -5,10 +5,10 @@ import (
 
 	"github.com/blocto/solana-go-sdk/client"
 	soltypes "github.com/blocto/solana-go-sdk/types"
-	"github.com/bytedance/mockey"
+	. "github.com/bytedance/mockey"
 	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
-	"github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,21 +52,17 @@ func TestSolanaOutput(t *testing.T) {
 	contract, err := NewSolanaProgram(chainEndpoint, programID, secretKey, stateAccountPK)
 	require.NoError(err)
 
-	t.Run("SendTXFailed", func(t *testing.T) {
-		mockey.PatchConvey("SendTXFailed", t, func() {
-			mockey.Mock((*solanaProgram).sendTX).Return("", errors.New(t.Name())).Build()
-			_, err = contract.Output(task, []byte("proof"))
-			convey.So(err.Error(), convey.ShouldEqual, t.Name())
-		})
+	PatchConvey("SendTXFailed", t, func() {
+		Mock((*solanaProgram).sendTX).Return("", errors.New(t.Name())).Build()
+		_, err = contract.Output(task, []byte("proof"))
+		So(err.Error(), ShouldEqual, t.Name())
 	})
 
-	t.Run("SendTXOk", func(t *testing.T) {
-		mockey.PatchConvey("SendTXOk", t, func() {
-			mockey.Mock((*solanaProgram).sendTX).Return(t.Name(), nil).Build()
-			txHash, err := contract.Output(task, []byte("proof"))
-			convey.So(err, convey.ShouldBeEmpty)
-			convey.So(txHash, convey.ShouldEqual, t.Name())
-		})
+	PatchConvey("SendTXOk", t, func() {
+		Mock((*solanaProgram).sendTX).Return(t.Name(), nil).Build()
+		txHash, err := contract.Output(task, []byte("proof"))
+		So(err, ShouldBeEmpty)
+		So(txHash, ShouldEqual, t.Name())
 	})
 }
 
@@ -84,53 +80,43 @@ func TestSolanaSendTX(t *testing.T) {
 		stateAccountPK: stateAccountPK,
 	}
 
-	t.Run("MissingInstructionData", func(t *testing.T) {
-		mockey.PatchConvey("MissingInstructionData", t, func() {
-			mockey.Mock(client.NewClient).Return(&client.Client{}).Build()
-			_, err := contract.sendTX(chainEndpoint, secretKey, nil)
-			convey.So(err.Error(), convey.ShouldEqual, "missing instruction data")
-		})
+	PatchConvey("MissingInstructionData", t, func() {
+		Mock(client.NewClient).Return(&client.Client{}).Build()
+		_, err := contract.sendTX(chainEndpoint, secretKey, nil)
+		So(err.Error(), ShouldEqual, "missing instruction data")
 	})
 
-	t.Run("GetSolanaBlockFailed", func(t *testing.T) {
-		mockey.PatchConvey("GetSolanaBlockFailed", t, func() {
-			mockey.Mock(client.NewClient).Return(&client.Client{})
-			mockey.Mock((*client.Client).GetLatestBlockhash).Return(nil, errors.New(t.Name())).Build()
-			_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
-			convey.So(err.Error(), convey.ShouldContainSubstring, t.Name())
-		})
+	PatchConvey("GetSolanaBlockFailed", t, func() {
+		Mock(client.NewClient).Return(&client.Client{})
+		Mock((*client.Client).GetLatestBlockhash).Return(nil, errors.New(t.Name())).Build()
+		_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
+		So(err.Error(), ShouldContainSubstring, t.Name())
 	})
 
-	t.Run("BuildSolanaTxFailed", func(t *testing.T) {
-		mockey.PatchConvey("BuildSolanaTxFailed", t, func() {
-			mockey.Mock(client.NewClient).Return(&client.Client{})
-			mockey.Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
-			mockey.Mock(soltypes.NewTransaction).Return(nil, errors.New(t.Name())).Build()
-			_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
-			convey.So(err.Error(), convey.ShouldContainSubstring, t.Name())
-		})
+	PatchConvey("BuildSolanaTxFailed", t, func() {
+		Mock(client.NewClient).Return(&client.Client{})
+		Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
+		Mock(soltypes.NewTransaction).Return(nil, errors.New(t.Name())).Build()
+		_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
+		So(err.Error(), ShouldContainSubstring, t.Name())
 	})
 
-	t.Run("SendSolanaTxFailed", func(t *testing.T) {
-		mockey.PatchConvey("SendSolanaTxFailed", t, func() {
-			mockey.Mock(client.NewClient).Return(&client.Client{})
-			mockey.Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
-			mockey.Mock(soltypes.NewTransaction).Return(nil, nil).Build()
-			mockey.Mock((*client.Client).SendTransaction).Return("", errors.New(t.Name())).Build()
-			_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
-			convey.So(err.Error(), convey.ShouldContainSubstring, t.Name())
-		})
+	PatchConvey("SendSolanaTxFailed", t, func() {
+		Mock(client.NewClient).Return(&client.Client{})
+		Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
+		Mock(soltypes.NewTransaction).Return(nil, nil).Build()
+		Mock((*client.Client).SendTransaction).Return("", errors.New(t.Name())).Build()
+		_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
+		So(err.Error(), ShouldContainSubstring, t.Name())
 	})
 
-	t.Run("SendSolanaTxOk", func(t *testing.T) {
-		mockey.PatchConvey("SendSolanaTxOk", t, func() {
-			mockey.Mock(client.NewClient).Return(&client.Client{})
-			mockey.Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
-			mockey.Mock(soltypes.NewTransaction).Return(nil, nil).Build()
-			mockey.Mock((*client.Client).SendTransaction).Return(t.Name(), nil).Build()
-			hash, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
-			convey.So(err, convey.ShouldBeEmpty)
-			convey.So(hash, convey.ShouldEqual, hash)
-		})
+	PatchConvey("SendSolanaTxOk", t, func() {
+		Mock(client.NewClient).Return(&client.Client{})
+		Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
+		Mock(soltypes.NewTransaction).Return(nil, nil).Build()
+		Mock((*client.Client).SendTransaction).Return(t.Name(), nil).Build()
+		hash, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
+		So(err, ShouldBeEmpty)
+		So(hash, ShouldEqual, hash)
 	})
 }

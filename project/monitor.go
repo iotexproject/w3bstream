@@ -12,12 +12,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/pkg/errors"
 )
 
 func NewMonitor(chainEndpoint string, addresses []string, topics []string, from, step int64, interval time.Duration) (*Monitor, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "dial chain endpoint %s failed", chainEndpoint)
 	}
 
 	m := &Monitor{
@@ -48,14 +49,13 @@ func NewMonitor(chainEndpoint string, addresses []string, topics []string, from,
 func NewDefaultMonitor(chainEndpoint string, addresses []string, topics []string) (*Monitor, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "dial chain endpoint %s failed", chainEndpoint)
 	}
 	defer client.Close()
 
 	latestBlk, err := client.BlockNumber(context.Background())
 	if err != nil {
-		slog.Error("query latest block number", "msg", err)
-		return nil, err
+		return nil, errors.Wrap(err, "get current block number failed")
 	}
 
 	return NewMonitor(chainEndpoint, addresses, topics, int64(latestBlk), 100000, time.Second*10)
