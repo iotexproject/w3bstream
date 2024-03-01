@@ -167,6 +167,14 @@ func TestRelease(t *testing.T) {
 			p.release()
 		})
 	})
+
+	t.Run("TopicCloseOk", func(t *testing.T) {
+		PatchConvey("TopicCloseOk", t, func() {
+			Mock((*pubsub.Subscription).Cancel).Return().Build()
+			Mock((*pubsub.Topic).Close).Return(nil).Build()
+			p.release()
+		})
+	})
 }
 
 func TestRun(t *testing.T) {
