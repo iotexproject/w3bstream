@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
-	"github.com/bytedance/mockey"
+	. "github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -16,6 +16,7 @@ import (
 	"github.com/machinefi/sprout/testutil/mock"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 )
 
@@ -65,12 +66,12 @@ func TestDiscoverPeers(t *testing.T) {
 	})
 
 	t.Run("DiscoverOK", func(t *testing.T) {
-		mockey.PatchConvey("DiscoverOK", t, func() {
+		PatchConvey("DiscoverOK", t, func() {
 			host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			mockey.Mock(routing.NewRoutingDiscovery).Return(nil).Build()
-			mockey.Mock(util.Advertise).Return().Build()
+			Mock(routing.NewRoutingDiscovery).Return(nil).Build()
+			Mock(util.Advertise).Return().Build()
 			err := discoverPeers(ctx, host, bootNodeMultiaddr, iotexChainID)
-			require.NoError(err)
+			So(err, ShouldBeEmpty)
 		})
 	})
 }

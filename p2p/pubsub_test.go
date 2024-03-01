@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
-	"github.com/bytedance/mockey"
+	. "github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -14,7 +14,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/machinefi/sprout/testutil/mock"
 	"github.com/pkg/errors"
-	"github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/testutil"
@@ -32,10 +32,10 @@ func TestNewPubSubs(t *testing.T) {
 	host := mock.NewMockHost(ctrl)
 
 	t.Run("NewP2pHostFailed", func(t *testing.T) {
-		mockey.PatchConvey("NewP2pHostFailed", t, func() {
-			mockey.Mock(libp2p.New).Return(nil, errors.New(t.Name())).Build()
+		PatchConvey("NewP2pHostFailed", t, func() {
+			Mock(libp2p.New).Return(nil, errors.New(t.Name())).Build()
 			_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
-			convey.So(err.Error(), convey.ShouldContainSubstring, t.Name())
+			So(err.Error(), ShouldContainSubstring, t.Name())
 		})
 	})
 
@@ -67,26 +67,26 @@ func TestAdd(t *testing.T) {
 	p := &PubSubs{pubSubs: make(map[uint64]*pubSub)}
 
 	t.Run("NewPubSubFailed", func(t *testing.T) {
-		mockey.PatchConvey("NewPubSubFailed", t, func() {
-			mockey.Mock(newPubSub).Return(&pubSub{}, errors.New(t.Name())).Build()
+		PatchConvey("NewPubSubFailed", t, func() {
+			Mock(newPubSub).Return(&pubSub{}, errors.New(t.Name())).Build()
 			err := p.Add(projectID)
-			convey.So(err.Error(), convey.ShouldEqual, t.Name())
+			So(err.Error(), ShouldEqual, t.Name())
 		})
 	})
 
 	t.Run("AddOk", func(t *testing.T) {
-		mockey.PatchConvey("AddOk", t, func() {
-			mockey.Mock(newPubSub).Return(&pubSub{}, nil).Build()
-			mockey.Mock((*pubSub).run).Return().Build()
+		PatchConvey("AddOk", t, func() {
+			Mock(newPubSub).Return(&pubSub{}, nil).Build()
+			Mock((*pubSub).run).Return().Build()
 			err := p.Add(projectID)
-			convey.So(err, convey.ShouldBeEmpty)
+			So(err, ShouldBeEmpty)
 		})
 	})
 
 	t.Run("AddRepeat", func(t *testing.T) {
-		mockey.PatchConvey("AddOk", t, func() {
+		PatchConvey("AddOk", t, func() {
 			err := p.Add(projectID)
-			convey.So(err, convey.ShouldBeEmpty)
+			So(err, ShouldBeEmpty)
 		})
 	})
 }
@@ -100,13 +100,13 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("DeleteOk", func(t *testing.T) {
-		mockey.PatchConvey("DeleteOk", t, func() {
-			mockey.Mock(newPubSub).Return(&pubSub{}, nil).Build()
-			mockey.Mock((*pubSub).run).Return().Build()
+		PatchConvey("DeleteOk", t, func() {
+			Mock(newPubSub).Return(&pubSub{}, nil).Build()
+			Mock((*pubSub).run).Return().Build()
 			err := p.Add(projectID)
-			convey.So(err, convey.ShouldBeEmpty)
+			So(err, ShouldBeEmpty)
 
-			mockey.Mock((*pubSub).release).Return().Build()
+			Mock((*pubSub).release).Return().Build()
 			p.Delete(projectID)
 		})
 	})
@@ -129,7 +129,7 @@ func TestPublish(t *testing.T) {
 	})
 
 	patches = p2pNewPubSub(patches, &pubSub{}, nil)
-	mockey.Mock((*pubSub).run).Return().Build()
+	Mock((*pubSub).run).Return().Build()
 	err := p.Add(projectID)
 	require.NoError(err)
 
@@ -150,6 +150,62 @@ func TestPublish(t *testing.T) {
 		patches = pubsubTopicPublish(patches, nil)
 		err := p.Publish(projectID, d)
 		require.NoError(err)
+	})
+}
+
+func TestRelease(t *testing.T) {
+	_, cancel := context.WithCancel(context.Background())
+	p := &pubSub{
+		topic:     &pubsub.Topic{},
+		ctxCancel: cancel,
+	}
+
+	t.Run("TopicCloseFailed", func(t *testing.T) {
+		PatchConvey("TopicCloseFailed", t, func() {
+			Mock((*pubsub.Subscription).Cancel).Return().Build()
+			Mock((*pubsub.Topic).Close).Return(errors.New(t.Name())).Build()
+			p.release()
+		})
+	})
+}
+
+func TestRun(t *testing.T) {
+	p := &pubSub{}
+
+	t.Run("GetP2pDataFailed", func(t *testing.T) {
+		PatchConvey("GetP2pDataFailed", t, func() {
+			Mock((*pubsub.Subscription).Next).Return(nil, errors.New(t.Name())).Build()
+			p.run()
+		})
+	})
+}
+
+func TestNewPubSub(t *testing.T) {
+
+	t.Run("JoinTopicFailed", func(t *testing.T) {
+		PatchConvey("JoinTopicFailed", t, func() {
+			Mock((*pubsub.PubSub).Join).Return(nil, errors.New(t.Name())).Build()
+			_, err := newPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+			So(err.Error(), ShouldContainSubstring, t.Name())
+		})
+	})
+
+	t.Run("TopicSubscriptionFailed", func(t *testing.T) {
+		PatchConvey("TopicSubscriptionFailed", t, func() {
+			Mock((*pubsub.PubSub).Join).Return(&pubsub.Topic{}, nil).Build()
+			Mock((*pubsub.Topic).Subscribe).Return(nil, errors.New(t.Name())).Build()
+			_, err := newPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+			So(err.Error(), ShouldContainSubstring, t.Name())
+		})
+	})
+
+	t.Run("NewPubSubOk", func(t *testing.T) {
+		PatchConvey("NewPubSubOk", t, func() {
+			Mock((*pubsub.PubSub).Join).Return(&pubsub.Topic{}, nil).Build()
+			Mock((*pubsub.Topic).Subscribe).Return(&pubsub.Subscription{}, nil).Build()
+			_, err := newPubSub(uint64(0x1), nil, nil, peer.ID("0"))
+			So(err, ShouldBeEmpty)
+		})
 	})
 }
 
