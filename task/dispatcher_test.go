@@ -1,6 +1,8 @@
 package task
 
 import (
+	"github.com/smartystreets/goconvey/convey"
+	"log/slog"
 	"reflect"
 	"testing"
 	"time"
@@ -35,25 +37,39 @@ func TestPubTask(t *testing.T) {
 
 	PatchConvey("GetTaskFailed", t, func() {
 		Mock((*persistence.Postgres).Fetch).Return(nil, errors.New(t.Name())).Build()
+		mockerAdd := Mock((*p2p.PubSubs).Add).Return(nil).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
 		d.pubTask()
+		convey.So(mockerAdd.Times(), convey.ShouldEqual, 0)
+		convey.So(mockerLog.Times(), convey.ShouldEqual, 1)
 	})
 
 	PatchConvey("TaskNil", t, func() {
 		Mock((*persistence.Postgres).Fetch).Return(nil, nil).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		mockerAdd := Mock((*p2p.PubSubs).Add).Return(nil).Build()
 		d.pubTask()
+		convey.So(mockerLog.Times(), convey.ShouldEqual, 0)
+		convey.So(mockerAdd.Times(), convey.ShouldEqual, 0)
 	})
 
 	PatchConvey("AddPubsubFailed", t, func() {
 		Mock((*persistence.Postgres).Fetch).Return(task, nil).Build()
 		Mock((*p2p.PubSubs).Add).Return(errors.New(t.Name())).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		mockerPub := Mock((*p2p.PubSubs).Publish).Return(nil).Build()
 		d.pubTask()
+		convey.So(mockerLog.Times(), convey.ShouldEqual, 1)
+		convey.So(mockerPub.Times(), convey.ShouldEqual, 0)
 	})
 
 	PatchConvey("PublishFailed", t, func() {
 		Mock((*persistence.Postgres).Fetch).Return(task, nil).Build()
 		Mock((*p2p.PubSubs).Add).Return(nil).Build()
 		Mock((*p2p.PubSubs).Publish).Return(errors.New(t.Name())).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
 		d.pubTask()
+		convey.So(mockerLog.Times(), convey.ShouldEqual, 1)
 	})
 }
 
