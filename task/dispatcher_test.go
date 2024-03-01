@@ -1,7 +1,6 @@
 package task
 
 import (
-	"github.com/smartystreets/goconvey/convey"
 	"log/slog"
 	"reflect"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	. "github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/p2p"
@@ -40,8 +40,8 @@ func TestPubTask(t *testing.T) {
 		mockerAdd := Mock((*p2p.PubSubs).Add).Return(nil).Build()
 		mockerLog := Mock(slog.Error).Return().Build()
 		d.pubTask()
-		convey.So(mockerAdd.Times(), convey.ShouldEqual, 0)
-		convey.So(mockerLog.Times(), convey.ShouldEqual, 1)
+		So(mockerAdd.Times(), ShouldEqual, 0)
+		So(mockerLog.Times(), ShouldEqual, 1)
 	})
 
 	PatchConvey("TaskNil", t, func() {
@@ -49,8 +49,8 @@ func TestPubTask(t *testing.T) {
 		mockerLog := Mock(slog.Error).Return().Build()
 		mockerAdd := Mock((*p2p.PubSubs).Add).Return(nil).Build()
 		d.pubTask()
-		convey.So(mockerLog.Times(), convey.ShouldEqual, 0)
-		convey.So(mockerAdd.Times(), convey.ShouldEqual, 0)
+		So(mockerLog.Times(), ShouldEqual, 0)
+		So(mockerAdd.Times(), ShouldEqual, 0)
 	})
 
 	PatchConvey("AddPubsubFailed", t, func() {
@@ -59,8 +59,8 @@ func TestPubTask(t *testing.T) {
 		mockerLog := Mock(slog.Error).Return().Build()
 		mockerPub := Mock((*p2p.PubSubs).Publish).Return(nil).Build()
 		d.pubTask()
-		convey.So(mockerLog.Times(), convey.ShouldEqual, 1)
-		convey.So(mockerPub.Times(), convey.ShouldEqual, 0)
+		So(mockerLog.Times(), ShouldEqual, 1)
+		So(mockerPub.Times(), ShouldEqual, 0)
 	})
 
 	PatchConvey("PublishFailed", t, func() {
@@ -69,7 +69,7 @@ func TestPubTask(t *testing.T) {
 		Mock((*p2p.PubSubs).Publish).Return(errors.New(t.Name())).Build()
 		mockerLog := Mock(slog.Error).Return().Build()
 		d.pubTask()
-		convey.So(mockerLog.Times(), convey.ShouldEqual, 1)
+		So(mockerLog.Times(), ShouldEqual, 1)
 	})
 }
 
