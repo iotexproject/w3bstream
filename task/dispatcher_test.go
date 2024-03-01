@@ -1,13 +1,16 @@
 package task
 
 import (
+	"log/slog"
 	"reflect"
 	"testing"
 	"time"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	. "github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/p2p"
@@ -18,6 +21,57 @@ import (
 	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/types"
 )
+
+func TestPubTask(t *testing.T) {
+
+	d := &Dispatcher{}
+	task := &types.Task{
+		ID: "",
+		Messages: []*types.Message{{
+			ID:             "id1",
+			ProjectID:      uint64(0x1),
+			ProjectVersion: "0.1",
+			Data:           "data",
+		}},
+	}
+
+	PatchConvey("GetTaskFailed", t, func() {
+		Mock((*persistence.Postgres).Fetch).Return(nil, errors.New(t.Name())).Build()
+		mockerAdd := Mock((*p2p.PubSubs).Add).Return(nil).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		d.pubTask()
+		So(mockerAdd.Times(), ShouldEqual, 0)
+		So(mockerLog.Times(), ShouldEqual, 1)
+	})
+
+	PatchConvey("TaskNil", t, func() {
+		Mock((*persistence.Postgres).Fetch).Return(nil, nil).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		mockerAdd := Mock((*p2p.PubSubs).Add).Return(nil).Build()
+		d.pubTask()
+		So(mockerLog.Times(), ShouldEqual, 0)
+		So(mockerAdd.Times(), ShouldEqual, 0)
+	})
+
+	PatchConvey("AddPubsubFailed", t, func() {
+		Mock((*persistence.Postgres).Fetch).Return(task, nil).Build()
+		Mock((*p2p.PubSubs).Add).Return(errors.New(t.Name())).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		mockerPub := Mock((*p2p.PubSubs).Publish).Return(nil).Build()
+		d.pubTask()
+		So(mockerLog.Times(), ShouldEqual, 1)
+		So(mockerPub.Times(), ShouldEqual, 0)
+	})
+
+	PatchConvey("PublishFailed", t, func() {
+		Mock((*persistence.Postgres).Fetch).Return(task, nil).Build()
+		Mock((*p2p.PubSubs).Add).Return(nil).Build()
+		Mock((*p2p.PubSubs).Publish).Return(errors.New(t.Name())).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		d.pubTask()
+		So(mockerLog.Times(), ShouldEqual, 1)
+	})
+}
 
 func TestNewDispatcher(t *testing.T) {
 	require := require.New(t)
