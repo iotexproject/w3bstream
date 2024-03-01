@@ -7,9 +7,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/machinefi/sprout/project/contracts"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/machinefi/sprout/project/contracts"
 )
 
 func TestNewManager(t *testing.T) {
