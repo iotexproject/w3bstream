@@ -2,6 +2,8 @@ package p2p
 
 import (
 	"context"
+	"encoding/json"
+	"log/slog"
 	"reflect"
 	"testing"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	pubsub_pb "github.com/libp2p/go-libp2p-pubsub/pb"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/machinefi/sprout/testutil/mock"
@@ -177,14 +180,38 @@ func TestRelease(t *testing.T) {
 	})
 }
 
-func TestRun(t *testing.T) {
-	p := &pubSub{}
+func TestNextMsg(t *testing.T) {
+	p := &pubSub{
+		selfID: peer.ID("test01"),
+	}
 
-	t.Run("GetP2pDataFailed", func(t *testing.T) {
-		PatchConvey("GetP2pDataFailed", t, func() {
-			Mock((*pubsub.Subscription).Next).Return(nil, errors.New(t.Name())).Build()
-			p.run()
-		})
+	PatchConvey("GetP2pDataFailed", t, func() {
+		Mock((*pubsub.Subscription).Next).Return(nil, errors.New(t.Name())).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		mockerUnmarshal := Mock(json.Unmarshal).Return(nil).Build()
+		p.nextMsg()
+		So(mockerLog.Times(), ShouldEqual, 1)
+		So(mockerUnmarshal.Times(), ShouldEqual, 0)
+	})
+
+	PatchConvey("GetP2pDataFromSelf", t, func() {
+		Mock((*pubsub.Subscription).Next).Return(&pubsub.Message{ReceivedFrom: p.selfID}, nil).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		mockerUnmarshal := Mock(json.Unmarshal).Return(nil).Build()
+		p.nextMsg()
+		So(mockerLog.Times(), ShouldEqual, 0)
+		So(mockerUnmarshal.Times(), ShouldEqual, 0)
+	})
+
+	PatchConvey("UnmarshalP2pDataFailed", t, func() {
+		Mock((*pubsub.Subscription).Next).Return(&pubsub.Message{
+			ReceivedFrom: peer.ID("test02"),
+			Message:      &pubsub_pb.Message{Data: nil},
+		}, nil).Build()
+		Mock(json.Unmarshal).Return(errors.New(t.Name())).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		p.nextMsg()
+		So(mockerLog.Times(), ShouldEqual, 1)
 	})
 }
 
@@ -249,26 +276,6 @@ func p2pNewPubSub(p *Patches, pub *pubSub, err error) *Patches {
 		newPubSub,
 		func(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*pubSub, error) {
 			return pub, err
-		},
-	)
-}
-
-func pubSubRelease(p *Patches) *Patches {
-	var ps *pubSub
-	return p.ApplyMethodFunc(
-		reflect.TypeOf(ps),
-		"Release",
-		func() {
-		},
-	)
-}
-
-func pubSubRun(p *Patches) *Patches {
-	var ps *pubSub
-	return p.ApplyMethodFunc(
-		reflect.TypeOf(ps),
-		"Run",
-		func() {
 		},
 	)
 }
