@@ -26,6 +26,7 @@ import (
 func TestNewPubSubs(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
+	defer patches.Reset()
 
 	var handle HandleSubscriptionMessage = nil
 	bootNodeMultiaddr := "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
@@ -119,6 +120,7 @@ func TestDelete(t *testing.T) {
 func TestPublish(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
+	defer patches.Reset()
 
 	projectID := uint64(0x1)
 	p := &PubSubs{pubSubs: make(map[uint64]*pubSub)}
@@ -217,31 +219,28 @@ func TestNextMsg(t *testing.T) {
 }
 
 func TestNewPubSub(t *testing.T) {
+	require := require.New(t)
+	patches := NewPatches()
+	defer patches.Reset()
 
-	//t.Run("JoinTopicFailed", func(t *testing.T) {
-	//	PatchConvey("JoinTopicFailed", t, func() {
-	//		Mock((*pubsub.PubSub).Join).Return(nil, errors.New(t.Name())).Build()
-	//		_, err := newPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
-	//		So(err.Error(), ShouldContainSubstring, t.Name())
-	//	})
-	//})
-	//
-	//t.Run("TopicSubscriptionFailed", func(t *testing.T) {
-	//	PatchConvey("TopicSubscriptionFailed", t, func() {
-	//		Mock((*pubsub.PubSub).Join).Return(&pubsub.Topic{}, nil).Build()
-	//		Mock((*pubsub.Topic).Subscribe).Return(nil, errors.New(t.Name())).Build()
-	//		_, err := newPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
-	//		So(err.Error(), ShouldContainSubstring, t.Name())
-	//	})
-	//})
+	t.Run("JoinTopicFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&pubsub.PubSub{}, "Join", nil, errors.New(t.Name()))
+		_, err := newPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		require.ErrorContains(err, t.Name())
+	})
+
+	t.Run("TopicSubscriptionFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&pubsub.PubSub{}, "Join", nil, nil)
+		patches = patches.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", nil, errors.New(t.Name()))
+		_, err := newPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		require.ErrorContains(err, t.Name())
+	})
 
 	t.Run("NewPubSubOk", func(t *testing.T) {
-		PatchConvey("NewPubSubOk", t, func() {
-			Mock((*pubsub.PubSub).Join).Return(&pubsub.Topic{}, nil).Build()
-			Mock((*pubsub.Topic).Subscribe).Return(&pubsub.Subscription{}, nil).Build()
-			_, err := newPubSub(uint64(0x1), nil, nil, peer.ID("0"))
-			So(err, ShouldBeEmpty)
-		})
+		patches = patches.ApplyMethodReturn(&pubsub.PubSub{}, "Join", nil, nil)
+		patches = patches.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", nil, nil)
+		_, err := newPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		require.NoError(err)
 	})
 }
 
