@@ -98,20 +98,21 @@ func TestDelete(t *testing.T) {
 	projectID := uint64(0x1)
 	p := &PubSubs{pubSubs: make(map[uint64]*pubSub)}
 
-	t.Run("IDNotExist", func(t *testing.T) {
+	PatchConvey("IDNotExist", t, func() {
+		mocker := Mock((*pubSub).release).Return().Build()
 		p.Delete(projectID)
+		So(mocker.Times(), ShouldEqual, 0)
 	})
 
-	t.Run("DeleteOk", func(t *testing.T) {
-		PatchConvey("DeleteOk", t, func() {
-			Mock(newPubSub).Return(&pubSub{}, nil).Build()
-			Mock((*pubSub).run).Return().Build()
-			err := p.Add(projectID)
-			So(err, ShouldBeEmpty)
+	PatchConvey("DeleteOk", t, func() {
+		Mock(newPubSub).Return(&pubSub{}, nil).Build()
+		Mock((*pubSub).run).Return().Build()
+		err := p.Add(projectID)
+		So(err, ShouldBeEmpty)
 
-			Mock((*pubSub).release).Return().Build()
-			p.Delete(projectID)
-		})
+		mocker := Mock((*pubSub).release).Return().Build()
+		p.Delete(projectID)
+		So(mocker.Times(), ShouldEqual, 1)
 	})
 }
 
@@ -163,20 +164,20 @@ func TestRelease(t *testing.T) {
 		ctxCancel: cancel,
 	}
 
-	t.Run("TopicCloseFailed", func(t *testing.T) {
-		PatchConvey("TopicCloseFailed", t, func() {
-			Mock((*pubsub.Subscription).Cancel).Return().Build()
-			Mock((*pubsub.Topic).Close).Return(errors.New(t.Name())).Build()
-			p.release()
-		})
+	PatchConvey("TopicCloseFailed", t, func() {
+		Mock((*pubsub.Subscription).Cancel).Return().Build()
+		Mock((*pubsub.Topic).Close).Return(errors.New(t.Name())).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		p.release()
+		So(mockerLog.Times(), ShouldEqual, 1)
 	})
 
-	t.Run("TopicCloseOk", func(t *testing.T) {
-		PatchConvey("TopicCloseOk", t, func() {
-			Mock((*pubsub.Subscription).Cancel).Return().Build()
-			Mock((*pubsub.Topic).Close).Return(nil).Build()
-			p.release()
-		})
+	PatchConvey("TopicCloseOk", t, func() {
+		Mock((*pubsub.Subscription).Cancel).Return().Build()
+		Mock((*pubsub.Topic).Close).Return(nil).Build()
+		mockerLog := Mock(slog.Error).Return().Build()
+		p.release()
+		So(mockerLog.Times(), ShouldEqual, 0)
 	})
 }
 
