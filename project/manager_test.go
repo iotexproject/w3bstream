@@ -3,50 +3,52 @@ package project
 import (
 	"testing"
 
-	. "github.com/bytedance/mockey"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/project/contracts"
+	"github.com/machinefi/sprout/testutil"
 )
 
 func TestNewManager(t *testing.T) {
-	PatchConvey("NewManagerDialChainFailed", t, func() {
-		Mock(ethclient.Dial).Return(nil, errors.New(t.Name())).Build()
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	t.Run("DialChainFailed", func(t *testing.T) {
+		p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "")
-		So(err.Error(), ShouldContainSubstring, t.Name())
+		r.ErrorContains(err, t.Name())
 	})
-	PatchConvey("NewManagerNewContractsFailed", t, func() {
-		Mock(ethclient.Dial).Return(nil, nil).Build()
-		Mock(contracts.NewContracts).Return(nil, errors.New(t.Name())).Build()
+	t.Run("NewContractsFailed", func(t *testing.T) {
+		p = testutil.EthClientDial(p, ethclient.NewClient(&rpc.Client{}), nil)
+		p = p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "")
-		So(err.Error(), ShouldContainSubstring, t.Name())
+		r.ErrorContains(err, t.Name())
 	})
-	PatchConvey("NewManagerNewDefaultMonitorFailed", t, func() {
-		Mock(ethclient.Dial).Return(ethclient.NewClient(&rpc.Client{}), nil).Build()
-		Mock(contracts.NewContracts).Return(nil, nil).Build()
-		Mock((*Manager).fillProjectPool).Return().Build()
-		Mock(NewDefaultMonitor).Return(nil, errors.New(t.Name())).Build()
+	t.Run("NewDefaultMonitorFailed", func(t *testing.T) {
+		p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
+		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
+		p = p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "")
-		So(err.Error(), ShouldContainSubstring, t.Name())
+		r.ErrorContains(err, t.Name())
 	})
-	PatchConvey("NewManagerSuccess", t, func() {
-		Mock(ethclient.Dial).Return(ethclient.NewClient(&rpc.Client{}), nil).Build()
-		Mock(contracts.NewContracts).Return(nil, nil).Build()
-		Mock((*Manager).fillProjectPool).Return().Build()
-		Mock(NewDefaultMonitor).Return(&Monitor{}, nil).Build()
-		Mock((*Monitor).run).Return().Build()
-		Mock((*Monitor).MustEvents).Return(make(chan *types.Log)).Build()
-		Mock((*Manager).watchProjectRegistrar).Return().Build()
+	t.Run("Success", func(t *testing.T) {
+		p = p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
+		p = p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
+		p = p.ApplyMethodReturn(&Monitor{}, "MustEvents", make(chan *types.Log))
+		p = p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 
 		_, err := NewManager("", "", "")
-		So(err, ShouldBeEmpty)
+		r.NoError(err)
 	})
 }
 
@@ -60,35 +62,50 @@ func (s testSubscription) Err() <-chan error {
 
 func (s testSubscription) Unsubscribe() {}
 
-func TestManagerMethod(t *testing.T) {
-	Convey("GetNotExist", t, func() {
+func TestManager_Get(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("NotExist", func(t *testing.T) {
 		m := &Manager{}
 		_, err := m.Get(1, "0.1")
-		So(err.Error(), ShouldContainSubstring, "project config not exist")
+		r.ErrorContains(err, "project config not exist")
 	})
-	Convey("GetSuccess", t, func() {
+	t.Run("Success", func(t *testing.T) {
 		m := &Manager{
 			pool: map[key]*Config{getKey(1, "0.1"): {}},
 		}
 		_, err := m.Get(1, "0.1")
-		So(err, ShouldBeEmpty)
+		r.NoError(err)
 	})
-	Convey("SetSuccess", t, func() {
+}
+
+func TestManager_Set(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		m := &Manager{
 			pool:       map[key]*Config{},
 			projectIDs: map[uint64]bool{},
 		}
 		m.Set(1, "0.1", &Config{})
 	})
-	Convey("GetAllSuccess", t, func() {
+}
+
+func TestManager_GetAllProjectID(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("Success", func(t *testing.T) {
 		m := &Manager{
 			projectIDs: map[uint64]bool{1: true},
 		}
 		ids := m.GetAllProjectID()
-		So(len(ids), ShouldEqual, 1)
-		So(ids[0], ShouldEqual, uint64(1))
+		r.Equal(len(ids), 1)
+		r.Equal(ids[0], uint64(1))
 	})
-	Convey("GetNotifySuccess", t, func() {
+}
+
+func TestManager_GetNotify(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("Success", func(t *testing.T) {
 		m := &Manager{
 			projectIDs: map[uint64]bool{1: true},
 			notify:     make(chan uint64, 1),
@@ -96,11 +113,18 @@ func TestManagerMethod(t *testing.T) {
 		notify := m.GetNotify()
 		m.notify <- uint64(1)
 		d := <-notify
-		So(d, ShouldEqual, uint64(1))
+		r.Equal(d, uint64(1))
 	})
-	PatchConvey("DoProjectRegistrarWatchSuccess", t, func() {
-		Mock((*contracts.ContractsFilterer).ParseProjectUpserted).Return(&contracts.ContractsProjectUpserted{ProjectId: 1}, nil).Build()
-		Mock((*ProjectMeta).GetConfigs).Return([]*Config{{}}, nil).Build()
+}
+
+func TestManager_doProjectRegistrarWatch(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	t.Run("Success", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&contracts.ContractsFilterer{}, "ParseProjectUpserted", &contracts.ContractsProjectUpserted{ProjectId: 1}, nil)
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -116,10 +140,17 @@ func TestManagerMethod(t *testing.T) {
 		m.doProjectRegistrarWatch(logChain, testSubscription{errChain})
 		notify := m.GetNotify()
 		d := <-notify
-		So(d, ShouldEqual, uint64(1))
+		r.Equal(d, uint64(1))
 	})
-	PatchConvey("DoProjectPoolFillReadChainFailed", t, func() {
-		Mock((*contracts.ContractsCaller).Projects).Return(nil, errors.New(t.Name())).Build()
+}
+
+func TestManager_doProjectPoolFill(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	t.Run("ReadChainFailed", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&contracts.ContractsCaller{}, "Projects", nil, errors.New(t.Name()))
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -127,15 +158,15 @@ func TestManagerMethod(t *testing.T) {
 			instance:   &contracts.Contracts{},
 		}
 		finished := m.doProjectPoolFill(1)
-		So(finished, ShouldBeFalse)
-		So(len(m.GetAllProjectID()), ShouldEqual, 0)
+		r.False(finished)
+		r.Equal(len(m.GetAllProjectID()), 0)
 	})
-	PatchConvey("DoProjectPoolFillFinished", t, func() {
-		Mock((*contracts.ContractsCaller).Projects).Return(struct {
+	t.Run("Finished", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&contracts.ContractsCaller{}, "Projects", struct {
 			Uri    string
 			Hash   [32]byte
 			Paused bool
-		}{}, nil).Build()
+		}{}, nil)
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -143,39 +174,18 @@ func TestManagerMethod(t *testing.T) {
 			instance:   &contracts.Contracts{},
 		}
 		finished := m.doProjectPoolFill(1)
-		So(finished, ShouldBeTrue)
-		So(len(m.GetAllProjectID()), ShouldEqual, 0)
+		r.True(finished)
+		r.Equal(len(m.GetAllProjectID()), 0)
 	})
-	PatchConvey("DoProjectPoolFillGetConfigFailed", t, func() {
-		Mock((*contracts.ContractsCaller).Projects).Return(struct {
-			Uri    string
-			Hash   [32]byte
-			Paused bool
-		}{
-			Uri:  "test",
-			Hash: [32]byte{1},
-		}, nil).Build()
-		Mock((*ProjectMeta).GetConfigs).Return(nil, errors.New(t.Name())).Build()
-
-		m := &Manager{
-			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
-			instance:   &contracts.Contracts{},
-		}
-		finished := m.doProjectPoolFill(1)
-		So(finished, ShouldBeFalse)
-		So(len(m.GetAllProjectID()), ShouldEqual, 0)
-	})
-	PatchConvey("DoProjectPoolFillSuccess", t, func() {
-		Mock((*contracts.ContractsCaller).Projects).Return(struct {
+	t.Run("GetConfigFailed", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&contracts.ContractsCaller{}, "Projects", struct {
 			Uri    string
 			Hash   [32]byte
 			Paused bool
 		}{
 			Uri:  "test",
 			Hash: [32]byte{1},
-		}, nil).Build()
-		Mock((*ProjectMeta).GetConfigs).Return([]*Config{{}}, nil).Build()
+		}, nil)
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -183,11 +193,38 @@ func TestManagerMethod(t *testing.T) {
 			instance:   &contracts.Contracts{},
 		}
 		finished := m.doProjectPoolFill(1)
-		So(finished, ShouldBeFalse)
-		So(len(m.GetAllProjectID()), ShouldEqual, 1)
+		r.False(finished)
+		r.Equal(len(m.GetAllProjectID()), 0)
 	})
-	PatchConvey("FillProjectPoolSuccess", t, func() {
-		Mock((*Manager).doProjectPoolFill).Return(true).Build()
+	t.Run("Success", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&contracts.ContractsCaller{}, "Projects", struct {
+			Uri    string
+			Hash   [32]byte
+			Paused bool
+		}{
+			Uri:  "test",
+			Hash: [32]byte{1},
+		}, nil)
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
+
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+			instance:   &contracts.Contracts{},
+		}
+		finished := m.doProjectPoolFill(1)
+		r.False(finished)
+		r.Equal(len(m.GetAllProjectID()), 1)
+	})
+}
+
+func TestManager_fillProjectPool(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	t.Run("Success", func(t *testing.T) {
+		p = p.ApplyPrivateMethod(&Manager{}, "doProjectPoolFill", func(uint64) bool { return true })
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -195,6 +232,6 @@ func TestManagerMethod(t *testing.T) {
 			instance:   &contracts.Contracts{},
 		}
 		m.fillProjectPool()
-		So(len(m.GetAllProjectID()), ShouldEqual, 0)
+		r.Equal(len(m.GetAllProjectID()), 0)
 	})
 }
