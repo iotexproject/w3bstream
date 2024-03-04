@@ -1,6 +1,23 @@
 # Changelog
 
 ---
+## [0.6.4] - 2024-02-26
+
+### Added
+- Sandbox contract support
+- More unit test
+
+### Changed
+- Output support snark proof pack
+
+---
+## [0.6.1] - 2024-02-19
+
+### Changed
+- When message have not packed to task, query message will return reveived state
+- Znode will auto join project p2p topic
+
+---
 ## [0.6.0] - 2024-02-15
 
 ### Added

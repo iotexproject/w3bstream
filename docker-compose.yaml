@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   enode:
-    image: ghcr.io/machinefi/enode:latest
+    image: ghcr.io/machinefi/enode:v0.6.4
     depends_on:
       - "postgres"
     container_name: w3bstream-enode
@@ -15,7 +15,7 @@ services:
       OPERATOR_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
 
   znode:
-    image: ghcr.io/machinefi/znode:latest
+    image: ghcr.io/machinefi/znode:v0.6.4
     depends_on:
       - "risc0"
       - "halo2"

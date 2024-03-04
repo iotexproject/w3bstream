@@ -12,12 +12,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/pkg/errors"
 )
 
 func NewMonitor(chainEndpoint string, addresses []string, topics []string, from, step int64, interval time.Duration) (*Monitor, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "dial chain endpoint %s failed", chainEndpoint)
 	}
 
 	m := &Monitor{
@@ -48,14 +49,13 @@ func NewMonitor(chainEndpoint string, addresses []string, topics []string, from,
 func NewDefaultMonitor(chainEndpoint string, addresses []string, topics []string) (*Monitor, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "dial chain endpoint %s failed", chainEndpoint)
 	}
 	defer client.Close()
 
 	latestBlk, err := client.BlockNumber(context.Background())
 	if err != nil {
-		slog.Error("query latest block number", "msg", err)
-		return nil, err
+		return nil, errors.Wrap(err, "get current block number failed")
 	}
 
 	return NewMonitor(chainEndpoint, addresses, topics, int64(latestBlk), 100000, time.Second*10)
@@ -105,53 +105,61 @@ func (m *Monitor) MustEvents(topic string) <-chan *types.Log {
 	return ch
 }
 
-func (m *Monitor) run() {
+func (m *Monitor) doRun() bool {
 	query := ethereum.FilterQuery{
 		Addresses: m.addresses,
 		Topics:    m.topics,
 	}
-	for {
-		select {
-		case <-m.stop:
-			slog.Info("monitor stopped")
-		default:
-			latestBlk, err := m.client.BlockNumber(context.Background())
-			if err != nil {
-				slog.Error("query latest block number", "msg", err)
-				time.Sleep(m.interval)
-				continue
-			}
-			slog.Debug("query latest block", "block number", latestBlk)
-			if uint64(m.latest) > latestBlk {
-				time.Sleep(m.interval)
-				continue
-			}
-			query.FromBlock = big.NewInt(m.latest)
-			query.ToBlock = big.NewInt(min(m.latest+m.step, int64(latestBlk)))
+	select {
+	case <-m.stop:
+		slog.Info("monitor stopped")
+		return true
+	default:
+		latestBlk, err := m.client.BlockNumber(context.Background())
+		if err != nil {
+			slog.Error("query latest block number", "msg", err)
+			time.Sleep(m.interval)
+			return false
+		}
+		slog.Debug("query latest block", "block number", latestBlk)
+		if uint64(m.latest) > latestBlk {
+			time.Sleep(m.interval)
+			return false
+		}
+		query.FromBlock = big.NewInt(m.latest)
+		query.ToBlock = big.NewInt(min(m.latest+m.step, int64(latestBlk)))
 
-			logs, err := m.client.FilterLogs(context.Background(), query)
-			if err != nil {
-				slog.Error("failed to filter logs", "msg", err)
-				time.Sleep(m.interval)
+		logs, err := m.client.FilterLogs(context.Background(), query)
+		if err != nil {
+			slog.Error("failed to filter logs", "msg", err)
+			time.Sleep(m.interval)
+			return false
+		}
+		slog.Debug("filter logs", "from", query.FromBlock.Uint64(), "to", query.ToBlock.Uint64())
+		m.latest = query.ToBlock.Int64()
+		if len(logs) == 0 {
+			goto TryLater
+		}
+		slog.Info("filter logs", "count", len(logs))
+		for _, l := range logs {
+			topic := l.Topics[0]
+			if _, ok := m.events[topic]; !ok {
 				continue
 			}
-			slog.Debug("filter logs", "from", query.FromBlock.Uint64(), "to", query.ToBlock.Uint64())
-			m.latest = query.ToBlock.Int64()
-			if len(logs) == 0 {
-				goto TryLater
-			}
-			slog.Info("filter logs", "count", len(logs))
-			for _, l := range logs {
-				topic := l.Topics[0]
-				if _, ok := m.events[topic]; !ok {
-					continue
-				}
-				m.events[topic] <- &l
-			}
-		TryLater:
-			if query.ToBlock.Int64()-query.FromBlock.Int64() < m.step {
-				time.Sleep(m.interval)
-			}
+			m.events[topic] <- &l
+		}
+	TryLater:
+		if query.ToBlock.Int64()-query.FromBlock.Int64() < m.step {
+			time.Sleep(m.interval)
+		}
+	}
+	return false
+}
+
+func (m *Monitor) run() {
+	for {
+		if finished := m.doRun(); finished {
+			return
 		}
 	}
 }

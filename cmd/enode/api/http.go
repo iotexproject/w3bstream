@@ -108,13 +108,14 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 	}
 	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
 
+	cliDID := ""
 	if tok != "" {
 		err := didvc.VerifyJWTCredential(s.didAuthServer, tok)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, newErrResp(err))
 			return
 		}
-		err = clients.VerifySessionAndProjectPermission(tok, req.ProjectID)
+		cliDID, err = clients.VerifySessionAndProjectPermission(tok, req.ProjectID)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, newErrResp(err))
 		}
@@ -129,6 +130,7 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 	id := uuid.NewString()
 	if err := s.pg.Save(&types.Message{
 		ID:             id,
+		ClientDID:      cliDID,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           req.Data,

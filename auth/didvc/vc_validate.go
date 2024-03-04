@@ -19,7 +19,7 @@ func VerifyJWTCredential(endpoint string, tok string) error {
 	}
 	reqbody, err := json.Marshal(reqv)
 	if err != nil {
-		return errors.Wrap(err, "")
+		return errors.Wrap(err, "failed to marshal request")
 	}
 	slog.Info(string(reqbody))
 
@@ -30,18 +30,18 @@ func VerifyJWTCredential(endpoint string, tok string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to request verification")
 	}
-
 	defer rsp.Body.Close()
+
+	if rsp.StatusCode != http.StatusOK {
+		return errors.Errorf("failed to request verification: [status code:%d]", rsp.StatusCode)
+	}
+
 	rspbody, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return errors.Wrap(err, "failed to read verification body")
 	}
 
 	slog.Info(string(rspbody))
-
-	if rsp.StatusCode != http.StatusOK {
-		return errors.Errorf("failed to request verification: %d %s", rsp.StatusCode, string(rspbody))
-	}
 
 	rspv := &VerifyCredentialRsp{}
 	if err = json.Unmarshal(rspbody, rspv); err != nil {

@@ -27,27 +27,31 @@ func (d *Dispatcher) Dispatch() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		t, err := d.pg.Fetch()
-		if err != nil {
-			slog.Error("get task failed", "error", err)
-			continue
-		}
-		if t == nil {
-			continue
-		}
+		d.pubTask()
+	}
+}
 
-		projectID := t.Messages[0].ProjectID
-		if err := d.pubSubs.Add(projectID); err != nil {
-			slog.Error("add project pubsub failed", "error", err, "projectID", projectID)
-			continue
-		}
+func (d *Dispatcher) pubTask() {
+	t, err := d.pg.Fetch()
+	if err != nil {
+		slog.Error("get task failed", "error", err)
+		return
+	}
+	if t == nil {
+		return
+	}
 
-		slog.Debug("dispatch project task", "projectID", projectID, "taskID", t.ID)
-		if err := d.pubSubs.Publish(projectID, &p2p.Data{
-			Task: t,
-		}); err != nil {
-			slog.Error("publish data failed", "error", err, "projectID", projectID)
-		}
+	projectID := t.Messages[0].ProjectID
+	if err := d.pubSubs.Add(projectID); err != nil {
+		slog.Error("add project pubsub failed", "error", err, "projectID", projectID)
+		return
+	}
+
+	slog.Debug("dispatch project task", "projectID", projectID, "taskID", t.ID)
+	if err := d.pubSubs.Publish(projectID, &p2p.Data{
+		Task: t,
+	}); err != nil {
+		slog.Error("publish data failed", "error", err, "projectID", projectID)
 	}
 }
 
@@ -80,6 +84,9 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	output, err := config.GetOutput(d.operatorPrivateKeyECDSA, d.operatorPrivateKeyED25519)
 	if err != nil {
 		slog.Error("init output failed", "error", err)
+		if err := d.pg.UpdateState(l.TaskID, types.TaskStateFailed, err.Error(), time.Now()); err != nil {
+			slog.Error("update task state to statefailed failed", "error", err, "taskID", l.TaskID)
+		}
 		return
 	}
 
@@ -88,6 +95,9 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	outRes, err := output.Output(task, []byte(l.Comment))
 	if err != nil {
 		slog.Error("output failed", "error", err)
+		if err := d.pg.UpdateState(l.TaskID, types.TaskStateFailed, err.Error(), time.Now()); err != nil {
+			slog.Error("update task state to statefailed failed", "error", err, "taskID", l.TaskID)
+		}
 		return
 	}
 

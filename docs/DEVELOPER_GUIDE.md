@@ -44,7 +44,7 @@ Generate the W3bstream project file:
 
 ```bash
 # Customize the output project file name "$ID" with a unique number
-ioctl ws code convert -t "halo2" -i "halo2_wasm_bg.wasm" -o "path/$ID"
+ioctl ws code convert -t "halo2" -i "halo2_wasm_bg.wasm" -c "path/$ID"
 ```
 
 Create the blockchain verifier (Solidity)

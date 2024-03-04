@@ -18,6 +18,18 @@ type Client struct {
 	projects  map[uint64]struct{}
 }
 
+func (c *Client) init() {
+	if c.Metadata == nil {
+		c.Metadata = make(map[string]string)
+	}
+	if c.projects == nil {
+		c.projects = make(map[uint64]struct{})
+	}
+	for _, v := range c.Projects {
+		c.projects[v] = struct{}{}
+	}
+}
+
 var manager *Manager
 
 func NewManager() *Manager {
@@ -28,6 +40,7 @@ func NewManager() *Manager {
 		mux:  sync.Mutex{},
 		pool: make(map[string]*Client),
 	}
+	m.syncFromContract()
 	m.fillByMockClients()
 	manager = m
 	return manager
@@ -46,6 +59,7 @@ func (mgr *Manager) GetByClientDID(clientdid string) (*Client, bool) {
 }
 
 func (mgr *Manager) AddClient(c *Client) {
+	c.init()
 	mgr.mux.Lock()
 	defer mgr.mux.Unlock()
 	mgr.pool[c.ClientDID] = c
@@ -60,10 +74,7 @@ func (mgr *Manager) fillByMockClients() {
 		panic(err)
 	}
 	for _, c := range clients {
-		c.projects = make(map[uint64]struct{})
-		for _, id := range c.Projects {
-			c.projects[id] = struct{}{}
-		}
+		c.init()
 		mgr.pool[c.ClientDID] = c
 	}
 }

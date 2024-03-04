@@ -1,0 +1,25 @@
+coverage:
+  status:
+    # only stat pull request
+    patch:
+      default:
+        ## need patch coverage higher than 70% then success
+        target: 70%
+        ## allow the coverage rate decline 10%
+        threshold: 10%
+  ## full coverage should more than 50%
+  range:
+    50..100
+## ignore packages
+ignore:
+  - scripts
+  - examples
+  # generated proto
+  - vm/proto
+  # generated contracts
+  - project/contracts
+  - smartcontracts
+  - persistence/znode
+  # test utils
+  - test
+  - testutil
