@@ -5,8 +5,6 @@ import (
 	"os"
 
 	"github.com/spf13/viper"
-
-	"github.com/machinefi/sprout/cmd/enode/constant"
 )
 
 func initLogger() {
@@ -16,24 +14,24 @@ func initLogger() {
 }
 
 func initConfig() {
-	viper.SetDefault(constant.ChainEndpoint, "https://babel-api.testnet.iotex.io")
-	viper.SetDefault(constant.HttpServiceEndpoint, ":9000")
-	viper.SetDefault(constant.DatabaseDSN, "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable")
-	viper.SetDefault(constant.BootNodeMultiaddr, "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o")
-	viper.SetDefault(constant.IotexChainID, 2)
-	viper.SetDefault(constant.ProjectContractAddress, "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26")
-	viper.SetDefault(constant.IPFSEndpoint, "ipfs.mainnet.iotex.io")
-	viper.SetDefault(constant.DIDAuthServerEndpoint, "didkit:9999")
+	viper.SetDefault(ChainEndpoint, "https://babel-api.testnet.iotex.io")
+	viper.SetDefault(HttpServiceEndpoint, ":9000")
+	viper.SetDefault(DatabaseDSN, "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable")
+	viper.SetDefault(BootNodeMultiaddr, "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o")
+	viper.SetDefault(IotexChainID, 2)
+	viper.SetDefault(ProjectContractAddress, "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26")
+	viper.SetDefault(IPFSEndpoint, "ipfs.mainnet.iotex.io")
+	viper.SetDefault(DIDAuthServerEndpoint, "didkit:9999")
 
-	viper.MustBindEnv(constant.ChainEndpoint)
-	viper.MustBindEnv(constant.HttpServiceEndpoint)
-	viper.MustBindEnv(constant.DatabaseDSN)
-	viper.MustBindEnv(constant.BootNodeMultiaddr)
-	viper.MustBindEnv(constant.IotexChainID)
-	viper.MustBindEnv(constant.ProjectContractAddress)
-	viper.MustBindEnv(constant.IPFSEndpoint)
-	viper.MustBindEnv(constant.DIDAuthServerEndpoint)
+	viper.MustBindEnv(ChainEndpoint)
+	viper.MustBindEnv(HttpServiceEndpoint)
+	viper.MustBindEnv(DatabaseDSN)
+	viper.MustBindEnv(BootNodeMultiaddr)
+	viper.MustBindEnv(IotexChainID)
+	viper.MustBindEnv(ProjectContractAddress)
+	viper.MustBindEnv(IPFSEndpoint)
+	viper.MustBindEnv(DIDAuthServerEndpoint)
 
-	viper.BindEnv(constant.OperatorPrivateKey)
-	viper.BindEnv(constant.OperatorPrivateKeyED25519)
+	viper.BindEnv(OperatorPrivateKey)
+	viper.BindEnv(OperatorPrivateKeyED25519)
 }
