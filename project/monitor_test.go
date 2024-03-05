@@ -4,156 +4,188 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/bytedance/mockey"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/machinefi/sprout/testutil"
 	"github.com/pkg/errors"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewMonitor(t *testing.T) {
-	PatchConvey("NewMonitorDialChainFailed", t, func() {
-		Mock(ethclient.Dial).Return(nil, errors.New(t.Name())).Build()
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	t.Run("DialChainFailed", func(t *testing.T) {
+		p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
 
 		_, err := NewMonitor("", []string{}, []string{}, 1, 100, 3*time.Second)
-		So(err.Error(), ShouldContainSubstring, t.Name())
+		r.ErrorContains(err, t.Name())
 	})
-	PatchConvey("NewManagerSuccess", t, func() {
-		Mock(ethclient.Dial).Return(nil, nil).Build()
+	t.Run("Success", func(t *testing.T) {
+		p = testutil.EthClientDial(p, nil, nil)
 
 		_, err := NewMonitor("", []string{"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26"}, []string{"ProjectUpserted(uint64,string,bytes32)"}, 1, 100, 3*time.Second)
-		So(err, ShouldBeEmpty)
-	})
-	PatchConvey("NewDefaultMonitorDialChainFailed", t, func() {
-		Mock(ethclient.Dial).Return(nil, errors.New(t.Name())).Build()
-
-		_, err := NewDefaultMonitor("", []string{}, []string{})
-		So(err.Error(), ShouldContainSubstring, t.Name())
-	})
-	PatchConvey("NewDefaultMonitorGetBlockNumberFailed", t, func() {
-		Mock(ethclient.Dial).Return(ethclient.NewClient(nil), nil).Build()
-		Mock((*ethclient.Client).Close).Return().Build()
-		Mock((*ethclient.Client).BlockNumber).Return(uint64(0), errors.New(t.Name())).Build()
-
-		_, err := NewDefaultMonitor("", []string{}, []string{})
-		So(err.Error(), ShouldContainSubstring, t.Name())
-	})
-	PatchConvey("NewDefaultMonitorSuccess", t, func() {
-		Mock(ethclient.Dial).Return(ethclient.NewClient(nil), nil).Build()
-		Mock((*ethclient.Client).Close).Return().Build()
-		Mock((*ethclient.Client).BlockNumber).Return(uint64(100), nil).Build()
-		Mock(NewMonitor).Return(&Monitor{}, nil).Build()
-
-		_, err := NewDefaultMonitor("", []string{}, []string{})
-		So(err, ShouldBeEmpty)
+		r.NoError(err)
 	})
 }
 
-func TestMonitorMethod(t *testing.T) {
-	Convey("Err", t, func() {
+func TestNewDefaultMonitor(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	t.Run("DialChainFailed", func(t *testing.T) {
+		p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
+
+		_, err := NewDefaultMonitor("", []string{}, []string{})
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("GetBlockNumberFailed", func(t *testing.T) {
+		p = testutil.EthClientDial(p, ethclient.NewClient(nil), nil)
+		p = p.ApplyMethodReturn(&ethclient.Client{}, "Close")
+		p = p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), errors.New(t.Name()))
+
+		_, err := NewDefaultMonitor("", []string{}, []string{})
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("Success", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(100), nil)
+		p = p.ApplyFuncReturn(NewMonitor, &Monitor{}, nil)
+
+		_, err := NewDefaultMonitor("", []string{}, []string{})
+		r.NoError(err)
+	})
+}
+
+func TestMonitor_Err(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("Success", func(t *testing.T) {
 		m := &Monitor{
 			err: make(chan error, 1),
 		}
 		res := m.Err()
 		err := errors.New(t.Name())
 		m.err <- err
-		So(<-res, ShouldEqual, err)
+		r.Equal(<-res, err)
 	})
-	Convey("Unsubscribe", t, func() {
+}
+
+func TestMonitor_Unsubscribe(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("Success", func(t *testing.T) {
 		m := &Monitor{
 			stop: make(chan struct{}, 1),
 		}
 		m.Unsubscribe()
-		So(<-m.stop, ShouldNotBeEmpty)
+		r.NotNil(<-m.stop)
 	})
-	Convey("Events", t, func() {
+}
+
+func TestMonitor_Events(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("Success", func(t *testing.T) {
 		topic := "test"
 		m := &Monitor{
 			events: map[common.Hash]chan *types.Log{crypto.Keccak256Hash([]byte(topic)): make(chan *types.Log)},
 		}
 		_, ok := m.Events(topic)
-		So(ok, ShouldBeTrue)
+		r.True(ok)
 	})
-	Convey("MustEvents", t, func() {
+}
+
+func TestMonitor_MustEvents(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("Success", func(t *testing.T) {
 		topic := "test"
 		m := &Monitor{
 			events: map[common.Hash]chan *types.Log{crypto.Keccak256Hash([]byte(topic)): make(chan *types.Log)},
 		}
 		ch := m.MustEvents(topic)
-		So(ch, ShouldNotBeNil)
+		r.NotNil(ch)
 	})
-	Convey("DoRunStopped", t, func() {
+}
+
+func TestMonitor_doRun(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	t.Run("Stopped", func(t *testing.T) {
 		m := &Monitor{
 			stop: make(chan struct{}, 1),
 		}
 		m.Unsubscribe()
 		finished := m.doRun()
-		So(finished, ShouldBeTrue)
+		r.True(finished)
 	})
-	PatchConvey("DoRunBlockNumberFailed", t, func() {
-		Mock((*ethclient.Client).BlockNumber).Return(uint64(100), errors.New(t.Name())).Build()
-		Mock(time.Sleep).Return().Build()
+	t.Run("BlockNumberFailed", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(100), errors.New(t.Name()))
+		p = p.ApplyFuncReturn(time.Sleep)
 
 		m := &Monitor{
 			stop: make(chan struct{}, 1),
 		}
 		finished := m.doRun()
-		So(finished, ShouldBeFalse)
+		r.False(finished)
 	})
-	PatchConvey("DoRunBlockNumberBehind", t, func() {
-		Mock((*ethclient.Client).BlockNumber).Return(uint64(100), nil).Build()
-		Mock(time.Sleep).Return().Build()
+	t.Run("BlockNumberBehind", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(100), nil)
 
 		m := &Monitor{
 			latest: 1000,
 			stop:   make(chan struct{}, 1),
 		}
 		finished := m.doRun()
-		So(finished, ShouldBeFalse)
+		r.False(finished)
 	})
-	PatchConvey("DoRunFilterLogsFailed", t, func() {
-		Mock((*ethclient.Client).BlockNumber).Return(uint64(100), nil).Build()
-		Mock((*ethclient.Client).FilterLogs).Return(nil, errors.New(t.Name())).Build()
-		Mock(time.Sleep).Return().Build()
+	t.Run("FilterLogsFailed", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", nil, errors.New(t.Name()))
 
 		m := &Monitor{
 			latest: 1,
 			stop:   make(chan struct{}, 1),
 		}
 		finished := m.doRun()
-		So(finished, ShouldBeFalse)
+		r.False(finished)
 	})
-	PatchConvey("DoRunFilterLogsEmpty", t, func() {
-		Mock((*ethclient.Client).BlockNumber).Return(uint64(100), nil).Build()
-		Mock((*ethclient.Client).FilterLogs).Return(nil, nil).Build()
-		Mock(time.Sleep).Return().Build()
+	t.Run("FilterLogsEmpty", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", nil, nil)
 
 		m := &Monitor{
 			latest: 1,
 			stop:   make(chan struct{}, 1),
 		}
 		finished := m.doRun()
-		So(finished, ShouldBeFalse)
+		r.False(finished)
 	})
-	PatchConvey("DoRunFilterLogsEmpty", t, func() {
-		Mock((*ethclient.Client).BlockNumber).Return(uint64(100), nil).Build()
-		Mock((*ethclient.Client).FilterLogs).Return([]types.Log{{Topics: []common.Hash{crypto.Keccak256Hash([]byte("0"))}}}, nil).Build()
-		Mock(time.Sleep).Return().Build()
+	t.Run("FilterLogsEmptyResult", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", []types.Log{{Topics: []common.Hash{crypto.Keccak256Hash([]byte("0"))}}}, nil)
 
 		m := &Monitor{
 			latest: 1,
 			stop:   make(chan struct{}, 1),
 		}
 		finished := m.doRun()
-		So(finished, ShouldBeFalse)
+		r.False(finished)
 	})
-	PatchConvey("Run", t, func() {
-		moker := Mock((*Monitor).doRun).Return(true).Build()
+}
+
+func TestMonitor_run(t *testing.T) {
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	t.Run("Success", func(t *testing.T) {
+		p = p.ApplyPrivateMethod(&Monitor{}, "doRun", func() bool { return true })
 
 		m := &Monitor{}
 		m.run()
-		So(moker.Times(), ShouldEqual, 1)
 	})
 }
