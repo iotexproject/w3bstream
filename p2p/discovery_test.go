@@ -6,23 +6,23 @@ import (
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
-	. "github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/libp2p/go-libp2p/p2p/discovery/util"
-	"github.com/machinefi/sprout/testutil/mock"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/testutil/mock"
 )
 
 func TestDiscoverPeers(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
+	defer patches.Reset()
 
 	ctx := context.Background()
 	bootNodeMultiaddr := "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
@@ -65,14 +65,12 @@ func TestDiscoverPeers(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 
-	t.Run("DiscoverOK", func(t *testing.T) {
-		PatchConvey("DiscoverOK", t, func() {
-			host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			Mock(routing.NewRoutingDiscovery).Return(nil).Build()
-			Mock(util.Advertise).Return().Build()
-			err := discoverPeers(ctx, host, bootNodeMultiaddr, iotexChainID)
-			So(err, ShouldBeEmpty)
-		})
+	t.Run("DiscoverSuccess", func(t *testing.T) {
+		host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		patches = patches.ApplyFuncReturn(routing.NewRoutingDiscovery, nil)
+		patches = patches.ApplyFuncReturn(util.Advertise)
+		err := discoverPeers(ctx, host, bootNodeMultiaddr, iotexChainID)
+		require.NoError(err)
 	})
 }
 
