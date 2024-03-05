@@ -3,120 +3,111 @@ package output
 import (
 	"testing"
 
+	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/blocto/solana-go-sdk/client"
 	soltypes "github.com/blocto/solana-go-sdk/types"
-	. "github.com/bytedance/mockey"
-	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/types"
 )
 
 func TestNewSolanaProgram(t *testing.T) {
 	require := require.New(t)
 
-	chainEndpoint := "https://solana"
-	programID := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
-	secretKey := "b7255a24"
-	stateAccountPK := "accountPK"
-
 	t.Run("NewSolana", func(t *testing.T) {
-		_, err := NewSolanaProgram(chainEndpoint, programID, secretKey, stateAccountPK)
+		_, err := NewSolanaProgram("", "", "secretKey", "")
 		require.NoError(err)
 	})
 
 	t.Run("SecretKeyNil", func(t *testing.T) {
-		_, err := NewSolanaProgram(chainEndpoint, programID, "", stateAccountPK)
+		_, err := NewSolanaProgram("", "", "", "")
 		require.EqualError(err, "secretkey is empty")
 	})
 }
 
-func TestSolanaOutput(t *testing.T) {
+func TestSolanaProgram_Output(t *testing.T) {
 	require := require.New(t)
+	patches := NewPatches()
+	defer patches.Reset()
 
-	chainEndpoint := "https://solana"
-	programID := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
-	secretKey := "fd6ac80f1b9886a6d157cd8e71f842a63c52ebd237cf48fba03ae587e197d511f0b2439ae6da236d26f17f56c68f05d48513cd99b33143fa0b1aec7838ce4276"
-	stateAccountPK := "accountPK"
+	contract := &solanaProgram{}
 
-	task := &types.Task{
-		ID: "",
-		Messages: []*types.Message{{
-			ID:             "id1",
-			ProjectID:      uint64(0x1),
-			ProjectVersion: "0.1",
-			Data:           "data",
-		}},
-	}
-
-	contract, err := NewSolanaProgram(chainEndpoint, programID, secretKey, stateAccountPK)
-	require.NoError(err)
-
-	PatchConvey("SendTXFailed", t, func() {
-		Mock((*solanaProgram).sendTX).Return("", errors.New(t.Name())).Build()
-		_, err = contract.Output(task, []byte("proof"))
-		So(err.Error(), ShouldEqual, t.Name())
+	t.Run("SendTXFailed", func(t *testing.T) {
+		patches = solanaProgramPackInstructions(patches, nil)
+		patches = solanaProgramSendTX(patches, "", errors.New(t.Name()))
+		_, err := contract.Output(&types.Task{}, []byte("proof"))
+		require.EqualError(err, t.Name())
 	})
 
-	PatchConvey("SendTXOk", t, func() {
-		Mock((*solanaProgram).sendTX).Return(t.Name(), nil).Build()
-		txHash, err := contract.Output(task, []byte("proof"))
-		So(err, ShouldBeEmpty)
-		So(txHash, ShouldEqual, t.Name())
+	t.Run("SendTXSuccess", func(t *testing.T) {
+		patches = solanaProgramSendTX(patches, "hash", nil)
+		txHash, err := contract.Output(&types.Task{}, []byte("proof"))
+		require.NoError(err)
+		require.Equal("hash", txHash)
 	})
 }
 
-func TestSolanaSendTX(t *testing.T) {
+func TestSolanaProgram_SendTX(t *testing.T) {
+	require := require.New(t)
+	patches := NewPatches()
+	defer patches.Reset()
 
-	chainEndpoint := "https://solana"
-	programID := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
 	secretKey := "fd6ac80f1b9886a6d157cd8e71f842a63c52ebd237cf48fba03ae587e197d511f0b2439ae6da236d26f17f56c68f05d48513cd99b33143fa0b1aec7838ce4276"
-	stateAccountPK := "accountPK"
+	contract := &solanaProgram{}
+	ins := contract.packInstructions([]byte("proof"))
 
-	contract := &solanaProgram{
-		endpoint:       chainEndpoint,
-		programID:      programID,
-		secretKey:      secretKey,
-		stateAccountPK: stateAccountPK,
-	}
-
-	PatchConvey("MissingInstructionData", t, func() {
-		Mock(client.NewClient).Return(&client.Client{}).Build()
-		_, err := contract.sendTX(chainEndpoint, secretKey, nil)
-		So(err.Error(), ShouldEqual, "missing instruction data")
+	t.Run("MissingInstructionData", func(t *testing.T) {
+		patches = patches.ApplyFuncReturn(client.NewClient, &client.Client{})
+		_, err := contract.sendTX("", secretKey, nil)
+		require.EqualError(err, "missing instruction data")
 	})
 
-	PatchConvey("GetSolanaBlockFailed", t, func() {
-		Mock(client.NewClient).Return(&client.Client{})
-		Mock((*client.Client).GetLatestBlockhash).Return(nil, errors.New(t.Name())).Build()
-		_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
-		So(err.Error(), ShouldContainSubstring, t.Name())
+	t.Run("GetSolanaBlockFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&client.Client{}, "GetLatestBlockhash", nil, errors.New(t.Name()))
+		_, err := contract.sendTX("", secretKey, ins)
+		require.ErrorContains(err, t.Name())
+	})
+	patches = patches.ApplyMethodReturn(&client.Client{}, "GetLatestBlockhash", nil, nil)
+
+	t.Run("BuildSolanaTxFailed", func(t *testing.T) {
+		patches = patches.ApplyFuncReturn(soltypes.NewTransaction, nil, errors.New(t.Name()))
+		_, err := contract.sendTX("", secretKey, ins)
+		require.ErrorContains(err, t.Name())
+	})
+	patches = patches.ApplyFuncReturn(soltypes.NewTransaction, nil, nil)
+
+	t.Run("SendSolanaTxFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&client.Client{}, "SendTransaction", "", errors.New(t.Name()))
+		_, err := contract.sendTX("", secretKey, ins)
+		require.ErrorContains(err, t.Name())
 	})
 
-	PatchConvey("BuildSolanaTxFailed", t, func() {
-		Mock(client.NewClient).Return(&client.Client{})
-		Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
-		Mock(soltypes.NewTransaction).Return(nil, errors.New(t.Name())).Build()
-		_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
-		So(err.Error(), ShouldContainSubstring, t.Name())
-	})
+	t.Run("SendSolanaTxSuccess", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&client.Client{}, "SendTransaction", t.Name(), nil)
 
-	PatchConvey("SendSolanaTxFailed", t, func() {
-		Mock(client.NewClient).Return(&client.Client{})
-		Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
-		Mock(soltypes.NewTransaction).Return(nil, nil).Build()
-		Mock((*client.Client).SendTransaction).Return("", errors.New(t.Name())).Build()
-		_, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
-		So(err.Error(), ShouldContainSubstring, t.Name())
+		hash, err := contract.sendTX("", secretKey, ins)
+		require.NoError(err)
+		require.Equal(t.Name(), hash)
 	})
+}
 
-	PatchConvey("SendSolanaTxOk", t, func() {
-		Mock(client.NewClient).Return(&client.Client{})
-		Mock((*client.Client).GetLatestBlockhash).Return(nil, nil).Build()
-		Mock(soltypes.NewTransaction).Return(nil, nil).Build()
-		Mock((*client.Client).SendTransaction).Return(t.Name(), nil).Build()
-		hash, err := contract.sendTX(chainEndpoint, secretKey, contract.packInstructions([]byte("proof")))
-		So(err, ShouldBeEmpty)
-		So(hash, ShouldEqual, hash)
-	})
+func solanaProgramPackInstructions(p *Patches, instructions []soltypes.Instruction) *Patches {
+	return p.ApplyPrivateMethod(
+		&solanaProgram{},
+		"packInstructions",
+		func(proof []byte) []soltypes.Instruction {
+			return instructions
+		},
+	)
+}
+
+func solanaProgramSendTX(p *Patches, hash string, err error) *Patches {
+	return p.ApplyPrivateMethod(
+		&solanaProgram{},
+		"sendTX",
+		func(endpoint, privateKey string, ins []soltypes.Instruction) (string, error) {
+			return hash, err
+		},
+	)
 }

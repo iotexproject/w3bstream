@@ -2,15 +2,15 @@ package output
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"math/big"
-	"reflect"
-	"strings"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -20,33 +20,31 @@ import (
 
 func TestNewEthereum(t *testing.T) {
 	require := require.New(t)
-
-	chainEndpoint := "https://iotex"
-	secretKey := "b7255a24"
-	contractAddress := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
-	contractAbiJSON := `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
-	contractMethod := "setProof"
-
-	t.Run("NewEthereum", func(t *testing.T) {
-		_, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMethod)
-		require.NoError(err)
-	})
+	patches := NewPatches()
+	defer patches.Reset()
 
 	t.Run("AbiNil", func(t *testing.T) {
-		_, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", "", contractMethod)
-		require.EqualError(err, "EOF")
+		patches = patches.ApplyFuncReturn(abi.JSON, nil, errors.New(t.Name()))
+		_, err := NewEthereum("", "", "", "", "", "")
+		require.ErrorContains(err, t.Name())
 	})
+	patches = patches.ApplyFuncReturn(abi.JSON, nil, nil)
 
 	t.Run("SecretKeyNil", func(t *testing.T) {
-		_, err := NewEthereum(chainEndpoint, "", contractAddress, "", contractAbiJSON, contractMethod)
+		_, err := NewEthereum("", "", "", "", "", "")
 		require.EqualError(err, "secretkey is empty")
 	})
 
+	t.Run("NewEthereumSuccess", func(t *testing.T) {
+		_, err := NewEthereum("", "secretKey", "", "", "", "")
+		require.NoError(err)
+	})
 }
 
-func TestEthOutput(t *testing.T) {
+func TestEthereumContract_Output(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
+	defer patches.Reset()
 
 	chainEndpoint := "https://iotex"
 	secretKey := "b7255a24"
@@ -126,7 +124,7 @@ func TestEthOutput(t *testing.T) {
 
 		proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"post_state_digest\":[244,204,22,124,129,242],\"journal\":[82,0,0,0,73,32]}}"
 		patches = patches.ApplyFuncReturn(abi.NewType, nil, nil)
-		patches = ethArgumentsPack(patches, errors.New(t.Name()))
+		patches = patches.ApplyMethodReturn(&abi.Arguments{}, "Pack", nil, errors.New(t.Name()))
 		defer patches.Reset()
 
 		_, err = contract.Output(task, []byte(proof))
@@ -163,136 +161,70 @@ func TestEthOutput(t *testing.T) {
 	})
 }
 
-func TestEthSendTX(t *testing.T) {
+func TestEthereumContract_SendTX(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
+	defer patches.Reset()
 
-	chainEndpoint := "https://iotex"
-	secretKey := "b7255a24"
-	contractAddress := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
-	receiverAddress := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
-	contractAbiJSON := `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
-	contractMethod := "setProof"
-	contractABI, err := abi.JSON(strings.NewReader(contractAbiJSON))
-	require.NoError(err)
-	contract := &ethereumContract{
-		chainEndpoint:   chainEndpoint,
-		secretKey:       secretKey,
-		contractAddress: contractAddress,
-		receiverAddress: receiverAddress,
-		contractABI:     contractABI,
-		contractMethod:  contractMethod,
-	}
-	require.NoError(err)
-
+	contract := &ethereumContract{}
 	ctx := context.Background()
-	data := []byte("this is proof")
 
 	t.Run("DialEthFailed", func(t *testing.T) {
-		patches.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
-		defer patches.Reset()
-
-		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		patches = patches.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
+		_, err := contract.sendTX(ctx, "", "", "", nil)
 		require.ErrorContains(err, t.Name())
 	})
+	patches = patches.ApplyFuncReturn(ethclient.Dial, nil, nil)
+	patches = patches.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
+	patches = patches.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
+	patches = patches.ApplyFuncReturn(common.HexToAddress, common.Address{})
 
 	t.Run("SuggestGasFailed", func(t *testing.T) {
-		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", nil, errors.New(t.Name()))
-		defer patches.Reset()
-
-		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		patches = patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", nil, errors.New(t.Name()))
+		_, err := contract.sendTX(ctx, "", "", "", nil)
 		require.ErrorContains(err, t.Name())
 	})
+	patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
 
 	t.Run("GetChainIdFailed", func(t *testing.T) {
-		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
 		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, errors.New(t.Name()))
-		defer patches.Reset()
-
-		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		_, err := contract.sendTX(ctx, "", "", "", nil)
 		require.ErrorContains(err, t.Name())
 	})
+	patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
 
 	t.Run("GetNonceFailed", func(t *testing.T) {
-		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
 		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", nil, errors.New(t.Name()))
-		defer patches.Reset()
-
-		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		_, err := contract.sendTX(ctx, "", "", "", nil)
 		require.ErrorContains(err, t.Name())
 	})
+	patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
 
 	t.Run("EstimateGasFailed", func(t *testing.T) {
-		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
 		patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", nil, errors.New(t.Name()))
-		defer patches.Reset()
-
-		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		_, err := contract.sendTX(ctx, "", "", "", nil)
 		require.ErrorContains(err, t.Name())
 	})
+	patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
 
 	t.Run("SignTxFailed", func(t *testing.T) {
-		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
 		patches.ApplyFuncReturn(ethtypes.SignTx, nil, errors.New(t.Name()))
-		defer patches.Reset()
-
-		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		_, err := contract.sendTX(ctx, "", "", "", nil)
 		require.ErrorContains(err, t.Name())
 	})
+	patches.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
 
 	t.Run("TransactionFailed", func(t *testing.T) {
-		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
-		patches.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
 		patches.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", errors.New(t.Name()))
-		defer patches.Reset()
-
-		_, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		_, err := contract.sendTX(ctx, "", "", "", nil)
 		require.ErrorContains(err, t.Name())
 	})
+	patches.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", nil)
 
-	t.Run("TransactionOk", func(t *testing.T) {
-		patches.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
-		patches.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
-		patches.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", nil)
+	t.Run("TransactionSuccess", func(t *testing.T) {
 		patches.ApplyMethodReturn(&ethtypes.Transaction{}, "Hash", common.Hash{})
-		defer patches.Reset()
-
-		tx, err := contract.sendTX(ctx, chainEndpoint, secretKey, contractAddress, data)
+		tx, err := contract.sendTX(ctx, "", "", "", nil)
 		require.NoError(err)
 		require.Equal(tx, "0x0000000000000000000000000000000000000000000000000000000000000000")
 	})
-}
-
-func ethArgumentsPack(p *Patches, err error) *Patches {
-	var args *abi.Arguments
-	return p.ApplyMethodFunc(
-		reflect.TypeOf(args),
-		"Pack",
-		func(args ...interface{}) ([]byte, error) {
-			return nil, err
-		},
-	)
-}
-
-func ethABIPack(p *Patches, err error) *Patches {
-	var a *abi.ABI
-	return p.ApplyMethodFunc(
-		reflect.TypeOf(a),
-		"Pack",
-		func(name string, args ...interface{}) ([]byte, error) {
-			return nil, err
-		},
-	)
 }

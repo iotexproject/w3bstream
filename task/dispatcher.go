@@ -6,6 +6,7 @@ import (
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence"
@@ -27,32 +28,33 @@ func (d *Dispatcher) Dispatch() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		d.pubTask()
+		if err := d.pubTask(); err != nil {
+			slog.Error("failed to dispatch task", "error", err)
+		}
 	}
 }
 
-func (d *Dispatcher) pubTask() {
+func (d *Dispatcher) pubTask() error {
 	t, err := d.pg.Fetch()
 	if err != nil {
-		slog.Error("get task failed", "error", err)
-		return
+		return errors.Wrapf(err, "failed to get task")
 	}
 	if t == nil {
-		return
+		return errors.New("get task nil")
 	}
 
 	projectID := t.Messages[0].ProjectID
 	if err := d.pubSubs.Add(projectID); err != nil {
-		slog.Error("add project pubsub failed", "error", err, "projectID", projectID)
-		return
+		return errors.Wrapf(err, "failed to add project pubsub, projectID %d", projectID)
 	}
 
 	slog.Debug("dispatch project task", "projectID", projectID, "taskID", t.ID)
 	if err := d.pubSubs.Publish(projectID, &p2p.Data{
 		Task: t,
 	}); err != nil {
-		slog.Error("publish data failed", "error", err, "projectID", projectID)
+		return errors.Wrapf(err, "failed to publish data, projectID %d", projectID)
 	}
+	return nil
 }
 
 func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {

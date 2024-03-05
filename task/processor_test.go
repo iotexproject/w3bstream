@@ -21,6 +21,7 @@ import (
 func TestNewProcessor(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
+	defer patches.Reset()
 
 	ps := &p2p.PubSubs{}
 
@@ -39,8 +40,9 @@ func TestNewProcessor(t *testing.T) {
 	})
 }
 
-func TestReportFail(t *testing.T) {
+func TestProcessor_ReportFail(t *testing.T) {
 	patches := NewPatches()
+	defer patches.Reset()
 	p := &Processor{}
 
 	t.Run("MarshalFailed", func(t *testing.T) {
@@ -55,8 +57,9 @@ func TestReportFail(t *testing.T) {
 	})
 }
 
-func TestReportSuccess(t *testing.T) {
+func TestProcessor_ReportSuccess(t *testing.T) {
 	patches := NewPatches()
+	defer patches.Reset()
 	p := &Processor{}
 
 	t.Run("MarshalFailed", func(t *testing.T) {
@@ -72,8 +75,9 @@ func TestReportSuccess(t *testing.T) {
 
 }
 
-func TestProcessorHandleP2PData(t *testing.T) {
+func TestProcessor_HandleP2PData(t *testing.T) {
 	patches := NewPatches()
+	defer patches.Reset()
 	p := &Processor{
 		vmHandler:      &vm.Handler{},
 		projectManager: nil,
@@ -125,7 +129,7 @@ func TestProcessorHandleP2PData(t *testing.T) {
 	})
 	patches = vmHandlerHandle(patches, []byte("res"), nil)
 
-	t.Run("HandleOK", func(t *testing.T) {
+	t.Run("HandleSuccess", func(t *testing.T) {
 		patches = processorReportSuccess(patches)
 		p.handleP2PData(data, nil)
 	})

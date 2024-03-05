@@ -1,16 +1,13 @@
 package task
 
 import (
-	"log/slog"
 	"reflect"
 	"testing"
 	"time"
 
 	. "github.com/agiledragon/gomonkey/v2"
-	. "github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/p2p"
@@ -22,7 +19,10 @@ import (
 	"github.com/machinefi/sprout/types"
 )
 
-func TestPubTask(t *testing.T) {
+func TestDispatcher_PubTask(t *testing.T) {
+	require := require.New(t)
+	patches := NewPatches()
+	defer patches.Reset()
 
 	d := &Dispatcher{}
 	task := &types.Task{
@@ -35,47 +35,37 @@ func TestPubTask(t *testing.T) {
 		}},
 	}
 
-	PatchConvey("GetTaskFailed", t, func() {
-		Mock((*persistence.Postgres).Fetch).Return(nil, errors.New(t.Name())).Build()
-		mockerAdd := Mock((*p2p.PubSubs).Add).Return(nil).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
-		d.pubTask()
-		So(mockerAdd.Times(), ShouldEqual, 0)
-		So(mockerLog.Times(), ShouldEqual, 1)
+	t.Run("GetTaskFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&persistence.Postgres{}, "Fetch", nil, errors.New(t.Name()))
+		err := d.pubTask()
+		require.ErrorContains(err, t.Name())
 	})
 
-	PatchConvey("TaskNil", t, func() {
-		Mock((*persistence.Postgres).Fetch).Return(nil, nil).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
-		mockerAdd := Mock((*p2p.PubSubs).Add).Return(nil).Build()
-		d.pubTask()
-		So(mockerLog.Times(), ShouldEqual, 0)
-		So(mockerAdd.Times(), ShouldEqual, 0)
+	t.Run("TaskNil", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&persistence.Postgres{}, "Fetch", nil, nil)
+		err := d.pubTask()
+		require.ErrorContains(err, "get task nil")
 	})
+	patches = patches.ApplyMethodReturn(&persistence.Postgres{}, "Fetch", task, nil)
 
-	PatchConvey("AddPubsubFailed", t, func() {
-		Mock((*persistence.Postgres).Fetch).Return(task, nil).Build()
-		Mock((*p2p.PubSubs).Add).Return(errors.New(t.Name())).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
-		mockerPub := Mock((*p2p.PubSubs).Publish).Return(nil).Build()
-		d.pubTask()
-		So(mockerLog.Times(), ShouldEqual, 1)
-		So(mockerPub.Times(), ShouldEqual, 0)
+	t.Run("AddPubsubFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
+		err := d.pubTask()
+		require.ErrorContains(err, t.Name())
 	})
+	patches = patches.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 
-	PatchConvey("PublishFailed", t, func() {
-		Mock((*persistence.Postgres).Fetch).Return(task, nil).Build()
-		Mock((*p2p.PubSubs).Add).Return(nil).Build()
-		Mock((*p2p.PubSubs).Publish).Return(errors.New(t.Name())).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
-		d.pubTask()
-		So(mockerLog.Times(), ShouldEqual, 1)
+	t.Run("PublishFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&p2p.PubSubs{}, "Publish", errors.New(t.Name()))
+		err := d.pubTask()
+		require.ErrorContains(err, t.Name())
 	})
 }
 
 func TestNewDispatcher(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
+	defer patches.Reset()
 
 	t.Run("NewFailed", func(t *testing.T) {
 		patches = testp2p.P2pNewPubSubs(patches, nil, errors.New(t.Name()))
@@ -90,8 +80,9 @@ func TestNewDispatcher(t *testing.T) {
 	})
 }
 
-func TestHandleP2PData(t *testing.T) {
+func TestDispatcher_HandleP2PData(t *testing.T) {
 	patches := NewPatches()
+	defer patches.Reset()
 
 	d := &Dispatcher{
 		pubSubs:                   nil,
@@ -194,7 +185,7 @@ func TestHandleP2PData(t *testing.T) {
 		d.handleP2PData(data, nil)
 	})
 
-	t.Run("HandleOK", func(t *testing.T) {
+	t.Run("HandleSuccess", func(t *testing.T) {
 		ot.EXPECT().Output(gomock.Any(), gomock.Any()).Return("outRes", nil).Times(1)
 		patches = testpersistence.PersistencePostgresUpdateState(patches, nil)
 		d.handleP2PData(data, nil)
