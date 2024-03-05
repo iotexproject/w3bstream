@@ -5,6 +5,7 @@ const (
 	DatabaseDSN            = "DATABASE_DSN"
 	Halo2ServerEndpoint    = "HALO2_SERVER_ENDPOINT"
 	ProjectContractAddress = "PROJECT_CONTRACT_ADDRESS"
+	ProjectFileDirectory   = "PROJECT_FILE_DIRECTORY"
 	ZNodeContractAddress   = "ZNODE_CONTRACT_ADDRESS"
 	IPFSEndpoint           = "IPFS_ENDPOINT"
 	Risc0ServerEndpoint    = "RISC0_SERVER_ENDPOINT"

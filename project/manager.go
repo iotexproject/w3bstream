@@ -2,8 +2,12 @@ package project
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
+	"path"
+	"strconv"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -16,12 +20,13 @@ import (
 )
 
 type Manager struct {
-	mux          sync.Mutex
-	pool         map[key]*Config
-	projectIDs   map[uint64]bool
-	instance     *contracts.Contracts
-	ipfsEndpoint string
-	notify       chan uint64
+	mux            sync.Mutex
+	pool           map[key]*Config
+	projectIDs     map[uint64]bool
+	instance       *contracts.Contracts
+	ipfsEndpoint   string
+	projectFileDir string
+	notify         chan uint64
 	// znodes       []string
 	// ioID         string
 }
@@ -164,7 +169,7 @@ func (m *Manager) doProjectPoolFill(projectID uint64) bool {
 	return false
 }
 
-func (m *Manager) fillProjectPool() {
+func (m *Manager) fillProjectPoolFromChain() {
 	for i := uint64(1); ; i++ {
 		if finished := m.doProjectPoolFill(i); finished {
 			return
@@ -172,12 +177,57 @@ func (m *Manager) fillProjectPool() {
 	}
 }
 
-func NewManager(chainEndpoint, contractAddress, ipfsEndpoint string) (*Manager, error) {
+func (m *Manager) fillProjectPoolFromLocal() {
+	if m.projectFileDir == "" {
+		return
+	}
+	files, err := os.ReadDir(m.projectFileDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			slog.Error("read project directory failed", "path", m.projectFileDir, "error", err)
+			return
+		}
+	}
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(path.Join(m.projectFileDir, f.Name()))
+		if err != nil {
+			slog.Error("read project config failed", "filename", f.Name(), "error", err)
+			continue
+		}
+
+		projectID, err := strconv.ParseUint(f.Name(), 10, 64)
+		if err != nil {
+			slog.Error("parse filename failed", "filename", f.Name())
+			continue
+		}
+		cs := []*Config{}
+		if err := json.Unmarshal(data, &cs); err != nil {
+			slog.Error("parse project config failed", "filename", f.Name())
+			continue
+		}
+
+		for _, c := range cs {
+			slog.Info("local project loaded", "project_id", projectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
+			m.Set(projectID, c.Version, c)
+		}
+	}
+}
+
+func (m *Manager) fillProjectPool() {
+	m.fillProjectPoolFromChain()
+	m.fillProjectPoolFromLocal()
+}
+
+func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint string) (*Manager, error) {
 	m := &Manager{
-		pool:         make(map[key]*Config),
-		projectIDs:   make(map[uint64]bool),
-		ipfsEndpoint: ipfsEndpoint,
-		notify:       make(chan uint64, 32),
+		pool:           make(map[key]*Config),
+		projectIDs:     make(map[uint64]bool),
+		ipfsEndpoint:   ipfsEndpoint,
+		projectFileDir: projectFileDir,
+		notify:         make(chan uint64, 32),
 	}
 
 	client, err := ethclient.Dial(chainEndpoint)
