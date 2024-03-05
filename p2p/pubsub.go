@@ -116,7 +116,7 @@ func (p *pubSub) release() {
 func (p *pubSub) run() {
 	for {
 		if err := p.nextMsg(); err != nil {
-			slog.Error("failed to pubSub get msg", err)
+			slog.Error("failed to pubSub get msg", "error", err)
 		}
 	}
 }

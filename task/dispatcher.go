@@ -29,7 +29,7 @@ func (d *Dispatcher) Dispatch() {
 
 	for range ticker.C {
 		if err := d.pubTask(); err != nil {
-			slog.Error("failed to dispatch task", err)
+			slog.Error("failed to dispatch task", "error", err)
 		}
 	}
 }
