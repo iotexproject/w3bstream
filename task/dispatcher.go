@@ -29,7 +29,7 @@ func (d *Dispatcher) Dispatch() {
 
 	for range ticker.C {
 		if err := d.pubTask(); err != nil {
-			slog.Error("dispatch task failed", err)
+			slog.Error("failed to dispatch task", err)
 		}
 	}
 }
@@ -37,7 +37,7 @@ func (d *Dispatcher) Dispatch() {
 func (d *Dispatcher) pubTask() error {
 	t, err := d.pg.Fetch()
 	if err != nil {
-		return errors.Wrapf(err, "get task failed")
+		return errors.Wrapf(err, "failed to get task")
 	}
 	if t == nil {
 		return errors.New("get task nil")
@@ -45,14 +45,14 @@ func (d *Dispatcher) pubTask() error {
 
 	projectID := t.Messages[0].ProjectID
 	if err := d.pubSubs.Add(projectID); err != nil {
-		return errors.Wrapf(err, "add project pubsub failed, projectID %d", projectID)
+		return errors.Wrapf(err, "failed to add project pubsub, projectID %d", projectID)
 	}
 
 	slog.Debug("dispatch project task", "projectID", projectID, "taskID", t.ID)
 	if err := d.pubSubs.Publish(projectID, &p2p.Data{
 		Task: t,
 	}); err != nil {
-		return errors.Wrapf(err, "publish data failed, projectID %d", projectID)
+		return errors.Wrapf(err, "failed to publish data, projectID %d", projectID)
 	}
 	return nil
 }

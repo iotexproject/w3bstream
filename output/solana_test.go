@@ -40,7 +40,7 @@ func TestSolanaProgram_Output(t *testing.T) {
 		require.EqualError(err, t.Name())
 	})
 
-	t.Run("SendTXOk", func(t *testing.T) {
+	t.Run("SendTXSuccess", func(t *testing.T) {
 		patches = solanaProgramSendTX(patches, "hash", nil)
 		txHash, err := contract.Output(&types.Task{}, []byte("proof"))
 		require.NoError(err)
@@ -83,7 +83,7 @@ func TestSolanaProgram_SendTX(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 
-	t.Run("SendSolanaTxOk", func(t *testing.T) {
+	t.Run("SendSolanaTxSuccess", func(t *testing.T) {
 		patches = patches.ApplyMethodReturn(&client.Client{}, "SendTransaction", t.Name(), nil)
 
 		hash, err := contract.sendTX("", secretKey, ins)

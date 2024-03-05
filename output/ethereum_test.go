@@ -35,7 +35,7 @@ func TestNewEthereum(t *testing.T) {
 		require.EqualError(err, "secretkey is empty")
 	})
 
-	t.Run("NewEthereumOk", func(t *testing.T) {
+	t.Run("NewEthereumSuccess", func(t *testing.T) {
 		_, err := NewEthereum("", "secretKey", "", "", "", "")
 		require.NoError(err)
 	})
@@ -221,7 +221,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 	})
 	patches.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", nil)
 
-	t.Run("TransactionOk", func(t *testing.T) {
+	t.Run("TransactionSuccess", func(t *testing.T) {
 		patches.ApplyMethodReturn(&ethtypes.Transaction{}, "Hash", common.Hash{})
 		tx, err := contract.sendTX(ctx, "", "", "", nil)
 		require.NoError(err)

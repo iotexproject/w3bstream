@@ -185,7 +185,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		d.handleP2PData(data, nil)
 	})
 
-	t.Run("HandleOK", func(t *testing.T) {
+	t.Run("HandleSuccess", func(t *testing.T) {
 		ot.EXPECT().Output(gomock.Any(), gomock.Any()).Return("outRes", nil).Times(1)
 		patches = testpersistence.PersistencePostgresUpdateState(patches, nil)
 		d.handleP2PData(data, nil)

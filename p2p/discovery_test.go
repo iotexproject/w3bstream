@@ -65,7 +65,7 @@ func TestDiscoverPeers(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 
-	t.Run("DiscoverOK", func(t *testing.T) {
+	t.Run("DiscoverSuccess", func(t *testing.T) {
 		host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 		patches = patches.ApplyFuncReturn(routing.NewRoutingDiscovery, nil)
 		patches = patches.ApplyFuncReturn(util.Advertise)

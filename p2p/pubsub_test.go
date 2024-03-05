@@ -74,7 +74,7 @@ func TestPubSubs_Add(t *testing.T) {
 	})
 	patches = patches.ApplyFuncReturn(newPubSub, &pubSub{}, nil)
 
-	t.Run("AddOk", func(t *testing.T) {
+	t.Run("AddSuccess", func(t *testing.T) {
 		patches = patches.ApplyPrivateMethod(&pubSub{}, "run", func() {})
 		err := p.Add(projectID)
 		require.NoError(err)
@@ -99,7 +99,7 @@ func TestPubSubs_Delete(t *testing.T) {
 		p.Delete(projectID)
 	})
 
-	t.Run("DeleteOk", func(t *testing.T) {
+	t.Run("DeleteSuccess", func(t *testing.T) {
 		patches = p2pNewPubSub(patches, &pubSub{}, nil)
 		patches = patches.ApplyPrivateMethod(&pubSub{}, "run", func() {})
 		err := p.Add(projectID)
@@ -144,7 +144,7 @@ func TestPubSubs_Publish(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 
-	t.Run("PublishDataOk", func(t *testing.T) {
+	t.Run("PublishDataSuccess", func(t *testing.T) {
 		patches = pubsubTopicPublish(patches, nil)
 		err := p.Publish(projectID, d)
 		require.NoError(err)
@@ -168,7 +168,7 @@ func TestPubSub_Release(t *testing.T) {
 	})
 	patches = patches.ApplyMethodReturn(&pubsub.Topic{}, "Close", nil)
 
-	t.Run("TopicCloseOk", func(t *testing.T) {
+	t.Run("TopicCloseSuccess", func(t *testing.T) {
 		p.release()
 	})
 }
@@ -222,7 +222,7 @@ func TestNewPubSub(t *testing.T) {
 		require.ErrorContains(err, t.Name())
 	})
 
-	t.Run("NewPubSubOk", func(t *testing.T) {
+	t.Run("NewPubSubSuccess", func(t *testing.T) {
 		patches = patches.ApplyMethodReturn(&pubsub.PubSub{}, "Join", nil, nil)
 		patches = patches.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", nil, nil)
 		_, err := newPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))

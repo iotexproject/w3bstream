@@ -116,7 +116,7 @@ func (p *pubSub) release() {
 func (p *pubSub) run() {
 	for {
 		if err := p.nextMsg(); err != nil {
-			slog.Error("pubSub get msg failed", err)
+			slog.Error("failed to pubSub get msg", err)
 		}
 	}
 }
@@ -124,14 +124,14 @@ func (p *pubSub) run() {
 func (p *pubSub) nextMsg() error {
 	m, err := p.subscription.Next(p.ctx)
 	if err != nil {
-		return errors.Wrapf(err, "get p2p data failed")
+		return errors.Wrapf(err, "failed to get p2p data")
 	}
 	if m.ReceivedFrom == p.selfID {
 		return nil
 	}
 	d := &Data{}
 	if err := json.Unmarshal(m.Message.Data, d); err != nil {
-		return errors.Wrapf(err, "json unmarshal p2p data failed")
+		return errors.Wrapf(err, "failed to json unmarshal p2p data")
 	}
 	p.handle(d, p.topic)
 	return nil

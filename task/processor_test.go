@@ -129,7 +129,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	})
 	patches = vmHandlerHandle(patches, []byte("res"), nil)
 
-	t.Run("HandleOK", func(t *testing.T) {
+	t.Run("HandleSuccess", func(t *testing.T) {
 		patches = processorReportSuccess(patches)
 		p.handleP2PData(data, nil)
 	})
