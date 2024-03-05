@@ -200,7 +200,7 @@ func TestPubSub_NextMsg(t *testing.T) {
 			Message:      &pubsub_pb.Message{Data: nil},
 		}, nil)
 		err := p.nextMsg()
-		require.ErrorContains(err, "json unmarshal p2p data failed")
+		require.ErrorContains(err, "failed to json unmarshal p2p data")
 	})
 }
 
