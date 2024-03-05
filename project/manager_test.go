@@ -35,7 +35,7 @@ func TestNewManager(t *testing.T) {
 	})
 	t.Run("NewDefaultMonitorFailed", func(t *testing.T) {
 		p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
-		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
+		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func(string) {})
 		p = p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "", "")
