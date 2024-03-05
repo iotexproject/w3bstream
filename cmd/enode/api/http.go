@@ -8,13 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
-
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
+	"github.com/pkg/errors"
 )
 
 type errResp struct {
@@ -46,24 +45,34 @@ type queryMessageStateLogResp struct {
 	States    []*stateLog `json:"states"`
 }
 
+type ENodeConfigInfoResp struct {
+	ProjectContractAddress string `json:"projectContractAddress"`
+	OperatorETHAddress     string `json:"OperatorETHAddress"`
+	OperatorSolanaAddress  string `json:"operatorSolanaAddress"`
+}
+
+type eNodeConfig func() (*ENodeConfigInfoResp, error)
 type HttpServer struct {
 	engine         *gin.Engine
 	pg             *persistence.Postgres
 	didAuthServer  string
 	projectManager *project.Manager
+	eNodeConfig    eNodeConfig
 }
 
-func NewHttpServer(pg *persistence.Postgres, didAuthServer string, projectManager *project.Manager) *HttpServer {
+func NewHttpServer(pg *persistence.Postgres, didAuthServer string, projectManager *project.Manager, enodeConfig eNodeConfig) *HttpServer {
 	s := &HttpServer{
 		engine:         gin.Default(),
 		pg:             pg,
 		didAuthServer:  didAuthServer,
 		projectManager: projectManager,
+		eNodeConfig:    enodeConfig,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
 	s.engine.GET("/message/:id", s.queryStateLogByID)
 	s.engine.POST("/sign_credential", s.issueJWTCredential)
+	s.engine.GET("/enode_config", s.getENodeConfigInfo)
 
 	return s
 }
@@ -188,4 +197,14 @@ func (s *HttpServer) issueJWTCredential(c *gin.Context) {
 
 	c.JSON(http.StatusOK, rsp)
 	return
+}
+
+func (s *HttpServer) getENodeConfigInfo(c *gin.Context) {
+	configInfo, err := s.eNodeConfig()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, newErrResp(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, configInfo)
 }
