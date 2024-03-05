@@ -29,7 +29,7 @@ jobs:
           go-version: 1.21
 
       - name: Run Unit tests.
-        run: go test -gcflags=all=-l ./... -coverprofile cover.out -covermode=atomic
+        run: go test -gcflags=all=-N -l ./... -coverprofile cover.out -covermode=atomic
 
       - name: Upload Coverage report to CodeCov
         uses: codecov/codecov-action@v1.0.0
