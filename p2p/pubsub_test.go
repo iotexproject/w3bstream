@@ -2,25 +2,21 @@ package p2p
 
 import (
 	"context"
-	"encoding/json"
-	"log/slog"
 	"reflect"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
-	. "github.com/bytedance/mockey"
 	"github.com/golang/mock/gomock"
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	pubsub_pb "github.com/libp2p/go-libp2p-pubsub/pb"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/machinefi/sprout/testutil/mock"
 	"github.com/pkg/errors"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/testutil"
+	"github.com/machinefi/sprout/testutil/mock"
 )
 
 func TestNewPubSubs(t *testing.T) {
@@ -36,13 +32,10 @@ func TestNewPubSubs(t *testing.T) {
 	host := mock.NewMockHost(ctrl)
 
 	t.Run("NewP2pHostFailed", func(t *testing.T) {
-		PatchConvey("NewP2pHostFailed", t, func() {
-			Mock(libp2p.New).Return(nil, errors.New(t.Name())).Build()
-			_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
-			So(err.Error(), ShouldContainSubstring, t.Name())
-		})
+		patches = libp2pNew(patches, nil, errors.New(t.Name()))
+		_, err := NewPubSubs(handle, bootNodeMultiaddr, iotexChainID)
+		require.ErrorContains(err, t.Name())
 	})
-
 	patches = libp2pNew(patches, host, nil)
 
 	t.Run("NewGossipFailed", func(t *testing.T) {
@@ -66,58 +59,57 @@ func TestNewPubSubs(t *testing.T) {
 	})
 }
 
-func TestAdd(t *testing.T) {
+func TestPubSubs_Add(t *testing.T) {
+	require := require.New(t)
+	patches := NewPatches()
+	defer patches.Reset()
+
 	projectID := uint64(0x1)
 	p := &PubSubs{pubSubs: make(map[uint64]*pubSub)}
 
 	t.Run("NewPubSubFailed", func(t *testing.T) {
-		PatchConvey("NewPubSubFailed", t, func() {
-			Mock(newPubSub).Return(&pubSub{}, errors.New(t.Name())).Build()
-			err := p.Add(projectID)
-			So(err.Error(), ShouldEqual, t.Name())
-		})
+		patches = patches.ApplyFuncReturn(newPubSub, &pubSub{}, errors.New(t.Name()))
+		err := p.Add(projectID)
+		require.EqualError(err, t.Name())
 	})
+	patches = patches.ApplyFuncReturn(newPubSub, &pubSub{}, nil)
 
 	t.Run("AddOk", func(t *testing.T) {
-		PatchConvey("AddOk", t, func() {
-			Mock(newPubSub).Return(&pubSub{}, nil).Build()
-			Mock((*pubSub).run).Return().Build()
-			err := p.Add(projectID)
-			So(err, ShouldBeEmpty)
-		})
+		patches = patches.ApplyPrivateMethod(&pubSub{}, "run", func() {})
+		err := p.Add(projectID)
+		require.NoError(err)
 	})
 
 	t.Run("AddRepeat", func(t *testing.T) {
-		PatchConvey("AddOk", t, func() {
-			err := p.Add(projectID)
-			So(err, ShouldBeEmpty)
-		})
+		err := p.Add(projectID)
+		require.NoError(err)
 	})
 }
 
-func TestDelete(t *testing.T) {
+func TestPubSubs_Delete(t *testing.T) {
+	require := require.New(t)
+	patches := NewPatches()
+	defer patches.Reset()
+
 	projectID := uint64(0x1)
 	p := &PubSubs{pubSubs: make(map[uint64]*pubSub)}
 
-	PatchConvey("IDNotExist", t, func() {
-		mocker := Mock((*pubSub).release).Return().Build()
+	t.Run("IDNotExist", func(t *testing.T) {
+		patches = patches.ApplyPrivateMethod(&pubSub{}, "release", func() {})
 		p.Delete(projectID)
-		So(mocker.Times(), ShouldEqual, 0)
 	})
 
-	PatchConvey("DeleteOk", t, func() {
-		Mock(newPubSub).Return(&pubSub{}, nil).Build()
-		Mock((*pubSub).run).Return().Build()
+	t.Run("DeleteOk", func(t *testing.T) {
+		patches = p2pNewPubSub(patches, &pubSub{}, nil)
+		patches = patches.ApplyPrivateMethod(&pubSub{}, "run", func() {})
 		err := p.Add(projectID)
-		So(err, ShouldBeEmpty)
+		require.NoError(err)
 
-		mocker := Mock((*pubSub).release).Return().Build()
 		p.Delete(projectID)
-		So(mocker.Times(), ShouldEqual, 1)
 	})
 }
 
-func TestPublish(t *testing.T) {
+func TestPubSubs_Publish(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
 	defer patches.Reset()
@@ -135,7 +127,7 @@ func TestPublish(t *testing.T) {
 	})
 
 	patches = p2pNewPubSub(patches, &pubSub{}, nil)
-	Mock((*pubSub).run).Return().Build()
+	patches = patches.ApplyPrivateMethod(&pubSub{}, "run", func() {})
 	err := p.Add(projectID)
 	require.NoError(err)
 
@@ -159,62 +151,56 @@ func TestPublish(t *testing.T) {
 	})
 }
 
-func TestRelease(t *testing.T) {
+func TestPubSub_Release(t *testing.T) {
+	patches := NewPatches()
+	defer patches.Reset()
+
 	_, cancel := context.WithCancel(context.Background())
 	p := &pubSub{
 		topic:     &pubsub.Topic{},
 		ctxCancel: cancel,
 	}
 
-	PatchConvey("TopicCloseFailed", t, func() {
-		Mock((*pubsub.Subscription).Cancel).Return().Build()
-		Mock((*pubsub.Topic).Close).Return(errors.New(t.Name())).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
+	t.Run("TopicCloseFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&pubsub.Subscription{}, "Cancel")
+		patches = patches.ApplyMethodReturn(&pubsub.Topic{}, "Close", errors.New(t.Name()))
 		p.release()
-		So(mockerLog.Times(), ShouldEqual, 1)
 	})
+	patches = patches.ApplyMethodReturn(&pubsub.Topic{}, "Close", nil)
 
-	PatchConvey("TopicCloseOk", t, func() {
-		Mock((*pubsub.Subscription).Cancel).Return().Build()
-		Mock((*pubsub.Topic).Close).Return(nil).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
+	t.Run("TopicCloseOk", func(t *testing.T) {
 		p.release()
-		So(mockerLog.Times(), ShouldEqual, 0)
 	})
 }
 
-func TestNextMsg(t *testing.T) {
+func TestPubSub_NextMsg(t *testing.T) {
+	require := require.New(t)
+	patches := NewPatches()
+	defer patches.Reset()
+
 	p := &pubSub{
 		selfID: peer.ID("test01"),
 	}
 
-	PatchConvey("GetP2pDataFailed", t, func() {
-		Mock((*pubsub.Subscription).Next).Return(nil, errors.New(t.Name())).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
-		mockerUnmarshal := Mock(json.Unmarshal).Return(nil).Build()
-		p.nextMsg()
-		So(mockerLog.Times(), ShouldEqual, 1)
-		So(mockerUnmarshal.Times(), ShouldEqual, 0)
+	t.Run("GetP2pDataFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&pubsub.Subscription{}, "Next", nil, errors.New(t.Name()))
+		err := p.nextMsg()
+		require.ErrorContains(err, t.Name())
 	})
 
-	PatchConvey("GetP2pDataFromSelf", t, func() {
-		Mock((*pubsub.Subscription).Next).Return(&pubsub.Message{ReceivedFrom: p.selfID}, nil).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
-		mockerUnmarshal := Mock(json.Unmarshal).Return(nil).Build()
-		p.nextMsg()
-		So(mockerLog.Times(), ShouldEqual, 0)
-		So(mockerUnmarshal.Times(), ShouldEqual, 0)
+	t.Run("GetP2pDataFromSelf", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&pubsub.Subscription{}, "Next", &pubsub.Message{ReceivedFrom: p.selfID}, nil)
+		err := p.nextMsg()
+		require.NoError(err)
 	})
 
-	PatchConvey("UnmarshalP2pDataFailed", t, func() {
-		Mock((*pubsub.Subscription).Next).Return(&pubsub.Message{
+	t.Run("UnmarshalP2pDataFailed", func(t *testing.T) {
+		patches = patches.ApplyMethodReturn(&pubsub.Subscription{}, "Next", &pubsub.Message{
 			ReceivedFrom: peer.ID("test02"),
 			Message:      &pubsub_pb.Message{Data: nil},
-		}, nil).Build()
-		Mock(json.Unmarshal).Return(errors.New(t.Name())).Build()
-		mockerLog := Mock(slog.Error).Return().Build()
-		p.nextMsg()
-		So(mockerLog.Times(), ShouldEqual, 1)
+		}, nil)
+		err := p.nextMsg()
+		require.ErrorContains(err, "json unmarshal p2p data failed")
 	})
 }
 

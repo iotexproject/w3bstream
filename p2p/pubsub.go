@@ -115,25 +115,26 @@ func (p *pubSub) release() {
 
 func (p *pubSub) run() {
 	for {
-		p.nextMsg()
+		if err := p.nextMsg(); err != nil {
+			slog.Error("pubSub get msg failed", err)
+		}
 	}
 }
 
-func (p *pubSub) nextMsg() {
+func (p *pubSub) nextMsg() error {
 	m, err := p.subscription.Next(p.ctx)
 	if err != nil {
-		slog.Error("get p2p data failed", "error", err)
-		return
+		return errors.Wrapf(err, "get p2p data failed")
 	}
 	if m.ReceivedFrom == p.selfID {
-		return
+		return nil
 	}
 	d := &Data{}
 	if err := json.Unmarshal(m.Message.Data, d); err != nil {
-		slog.Error("json unmarshal p2p data failed", "error", err)
-		return
+		return errors.Wrapf(err, "json unmarshal p2p data failed")
 	}
 	p.handle(d, p.topic)
+	return nil
 }
 
 func newPubSub(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*pubSub, error) {
