@@ -8,12 +8,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
 )
 
 type errResp struct {
@@ -45,13 +46,13 @@ type queryMessageStateLogResp struct {
 	States    []*stateLog `json:"states"`
 }
 
-type ENodeConfigInfoResp struct {
+type ENodeConfigResp struct {
 	ProjectContractAddress string `json:"projectContractAddress"`
-	OperatorETHAddress     string `json:"OperatorETHAddress"`
-	OperatorSolanaAddress  string `json:"operatorSolanaAddress"`
+	OperatorETHAddress     string `json:"OperatorETHAddress,omitempty"`
+	OperatorSolanaAddress  string `json:"operatorSolanaAddress,omitempty"`
 }
 
-type eNodeConfig func() (*ENodeConfigInfoResp, error)
+type eNodeConfig func() (*ENodeConfigResp, error)
 type HttpServer struct {
 	engine         *gin.Engine
 	pg             *persistence.Postgres

@@ -6,17 +6,17 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/viper"
-
 	solanaTypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
+	"github.com/spf13/viper"
+
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/enode/api"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
-	"github.com/pkg/errors"
 )
 
 func main() {
@@ -52,8 +52,8 @@ func main() {
 	<-done
 }
 
-func getENodeConfig() (*api.ENodeConfigInfoResp, error) {
-	enodeConf := &api.ENodeConfigInfoResp{ProjectContractAddress: viper.GetString(ProjectContractAddress)}
+func getENodeConfig() (*api.ENodeConfigResp, error) {
+	enodeConf := &api.ENodeConfigResp{ProjectContractAddress: viper.GetString(ProjectContractAddress)}
 
 	if len(viper.GetString(OperatorPrivateKey)) > 0 {
 		pk := crypto.ToECDSAUnsafe(common.FromHex(viper.GetString(OperatorPrivateKey)))
