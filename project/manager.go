@@ -20,13 +20,12 @@ import (
 )
 
 type Manager struct {
-	mux            sync.Mutex
-	pool           map[key]*Config
-	projectIDs     map[uint64]bool
-	instance       *contracts.Contracts
-	ipfsEndpoint   string
-	projectFileDir string
-	notify         chan uint64
+	mux          sync.Mutex
+	pool         map[key]*Config
+	projectIDs   map[uint64]bool
+	instance     *contracts.Contracts
+	ipfsEndpoint string
+	notify       chan uint64
 	// znodes       []string
 	// ioID         string
 }
@@ -177,14 +176,14 @@ func (m *Manager) fillProjectPoolFromChain() {
 	}
 }
 
-func (m *Manager) fillProjectPoolFromLocal() {
-	if m.projectFileDir == "" {
+func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
+	if projectFileDir == "" {
 		return
 	}
-	files, err := os.ReadDir(m.projectFileDir)
+	files, err := os.ReadDir(projectFileDir)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			slog.Error("read project directory failed", "path", m.projectFileDir, "error", err)
+			slog.Error("read project directory failed", "path", projectFileDir, "error", err)
 			return
 		}
 	}
@@ -192,7 +191,7 @@ func (m *Manager) fillProjectPoolFromLocal() {
 		if f.IsDir() {
 			continue
 		}
-		data, err := os.ReadFile(path.Join(m.projectFileDir, f.Name()))
+		data, err := os.ReadFile(path.Join(projectFileDir, f.Name()))
 		if err != nil {
 			slog.Error("read project config failed", "filename", f.Name(), "error", err)
 			continue
@@ -216,18 +215,17 @@ func (m *Manager) fillProjectPoolFromLocal() {
 	}
 }
 
-func (m *Manager) fillProjectPool() {
+func (m *Manager) fillProjectPool(projectFileDir string) {
 	m.fillProjectPoolFromChain()
-	m.fillProjectPoolFromLocal()
+	m.fillProjectPoolFromLocal(projectFileDir)
 }
 
 func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint string) (*Manager, error) {
 	m := &Manager{
-		pool:           make(map[key]*Config),
-		projectIDs:     make(map[uint64]bool),
-		ipfsEndpoint:   ipfsEndpoint,
-		projectFileDir: projectFileDir,
-		notify:         make(chan uint64, 32),
+		pool:         make(map[key]*Config),
+		projectIDs:   make(map[uint64]bool),
+		ipfsEndpoint: ipfsEndpoint,
+		notify:       make(chan uint64, 32),
 	}
 
 	client, err := ethclient.Dial(chainEndpoint)
@@ -239,7 +237,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint str
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	m.fillProjectPool()
+	m.fillProjectPool(projectFileDir)
 
 	topic := "ProjectUpserted(uint64,string,bytes32)"
 	monitor, err := NewDefaultMonitor(

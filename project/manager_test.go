@@ -231,7 +231,7 @@ func TestManager_fillProjectPool(t *testing.T) {
 			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
-		m.fillProjectPool()
+		m.fillProjectPool("")
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
 }
