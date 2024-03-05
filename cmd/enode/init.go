@@ -34,4 +34,5 @@ func initConfig() {
 
 	viper.BindEnv(OperatorPrivateKey)
 	viper.BindEnv(OperatorPrivateKeyED25519)
+	viper.BindEnv(ProjectFileDirectory)
 }

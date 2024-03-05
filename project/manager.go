@@ -2,8 +2,12 @@ package project
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
+	"path"
+	"strconv"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -164,7 +168,7 @@ func (m *Manager) doProjectPoolFill(projectID uint64) bool {
 	return false
 }
 
-func (m *Manager) fillProjectPool() {
+func (m *Manager) fillProjectPoolFromChain() {
 	for i := uint64(1); ; i++ {
 		if finished := m.doProjectPoolFill(i); finished {
 			return
@@ -172,7 +176,51 @@ func (m *Manager) fillProjectPool() {
 	}
 }
 
-func NewManager(chainEndpoint, contractAddress, ipfsEndpoint string) (*Manager, error) {
+func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
+	if projectFileDir == "" {
+		return
+	}
+	files, err := os.ReadDir(projectFileDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			slog.Error("read project directory failed", "path", projectFileDir, "error", err)
+			return
+		}
+	}
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(path.Join(projectFileDir, f.Name()))
+		if err != nil {
+			slog.Error("read project config failed", "filename", f.Name(), "error", err)
+			continue
+		}
+
+		projectID, err := strconv.ParseUint(f.Name(), 10, 64)
+		if err != nil {
+			slog.Error("parse filename failed", "filename", f.Name())
+			continue
+		}
+		cs := []*Config{}
+		if err := json.Unmarshal(data, &cs); err != nil {
+			slog.Error("parse project config failed", "filename", f.Name())
+			continue
+		}
+
+		for _, c := range cs {
+			slog.Info("local project loaded", "project_id", projectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
+			m.Set(projectID, c.Version, c)
+		}
+	}
+}
+
+func (m *Manager) fillProjectPool(projectFileDir string) {
+	m.fillProjectPoolFromChain()
+	m.fillProjectPoolFromLocal(projectFileDir)
+}
+
+func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint string) (*Manager, error) {
 	m := &Manager{
 		pool:         make(map[key]*Config),
 		projectIDs:   make(map[uint64]bool),
@@ -189,7 +237,7 @@ func NewManager(chainEndpoint, contractAddress, ipfsEndpoint string) (*Manager, 
 		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	m.fillProjectPool()
+	m.fillProjectPool(projectFileDir)
 
 	topic := "ProjectUpserted(uint64,string,bytes32)"
 	monitor, err := NewDefaultMonitor(

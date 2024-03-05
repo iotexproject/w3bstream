@@ -40,6 +40,8 @@ func initConfig() {
 	viper.MustBindEnv(IotexChainID)
 	viper.MustBindEnv(IPFSEndpoint)
 	viper.MustBindEnv(IoID)
+
+	viper.BindEnv(ProjectFileDirectory)
 }
 
 // TODO it's risc0 depend tables, will move to risc0

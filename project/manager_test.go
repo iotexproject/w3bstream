@@ -23,22 +23,22 @@ func TestNewManager(t *testing.T) {
 	t.Run("DialChainFailed", func(t *testing.T) {
 		p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "")
+		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("NewContractsFailed", func(t *testing.T) {
 		p = testutil.EthClientDial(p, ethclient.NewClient(&rpc.Client{}), nil)
 		p = p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "")
+		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("NewDefaultMonitorFailed", func(t *testing.T) {
 		p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
-		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func() {})
+		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func(string) {})
 		p = p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "")
+		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestNewManager(t *testing.T) {
 		p = p.ApplyMethodReturn(&Monitor{}, "MustEvents", make(chan *types.Log))
 		p = p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 
-		_, err := NewManager("", "", "")
+		_, err := NewManager("", "", "", "")
 		r.NoError(err)
 	})
 }
@@ -231,7 +231,7 @@ func TestManager_fillProjectPool(t *testing.T) {
 			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
-		m.fillProjectPool()
+		m.fillProjectPool("")
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
 }
