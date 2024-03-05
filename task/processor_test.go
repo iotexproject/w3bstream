@@ -21,6 +21,7 @@ import (
 func TestNewProcessor(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
+	defer patches.Reset()
 
 	ps := &p2p.PubSubs{}
 
@@ -41,6 +42,7 @@ func TestNewProcessor(t *testing.T) {
 
 func TestReportFail(t *testing.T) {
 	patches := NewPatches()
+	defer patches.Reset()
 	p := &Processor{}
 
 	t.Run("MarshalFailed", func(t *testing.T) {
@@ -57,6 +59,7 @@ func TestReportFail(t *testing.T) {
 
 func TestReportSuccess(t *testing.T) {
 	patches := NewPatches()
+	defer patches.Reset()
 	p := &Processor{}
 
 	t.Run("MarshalFailed", func(t *testing.T) {
@@ -74,6 +77,7 @@ func TestReportSuccess(t *testing.T) {
 
 func TestProcessorHandleP2PData(t *testing.T) {
 	patches := NewPatches()
+	defer patches.Reset()
 	p := &Processor{
 		vmHandler:      &vm.Handler{},
 		projectManager: nil,
