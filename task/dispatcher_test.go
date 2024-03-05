@@ -19,7 +19,7 @@ import (
 	"github.com/machinefi/sprout/types"
 )
 
-func TestPubTask(t *testing.T) {
+func TestDispatcher_PubTask(t *testing.T) {
 	require := require.New(t)
 	patches := NewPatches()
 	defer patches.Reset()
@@ -80,7 +80,7 @@ func TestNewDispatcher(t *testing.T) {
 	})
 }
 
-func TestHandleP2PData(t *testing.T) {
+func TestDispatcher_HandleP2PData(t *testing.T) {
 	patches := NewPatches()
 	defer patches.Reset()
 

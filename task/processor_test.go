@@ -40,7 +40,7 @@ func TestNewProcessor(t *testing.T) {
 	})
 }
 
-func TestReportFail(t *testing.T) {
+func TestProcessor_ReportFail(t *testing.T) {
 	patches := NewPatches()
 	defer patches.Reset()
 	p := &Processor{}
@@ -57,7 +57,7 @@ func TestReportFail(t *testing.T) {
 	})
 }
 
-func TestReportSuccess(t *testing.T) {
+func TestProcessor_ReportSuccess(t *testing.T) {
 	patches := NewPatches()
 	defer patches.Reset()
 	p := &Processor{}
@@ -75,7 +75,7 @@ func TestReportSuccess(t *testing.T) {
 
 }
 
-func TestProcessorHandleP2PData(t *testing.T) {
+func TestProcessor_HandleP2PData(t *testing.T) {
 	patches := NewPatches()
 	defer patches.Reset()
 	p := &Processor{
