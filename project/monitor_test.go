@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/machinefi/sprout/testutil"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -19,14 +18,14 @@ func TestNewMonitor(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	t.Run("DialChainFailed", func(t *testing.T) {
-		p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
+	t.Run("FailedToDialChain", func(t *testing.T) {
+		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 
 		_, err := NewMonitor("", []string{}, []string{}, 1, 100, 3*time.Second)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
-		p = testutil.EthClientDial(p, nil, nil)
+		p = p.ApplyFuncReturn(ethclient.Dial, nil, nil)
 
 		_, err := NewMonitor("", []string{"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26"}, []string{"ProjectUpserted(uint64,string,bytes32)"}, 1, 100, 3*time.Second)
 		r.NoError(err)
@@ -38,14 +37,14 @@ func TestNewDefaultMonitor(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	t.Run("DialChainFailed", func(t *testing.T) {
-		p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
+	t.Run("FailedToDialChain", func(t *testing.T) {
+		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 
 		_, err := NewDefaultMonitor("", []string{}, []string{})
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("GetBlockNumberFailed", func(t *testing.T) {
-		p = testutil.EthClientDial(p, ethclient.NewClient(nil), nil)
+	t.Run("FailedToGetBlockNumber", func(t *testing.T) {
+		p = p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(nil), nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "Close")
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(0), errors.New(t.Name()))
 
@@ -126,7 +125,7 @@ func TestMonitor_doRun(t *testing.T) {
 		finished := m.doRun()
 		r.True(finished)
 	})
-	t.Run("BlockNumberFailed", func(t *testing.T) {
+	t.Run("FailedToGetBlockNumber", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(100), errors.New(t.Name()))
 		p = p.ApplyFuncReturn(time.Sleep)
 
@@ -146,7 +145,7 @@ func TestMonitor_doRun(t *testing.T) {
 		finished := m.doRun()
 		r.False(finished)
 	})
-	t.Run("FilterLogsFailed", func(t *testing.T) {
+	t.Run("FailedToFilterLogs", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", nil, errors.New(t.Name()))
 
 		m := &Monitor{

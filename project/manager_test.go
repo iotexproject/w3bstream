@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/project/contracts"
-	"github.com/machinefi/sprout/testutil"
 	wstypes "github.com/machinefi/sprout/types"
 )
 
@@ -23,29 +22,32 @@ func TestNewManager(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	t.Run("DialChainFailed", func(t *testing.T) {
-		p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
+	t.Run("FailedToDialChain", func(t *testing.T) {
+		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("NewContractsFailed", func(t *testing.T) {
-		p = testutil.EthClientDial(p, ethclient.NewClient(&rpc.Client{}), nil)
+	p = p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
+
+	t.Run("FailedToNewContracts", func(t *testing.T) {
 		p = p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("NewDefaultMonitorFailed", func(t *testing.T) {
-		p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
+	p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
+
+	t.Run("FailedToNewDefaultMonitor", func(t *testing.T) {
 		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func(string) {})
 		p = p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
+	p = p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
+
 	t.Run("Success", func(t *testing.T) {
-		p = p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
 		p = p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
 		p = p.ApplyMethodReturn(&Monitor{}, "MustEvents", make(chan *types.Log))
 		p = p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
@@ -152,7 +154,7 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	t.Run("ReadChainFailed", func(t *testing.T) {
+	t.Run("FailedToReadChain", func(t *testing.T) {
 		outputs := []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{struct {
@@ -194,7 +196,7 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 		m.fillProjectPoolFromContract()
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
-	t.Run("GetConfigFailed", func(t *testing.T) {
+	t.Run("FailedToGetConfig", func(t *testing.T) {
 		outputs := []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{struct {
@@ -312,7 +314,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
-	t.Run("ReadDirFailed", func(t *testing.T) {
+	t.Run("FailedToReadDir", func(t *testing.T) {
 		p = p.ApplyFuncReturn(os.ReadDir, nil, errors.New(t.Name()))
 
 		m := &Manager{
@@ -322,7 +324,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
-	t.Run("ReadFileFailed", func(t *testing.T) {
+	t.Run("FailedToReadFile", func(t *testing.T) {
 		p = p.ApplyFuncReturn(os.ReadDir, []os.DirEntry{mockDirEntry{isDir: true}, mockDirEntry{}}, nil)
 		p = p.ApplyFuncReturn(os.ReadFile, nil, errors.New(t.Name()))
 
@@ -354,7 +356,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 1)
 	})
-	t.Run("JsonUnmarshalFailed", func(t *testing.T) {
+	t.Run("FailedToUnmarshalJson", func(t *testing.T) {
 		p = p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
 
 		m := &Manager{
