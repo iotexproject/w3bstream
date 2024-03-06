@@ -109,14 +109,14 @@ func (p *pubSub) release() {
 	p.ctxCancel()
 	p.subscription.Cancel()
 	if err := p.topic.Close(); err != nil {
-		slog.Error("close topic failed", "error", err, "topic", p.topic.String())
+		slog.Error("failed to close topic", "error", err, "topic", p.topic.String())
 	}
 }
 
 func (p *pubSub) run() {
 	for {
 		if err := p.nextMsg(); err != nil {
-			slog.Error("failed to pubSub get msg", "error", err)
+			slog.Error("failed to get pubsub msg", "error", err)
 		}
 	}
 }
