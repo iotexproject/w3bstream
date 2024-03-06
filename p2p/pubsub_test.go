@@ -138,11 +138,11 @@ func TestPubSubs_Publish(t *testing.T) {
 	p = p.ApplyFuncReturn(json.Marshal, []byte("any"), nil)
 
 	t.Run("FailedToPublishData", func(t *testing.T) {
-		p = p.ApplyMethodFunc(&pubsub.Topic{}, "Publish", errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Publish", errors.New(t.Name()))
 		err := pubSubs.Publish(projectID, d)
 		r.ErrorContains(err, t.Name())
 	})
-	p = p.ApplyMethodFunc(&pubsub.Topic{}, "Publish", nil)
+	p = p.ApplyMethodReturn(&pubsub.Topic{}, "Publish", nil)
 
 	t.Run("Success", func(t *testing.T) {
 		err := pubSubs.Publish(projectID, d)
