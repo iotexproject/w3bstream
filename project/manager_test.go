@@ -1,6 +1,8 @@
 package project
 
 import (
+	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -12,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/project/contracts"
-	"github.com/machinefi/sprout/testutil"
+	wstypes "github.com/machinefi/sprout/types"
 )
 
 func TestNewManager(t *testing.T) {
@@ -20,29 +22,32 @@ func TestNewManager(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	t.Run("DialChainFailed", func(t *testing.T) {
-		p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
+	t.Run("FailedToDialChain", func(t *testing.T) {
+		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("NewContractsFailed", func(t *testing.T) {
-		p = testutil.EthClientDial(p, ethclient.NewClient(&rpc.Client{}), nil)
+	p = p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
+
+	t.Run("FailedToNewContracts", func(t *testing.T) {
 		p = p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("NewDefaultMonitorFailed", func(t *testing.T) {
-		p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
+	p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
+
+	t.Run("FailedToNewDefaultMonitor", func(t *testing.T) {
 		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func(string) {})
 		p = p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
+	p = p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
+
 	t.Run("Success", func(t *testing.T) {
-		p = p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
 		p = p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
 		p = p.ApplyMethodReturn(&Monitor{}, "MustEvents", make(chan *types.Log))
 		p = p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
@@ -144,21 +149,36 @@ func TestManager_doProjectRegistrarWatch(t *testing.T) {
 	})
 }
 
-func TestManager_doProjectPoolFill(t *testing.T) {
+func TestManager_fillProjectPoolFromContract(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	t.Run("ReadChainFailed", func(t *testing.T) {
-		p = p.ApplyMethodReturn(&contracts.ContractsCaller{}, "Projects", nil, errors.New(t.Name()))
+	t.Run("FailedToReadChain", func(t *testing.T) {
+		outputs := []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{struct {
+					Uri    string
+					Hash   [32]byte
+					Paused bool
+				}{}, errors.New(t.Name())},
+			},
+			{
+				Values: gomonkey.Params{struct {
+					Uri    string
+					Hash   [32]byte
+					Paused bool
+				}{}, nil},
+			},
+		}
+		p = p.ApplyMethodSeq(&contracts.ContractsCaller{}, "Projects", outputs)
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
 			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
-		finished := m.doProjectPoolFill(1)
-		r.False(finished)
+		m.fillProjectPoolFromContract()
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
 	t.Run("Finished", func(t *testing.T) {
@@ -173,38 +193,61 @@ func TestManager_doProjectPoolFill(t *testing.T) {
 			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
-		finished := m.doProjectPoolFill(1)
-		r.True(finished)
+		m.fillProjectPoolFromContract()
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
-	t.Run("GetConfigFailed", func(t *testing.T) {
-		p = p.ApplyMethodReturn(&contracts.ContractsCaller{}, "Projects", struct {
-			Uri    string
-			Hash   [32]byte
-			Paused bool
-		}{
-			Uri:  "test",
-			Hash: [32]byte{1},
-		}, nil)
+	t.Run("FailedToGetConfig", func(t *testing.T) {
+		outputs := []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{struct {
+					Uri    string
+					Hash   [32]byte
+					Paused bool
+				}{
+					Uri:  "test",
+					Hash: [32]byte{1},
+				}, nil},
+			},
+			{
+				Values: gomonkey.Params{struct {
+					Uri    string
+					Hash   [32]byte
+					Paused bool
+				}{}, nil},
+			},
+		}
+		p = p.ApplyMethodSeq(&contracts.ContractsCaller{}, "Projects", outputs)
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", nil, errors.New(t.Name()))
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
 			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
-		finished := m.doProjectPoolFill(1)
-		r.False(finished)
+		m.fillProjectPoolFromContract()
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
 	t.Run("Success", func(t *testing.T) {
-		p = p.ApplyMethodReturn(&contracts.ContractsCaller{}, "Projects", struct {
-			Uri    string
-			Hash   [32]byte
-			Paused bool
-		}{
-			Uri:  "test",
-			Hash: [32]byte{1},
-		}, nil)
+		outputs := []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{struct {
+					Uri    string
+					Hash   [32]byte
+					Paused bool
+				}{
+					Uri:  "test",
+					Hash: [32]byte{1},
+				}, nil},
+			},
+			{
+				Values: gomonkey.Params{struct {
+					Uri    string
+					Hash   [32]byte
+					Paused bool
+				}{}, nil},
+			},
+		}
+		p = p.ApplyMethodSeq(&contracts.ContractsCaller{}, "Projects", outputs)
 		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
 
 		m := &Manager{
@@ -212,9 +255,116 @@ func TestManager_doProjectPoolFill(t *testing.T) {
 			pool:       map[key]*Config{},
 			instance:   &contracts.Contracts{},
 		}
-		finished := m.doProjectPoolFill(1)
-		r.False(finished)
+		m.fillProjectPoolFromContract()
 		r.Equal(len(m.GetAllProjectID()), 1)
+	})
+}
+
+type mockDirEntry struct {
+	isDir bool
+	name  string
+}
+
+func (m mockDirEntry) Name() string {
+	return m.name
+}
+
+func (m mockDirEntry) IsDir() bool {
+	return m.isDir
+}
+
+func (m mockDirEntry) Type() os.FileMode {
+	return 0
+}
+
+func (m mockDirEntry) Info() (os.FileInfo, error) {
+	return nil, nil
+}
+
+func TestManager_fillProjectPoolFromLocal(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	cs := []*Config{
+		{
+			Code:    "i am code",
+			VMType:  wstypes.VMHalo2,
+			Version: "0.1",
+		},
+	}
+	jc, err := json.Marshal(cs)
+	r.NoError(err)
+
+	t.Run("ProjectFileDirParamIsEmpty", func(t *testing.T) {
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+		}
+		m.fillProjectPoolFromLocal("")
+		r.Equal(len(m.GetAllProjectID()), 0)
+	})
+	t.Run("ReadDirNotExistError", func(t *testing.T) {
+		p = p.ApplyFuncReturn(os.ReadDir, nil, os.ErrNotExist)
+
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+		}
+		m.fillProjectPoolFromLocal("test")
+		r.Equal(len(m.GetAllProjectID()), 0)
+	})
+	t.Run("FailedToReadDir", func(t *testing.T) {
+		p = p.ApplyFuncReturn(os.ReadDir, nil, errors.New(t.Name()))
+
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+		}
+		m.fillProjectPoolFromLocal("test")
+		r.Equal(len(m.GetAllProjectID()), 0)
+	})
+	t.Run("FailedToReadFile", func(t *testing.T) {
+		p = p.ApplyFuncReturn(os.ReadDir, []os.DirEntry{mockDirEntry{isDir: true}, mockDirEntry{}}, nil)
+		p = p.ApplyFuncReturn(os.ReadFile, nil, errors.New(t.Name()))
+
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+		}
+		m.fillProjectPoolFromLocal("test")
+		r.Equal(len(m.GetAllProjectID()), 0)
+	})
+	t.Run("InvalidFileName", func(t *testing.T) {
+		p = p.ApplyFuncReturn(os.ReadFile, nil, nil)
+
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+		}
+		m.fillProjectPoolFromLocal("test")
+		r.Equal(len(m.GetAllProjectID()), 0)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p = p.ApplyFuncReturn(os.ReadDir, []os.DirEntry{mockDirEntry{isDir: true}, mockDirEntry{name: "1"}}, nil)
+		p = p.ApplyFuncReturn(os.ReadFile, jc, nil)
+
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+		}
+		m.fillProjectPoolFromLocal("test")
+		r.Equal(len(m.GetAllProjectID()), 1)
+	})
+	t.Run("FailedToUnmarshalJson", func(t *testing.T) {
+		p = p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+
+		m := &Manager{
+			projectIDs: map[uint64]bool{},
+			pool:       map[key]*Config{},
+		}
+		m.fillProjectPoolFromLocal("test")
+		r.Equal(len(m.GetAllProjectID()), 0)
 	})
 }
 
@@ -224,12 +374,11 @@ func TestManager_fillProjectPool(t *testing.T) {
 	defer p.Reset()
 
 	t.Run("Success", func(t *testing.T) {
-		p = p.ApplyPrivateMethod(&Manager{}, "doProjectPoolFill", func(uint64) bool { return true })
+		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPoolFromContract", func() {})
+		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPoolFromLocal", func(string) {})
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
-			instance:   &contracts.Contracts{},
 		}
 		m.fillProjectPool("")
 		r.Equal(len(m.GetAllProjectID()), 0)

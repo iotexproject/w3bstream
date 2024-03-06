@@ -100,13 +100,13 @@ func (m *Manager) doProjectRegistrarWatch(logs <-chan *types.Log, subs event.Sub
 		}
 
 		for _, c := range cs {
-			slog.Info("monitor project", "projectID", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
+			slog.Info("monitor project", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
 			m.Set(pm.ProjectID, c.Version, c)
 		}
 		select {
 		case m.notify <- pm.ProjectID:
 		default:
-			slog.Info("project notify channel full", "projectID", pm.ProjectID)
+			slog.Info("project notify channel full", "project_id", pm.ProjectID)
 		}
 	}
 }
@@ -117,61 +117,54 @@ func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subsc
 	}
 }
 
-func (m *Manager) doProjectPoolFill(projectID uint64) bool {
-	emptyHash := [32]byte{}
-	mp, err := m.instance.Projects(nil, projectID)
-	if err != nil {
-		slog.Error("get project meta from chain failed", "project_id", projectID, "error", err)
-		return false
-	}
-	// query empty, means reached the maximum projectID value
-	if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
-		slog.Info("project from contract read completed", "max", projectID-1)
-		return true
-	}
-
-	// znodeMap := map[[sha256.Size]byte]string{}
-	// for _, n := range znodes {
-	// 	znodeMap[sha256.Sum256([]byte(n))] = n
-	// }
-
-	// max := new(big.Int).SetUint64(0)
-	// maxZnode := ioID
-	// for h, id := range znodeMap {
-	// 	n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetUint64(i))
-	// 	if n.Cmp(max) > 0 {
-	// 		max = n
-	// 		maxZnode = id
-	// 	}
-	// }
-	// if maxZnode != ioID {
-	// 	slog.Info("the project not scheduld to this znode", "projectID", i)
-	// 	continue
-	// }
-
-	pm := &ProjectMeta{
-		ProjectID: projectID,
-		Uri:       mp.Uri,
-		Hash:      mp.Hash,
-		Paused:    mp.Paused,
-	}
-	cs, err := pm.GetConfigs(m.ipfsEndpoint)
-	if err != nil {
-		slog.Error("fetch project failed", "err", err)
-		return false
-	}
-
-	for _, c := range cs {
-		slog.Debug("contract project loaded", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
-		m.Set(projectID, c.Version, c)
-	}
-	return false
-}
-
-func (m *Manager) fillProjectPoolFromChain() {
-	for i := uint64(1); ; i++ {
-		if finished := m.doProjectPoolFill(i); finished {
+func (m *Manager) fillProjectPoolFromContract() {
+	for projectID := uint64(1); ; projectID++ {
+		emptyHash := [32]byte{}
+		mp, err := m.instance.Projects(nil, projectID)
+		if err != nil {
+			slog.Error("failed to get project meta from chain ", "project_id", projectID, "error", err)
+			continue
+		}
+		// query empty, means reached the maximum projectID value
+		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
+			slog.Info("load project from contract completed", "max project_id", projectID-1)
 			return
+		}
+
+		// znodeMap := map[[sha256.Size]byte]string{}
+		// for _, n := range znodes {
+		// 	znodeMap[sha256.Sum256([]byte(n))] = n
+		// }
+
+		// max := new(big.Int).SetUint64(0)
+		// maxZnode := ioID
+		// for h, id := range znodeMap {
+		// 	n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetUint64(i))
+		// 	if n.Cmp(max) > 0 {
+		// 		max = n
+		// 		maxZnode = id
+		// 	}
+		// }
+		// if maxZnode != ioID {
+		// 	slog.Info("the project not scheduld to this znode", "projectID", i)
+		// 	continue
+		// }
+
+		pm := &ProjectMeta{
+			ProjectID: projectID,
+			Uri:       mp.Uri,
+			Hash:      mp.Hash,
+			Paused:    mp.Paused,
+		}
+		cs, err := pm.GetConfigs(m.ipfsEndpoint)
+		if err != nil {
+			slog.Error("failed to fetch project", "error", err)
+			continue
+		}
+
+		for _, c := range cs {
+			slog.Debug("contract project loaded", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
+			m.Set(projectID, c.Version, c)
 		}
 	}
 }
@@ -216,7 +209,7 @@ func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
 }
 
 func (m *Manager) fillProjectPool(projectFileDir string) {
-	m.fillProjectPoolFromChain()
+	m.fillProjectPoolFromContract()
 	m.fillProjectPoolFromLocal(projectFileDir)
 }
 
@@ -230,11 +223,11 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint str
 
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
-		return nil, errors.Wrapf(err, "dial chain endpoint failed, endpoint %s", chainEndpoint)
+		return nil, errors.Wrapf(err, "failed to dial chain, endpoint %s", chainEndpoint)
 	}
 	m.instance, err = contracts.NewContracts(common.HexToAddress(contractAddress), client)
 	if err != nil {
-		return nil, errors.Wrapf(err, "new contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
+		return nil, errors.Wrapf(err, "failed to new contract instance, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
 	m.fillProjectPool(projectFileDir)
@@ -246,8 +239,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint str
 		[]string{topic},
 	)
 	if err != nil {
-		slog.Error("failed to new contract monitor", "msg", err)
-		return nil, err
+		return nil, errors.Wrap(err, "failed to new contract monitor")
 	}
 	go monitor.run()
 	go m.watchProjectRegistrar(monitor.MustEvents(topic), monitor)

@@ -2,13 +2,11 @@ package p2p
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
-	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/golang/mock/gomock"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/libp2p/go-libp2p/p2p/discovery/util"
@@ -20,94 +18,62 @@ import (
 )
 
 func TestDiscoverPeers(t *testing.T) {
-	require := require.New(t)
-	patches := NewPatches()
-	defer patches.Reset()
-
-	ctx := context.Background()
-	bootNodeMultiaddr := "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
-	iotexChainID := 2
-
-	t.Run("NewDhtFailed", func(t *testing.T) {
-		patches = newDht(patches, errors.New(t.Name()))
-		err := discoverPeers(ctx, nil, bootNodeMultiaddr, iotexChainID)
-		require.ErrorContains(err, t.Name())
-	})
-	patches = newDht(patches, nil)
-
-	t.Run("DhtBootstrapFailed", func(t *testing.T) {
-		patches = ipfsDHTBootstrap(patches, errors.New(t.Name()))
-		err := discoverPeers(ctx, nil, bootNodeMultiaddr, iotexChainID)
-		require.ErrorContains(err, t.Name())
-	})
-	patches = ipfsDHTBootstrap(patches, nil)
-
-	t.Run("ParseBootNodeMultiaddrFailed", func(t *testing.T) {
-		patches = multiaddrNewMultiaddr(patches, errors.New(t.Name()))
-		err := discoverPeers(ctx, nil, bootNodeMultiaddr, iotexChainID)
-		require.ErrorContains(err, t.Name())
-	})
-	patches = multiaddrNewMultiaddr(patches, nil)
-
-	t.Run("GetBootnodeFailed", func(t *testing.T) {
-		patches = peerAddrInfoFromP2pAddr(patches, nil, errors.New(t.Name()))
-		err := discoverPeers(ctx, nil, bootNodeMultiaddr, iotexChainID)
-		require.ErrorContains(err, t.Name())
-	})
-	patches = peerAddrInfoFromP2pAddr(patches, &peer.AddrInfo{}, nil)
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
 
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	host := mock.NewMockHost(ctrl)
 
-	t.Run("ConnectBootNodeFailed", func(t *testing.T) {
+	ctx := context.Background()
+	iotexChainID := 2
+	addr, err := multiaddr.NewMultiaddr("/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o")
+	r.NoError(err)
+
+	t.Run("FailedToNewDht", func(t *testing.T) {
+		p = p.ApplyFuncReturn(dht.New, nil, errors.New(t.Name()))
+
+		err := discoverPeers(ctx, nil, "", iotexChainID)
+		r.ErrorContains(err, t.Name())
+	})
+	p = p.ApplyFuncReturn(dht.New, &dht.IpfsDHT{}, nil)
+
+	t.Run("FailedToBootstrapDht", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&dht.IpfsDHT{}, "Bootstrap", errors.New(t.Name()))
+
+		err := discoverPeers(ctx, nil, "", iotexChainID)
+		r.ErrorContains(err, t.Name())
+	})
+	p = p.ApplyMethodReturn(&dht.IpfsDHT{}, "Bootstrap", nil)
+
+	t.Run("FailedToParseBootNodeMultiaddr", func(t *testing.T) {
+		p = p.ApplyFuncReturn(multiaddr.NewMultiaddr, nil, errors.New(t.Name()))
+
+		err := discoverPeers(ctx, nil, "", iotexChainID)
+		r.ErrorContains(err, t.Name())
+	})
+	p = p.ApplyFuncReturn(multiaddr.NewMultiaddr, addr, nil)
+
+	t.Run("FailedToGetBootnode", func(t *testing.T) {
+		p = p.ApplyFuncReturn(peer.AddrInfoFromP2pAddr, nil, errors.New(t.Name()))
+
+		err := discoverPeers(ctx, nil, "", iotexChainID)
+		r.ErrorContains(err, t.Name())
+	})
+	p = p.ApplyFuncReturn(peer.AddrInfoFromP2pAddr, &peer.AddrInfo{}, nil)
+
+	t.Run("FailedToConnectBootNode", func(t *testing.T) {
 		host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(errors.New(t.Name())).Times(1)
-		err := discoverPeers(ctx, host, bootNodeMultiaddr, iotexChainID)
-		require.ErrorContains(err, t.Name())
+		err := discoverPeers(ctx, host, "", iotexChainID)
+		r.ErrorContains(err, t.Name())
 	})
-
-	t.Run("DiscoverSuccess", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		host.EXPECT().Connect(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-		patches = patches.ApplyFuncReturn(routing.NewRoutingDiscovery, nil)
-		patches = patches.ApplyFuncReturn(util.Advertise)
-		err := discoverPeers(ctx, host, bootNodeMultiaddr, iotexChainID)
-		require.NoError(err)
+		p = p.ApplyFuncReturn(routing.NewRoutingDiscovery, nil)
+		p = p.ApplyFuncReturn(util.Advertise)
+
+		err := discoverPeers(ctx, host, "", iotexChainID)
+		r.NoError(err)
 	})
-}
-
-func newDht(p *Patches, err error) *Patches {
-	return p.ApplyFunc(
-		dht.New,
-		func(ctx context.Context, h host.Host, options ...dht.Option) (*dht.IpfsDHT, error) {
-			return nil, err
-		},
-	)
-}
-
-func ipfsDHTBootstrap(p *Patches, err error) *Patches {
-	ipfsDHT := &dht.IpfsDHT{}
-	return p.ApplyMethodFunc(
-		reflect.TypeOf(ipfsDHT),
-		"Bootstrap",
-		func(context.Context) error {
-			return err
-		},
-	)
-}
-
-func multiaddrNewMultiaddr(p *Patches, err error) *Patches {
-	return p.ApplyFunc(
-		multiaddr.NewMultiaddr,
-		func(s string) (multiaddr.Multiaddr, error) {
-			return nil, err
-		},
-	)
-}
-
-func peerAddrInfoFromP2pAddr(p *Patches, addrInfo *peer.AddrInfo, err error) *Patches {
-	return p.ApplyFunc(
-		peer.AddrInfoFromP2pAddr,
-		func(m multiaddr.Multiaddr) (*peer.AddrInfo, error) {
-			return addrInfo, err
-		},
-	)
 }

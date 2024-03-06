@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/testutil"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/utils/ipfs"
 )
@@ -64,7 +64,7 @@ func TestProjectMeta_GetConfigs_init(t *testing.T) {
 	defer p.Reset()
 
 	t.Run("InvalidUri", func(t *testing.T) {
-		p = testutil.URLParse(p, nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(url.Parse, nil, errors.New(t.Name()))
 
 		_, err := (&ProjectMeta{}).GetConfigs("")
 		r.ErrorContains(err, t.Name())
@@ -97,23 +97,23 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 		Hash:      [32]byte(hash),
 	}
 
-	t.Run("GetHTTPFailed", func(t *testing.T) {
-		p = testutil.HttpGet(p, nil, errors.New(t.Name()))
+	t.Run("FailedToGetHTTP", func(t *testing.T) {
+		p = p.ApplyFuncReturn(http.Get, nil, errors.New(t.Name()))
 
 		_, err := pm.GetConfigs("")
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("IOReadAllFailed", func(t *testing.T) {
-		p = testutil.HttpGet(p, &http.Response{
+	t.Run("FailedToIOReadAll", func(t *testing.T) {
+		p = p.ApplyFuncReturn(http.Get, &http.Response{
 			Body: io.NopCloser(bytes.NewReader(jc)),
 		}, nil)
-		p = testutil.IoReadAll(p, nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(io.ReadAll, nil, errors.New(t.Name()))
 
 		_, err := pm.GetConfigs("")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("HashMismatch", func(t *testing.T) {
-		p = testutil.IoReadAll(p, jc, nil)
+		p = p.ApplyFuncReturn(io.ReadAll, jc, nil)
 
 		npm := *pm
 		npm.Hash = [32]byte{}
@@ -126,8 +126,8 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 		r.Equal(len(resultConfigs), len(cs))
 		r.Equal(resultConfigs[0].Code, "i am code")
 	})
-	t.Run("JsonUnmarshalFailed", func(t *testing.T) {
-		p = testutil.JsonUnmarshal(p, errors.New(t.Name()))
+	t.Run("FailedToUnmarshalJson", func(t *testing.T) {
+		p = p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
 
 		_, err := pm.GetConfigs("")
 		r.ErrorContains(err, t.Name())
@@ -142,7 +142,7 @@ func TestProjectMeta_GetConfigs_ipfs(t *testing.T) {
 	pm := &ProjectMeta{
 		Uri: "ipfs://test.com/123",
 	}
-	t.Run("GetIPFSFailed", func(t *testing.T) {
+	t.Run("FailedToGetIPFS", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 
 		_, err := pm.GetConfigs("")
@@ -159,7 +159,7 @@ func TestProjectMeta_GetConfigs_default(t *testing.T) {
 		Uri: "test.com/123",
 	}
 
-	t.Run("GetIPFSFailed", func(t *testing.T) {
+	t.Run("FailedToGetIPFS", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 
 		_, err := pm.GetConfigs("")
