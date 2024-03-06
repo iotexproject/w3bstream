@@ -179,7 +179,8 @@ func TestPubSub_NextMsg(t *testing.T) {
 	defer p.Reset()
 
 	pubSub := &pubSub{
-		selfID: peer.ID("test01"),
+		selfID:       peer.ID("test01"),
+		subscription: &pubsub.Subscription{},
 	}
 
 	t.Run("FailedToGetP2PData", func(t *testing.T) {
