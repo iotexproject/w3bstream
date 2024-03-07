@@ -1,8 +1,9 @@
 package p2p
 
 import (
-	"log/slog"
+	"context"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/libp2p/go-libp2p"
@@ -88,7 +89,6 @@ func TestPubSubs_Add(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyFunc(NewPubSub, func(uint64, *pubsub.PubSub, HandleSubscriptionMessage, peer.ID) (*pubSub, error) {
-			slog.Info("mock newpubsub")
 			return nil, errors.New(t.Name())
 		})
 
@@ -100,10 +100,25 @@ func TestPubSubs_Add(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(NewPubSub, &pubSub{}, nil)
-		p = p.ApplyPrivateMethod(&pubSub{}, "run", func(_ *pubSub) {})
+		_ps := &pubSub{}
+		_ps.ctx, _ps.ctxCancel = context.WithCancel(context.Background())
+
+		times := -1
+
+		p = p.ApplyFuncReturn(NewPubSub, _ps, nil)
+		p = p.ApplyPrivateMethod(&pubSub{}, "nextMsg", func() error {
+			times++
+			time.Sleep(100 * time.Millisecond)
+			if times%2 == 0 {
+				return errors.New(t.Name())
+			}
+			return nil
+		})
 
 		err := ps.Add(3)
+		time.Sleep(time.Second)
+		_ps.ctxCancel()
+		time.Sleep(time.Second)
 		r.NoError(err)
 	})
 }

@@ -118,6 +118,7 @@ func (p *pubSub) run() {
 	for {
 		select {
 		case <-p.ctx.Done():
+			slog.With("ctx.Err()", p.ctx.Err()).Info("pubsub stopped caused by")
 			return
 		default:
 			if err := p.nextMsg(); err != nil {
