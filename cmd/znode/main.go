@@ -2,30 +2,40 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/viper"
+	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/cmd/znode/config"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
 
+var conf *config.Config
+
 func main() {
-	initLogger()
-	initConfig()
+	var err error
+	conf, err = config.Get()
+	if err != nil {
+		panic(errors.Wrap(err, "failed to init enode config"))
+	}
+	conf.Print()
+	slog.Info("znode config loaded")
+
 	if err := migrateDatabase(); err != nil {
 		log.Fatal(err)
 	}
 
 	vmHandler := vm.NewHandler(
 		map[types.VM]string{
-			types.VMRisc0:  viper.GetString(Risc0ServerEndpoint),
-			types.VMHalo2:  viper.GetString(Halo2ServerEndpoint),
-			types.VMZkwasm: viper.GetString(ZkwasmServerEndpoint),
+			types.VMRisc0:  conf.Risc0ServerEndpoint,
+			types.VMHalo2:  conf.Halo2ServerEndpoint,
+			types.VMZkwasm: conf.ZKWasmServerEndpoint,
 		},
 	)
 
@@ -34,12 +44,12 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	projectManager, err := project.NewManager(viper.GetString(ChainEndpoint), viper.GetString(ProjectContractAddress), viper.GetString(ProjectFileDirectory), viper.GetString(IPFSEndpoint))
+	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, viper.GetString(BootNodeMultiaddr), viper.GetInt(IotexChainID))
+	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}
