@@ -32,10 +32,11 @@ func (p *PubSubs) Add(projectID uint64) error {
 		return nil
 	}
 
-	nps, err := newPubSub(projectID, p.ps, p.handle, p.selfID)
+	nps, err := NewPubSub(projectID, p.ps, p.handle, p.selfID)
 	if err != nil {
 		return err
 	}
+	slog.With("project", projectID).Info("subscribe started")
 	go nps.run()
 
 	p.pubSubs[projectID] = nps
@@ -115,8 +116,13 @@ func (p *pubSub) release() {
 
 func (p *pubSub) run() {
 	for {
-		if err := p.nextMsg(); err != nil {
-			slog.Error("failed to get pubsub msg", "error", err)
+		select {
+		case <-p.ctx.Done():
+			return
+		default:
+			if err := p.nextMsg(); err != nil {
+				slog.Error("failed to get pubsub msg", "error", err)
+			}
 		}
 	}
 }
@@ -137,7 +143,7 @@ func (p *pubSub) nextMsg() error {
 	return nil
 }
 
-func newPubSub(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*pubSub, error) {
+func NewPubSub(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*pubSub, error) {
 	topic, err := ps.Join("w3bstream-project-" + strconv.FormatUint(projectID, 10))
 	if err != nil {
 		return nil, errors.Wrapf(err, "join topic %v failed", projectID)
