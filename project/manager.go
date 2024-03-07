@@ -221,28 +221,32 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint str
 		notify:       make(chan uint64, 32),
 	}
 
-	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to dial chain, endpoint %s", chainEndpoint)
-	}
-	m.instance, err = contracts.NewContracts(common.HexToAddress(contractAddress), client)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to new contract instance, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
+	if contractAddress != "" {
+		client, err := ethclient.Dial(chainEndpoint)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to dial chain, endpoint %s", chainEndpoint)
+		}
+		m.instance, err = contracts.NewContracts(common.HexToAddress(contractAddress), client)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to new contract instance, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
+		}
+
+		m.fillProjectPoolFromContract()
+
+		topic := "ProjectUpserted(uint64,string,bytes32)"
+		monitor, err := NewDefaultMonitor(
+			chainEndpoint,
+			[]string{contractAddress},
+			[]string{topic},
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to new contract monitor")
+		}
+		go monitor.run()
+		go m.watchProjectRegistrar(monitor.MustEvents(topic), monitor)
 	}
 
-	m.fillProjectPool(projectFileDir)
-
-	topic := "ProjectUpserted(uint64,string,bytes32)"
-	monitor, err := NewDefaultMonitor(
-		chainEndpoint,
-		[]string{contractAddress},
-		[]string{topic},
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to new contract monitor")
-	}
-	go monitor.run()
-	go m.watchProjectRegistrar(monitor.MustEvents(topic), monitor)
+	m.fillProjectPoolFromLocal(projectFileDir)
 
 	return m, nil
 }
