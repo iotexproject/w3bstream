@@ -29,7 +29,9 @@ jobs:
           go-version: 1.21
 
       - name: Run Unit tests.
-        run: go test -gcflags="all=-N -l" ./... -coverprofile cover.out -covermode=atomic
+        # skip integration testing
+        run: go test -p 1 -gcflags="all=-N -l" `sudo go list ./... | grep -v github.com/machinefi/sprout/cmd/tests` -covermode=atomic -coverprofile cover.out
+        #run: go test -gcflags="all=-N -l" ./... -coverprofile cover.out -covermode=atomic
 
       - name: Upload Coverage report to CodeCov
         uses: codecov/codecov-action@v1.0.0

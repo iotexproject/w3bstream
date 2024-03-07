@@ -75,7 +75,6 @@ func TestNewPubSubs(t *testing.T) {
 }
 
 func TestPubSubs_Add(t *testing.T) {
-	t.SkipNow()
 	r := require.New(t)
 
 	ps := &PubSubs{pubSubs: map[uint64]*pubSub{1: {}}}
