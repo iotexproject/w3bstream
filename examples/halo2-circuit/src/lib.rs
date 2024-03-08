@@ -6,7 +6,6 @@ use std::io::BufReader;
 use generator::{gen_pk, gen_proof};
 use halo2_curves::bn256::{Bn256, Fr};
 use halo2_proofs::{poly::{commitment::Params, kzg::commitment::ParamsKZG}, circuit::Value};
-use snark_verifier::loader::evm::encode_calldata;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -53,14 +52,9 @@ pub fn prove(input: &str) -> std::string::String {
     let instances = vec![vec![c]];
 
     let proof = gen_proof(&params, &pk, circuit.clone(), &instances);
-    let calldata = encode_calldata(&instances, &proof);
 
     format!(
-        r#"{{
-"proof": "0x{}",
-"calldata": "0x{}"
-}}"#,
+        r#"{}"#,
         hex::encode(&proof),
-        hex::encode(calldata),
     )
 }
