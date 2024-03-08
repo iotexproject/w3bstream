@@ -11,9 +11,10 @@ import (
 	pubsub_pb "github.com/libp2p/go-libp2p-pubsub/pb"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/machinefi/sprout/testutil"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/testutil"
 )
 
 type mockHost struct{ host.Host }

@@ -10,10 +10,11 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/libp2p/go-libp2p/p2p/discovery/util"
-	"github.com/machinefi/sprout/testutil/mock"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/testutil/mock"
 )
 
 func TestDiscoverPeers(t *testing.T) {
