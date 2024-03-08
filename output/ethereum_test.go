@@ -40,6 +40,10 @@ func TestNewEthereum(t *testing.T) {
 	})
 
 	t.Run("NewEthereumSuccess", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		p = p.ApplyFuncReturn(abi.JSON, nil, nil)
 		_, err := NewEthereum("", "secretKey", "", "", "", "")
 		r.NoError(err)
 	})
