@@ -11,14 +11,14 @@ import (
 	"github.com/machinefi/sprout/types"
 )
 
-type HttpServer struct {
+type httpServer struct {
 	engine            *gin.Engine
 	p                 *persistence
 	aggregationAmount uint
 }
 
-func NewHttpServer(p *persistence, aggregationAmount uint) *HttpServer {
-	s := &HttpServer{
+func newHttpServer(p *persistence, aggregationAmount uint) *httpServer {
+	s := &httpServer{
 		engine:            gin.Default(),
 		p:                 p,
 		aggregationAmount: aggregationAmount,
@@ -31,14 +31,14 @@ func NewHttpServer(p *persistence, aggregationAmount uint) *HttpServer {
 }
 
 // this func will block caller
-func (s *HttpServer) Run(address string) error {
+func (s *httpServer) run(address string) error {
 	if err := s.engine.Run(address); err != nil {
 		return errors.Wrap(err, "failed to start http server")
 	}
 	return nil
 }
 
-func (s *HttpServer) handleMessage(c *gin.Context) {
+func (s *httpServer) handleMessage(c *gin.Context) {
 	req := &apitypes.HandleMessageReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
@@ -60,7 +60,7 @@ func (s *HttpServer) handleMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, &apitypes.HandleMessageRsp{MessageID: id})
 }
 
-func (s *HttpServer) queryStateLogByID(c *gin.Context) {
+func (s *httpServer) queryStateLogByID(c *gin.Context) {
 	messageID := c.Param("id")
 
 	ms, err := s.p.fetchMessage(messageID)

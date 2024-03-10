@@ -26,13 +26,13 @@ func init() {
 func main() {
 	flag.Parse()
 
-	pg, err := newPersistence(databaseDSN)
+	p, err := newPersistence(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
-		if err := NewHttpServer(pg, aggregationAmount).Run(address); err != nil {
+		if err := newHttpServer(p, aggregationAmount).run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()
