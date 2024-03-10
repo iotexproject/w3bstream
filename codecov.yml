@@ -23,3 +23,5 @@ ignore:
   # test utils
   - test
   - testutil
+  # e2e test
+  - cmd/tests
