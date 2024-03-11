@@ -18,7 +18,7 @@ type Handler struct {
 }
 
 func (r *Handler) Handle(task *types.Task, vmtype types.VM, code string, expParam string) ([]byte, error) {
-	if len(task.Data) == 0 {
+	if task == nil || len(task.Data) == 0 {
 		return nil, errors.New("empty task")
 	}
 	endpoint, ok := r.vmServerEndpoints[vmtype]
