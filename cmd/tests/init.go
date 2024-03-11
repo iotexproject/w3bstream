@@ -43,7 +43,7 @@ func init() {
 	go runZnode(znodeconf)
 	go runEnode(enodeconf)
 
-	// repeat 3 and duration 3s
+	// repeat 3 and duration 5s
 	if err := checkLiveness(3, 5, func() error {
 		if _, e := http.Get(fmt.Sprintf("http://localhost%s/live", enodeconf.ServiceEndpoint)); err != nil {
 			return e
