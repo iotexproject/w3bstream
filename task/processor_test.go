@@ -135,12 +135,12 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 
 func processorReportSuccess(p *Patches) *Patches {
 	var pro *Processor
-	return ApplyPrivateMethod(pro, "reportSuccess", func(taskID string, state types.TaskState, comment string, topic *pubsub.Topic) {})
+	return p.ApplyPrivateMethod(pro, "reportSuccess", func(taskID string, state types.TaskState, comment string, topic *pubsub.Topic) {})
 }
 
 func processorReportFail(p *Patches) *Patches {
 	var pro *Processor
-	return ApplyPrivateMethod(pro, "reportFail", func(taskID string, err error, topic *pubsub.Topic) {})
+	return p.ApplyPrivateMethod(pro, "reportFail", func(taskID string, err error, topic *pubsub.Topic) {})
 }
 
 func vmHandlerHandle(p *Patches, res []byte, err error) *Patches {
@@ -148,7 +148,7 @@ func vmHandlerHandle(p *Patches, res []byte, err error) *Patches {
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(handler),
 		"Handle",
-		func(msgs []*types.Message, vmtype types.VM, code string, expParam string) ([]byte, error) {
+		func(task *types.Task, vmtype types.VM, code string, expParam string) ([]byte, error) {
 			return res, err
 		},
 	)
