@@ -23,7 +23,7 @@ const (
 type TaskStateLog struct {
 	TaskID    string
 	State     TaskState
-	Comment   string
+	Comment   []byte
 	CreatedAt time.Time
 }
 

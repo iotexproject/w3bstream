@@ -64,13 +64,13 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 
 	t.Run("MarshalFailed", func(t *testing.T) {
 		patches = testutil.JsonMarshal(patches, []byte("any"), errors.New(t.Name()))
-		p.reportSuccess("taskID", types.TaskStatePacked, "", nil)
+		p.reportSuccess("taskID", types.TaskStatePacked, []byte(""), nil)
 	})
 	patches = testutil.JsonMarshal(patches, []byte("any"), nil)
 
 	t.Run("PublishFailed", func(t *testing.T) {
 		patches = testutil.TopicPublish(patches, errors.New(t.Name()))
-		p.reportSuccess("taskID", types.TaskStatePacked, "", nil)
+		p.reportSuccess("taskID", types.TaskStatePacked, []byte(""), nil)
 	})
 
 }

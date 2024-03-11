@@ -105,7 +105,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		TaskStateLog: &types.TaskStateLog{
 			TaskID:    "TaskID",
 			State:     types.TaskStatePacked,
-			Comment:   "Comment",
+			Comment:   []byte("Comment"),
 			CreatedAt: time.Now(),
 		},
 	}

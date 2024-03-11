@@ -58,7 +58,7 @@ var (
 		ProjectContractAddress: "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		DIDAuthServerEndpoint:  "localhost:19999",
-		ProjectFileDirectory:   "test/project",
+		ProjectFileDirectory:   "./testdata",
 		LogLevel:               int(slog.LevelDebug),
 	}
 )

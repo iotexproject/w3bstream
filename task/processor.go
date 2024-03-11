@@ -28,7 +28,7 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	tid := d.Task.ID
 	ms := d.Task.Messages
 	slog.Debug("get new task", "task_id", tid)
-	r.reportSuccess(tid, types.TaskStateDispatched, "", topic)
+	r.reportSuccess(tid, types.TaskStateDispatched, []byte(""), topic)
 
 	config, err := r.projectManager.Get(ms[0].ProjectID, ms[0].ProjectVersion)
 	if err != nil {
@@ -44,7 +44,7 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 	slog.Debug("proof result", "proof_result", string(res))
-	r.reportSuccess(tid, types.TaskStateProved, string(res), topic)
+	r.reportSuccess(tid, types.TaskStateProved, res, topic)
 }
 
 func (r *Processor) reportFail(taskID string, err error, topic *pubsub.Topic) {
@@ -52,7 +52,7 @@ func (r *Processor) reportFail(taskID string, err error, topic *pubsub.Topic) {
 		TaskStateLog: &types.TaskStateLog{
 			TaskID:    taskID,
 			State:     types.TaskStateFailed,
-			Comment:   err.Error(),
+			Comment:   []byte(err.Error()),
 			CreatedAt: time.Now(),
 		},
 	})
@@ -65,7 +65,7 @@ func (r *Processor) reportFail(taskID string, err error, topic *pubsub.Topic) {
 	}
 }
 
-func (r *Processor) reportSuccess(taskID string, state types.TaskState, comment string, topic *pubsub.Topic) {
+func (r *Processor) reportSuccess(taskID string, state types.TaskState, comment []byte, topic *pubsub.Topic) {
 	j, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
 			TaskID:    taskID,

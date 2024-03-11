@@ -35,7 +35,7 @@ type taskStateLog struct {
 	gorm.Model
 	TaskID  string          `gorm:"index:task_id,not null"`
 	State   types.TaskState `gorm:"not null"`
-	Comment string
+	Comment []byte
 }
 
 type Postgres struct {
@@ -272,7 +272,7 @@ func (p *Postgres) FetchStateLog(messageID string) ([]*types.TaskStateLog, error
 	return tls, nil
 }
 
-func (p *Postgres) UpdateState(taskID string, state types.TaskState, comment string, createdAt time.Time) error {
+func (p *Postgres) UpdateState(taskID string, state types.TaskState, comment []byte, createdAt time.Time) error {
 	return p.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&task{}).Where("task_id = ?", taskID).Update("state", state).Error; err != nil {
 			return errors.Wrapf(err, "update task state failed, task_id %s, target_state %s", taskID, state.String())

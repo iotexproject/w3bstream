@@ -67,7 +67,7 @@ var (
 		IoTeXChainID:           2,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		IoID:                   "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6SNgp8",
-		ProjectFileDirectory:   "test/project",
+		ProjectFileDirectory:   "./testdata",
 		LogLevel:               int(slog.LevelDebug),
 	}
 )

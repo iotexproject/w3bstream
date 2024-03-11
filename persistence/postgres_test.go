@@ -520,18 +520,18 @@ func TestPostgres_UpdateState(t *testing.T) {
 		t.Run("FailedToUpdateState", func(t *testing.T) {
 			p = testutil.GormDBModel(p, d)
 			p = testutil.GormDBUpdate(p, &gorm.DB{Error: errors.New(t.Name())})
-			err := v.UpdateState("any", types.TaskStatePacked, "any", time.Now())
+			err := v.UpdateState("any", types.TaskStatePacked, []byte("any"), time.Now())
 			r.ErrorContains(err, t.Name())
 		})
 		t.Run("FailedToCreateStateLog", func(t *testing.T) {
 			p = testutil.GormDBUpdate(p, &gorm.DB{Error: nil})
 			p = testutil.GormDBCreate(p, nil, &gorm.DB{Error: errors.New(t.Name())})
-			err := v.UpdateState("any", types.TaskStatePacked, "any", time.Now())
+			err := v.UpdateState("any", types.TaskStatePacked, []byte("any"), time.Now())
 			r.ErrorContains(err, t.Name())
 		})
 		t.Run("Success", func(t *testing.T) {
 			p = testutil.GormDBCreate(p, nil, &gorm.DB{Error: nil})
-			err := v.UpdateState("any", types.TaskStatePacked, "any", time.Now())
+			err := v.UpdateState("any", types.TaskStatePacked, []byte("any"), time.Now())
 			r.NoError(err)
 		})
 	})
