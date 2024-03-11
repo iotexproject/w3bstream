@@ -30,7 +30,7 @@ func TestHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("UnsupportedVMType", func(t *testing.T) {
-		_, err := h.Handle([]*types.Message{{}}, types.VM("other"), "any", "any")
+		_, err := h.Handle(&types.Task{}, types.VM("other"), "any", "any")
 		r.Error(err)
 	})
 
@@ -39,7 +39,7 @@ func TestHandler_Handle(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyMethodReturn(&server.Mgr{}, "Acquire", nil, errors.New(t.Name()))
-		_, err := h.Handle([]*types.Message{{}}, types.VMZkwasm, "any", "any")
+		_, err := h.Handle(&types.Task{}, types.VMZkwasm, "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -51,7 +51,7 @@ func TestHandler_Handle(t *testing.T) {
 		p = p.ApplyMethod(&server.Mgr{}, "Release", func(*server.Mgr, uint64, *server.Instance) {})
 		p = p.ApplyMethodReturn(&server.Instance{}, "Execute", nil, errors.New(t.Name()))
 
-		_, err := h.Handle([]*types.Message{{}}, types.VMZkwasm, "any", "any")
+		_, err := h.Handle(&types.Task{}, types.VMZkwasm, "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -64,7 +64,7 @@ func TestHandler_Handle(t *testing.T) {
 		p = p.ApplyMethodReturn(&server.Instance{}, "Execute", []byte("any"), nil)
 		p = p.ApplyFuncReturn(hex.DecodeString, nil, errors.New(t.Name()))
 
-		_, err := h.Handle([]*types.Message{{}}, types.VMZkwasm, "any", "any")
+		_, err := h.Handle(&types.Task{}, types.VMZkwasm, "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -77,7 +77,7 @@ func TestHandler_Handle(t *testing.T) {
 		p = p.ApplyMethodReturn(&server.Instance{}, "Execute", []byte("any"), nil)
 		p = p.ApplyFuncReturn(hex.DecodeString, []byte("any"), nil)
 
-		_, err := h.Handle([]*types.Message{{}}, types.VMZkwasm, "any", "any")
+		_, err := h.Handle(&types.Task{}, types.VMZkwasm, "any", "any")
 		r.NoError(err)
 	})
 }

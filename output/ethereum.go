@@ -30,8 +30,6 @@ type ethereumContract struct {
 func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to ethereum contract", "chain endpoint", e.chainEndpoint)
 
-	m := task.Messages[0]
-
 	method, ok := e.contractABI.Methods[e.contractMethod]
 	if !ok {
 		return "", errors.Errorf("contract abi miss the contract method %s", e.contractMethod)
@@ -44,7 +42,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			params = append(params, proof)
 
 		case "projectId", "_projectId":
-			i := new(big.Int).SetUint64(m.ProjectID)
+			i := new(big.Int).SetUint64(task.ProjectID)
 			params = append(params, i)
 
 		case "receiver", "_receiver":
@@ -96,7 +94,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			params = append(params, []byte(value))
 
 		default:
-			value := gjson.Get(m.Data, a.Name)
+			value := gjson.GetBytes(task.Data[0], a.Name)
 			param := value.String()
 			if param == "" {
 				return "", errors.Errorf("miss param %s for contract abi", a.Name)

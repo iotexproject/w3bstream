@@ -94,13 +94,10 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 
 	data := &p2p.Data{
 		Task: &types.Task{
-			ID: "",
-			Messages: []*types.Message{{
-				ID:             "id1",
-				ProjectID:      uint64(0x1),
-				ProjectVersion: "0.1",
-				Data:           "data",
-			}},
+			ID:             "",
+			ProjectID:      uint64(0x1),
+			ProjectVersion: "0.1",
+			Data:           [][]byte{[]byte("data")},
 		},
 		TaskStateLog: nil,
 	}

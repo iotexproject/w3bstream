@@ -17,23 +17,23 @@ type Handler struct {
 	instanceMgr       *server.Mgr
 }
 
-func (r *Handler) Handle(msgs []*types.Message, vmtype types.VM, code string, expParam string) ([]byte, error) {
-	if len(msgs) == 0 {
-		return nil, errors.New("missing messages")
+func (r *Handler) Handle(task *types.Task, vmtype types.VM, code string, expParam string) ([]byte, error) {
+	if len(task.Data) == 0 {
+		return nil, errors.New("empty task")
 	}
 	endpoint, ok := r.vmServerEndpoints[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
 	}
 
-	ins, err := r.instanceMgr.Acquire(msgs[0].ProjectID, endpoint, code, expParam)
+	ins, err := r.instanceMgr.Acquire(task.ProjectID, endpoint, code, expParam)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get instance")
 	}
 	slog.Debug(fmt.Sprintf("acquire %s instance success", vmtype))
-	defer r.instanceMgr.Release(msgs[0].ProjectID, ins)
+	defer r.instanceMgr.Release(task.ProjectID, ins)
 
-	res, err := ins.Execute(context.Background(), msgs)
+	res, err := ins.Execute(context.Background(), task)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute instance")
 	}

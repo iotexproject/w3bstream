@@ -60,13 +60,10 @@ func TestEthereumContract_Output(t *testing.T) {
 	contractMethod := "submit"
 
 	task := &types.Task{
-		ID: "",
-		Messages: []*types.Message{{
-			ID:             "id1",
-			ProjectID:      uint64(0x1),
-			ProjectVersion: "0.1",
-			Data:           "data",
-		}},
+		ID:             "",
+		ProjectID:      uint64(0x1),
+		ProjectVersion: "0.1",
+		Data:           [][]byte{[]byte("data")},
 	}
 
 	t.Run("MissMethod", func(t *testing.T) {
