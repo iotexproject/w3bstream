@@ -86,7 +86,7 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	output, err := config.GetOutput(d.operatorPrivateKeyECDSA, d.operatorPrivateKeyED25519)
 	if err != nil {
 		slog.Error("init output failed", "error", err)
-		if err := d.pg.UpdateState(l.TaskID, types.TaskStateFailed, err.Error(), time.Now()); err != nil {
+		if err := d.pg.UpdateState(l.TaskID, types.TaskStateFailed, []byte(err.Error()), time.Now()); err != nil {
 			slog.Error("update task state to statefailed failed", "error", err, "taskID", l.TaskID)
 		}
 		return
@@ -97,13 +97,13 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	outRes, err := output.Output(task, []byte(l.Comment))
 	if err != nil {
 		slog.Error("output failed", "error", err)
-		if err := d.pg.UpdateState(l.TaskID, types.TaskStateFailed, err.Error(), time.Now()); err != nil {
+		if err := d.pg.UpdateState(l.TaskID, types.TaskStateFailed, []byte(err.Error()), time.Now()); err != nil {
 			slog.Error("update task state to statefailed failed", "error", err, "taskID", l.TaskID)
 		}
 		return
 	}
 
-	if err := d.pg.UpdateState(l.TaskID, types.TaskStateOutputted, fmt.Sprintf("output result: %s", outRes), time.Now()); err != nil {
+	if err := d.pg.UpdateState(l.TaskID, types.TaskStateOutputted, []byte(fmt.Sprintf("output result: %s", outRes)), time.Now()); err != nil {
 		slog.Error("update task state to outputted failed", "error", err, "taskID", l.TaskID)
 	}
 }

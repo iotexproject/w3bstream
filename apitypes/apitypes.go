@@ -20,6 +20,10 @@ type HandleMessageRsp struct {
 	MessageID string `json:"messageID"`
 }
 
+type LivenessRsp struct {
+	Status string `json:"status"`
+}
+
 type StateLog struct {
 	State   string    `json:"state"`
 	Time    time.Time `json:"time"`

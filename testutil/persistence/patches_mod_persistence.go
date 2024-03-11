@@ -15,7 +15,7 @@ func PersistencePostgresUpdateState(p *Patches, err error) *Patches {
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(pg),
 		"UpdateState",
-		func(taskID string, state types.TaskState, comment string, createdAt time.Time) error {
+		func(taskID string, state types.TaskState, comment []byte, createdAt time.Time) error {
 			return err
 		},
 	)

@@ -38,7 +38,7 @@ services:
     restart: always
 
   risc0:
-    image: wangweixiaohao2944/risc0server:v0.8.1.rc6
+    image: wangweixiaohao2944/risc0server:v1.0.0.rc2
     depends_on:
       - "postgres"
     container_name: risc0-service
@@ -46,6 +46,7 @@ services:
     restart: always
     environment:
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+      BONSAI_URL: https://api.bonsai.xyz
       BONSAI_KEY: "${BONSAI_KEY:-}"
 
   postgres:
