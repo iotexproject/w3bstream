@@ -1,9 +1,12 @@
 package tests
 
 import (
+	"fmt"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -39,6 +42,28 @@ func init() {
 
 	go runZnode(znodeconf)
 	go runEnode(enodeconf)
+
+	// repeat 3 and duration 5s
+	if err := checkLiveness(3, 5, func() error {
+		if _, e := http.Get(fmt.Sprintf("http://localhost%s/live", enodeconf.ServiceEndpoint)); err != nil {
+			return e
+		}
+		return nil
+	}); err != nil {
+		slog.Error("http server failed to start", "error", err)
+	}
+}
+
+func checkLiveness(repeat int, duration int64, ping func() error) error {
+	for i := 0; i < repeat; i++ {
+		if err := ping; err != nil {
+			slog.Warn("retry again", "duration", duration, "error", err)
+			time.Sleep(time.Duration(duration) * time.Second)
+			continue
+		}
+		break
+	}
+	return nil
 }
 
 func migrateDatabase(dsn string) error {
@@ -52,8 +77,6 @@ func migrateDatabase(dsn string) error {
 	  
 	  CREATE TABLE IF NOT EXISTS proofs (
 		id SERIAL PRIMARY KEY,
-		name VARCHAR NOT NULL,
-		template_name VARCHAR NOT NULL,
 		image_id VARCHAR NOT NULL,
 		private_input VARCHAR NOT NULL,
 		public_input VARCHAR NOT NULL,

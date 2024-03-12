@@ -55,6 +55,7 @@ func NewHttpServer(pg *persistence.Postgres, projectManager *project.Manager, co
 		s.enodeConf.OperatorSolanaAddress = wallet.PublicKey.String()
 	}
 
+	s.engine.GET("/live", s.liveness)
 	s.engine.POST("/message", s.handleMessage)
 	s.engine.GET("/message/:id", s.queryStateLogByID)
 	s.engine.POST("/sign_credential", s.issueJWTCredential)
@@ -69,6 +70,10 @@ func (s *HttpServer) Run(endpoint string) error {
 		return errors.Wrap(err, "start http server failed")
 	}
 	return nil
+}
+
+func (s *HttpServer) liveness(c *gin.Context) {
+	c.JSON(http.StatusOK, &apitypes.LivenessRsp{Status: "up"})
 }
 
 func (s *HttpServer) handleMessage(c *gin.Context) {
@@ -161,7 +166,7 @@ func (s *HttpServer) queryStateLogByID(c *gin.Context) {
 		ss = append(ss, &apitypes.StateLog{
 			State:   l.State.String(),
 			Time:    l.CreatedAt,
-			Comment: l.Comment,
+			Comment: string(l.Comment),
 		})
 	}
 

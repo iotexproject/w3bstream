@@ -50,7 +50,7 @@ func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
 		TaskStateLog: &types.TaskStateLog{
 			Task:      *t,
 			State:     types.TaskStateFailed,
-			Comment:   err.Error(),
+			Comment:   []byte(err.Error()),
 			CreatedAt: time.Now(),
 		},
 	})
