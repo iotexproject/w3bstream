@@ -3,8 +3,10 @@ package types
 import "time"
 
 type Task struct {
-	ID       string     `json:"id"`
-	Messages []*Message `json:"messages"`
+	ID             string   `json:"id"`
+	ProjectID      uint64   `json:"projectID"`
+	ProjectVersion string   `json:"projectVersion"`
+	Data           [][]byte `json:"data"`
 }
 
 type TaskState uint8

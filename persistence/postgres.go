@@ -183,19 +183,15 @@ func (p *Postgres) FetchByID(taskID string) (*types.Task, error) {
 	if len(messages) == 0 {
 		return nil, errors.Errorf("missing message, taskID %s", taskID)
 	}
-	tms := []*types.Message{}
+	ds := make([][]byte, 0, len(messages))
 	for _, m := range messages {
-		tms = append(tms, &types.Message{
-			ID:             m.MessageID,
-			ClientDID:      m.ClientDID,
-			ProjectID:      m.ProjectID,
-			ProjectVersion: m.ProjectVersion,
-			Data:           m.Data,
-		})
+		ds = append(ds, []byte(m.Data))
 	}
 	return &types.Task{
-		ID:       taskID,
-		Messages: tms,
+		ID:             taskID,
+		ProjectID:      messages[0].ProjectID,
+		ProjectVersion: messages[0].ProjectVersion,
+		Data:           ds,
 	}, nil
 }
 

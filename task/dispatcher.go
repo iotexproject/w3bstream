@@ -43,16 +43,15 @@ func (d *Dispatcher) pubTask() error {
 		return errors.New("get task nil")
 	}
 
-	projectID := t.Messages[0].ProjectID
-	if err := d.pubSubs.Add(projectID); err != nil {
-		return errors.Wrapf(err, "failed to add project pubsub, projectID %d", projectID)
+	if err := d.pubSubs.Add(t.ProjectID); err != nil {
+		return errors.Wrapf(err, "failed to add project pubsub, projectID %d", t.ProjectID)
 	}
 
-	slog.Debug("dispatch project task", "projectID", projectID, "taskID", t.ID)
-	if err := d.pubSubs.Publish(projectID, &p2p.Data{
+	slog.Debug("dispatch project task", "projectID", t.ProjectID, "taskID", t.ID)
+	if err := d.pubSubs.Publish(t.ProjectID, &p2p.Data{
 		Task: t,
 	}); err != nil {
-		return errors.Wrapf(err, "failed to publish data, projectID %d", projectID)
+		return errors.Wrapf(err, "failed to publish data, projectID %d", t.ProjectID)
 	}
 	return nil
 }
@@ -75,11 +74,9 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 		slog.Error("fetch task failed", "error", err, "taskID", l.TaskID)
 		return
 	}
-	pid := task.Messages[0].ProjectID
-	pver := task.Messages[0].ProjectVersion
-	config, err := d.projectManager.Get(pid, pver)
+	config, err := d.projectManager.Get(task.ProjectID, task.ProjectVersion)
 	if err != nil {
-		slog.Error("get project failed", "error", err, "projectID", pid, "projectVersion", pver)
+		slog.Error("get project failed", "error", err, "projectID", task.ProjectID, "projectVersion", task.ProjectVersion)
 		return
 	}
 

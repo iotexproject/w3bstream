@@ -26,13 +26,10 @@ func TestDispatcher_PubTask(t *testing.T) {
 
 	d := &Dispatcher{}
 	task := &types.Task{
-		ID: "",
-		Messages: []*types.Message{{
-			ID:             "id1",
-			ProjectID:      uint64(0x1),
-			ProjectVersion: "0.1",
-			Data:           "data",
-		}},
+		ID:             "",
+		ProjectID:      uint64(0x1),
+		ProjectVersion: "0.1",
+		Data:           [][]byte{[]byte("data")},
 	}
 
 	t.Run("GetTaskFailed", func(t *testing.T) {
@@ -127,13 +124,10 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 	})
 
 	task := &types.Task{
-		ID: "",
-		Messages: []*types.Message{{
-			ID:             "id1",
-			ProjectID:      uint64(0x1),
-			ProjectVersion: "0.1",
-			Data:           "data",
-		}},
+		ID:             "",
+		ProjectID:      uint64(0x1),
+		ProjectVersion: "0.1",
+		Data:           [][]byte{[]byte("data")},
 	}
 	patches = testpersistence.PersistencePostgresFetchByID(patches, task, nil)
 

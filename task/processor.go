@@ -26,18 +26,17 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 	tid := d.Task.ID
-	ms := d.Task.Messages
 	slog.Debug("get new task", "task_id", tid)
 	r.reportSuccess(tid, types.TaskStateDispatched, []byte(""), topic)
 
-	config, err := r.projectManager.Get(ms[0].ProjectID, ms[0].ProjectVersion)
+	config, err := r.projectManager.Get(d.Task.ProjectID, d.Task.ProjectVersion)
 	if err != nil {
 		slog.Error("get project failed", "error", err)
 		r.reportFail(tid, err, topic)
 		return
 	}
 
-	res, err := r.vmHandler.Handle(ms, config.VMType, config.Code, config.CodeExpParam)
+	res, err := r.vmHandler.Handle(d.Task, config.VMType, config.Code, config.CodeExpParam)
 	if err != nil {
 		slog.Error("proof failed", "error", err)
 		r.reportFail(tid, err, topic)
