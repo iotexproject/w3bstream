@@ -48,7 +48,7 @@ func (t *textileDB) packData(proof []byte) ([]byte, error) {
 	// get result from proof
 	var result string
 	for _, value := range valueJournal.Array() {
-		result += string(value.Int())
+		result += fmt.Sprint(value.Int())
 	}
 
 	data := map[string]string{
