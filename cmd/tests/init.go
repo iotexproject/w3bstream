@@ -16,6 +16,7 @@ import (
 	"github.com/machinefi/sprout/cmd/enode/api"
 	enodeconfig "github.com/machinefi/sprout/cmd/enode/config"
 	znodeconfig "github.com/machinefi/sprout/cmd/znode/config"
+	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
@@ -138,11 +139,21 @@ func runEnode(conf *enodeconfig.Config) {
 		log.Fatal(err)
 	}
 
-	dispatcher, err := task.NewDispatcher(pg, projectManager, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID, nil)
+	datasource, err := datasource.NewPostgres(conf.DatasourceDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
-	go dispatcher.Dispatch()
+
+	nextTaskID, err := pg.FetchNextTaskID()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dispatcher, err := task.NewDispatcher(pg, projectManager, datasource, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	go dispatcher.Dispatch(nextTaskID)
 
 	go func() {
 		if err := api.NewHttpServer(pg, projectManager, conf).Run(conf.ServiceEndpoint); err != nil {

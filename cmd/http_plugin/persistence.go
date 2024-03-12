@@ -17,14 +17,14 @@ type message struct {
 	ClientDID      string `gorm:"column:client_did;index:message_fetch,not null,default:''"`
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
 	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
-	Data           string `gorm:"size:4096"`
+	Data           []byte `gorm:"size:4096"`
 	TaskID         string `gorm:"index:task_id,not null,default:''"`
 }
 
 type task struct {
 	gorm.Model
-	TaskID    string `gorm:"index:task_id,not null"`
-	MessageID string `gorm:"index:message_id,not null"`
+	TaskID     string   `gorm:"index:task_id,not null"`
+	MessageIDs []string `gorm:"index:message_id,not null"`
 }
 
 type persistence struct {
@@ -37,7 +37,7 @@ func (p *persistence) createMessageTx(tx *gorm.DB, msg *types.Message) error {
 		ClientDID:      msg.ClientDID,
 		ProjectID:      msg.ProjectID,
 		ProjectVersion: msg.ProjectVersion,
-		Data:           msg.Data,
+		Data:           []byte(msg.Data),
 	}
 	if err := tx.Create(m).Error; err != nil {
 		return errors.Wrap(err, "failed to create message")
@@ -66,20 +66,17 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *types.Message)
 	}
 
 	taskID := uuid.NewString()
-	tasks := make([]*task, 0, amount)
+	task := task{}
 	messageIDs := make([]string, 0, amount)
 	for _, v := range messages {
 		messageIDs = append(messageIDs, v.MessageID)
-		tasks = append(tasks, &task{
-			TaskID:    taskID,
-			MessageID: v.MessageID,
-		})
+		task.MessageIDs = append(task.MessageIDs, v.MessageID)
 	}
 	if err := tx.Model(&message{}).Where("message_id IN ?", messageIDs).Update("task_id", taskID).Error; err != nil {
 		return errors.Wrap(err, "failed to update message task id")
 	}
-	if err := tx.Create(&tasks).Error; err != nil {
-		return errors.Wrap(err, "failed to create tasks")
+	if err := tx.Create(&task).Error; err != nil {
+		return errors.Wrap(err, "failed to create task")
 	}
 	return nil
 }
@@ -110,7 +107,7 @@ func (p *persistence) fetchMessage(messageID string) ([]*types.MessageWithTime, 
 				ClientDID:      m.ClientDID,
 				ProjectID:      m.ProjectID,
 				ProjectVersion: m.ProjectVersion,
-				Data:           m.Data,
+				Data:           string(m.Data),
 			},
 			CreatedAt: m.CreatedAt,
 		})

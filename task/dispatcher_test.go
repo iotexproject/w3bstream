@@ -22,13 +22,13 @@ func TestNewDispatcher(t *testing.T) {
 
 	t.Run("NewFailed", func(t *testing.T) {
 		patches = testp2p.P2pNewPubSubs(patches, nil, errors.New(t.Name()))
-		_, err := NewDispatcher(nil, nil, "", "", "", 0, nil)
+		_, err := NewDispatcher(nil, nil, nil, "", "", "", 0)
 		require.ErrorContains(err, t.Name())
 	})
 	patches = testp2p.P2pNewPubSubs(patches, nil, nil)
 
 	t.Run("New", func(t *testing.T) {
-		_, err := NewDispatcher(nil, nil, "", "", "", 0, nil)
+		_, err := NewDispatcher(nil, nil, nil, "", "", "", 0)
 		require.NoError(err)
 	})
 }
@@ -39,7 +39,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 
 	d := &Dispatcher{
 		pubSubs:                   nil,
-		pg:                        &persistence.Postgres{},
+		persistence:               &persistence.Postgres{},
 		projectManager:            nil,
 		operatorPrivateKeyECDSA:   "",
 		operatorPrivateKeyED25519: "",
