@@ -25,60 +25,59 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	if d.Task == nil {
 		return
 	}
-	tid := d.Task.ID
-	slog.Debug("get new task", "task_id", tid)
-	r.reportSuccess(tid, types.TaskStateDispatched, "", topic)
+	t := d.Task
+	slog.Debug("get a new task", "task_id", t.ID)
+	r.reportSuccess(t, types.TaskStateDispatched, nil, topic)
 
-	config, err := r.projectManager.Get(d.Task.ProjectID, d.Task.ProjectVersion)
+	config, err := r.projectManager.Get(t.ProjectID, t.ProjectVersion)
 	if err != nil {
-		slog.Error("get project failed", "error", err)
-		r.reportFail(tid, err, topic)
+		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID, "project_version", t.ProjectVersion)
+		r.reportFail(t, err, topic)
 		return
 	}
 
-	res, err := r.vmHandler.Handle(d.Task, config.VMType, config.Code, config.CodeExpParam)
+	res, err := r.vmHandler.Handle(t, config.VMType, config.Code, config.CodeExpParam)
 	if err != nil {
-		slog.Error("proof failed", "error", err)
-		r.reportFail(tid, err, topic)
+		slog.Error("failed to generate proof", "error", err)
+		r.reportFail(t, err, topic)
 		return
 	}
-	slog.Debug("proof result", "proof_result", string(res))
-	r.reportSuccess(tid, types.TaskStateProved, string(res), topic)
+	r.reportSuccess(t, types.TaskStateProved, res, topic)
 }
 
-func (r *Processor) reportFail(taskID string, err error, topic *pubsub.Topic) {
+func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
 	j, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
-			TaskID:    taskID,
+			Task:      *t,
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		},
 	})
 	if err != nil {
-		slog.Error("json marshal p2p task state log data failed", "error", err, "taskID", taskID)
+		slog.Error("failed to marshal p2p task state log data to json", "error", err, "task_id", t.ID)
 		return
 	}
 	if err := topic.Publish(context.Background(), j); err != nil {
-		slog.Error("publish task state log data to p2p network failed", "error", err, "taskID", taskID)
+		slog.Error("failed to publish task state log data to p2p network", "error", err, "task_id", t.ID)
 	}
 }
 
-func (r *Processor) reportSuccess(taskID string, state types.TaskState, comment string, topic *pubsub.Topic) {
+func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, topic *pubsub.Topic) {
 	j, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
-			TaskID:    taskID,
+			Task:      *t,
 			State:     state,
-			Comment:   comment,
+			Result:    result,
 			CreatedAt: time.Now(),
 		},
 	})
 	if err != nil {
-		slog.Error("json marshal p2p task state log data failed", "error", err, "taskID", taskID)
+		slog.Error("failed to marshal p2p task state log data to json", "error", err, "task_id", t.ID)
 		return
 	}
 	if err := topic.Publish(context.Background(), j); err != nil {
-		slog.Error("publish task state log data to p2p network failed", "error", err, "taskID", taskID)
+		slog.Error("failed to publish task state log data to p2p network", "error", err, "task_id", t.ID)
 	}
 }
 

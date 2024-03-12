@@ -3,7 +3,7 @@ package types
 import "time"
 
 type Task struct {
-	ID             string   `json:"id"`
+	ID             uint64   `json:"id"`
 	ProjectID      uint64   `json:"projectID"`
 	ProjectVersion string   `json:"projectVersion"`
 	Data           [][]byte `json:"data"`
@@ -23,9 +23,10 @@ const (
 )
 
 type TaskStateLog struct {
-	TaskID    string
+	Task      Task
 	State     TaskState
 	Comment   string
+	Result    []byte
 	CreatedAt time.Time
 }
 
