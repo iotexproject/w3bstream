@@ -40,7 +40,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dispatcher, err := task.NewDispatcher(pg, projectManager, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID)
+	dispatcher, err := task.NewDispatcher(pg, projectManager, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

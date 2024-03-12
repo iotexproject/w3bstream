@@ -60,7 +60,7 @@ func TestEthereumContract_Output(t *testing.T) {
 	contractMethod := "submit"
 
 	task := &types.Task{
-		ID:             "",
+		ID:             1,
 		ProjectID:      uint64(0x1),
 		ProjectVersion: "0.1",
 		Data:           [][]byte{[]byte("data")},

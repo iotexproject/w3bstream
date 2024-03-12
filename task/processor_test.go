@@ -47,13 +47,13 @@ func TestProcessor_ReportFail(t *testing.T) {
 
 	t.Run("MarshalFailed", func(t *testing.T) {
 		patches = testutil.JsonMarshal(patches, []byte("any"), errors.New(t.Name()))
-		p.reportFail("taskID", errors.New(t.Name()), nil)
+		p.reportFail(&types.Task{}, errors.New(t.Name()), nil)
 	})
 	patches = testutil.JsonMarshal(patches, []byte("any"), nil)
 
 	t.Run("PublishFailed", func(t *testing.T) {
 		patches = testutil.TopicPublish(patches, errors.New(t.Name()))
-		p.reportFail("taskID", errors.New(t.Name()), nil)
+		p.reportFail(&types.Task{}, errors.New(t.Name()), nil)
 	})
 }
 
@@ -64,13 +64,13 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 
 	t.Run("MarshalFailed", func(t *testing.T) {
 		patches = testutil.JsonMarshal(patches, []byte("any"), errors.New(t.Name()))
-		p.reportSuccess("taskID", types.TaskStatePacked, []byte(""), nil)
+		p.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, nil)
 	})
 	patches = testutil.JsonMarshal(patches, []byte("any"), nil)
 
 	t.Run("PublishFailed", func(t *testing.T) {
 		patches = testutil.TopicPublish(patches, errors.New(t.Name()))
-		p.reportSuccess("taskID", types.TaskStatePacked, []byte(""), nil)
+		p.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, nil)
 	})
 
 }
@@ -94,7 +94,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 
 	data := &p2p.Data{
 		Task: &types.Task{
-			ID:             "",
+			ID:             1,
 			ProjectID:      uint64(0x1),
 			ProjectVersion: "0.1",
 			Data:           [][]byte{[]byte("data")},
