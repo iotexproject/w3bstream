@@ -100,7 +100,7 @@ func writeEvent(url string, fileData []byte) error {
 		return err
 	}
 
-	slog.Debug("Write response", string(responseBody))
+	slog.Debug("Write event", "response", string(responseBody))
 	return nil
 }
 
