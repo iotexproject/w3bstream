@@ -20,6 +20,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
+	github.com/tablelandnetwork/basin-cli v0.0.11
 	github.com/tidwall/gjson v1.17.0
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.32.0
