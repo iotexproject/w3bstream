@@ -95,6 +95,10 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(errors.New("cannot find task by internal task id")))
 			return
 		}
+		ss = append(ss, &apitypes.StateLog{
+			State: types.TaskStatePacked.String(),
+			Time:  ts[0].CreatedAt,
+		})
 		resp, err := http.Get(fmt.Sprintf("http://%s/%s/%d/%d", s.enodeAddress, "task", m.ProjectID, ts[0].ID))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))

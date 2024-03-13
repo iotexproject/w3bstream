@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"gorm.io/datatypes"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -23,8 +26,8 @@ type message struct {
 
 type task struct {
 	gorm.Model
-	InternalTaskID string   `gorm:"index:internal_task_id,not null"`
-	MessageIDs     []string `gorm:"not null"`
+	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
+	MessageIDs     datatypes.JSON `gorm:"not null"`
 }
 
 type persistence struct {
@@ -54,7 +57,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *types.Message)
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Order("created_at").
 		Where(
-			"project_id = ? AND project_version = ? AND client_did = ? AND task_id = ?",
+			"project_id = ? AND project_version = ? AND client_did = ? AND internal_task_id = ?",
 			m.ProjectID, m.ProjectVersion, m.ClientDID, "",
 		).Limit(amount).Find(&messages).Error; err != nil {
 		return errors.Wrap(err, "failed to fetch unpacked messages")
@@ -66,16 +69,22 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *types.Message)
 	}
 
 	taskID := uuid.NewString()
-	task := task{}
 	messageIDs := make([]string, 0, amount)
 	for _, v := range messages {
 		messageIDs = append(messageIDs, v.MessageID)
-		task.MessageIDs = append(task.MessageIDs, v.MessageID)
 	}
-	if err := tx.Model(&message{}).Where("message_id IN ?", messageIDs).Update("task_id", taskID).Error; err != nil {
-		return errors.Wrap(err, "failed to update message task id")
+	if err := tx.Model(&message{}).Where("message_id IN ?", messageIDs).Update("internal_task_id", taskID).Error; err != nil {
+		return errors.Wrap(err, "failed to update message internal task id")
 	}
-	if err := tx.Create(&task).Error; err != nil {
+	messageIDsJson, err := json.Marshal(messageIDs)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal message id array")
+	}
+
+	if err := tx.Create(&task{
+		InternalTaskID: taskID,
+		MessageIDs:     messageIDsJson,
+	}).Error; err != nil {
 		return errors.Wrap(err, "failed to create task")
 	}
 	return nil

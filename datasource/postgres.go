@@ -1,7 +1,10 @@
 package datasource
 
 import (
+	"encoding/json"
+
 	"github.com/pkg/errors"
+	"gorm.io/datatypes"
 	pgdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -16,13 +19,13 @@ type message struct {
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
 	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
 	Data           []byte `gorm:"size:4096"`
-	TaskID         string `gorm:"index:task_id,not null,default:''"`
+	InternalTaskID string `gorm:"index:internal_task_id,not null,default:''"`
 }
 
 type task struct {
 	gorm.Model
-	TaskID     string   `gorm:"index:task_id,not null"`
-	MessageIDs []string `gorm:"index:message_id,not null"`
+	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
+	MessageIDs     datatypes.JSON `gorm:"not null"`
 }
 
 type postgres struct {
@@ -38,8 +41,13 @@ func (p *postgres) Retrieve(nextTaskID uint64) (*types.Task, error) {
 		return nil, errors.Wrapf(err, "failed to query task, next_task_id %v", nextTaskID)
 	}
 
+	messageIDs := []string{}
+	if err := json.Unmarshal(t.MessageIDs, &messageIDs); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal task message ids, task_id %v", t.ID)
+	}
+
 	ms := []*message{}
-	if err := p.db.Where("message_id IN ?", t.MessageIDs).Find(&ms).Error; err != nil {
+	if err := p.db.Where("message_id IN ?", messageIDs).Find(&ms).Error; err != nil {
 		return nil, errors.Wrapf(err, "failed to query task messages, task_id %v", t.ID)
 	}
 	if len(ms) == 0 {
