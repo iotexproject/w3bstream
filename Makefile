@@ -33,9 +33,9 @@ didkit_test:
 risc0_test:
 	docker run --name risc0_test \
   --platform linux/x86_64 \
-  -e DATABASE_URL=postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable \
-  -e BONSAI_URL: https://api.bonsai.xyz} \
-  -e BONSAI_KEY= xxx \
+  -e DATABASE_URL='postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable' \
+  -e BONSAI_URL=https://api.bonsai.xyz \
+  -e BONSAI_KEY=xxx \
   -p 14001:4001 \
   -d wangweixiaohao2944/risc0server:v1.0.0.rc2
 
