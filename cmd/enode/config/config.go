@@ -11,6 +11,7 @@ type Config struct {
 	ServiceEndpoint           string `env:"HTTP_SERVICE_ENDPOINT"`
 	ChainEndpoint             string `env:"CHAIN_ENDPOINT"`
 	DatabaseDSN               string `env:"DATABASE_DSN"`
+	DatasourceDSN             string `env:"DATASOURCE_DSN"`
 	BootNodeMultiAddr         string `env:"BOOTNODE_MULTIADDR"`
 	IoTeXChainID              int    `env:"IOTEX_CHAINID"`
 	ProjectContractAddress    string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
@@ -29,6 +30,7 @@ var (
 		ServiceEndpoint:        ":9000",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:            "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
+		DatasourceDSN:          "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:           2,
 		ProjectContractAddress: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
@@ -41,6 +43,7 @@ var (
 		ServiceEndpoint:        ":9000",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
+		DatasourceDSN:          "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:           2,
 		ProjectContractAddress: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
@@ -53,6 +56,7 @@ var (
 		ServiceEndpoint:        ":19000",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
+		DatasourceDSN:          "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:           2,
 		ProjectContractAddress: "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",

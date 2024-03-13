@@ -16,18 +16,17 @@ import (
 )
 
 type Dispatcher struct {
-	source                    datasource.Datasource
+	datasource                datasource.Datasource
 	pubSubs                   *p2p.PubSubs
-	pg                        *persistence.Postgres
+	persistence               *persistence.Postgres
 	projectManager            *project.Manager
 	operatorPrivateKeyECDSA   string
 	operatorPrivateKeyED25519 string
 }
 
 // will block caller
-func (d *Dispatcher) Dispatch() {
+func (d *Dispatcher) Dispatch(nextTaskID uint64) {
 	ticker := time.NewTicker(3 * time.Second)
-	nextTaskID := uint64(0)
 
 	for range ticker.C {
 		next, err := d.dispatchTask(nextTaskID)
@@ -40,7 +39,7 @@ func (d *Dispatcher) Dispatch() {
 }
 
 func (d *Dispatcher) dispatchTask(nextTaskID uint64) (uint64, error) {
-	t, err := d.source.Retrieve(nextTaskID)
+	t, err := d.datasource.Retrieve(nextTaskID)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to retrieve task from data source")
 	}
@@ -64,7 +63,7 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 	l := data.TaskStateLog
-	if err := d.pg.Create(l); err != nil {
+	if err := d.persistence.Create(l); err != nil {
 		slog.Error("failed to create task state log", "error", err, "taskID", l.Task.ID)
 		return
 	}
@@ -81,7 +80,7 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	output, err := config.GetOutput(d.operatorPrivateKeyECDSA, d.operatorPrivateKeyED25519)
 	if err != nil {
 		slog.Error("failed to init output", "error", err)
-		if err := d.pg.Create(&types.TaskStateLog{
+		if err := d.persistence.Create(&types.TaskStateLog{
 			Task:      l.Task,
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
@@ -97,7 +96,7 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	outRes, err := output.Output(&l.Task, l.Result)
 	if err != nil {
 		slog.Error("failed to output", "error", err, "taskID", l.Task.ID)
-		if err := d.pg.Create(&types.TaskStateLog{
+		if err := d.persistence.Create(&types.TaskStateLog{
 			Task:      l.Task,
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
@@ -108,7 +107,7 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 
-	if err := d.pg.Create(&types.TaskStateLog{
+	if err := d.persistence.Create(&types.TaskStateLog{
 		Task:      l.Task,
 		State:     types.TaskStateOutputted,
 		Result:    []byte(outRes),
@@ -118,10 +117,10 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	}
 }
 
-func NewDispatcher(pg *persistence.Postgres, projectManager *project.Manager, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, iotexChainID int, source datasource.Datasource) (*Dispatcher, error) {
+func NewDispatcher(persistence *persistence.Postgres, projectManager *project.Manager, datasource datasource.Datasource, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, iotexChainID int) (*Dispatcher, error) {
 	d := &Dispatcher{
-		source:                    source,
-		pg:                        pg,
+		datasource:                datasource,
+		persistence:               persistence,
 		projectManager:            projectManager,
 		operatorPrivateKeyECDSA:   operatorPrivateKey,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,

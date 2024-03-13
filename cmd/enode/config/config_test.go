@@ -19,6 +19,7 @@ func TestConfig_Init(t *testing.T) {
 			ServiceEndpoint:           ":1999",
 			ChainEndpoint:             "http://iotex.chainendpoint.io",
 			DatabaseDSN:               "postgres://username:password@host:port/database?ext=1",
+			DatasourceDSN:             "postgres://username:password@host:port/database?ext=1",
 			BootNodeMultiAddr:         "/dns4/a.b.com/tcp/1000/ipfs/123123123",
 			IoTeXChainID:              100,
 			ProjectContractAddress:    "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
@@ -32,6 +33,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("HTTP_SERVICE_ENDPOINT", expected.ServiceEndpoint)
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATABASE_DSN", expected.DatabaseDSN)
+		_ = os.Setenv("DATASOURCE_DSN", expected.DatasourceDSN)
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddress)

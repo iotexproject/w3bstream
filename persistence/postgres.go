@@ -59,6 +59,18 @@ func (p *Postgres) Fetch(taskID, projectID uint64) ([]*types.TaskStateLog, error
 	return tls, nil
 }
 
+func (p *Postgres) FetchNextTaskID() (uint64, error) {
+	max := uint64(0)
+
+	if err := p.db.Model(&taskStateLog{}).Select("max(task_id)").Take(&max).Error; err != nil {
+		return 0, errors.Wrap(err, "failed to query max task id")
+	}
+	if max != 0 {
+		max++
+	}
+	return max, nil
+}
+
 func NewPostgres(pgEndpoint string) (*Postgres, error) {
 	db, err := gorm.Open(postgres.Open(pgEndpoint), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),

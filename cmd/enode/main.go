@@ -12,6 +12,7 @@ import (
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/enode/api"
 	"github.com/machinefi/sprout/cmd/enode/config"
+	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
@@ -28,7 +29,7 @@ func main() {
 	conf.Print()
 	slog.Info("enode config loaded")
 
-	pg, err := persistence.NewPostgres(conf.DatabaseDSN)
+	persistence, err := persistence.NewPostgres(conf.DatabaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,14 +41,24 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dispatcher, err := task.NewDispatcher(pg, projectManager, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID, nil)
+	datasource, err := datasource.NewPostgres(conf.DatasourceDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
-	go dispatcher.Dispatch()
+
+	nextTaskID, err := persistence.FetchNextTaskID()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dispatcher, err := task.NewDispatcher(persistence, projectManager, datasource, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	go dispatcher.Dispatch(nextTaskID)
 
 	go func() {
-		if err := api.NewHttpServer(pg, projectManager, conf).Run(conf.ServiceEndpoint); err != nil {
+		if err := api.NewHttpServer(persistence, projectManager, conf).Run(conf.ServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()
