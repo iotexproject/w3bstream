@@ -18,13 +18,13 @@ type message struct {
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
 	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
 	Data           []byte `gorm:"size:4096"`
-	TaskID         string `gorm:"index:task_id,not null,default:''"`
+	InternalTaskID string `gorm:"index:internal_task_id,not null,default:''"`
 }
 
 type task struct {
 	gorm.Model
-	TaskID     string   `gorm:"index:task_id,not null"`
-	MessageIDs []string `gorm:"index:message_id,not null"`
+	InternalTaskID string   `gorm:"index:internal_task_id,not null"`
+	MessageIDs     []string `gorm:"not null"`
 }
 
 type persistence struct {
@@ -93,26 +93,22 @@ func (p *persistence) save(msg *types.Message, aggregationAmount uint) error {
 	})
 }
 
-func (p *persistence) fetchMessage(messageID string) ([]*types.MessageWithTime, error) {
+func (p *persistence) fetchMessage(messageID string) ([]*message, error) {
 	ms := []*message{}
 	if err := p.db.Where("message_id = ?", messageID).Find(&ms).Error; err != nil {
 		return nil, errors.Wrapf(err, "query message by messageID failed, messageID %s", messageID)
 	}
 
-	tms := []*types.MessageWithTime{}
-	for _, m := range ms {
-		tms = append(tms, &types.MessageWithTime{
-			Message: types.Message{
-				ID:             m.MessageID,
-				ClientDID:      m.ClientDID,
-				ProjectID:      m.ProjectID,
-				ProjectVersion: m.ProjectVersion,
-				Data:           string(m.Data),
-			},
-			CreatedAt: m.CreatedAt,
-		})
+	return ms, nil
+}
+
+func (p *persistence) fetchTask(internalTaskID string) ([]*task, error) {
+	ts := []*task{}
+	if err := p.db.Where("internal_task_id = ?", internalTaskID).Find(&ts).Error; err != nil {
+		return nil, errors.Wrapf(err, "query task by internal task id failed, internal_task_id %s", internalTaskID)
 	}
-	return tms, nil
+
+	return ts, nil
 }
 
 func newPersistence(pgEndpoint string) (*persistence, error) {

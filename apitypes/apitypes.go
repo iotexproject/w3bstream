@@ -28,6 +28,13 @@ type StateLog struct {
 	State   string    `json:"state"`
 	Time    time.Time `json:"time"`
 	Comment string    `json:"comment"`
+	Result  string    `json:"result"`
+}
+
+type QueryTaskStateLogRsp struct {
+	TaskID    uint64      `json:"taskID"`
+	ProjectID uint64      `json:"projectID"`
+	States    []*StateLog `json:"states"`
 }
 
 type QueryMessageStateLogRsp struct {
