@@ -33,6 +33,7 @@ type OutputConfig struct {
 	Type     types.Output   `json:"type"`
 	Ethereum EthereumConfig `json:"ethereum,omitempty"`
 	Solana   SolanaConfig   `json:"solana,omitempty"`
+	Textile  TextileConfig  `json:"textile,omitempty"`
 }
 
 type EthereumConfig struct {
@@ -49,6 +50,10 @@ type SolanaConfig struct {
 	StateAccountPK string `json:"stateAccountPK"`
 }
 
+type TextileConfig struct {
+	VaultID string `json:"vaultID"`
+}
+
 func (c *Config) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
 	outConf := c.Output
 
@@ -59,6 +64,9 @@ func (c *Config) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Ou
 	case types.OutputSolanaProgram:
 		solConf := outConf.Solana
 		return output.NewSolanaProgram(solConf.ChainEndpoint, solConf.ProgramID, privateKeyED25519, solConf.StateAccountPK)
+	case types.OutputTextile:
+		textileConf := outConf.Textile
+		return output.NewTextileDBAdapter(textileConf.VaultID, privateKeyECDSA)
 	default:
 		return output.NewStdout(), nil
 	}
