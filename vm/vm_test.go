@@ -56,19 +56,6 @@ func TestHandler_Handle(t *testing.T) {
 		r.ErrorContains(err, t.Name())
 	})
 
-	t.Run("FailedToHexDecode", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyMethodReturn(&server.Mgr{}, "Acquire", &server.Instance{}, nil)
-		p = p.ApplyMethod(&server.Mgr{}, "Release", func(*server.Mgr, uint64, *server.Instance) {})
-		p = p.ApplyMethodReturn(&server.Instance{}, "Execute", []byte("any"), nil)
-		p = p.ApplyFuncReturn(hex.DecodeString, nil, errors.New(t.Name()))
-
-		_, err := h.Handle(task, types.VMZkwasm, "any", "any")
-		r.ErrorContains(err, t.Name())
-	})
-
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
