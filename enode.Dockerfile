@@ -11,7 +11,7 @@ RUN cd ./cmd/enode && go build -o enode
 FROM golang:1.21 AS runtime
 
 COPY --from=builder /go/src/cmd/enode/enode /go/bin/enode
-EXPOSE 9000
+EXPOSE 9001
 
 WORKDIR /go/bin
 ENTRYPOINT ["/go/bin/enode"]
