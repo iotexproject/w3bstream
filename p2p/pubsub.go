@@ -81,7 +81,7 @@ func NewPubSubs(handle HandleSubscriptionMessage, bootNodeMultiaddr string, iote
 		return nil, errors.Wrap(err, "new libp2p host failed")
 	}
 
-	ps, err := pubsub.NewGossipSub(ctx, h)
+	ps, err := pubsub.NewGossipSub(ctx, h, pubsub.WithMaxMessageSize(2*pubsub.DefaultMaxMessageSize))
 	if err != nil {
 		return nil, errors.Wrap(err, "new gossip subscription failed")
 	}
