@@ -26,6 +26,7 @@ services:
     restart: always
     environment:
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+      BONSAI_URL: https://api.bonsai.xyz
       BONSAI_KEY: "${BONSAI_KEY:-}"
     ports:
      - "4001:4001"
