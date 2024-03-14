@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	solanatypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -13,23 +15,20 @@ import (
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/cmd/enode/config"
 	"github.com/machinefi/sprout/persistence"
-	"github.com/machinefi/sprout/project"
 )
 
 type HttpServer struct {
-	engine         *gin.Engine
-	pg             *persistence.Postgres
-	projectManager *project.Manager
-	conf           *config.Config
-	enodeConf      *apitypes.ENodeConfigRsp
+	engine      *gin.Engine
+	persistence *persistence.Postgres
+	conf        *config.Config
+	enodeConf   *apitypes.ENodeConfigRsp
 }
 
-func NewHttpServer(pg *persistence.Postgres, projectManager *project.Manager, conf *config.Config) *HttpServer {
+func NewHttpServer(persistence *persistence.Postgres, conf *config.Config) *HttpServer {
 	s := &HttpServer{
-		engine:         gin.Default(),
-		pg:             pg,
-		projectManager: projectManager,
-		conf:           conf,
+		engine:      gin.Default(),
+		persistence: persistence,
+		conf:        conf,
 	}
 
 	s.enodeConf = &apitypes.ENodeConfigRsp{
@@ -51,7 +50,7 @@ func NewHttpServer(pg *persistence.Postgres, projectManager *project.Manager, co
 	}
 
 	s.engine.GET("/live", s.liveness)
-	//s.engine.GET("/message/:id", s.queryStateLogByID)
+	s.engine.GET("/task/:project_id/:task_id", s.getTaskStateLog)
 	s.engine.POST("/sign_credential", s.issueJWTCredential)
 	s.engine.GET("/enode_config", s.getENodeConfigInfo)
 
@@ -70,54 +69,61 @@ func (s *HttpServer) liveness(c *gin.Context) {
 	c.JSON(http.StatusOK, &apitypes.LivenessRsp{Status: "up"})
 }
 
-// func (s *HttpServer) queryStateLogByID(c *gin.Context) {
-// 	tok := c.GetHeader("Authorization")
-// 	if tok == "" {
-// 		tok = c.Query("authorization")
-// 	}
-// 	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
+func (s *HttpServer) getTaskStateLog(c *gin.Context) {
+	tok := c.GetHeader("Authorization")
+	if tok == "" {
+		tok = c.Query("authorization")
+	}
+	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
 
-// 	if tok != "" {
-// 		err := didvc.VerifyJWTCredential(s.conf.DIDAuthServerEndpoint, tok)
-// 		if err != nil {
-// 			c.String(http.StatusUnauthorized, err.Error())
-// 			return
-// 		}
-// 	}
+	if tok != "" {
+		err := didvc.VerifyJWTCredential(s.conf.DIDAuthServerEndpoint, tok)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
+			return
+		}
+	}
 
-// 	messageID := c.Param("id")
+	projectID, err := strconv.ParseUint(c.Param("project_id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
+		return
+	}
+	taskID, err := strconv.ParseUint(c.Param("task_id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
+		return
+	}
 
-// 	ms, err := s.pg.FetchMessage(messageID)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
-// 		return
-// 	}
-// 	if len(ms) == 0 {
-// 		c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID})
-// 		return
-// 	}
+	ls, err := s.persistence.Fetch(taskID, projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+		return
+	}
+	if len(ls) == 0 {
+		c.JSON(http.StatusOK, &apitypes.QueryTaskStateLogRsp{
+			TaskID:    taskID,
+			ProjectID: projectID,
+		})
+		return
+	}
 
-// 	ls, err := s.pg.FetchStateLog(messageID)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
-// 		return
-// 	}
+	ss := []*apitypes.StateLog{}
+	for _, l := range ls {
+		ss = append(ss, &apitypes.StateLog{
+			State:   l.State.String(),
+			Time:    l.CreatedAt,
+			Comment: l.Comment,
+			Result:  string(l.Result),
+		})
+	}
 
-// 	ss := []*apitypes.StateLog{
-// 		{
-// 			State: "received",
-// 			Time:  ms[0].CreatedAt,
-// 		}}
-// 	for _, l := range ls {
-// 		ss = append(ss, &apitypes.StateLog{
-// 			State:   l.State.String(),
-// 			Time:    l.CreatedAt,
-// 			Comment: string(l.Comment),
-// 		})
-// 	}
-
-// 	c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID, States: ss})
-// }
+	c.JSON(http.StatusOK, &apitypes.QueryTaskStateLogRsp{
+		TaskID:    taskID,
+		ProjectID: projectID,
+		States:    ss,
+	})
+}
 
 func (s *HttpServer) issueJWTCredential(c *gin.Context) {
 	req := new(didvc.IssueCredentialReq)

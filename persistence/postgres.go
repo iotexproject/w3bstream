@@ -62,7 +62,7 @@ func (p *Postgres) Fetch(taskID, projectID uint64) ([]*types.TaskStateLog, error
 func (p *Postgres) FetchNextTaskID() (uint64, error) {
 	max := uint64(0)
 
-	if err := p.db.Model(&taskStateLog{}).Select("max(task_id)").Take(&max).Error; err != nil {
+	if err := p.db.Model(&taskStateLog{}).Select("CASE WHEN MAX(task_id) IS NULL THEN 0 ELSE MAX(task_id) END").Take(&max).Error; err != nil {
 		return 0, errors.Wrap(err, "failed to query max task id")
 	}
 	if max != 0 {

@@ -156,7 +156,7 @@ func runEnode(conf *enodeconfig.Config) {
 	go dispatcher.Dispatch(nextTaskID)
 
 	go func() {
-		if err := api.NewHttpServer(pg, projectManager, conf).Run(conf.ServiceEndpoint); err != nil {
+		if err := api.NewHttpServer(pg, conf).Run(conf.ServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()

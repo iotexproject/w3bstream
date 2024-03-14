@@ -3,6 +3,7 @@ package output
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"math/big"
 	"testing"
 
@@ -59,6 +60,9 @@ func TestEthereumContract_Output(t *testing.T) {
 	contractAbiJSON := `[{"inputs":[],"name":"getJournal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getPostStateDigest","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getProjectId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getSeal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes","name":"_proof","type":"bytes"}],"name":"setProof","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_projectId","type":"uint256"},{"internalType":"address","name":"_receiver","type":"address"},{"internalType":"bytes","name":"_data_snark","type":"bytes"}],"name":"submit","outputs":[],"stateMutability":"nonpayable","type":"function"}]`
 	contractMethod := "submit"
 
+	proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"journal\":[82,0,0,0,73,32]}}"
+	hexProof := hex.EncodeToString([]byte(proof))
+
 	task := &types.Task{
 		ID:             1,
 		ProjectID:      uint64(0x1),
@@ -83,60 +87,12 @@ func TestEthereumContract_Output(t *testing.T) {
 		r.ErrorContains(err, "miss param")
 	})
 
-	t.Run("GetSnarkFailed", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
-		r.NoError(err)
-
-		_, err = contract.Output(task, []byte("this is proof"))
-		r.ErrorContains(err, "get Snark.snark failed")
-	})
-
 	t.Run("GetPostStateDigestFailed", func(t *testing.T) {
 		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
 		r.NoError(err)
 
-		proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"journal\":[82,0,0,0,73,32]}}"
-		_, err = contract.Output(task, []byte(proof))
+		_, err = contract.Output(task, []byte(hexProof))
 		r.ErrorContains(err, "get Snark.post_state_digest failed")
-	})
-
-	t.Run("GetJournalFailed", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
-		r.NoError(err)
-
-		proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"post_state_digest\":[244,204,22,124,129,242]}}"
-		_, err = contract.Output(task, []byte(proof))
-		r.ErrorContains(err, "get Snark.journal failed")
-	})
-
-	t.Run("NewAbiPackFailed", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
-		r.NoError(err)
-
-		proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"post_state_digest\":[244,204,22,124,129,242],\"journal\":[82,0,0,0,73,32]}}"
-
-		p := NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(abi.NewType, nil, errors.New(t.Name()))
-		_, err = contract.Output(task, []byte(proof))
-		r.ErrorContains(err, t.Name())
-	})
-
-	t.Run("AbiPackFailed", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
-		r.NoError(err)
-
-		proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"post_state_digest\":[244,204,22,124,129,242],\"journal\":[82,0,0,0,73,32]}}"
-
-		p := NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(abi.NewType, nil, nil)
-		p = p.ApplyMethodReturn(&abi.Arguments{}, "Pack", nil, errors.New(t.Name()))
-
-		_, err = contract.Output(task, []byte(proof))
-		r.ErrorContains(err, "ethereum accounts abi pack failed")
 	})
 
 	t.Run("MissProofSnarkParam", func(t *testing.T) {

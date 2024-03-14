@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,13 +17,15 @@ import (
 type httpServer struct {
 	engine            *gin.Engine
 	p                 *persistence
+	enodeAddress      string
 	aggregationAmount uint
 }
 
-func newHttpServer(p *persistence, aggregationAmount uint) *httpServer {
+func newHttpServer(p *persistence, aggregationAmount uint, enodeAddress string) *httpServer {
 	s := &httpServer{
 		engine:            gin.Default(),
 		p:                 p,
+		enodeAddress:      enodeAddress,
 		aggregationAmount: aggregationAmount,
 	}
 
@@ -72,8 +77,46 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 		c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID})
 		return
 	}
+	m := ms[0]
+	ss := []*apitypes.StateLog{
+		{
+			State: "received",
+			Time:  m.CreatedAt,
+		},
+	}
 
-	// TODO query task
+	if m.InternalTaskID != "" {
+		ts, err := s.p.fetchTask(m.InternalTaskID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+			return
+		}
+		if len(ts) == 0 {
+			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(errors.New("cannot find task by internal task id")))
+			return
+		}
+		ss = append(ss, &apitypes.StateLog{
+			State: types.TaskStatePacked.String(),
+			Time:  ts[0].CreatedAt,
+		})
+		resp, err := http.Get(fmt.Sprintf("http://%s/%s/%d/%d", s.enodeAddress, "task", m.ProjectID, ts[0].ID))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+			return
+		}
+		defer resp.Body.Close()
 
-	c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID})
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+			return
+		}
+		taskStateLog := &apitypes.QueryTaskStateLogRsp{}
+		if err := json.Unmarshal(body, &taskStateLog); err != nil {
+			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+		}
+		ss = append(ss, taskStateLog.States...)
+	}
+
+	c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID, States: ss})
 }

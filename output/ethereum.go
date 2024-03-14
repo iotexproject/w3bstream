@@ -2,6 +2,7 @@ package output
 
 import (
 	"context"
+	"encoding/hex"
 	"log/slog"
 	"math/big"
 	"strings"
@@ -52,6 +53,10 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			params = append(params, common.HexToAddress(e.receiverAddress))
 
 		case "data_snark", "_data_snark":
+			proof, err := hex.DecodeString(string(proof))
+			if err != nil {
+				return "", errors.Wrap(err, "failed to decode proof by hex format")
+			}
 			valueSeal := gjson.GetBytes(proof, "Snark.snark").String()
 			if valueSeal == "" {
 				return "", errors.New("get Snark.snark failed")
@@ -79,19 +84,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			if err != nil {
 				return "", errors.Wrap(err, "ethereum accounts abi pack failed")
 			}
-
 			params = append(params, packed)
-
-		case "proof_snark_seal", "proof_snark_post_state_digest", "proof_snark_journal":
-			name := strings.TrimPrefix(a.Name, "proof_snark_")
-			if name == "seal" {
-				name = "snark"
-			}
-			value := gjson.GetBytes(proof, "Snark."+name).String()
-			if value == "" {
-				return "", errors.Errorf("miss param %s for contract abi", a.Name)
-			}
-			params = append(params, []byte(value))
 
 		default:
 			value := gjson.GetBytes(task.Data[0], a.Name)

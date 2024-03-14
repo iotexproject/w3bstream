@@ -27,7 +27,7 @@ type Config struct {
 var (
 	// prod default config for enode; all config elements come from docker-compose.yaml in root of project
 	defaultConfig = &Config{
-		ServiceEndpoint:        ":9000",
+		ServiceEndpoint:        ":9001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:            "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		DatasourceDSN:          "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
@@ -40,7 +40,7 @@ var (
 	}
 	// local debug default config for enode; all config elements come from docker-compose-dev.yaml in root of project
 	defaultDebugConfig = &Config{
-		ServiceEndpoint:        ":9000",
+		ServiceEndpoint:        ":9001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
 		DatasourceDSN:          "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
@@ -53,7 +53,7 @@ var (
 	}
 	// integration default config for enode; all config elements come from Makefile in `integration_test` entry
 	defaultTestConfig = &Config{
-		ServiceEndpoint:        ":19000",
+		ServiceEndpoint:        ":19001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		DatasourceDSN:          "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",

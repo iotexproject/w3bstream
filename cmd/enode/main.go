@@ -58,7 +58,7 @@ func main() {
 	go dispatcher.Dispatch(nextTaskID)
 
 	go func() {
-		if err := api.NewHttpServer(persistence, projectManager, conf).Run(conf.ServiceEndpoint); err != nil {
+		if err := api.NewHttpServer(persistence, conf).Run(conf.ServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()

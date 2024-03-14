@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"gorm.io/datatypes"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -18,13 +21,13 @@ type message struct {
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
 	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
 	Data           []byte `gorm:"size:4096"`
-	TaskID         string `gorm:"index:task_id,not null,default:''"`
+	InternalTaskID string `gorm:"index:internal_task_id,not null,default:''"`
 }
 
 type task struct {
 	gorm.Model
-	TaskID     string   `gorm:"index:task_id,not null"`
-	MessageIDs []string `gorm:"index:message_id,not null"`
+	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
+	MessageIDs     datatypes.JSON `gorm:"not null"`
 }
 
 type persistence struct {
@@ -54,7 +57,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *types.Message)
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Order("created_at").
 		Where(
-			"project_id = ? AND project_version = ? AND client_did = ? AND task_id = ?",
+			"project_id = ? AND project_version = ? AND client_did = ? AND internal_task_id = ?",
 			m.ProjectID, m.ProjectVersion, m.ClientDID, "",
 		).Limit(amount).Find(&messages).Error; err != nil {
 		return errors.Wrap(err, "failed to fetch unpacked messages")
@@ -66,16 +69,22 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *types.Message)
 	}
 
 	taskID := uuid.NewString()
-	task := task{}
 	messageIDs := make([]string, 0, amount)
 	for _, v := range messages {
 		messageIDs = append(messageIDs, v.MessageID)
-		task.MessageIDs = append(task.MessageIDs, v.MessageID)
 	}
-	if err := tx.Model(&message{}).Where("message_id IN ?", messageIDs).Update("task_id", taskID).Error; err != nil {
-		return errors.Wrap(err, "failed to update message task id")
+	if err := tx.Model(&message{}).Where("message_id IN ?", messageIDs).Update("internal_task_id", taskID).Error; err != nil {
+		return errors.Wrap(err, "failed to update message internal task id")
 	}
-	if err := tx.Create(&task).Error; err != nil {
+	messageIDsJson, err := json.Marshal(messageIDs)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal message id array")
+	}
+
+	if err := tx.Create(&task{
+		InternalTaskID: taskID,
+		MessageIDs:     messageIDsJson,
+	}).Error; err != nil {
 		return errors.Wrap(err, "failed to create task")
 	}
 	return nil
@@ -93,26 +102,22 @@ func (p *persistence) save(msg *types.Message, aggregationAmount uint) error {
 	})
 }
 
-func (p *persistence) fetchMessage(messageID string) ([]*types.MessageWithTime, error) {
+func (p *persistence) fetchMessage(messageID string) ([]*message, error) {
 	ms := []*message{}
 	if err := p.db.Where("message_id = ?", messageID).Find(&ms).Error; err != nil {
 		return nil, errors.Wrapf(err, "query message by messageID failed, messageID %s", messageID)
 	}
 
-	tms := []*types.MessageWithTime{}
-	for _, m := range ms {
-		tms = append(tms, &types.MessageWithTime{
-			Message: types.Message{
-				ID:             m.MessageID,
-				ClientDID:      m.ClientDID,
-				ProjectID:      m.ProjectID,
-				ProjectVersion: m.ProjectVersion,
-				Data:           string(m.Data),
-			},
-			CreatedAt: m.CreatedAt,
-		})
+	return ms, nil
+}
+
+func (p *persistence) fetchTask(internalTaskID string) ([]*task, error) {
+	ts := []*task{}
+	if err := p.db.Where("internal_task_id = ?", internalTaskID).Find(&ts).Error; err != nil {
+		return nil, errors.Wrapf(err, "query task by internal task id failed, internal_task_id %s", internalTaskID)
 	}
-	return tms, nil
+
+	return ts, nil
 }
 
 func newPersistence(pgEndpoint string) (*persistence, error) {
