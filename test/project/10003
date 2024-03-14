@@ -5,7 +5,9 @@
       "version": "0.1",
       "output": {
         "type": "textile",
-        "vaultID": "qod_poc"
+        "textile": {
+          "vaultID": "qod_poc.data"
+        }
       },
       "vmType": "risc0"
     }

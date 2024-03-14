@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -40,7 +41,9 @@ func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
 }
 
 func (t *textileDB) packData(proof []byte) ([]byte, error) {
+	proof, err := hex.DecodeString(string(proof))
 	valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes")
+	//valueJournal := gjson.GetBytes(proof, "Snark.journal")
 	if !valueJournal.Exists() {
 		return nil, errors.New("proof does not contain journal")
 	}
@@ -64,7 +67,7 @@ func (t *textileDB) packData(proof []byte) ([]byte, error) {
 }
 
 func (t *textileDB) write(data []byte) (string, error) {
-	signature, err := signing.NewSigner(t.secretKey).SignBytes(data)
+	signatureBytes, err := signing.NewSigner(t.secretKey).SignBytes(data)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to sign data")
 	}
@@ -72,7 +75,7 @@ func (t *textileDB) write(data []byte) (string, error) {
 	url := fmt.Sprintf("%s?timestamp=%s&signature=%s",
 		t.endpoint,
 		strconv.FormatInt(time.Now().Unix(), 10),
-		signature)
+		hex.EncodeToString(signatureBytes))
 	err = writeEvent(url, data)
 	return "", err
 }
