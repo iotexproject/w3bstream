@@ -22,73 +22,78 @@ func PatchNewZnode(p *gomonkey.Patches, node *ZNode, err error) *gomonkey.Patche
 	)
 }
 
-func TestZnode(t *testing.T) {
+func TestNewZnode(t *testing.T) {
 	r := require.New(t)
-	p := gomonkey.NewPatches()
-	defer p.Reset()
 
-	t.Run("NewZnode", func(t *testing.T) {
-
+	t.Run("DailEth", func(t *testing.T) {
 		t.Run("FailedToDialEthClient", func(t *testing.T) {
-			// mockey.PatchConvey(t.Name(), t, func() {
-			// 	mockey.Mock(ethclient.Dial).Return(nil, errors.New(t.Name())).Build()
-			// })
+			p := gomonkey.NewPatches()
+			defer p.Reset()
+
 			p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
+
 			z, err := NewZNode("any", "any")
 			r.Nil(z)
 			r.ErrorContains(err, t.Name())
 		})
+	})
+	t.Run("CreateZnodeContractInstance", func(t *testing.T) {
 		t.Run("FailedToCreateZnodeContractInstance", func(t *testing.T) {
-			// mockey.PatchConvey(t.Name(), t, func() {
-			// 	mockey.Mock(ethclient.Dial).Return(nil, nil).Build()
-			// 	mockey.Mock(znode.NewZnode).Return(nil, errors.New(t.Name()))
-			// })
+			p := gomonkey.NewPatches()
+			defer p.Reset()
 
 			p = testutil.EthClientDial(p, nil, nil)
 			p = znodecontract.PatchNewZnode(p, nil, errors.New(t.Name()))
+
 			z, err := NewZNode("any", "any")
 			r.Nil(z)
 			r.ErrorContains(err, t.Name())
 		})
-		t.Run("Success", func(t *testing.T) {
-			p = znodecontract.PatchNewZnode(p, &znode.Znode{
-				ZnodeCaller:     znode.ZnodeCaller{},
-				ZnodeFilterer:   znode.ZnodeFilterer{},
-				ZnodeTransactor: znode.ZnodeTransactor{},
-			}, nil)
-			p = znodecontract.PatchZnodeCallerZnodesSeq(p,
-				struct {
-					Did    string
-					Paused bool
-					Err    error
-				}{Err: errors.New(t.Name())},
-				struct {
-					Did    string
-					Paused bool
-					Err    error
-				}{Did: "any", Err: nil},
-				struct {
-					Did    string
-					Paused bool
-					Err    error
-				}{Did: "", Err: nil},
-			)
-			z, err := NewZNode("any", "any")
-			r.NotNil(z)
-			r.Nil(err)
-		})
 	})
+	t.Run("LoopFetchZnodeFromContractUntilFetchedEmpty", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-	t.Run("Znode", func(t *testing.T) {
-		p = PatchNewZnode(p, &ZNode{
-			mux:             sync.Mutex{},
-			znodeDIDs:       map[string]bool{"any1": true, "any2": true},
-			contractAddress: "any",
-			chainEndpoint:   "any",
+		p = testutil.EthClientDial(p, nil, nil)
+		p = znodecontract.PatchNewZnode(p, &znode.Znode{
+			ZnodeCaller:     znode.ZnodeCaller{},
+			ZnodeFilterer:   znode.ZnodeFilterer{},
+			ZnodeTransactor: znode.ZnodeTransactor{},
 		}, nil)
-
+		p = znodecontract.PatchZnodeCallerZnodesSeq(p,
+			struct {
+				Did    string
+				Paused bool
+				Err    error
+			}{Err: errors.New(t.Name())},
+			struct {
+				Did    string
+				Paused bool
+				Err    error
+			}{Did: "any", Err: nil},
+			struct {
+				Did    string
+				Paused bool
+				Err    error
+			}{Did: "", Err: nil},
+		)
 		z, err := NewZNode("any", "any")
+		r.NotNil(z)
 		r.Nil(err)
-		r.Len(z.GetAll(), 2)
 	})
+}
+
+func TestZNode_GetAll(t *testing.T) {
+	r := require.New(t)
+
+	zn := &ZNode{
+		mux: sync.Mutex{},
+		znodeDIDs: map[string]bool{
+			"any1": true,
+			"any2": true,
+		},
+	}
+
+	nodes := zn.GetAll()
+	r.Equal(len(nodes), len(zn.znodeDIDs))
 }

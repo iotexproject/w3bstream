@@ -62,11 +62,47 @@ func TestPostgres_Fetch(t *testing.T) {
 		_, err := v.Fetch(1, 1)
 		r.ErrorContains(err, t.Name())
 	})
-	p = p.ApplyMethodReturn(&gorm.DB{}, "Find", v.db)
+
+	p = testutil.GormDBFind(p, &([]*taskStateLog{{}, {}, {}}), v.db)
 
 	t.Run("Success", func(t *testing.T) {
 		_task, err := v.Fetch(1, 1)
 		r.NotNil(_task)
+		r.NoError(err)
+	})
+}
+
+func TestPostgres_FetchNextTaskID(t *testing.T) {
+	r := require.New(t)
+	p := NewPatches()
+	defer p.Reset()
+
+	v := &Postgres{
+		db: &gorm.DB{
+			Error:     nil,
+			Statement: &gorm.Statement{},
+		},
+	}
+
+	p = testutil.GormDBModel(p, v.db)
+	p = testutil.GormDBSelect(p, v.db)
+
+	t.Run("FailedToTakeMaxTaskID", func(t *testing.T) {
+		p = testutil.GormDBTake(p, nil, &gorm.DB{Error: errors.New(t.Name())})
+
+		taskID, err := v.FetchNextTaskID()
+
+		r.Equal(taskID, uint64(0))
+		r.ErrorContains(err, t.Name())
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		_taskID := uint64(100)
+		p = testutil.GormDBTake(p, &_taskID, v.db)
+
+		taskID, err := v.FetchNextTaskID()
+
+		r.Equal(taskID, _taskID+1)
 		r.NoError(err)
 	})
 }
