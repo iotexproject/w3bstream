@@ -20,8 +20,6 @@ func migrateDatabase() error {
 	  
 	  CREATE TABLE IF NOT EXISTS proofs (
 		id SERIAL PRIMARY KEY,
-		name VARCHAR NOT NULL,
-		template_name VARCHAR NOT NULL,
 		image_id VARCHAR NOT NULL,
 		private_input VARCHAR NOT NULL,
 		public_input VARCHAR NOT NULL,
