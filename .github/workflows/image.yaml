@@ -82,3 +82,21 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-node.outputs.tags }}
           labels: ${{ steps.meta-node.outputs.labels }}
+
+      - name: Extract Docker metadata
+        id: meta-http-plugin
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.PLUGIN_IMAGE_NAME }}
+
+      - name: Build and push Docker image http plugin
+        id: build-and-push-node
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          file: ./http_plugin.Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-http-plugin.outputs.tags }}
+          labels: ${{ steps.meta-http-plugin.outputs.labels }}
