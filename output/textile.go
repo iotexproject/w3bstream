@@ -42,10 +42,13 @@ func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
 
 func (t *textileDB) packData(proof []byte) ([]byte, error) {
 	proof, err := hex.DecodeString(string(proof))
-	//valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes")
-	valueJournal := gjson.GetBytes(proof, "Snark.journal")
+
+	valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes")
 	if !valueJournal.Exists() {
-		return nil, errors.New("proof does not contain journal")
+		valueJournal = gjson.GetBytes(proof, "Snark.journal")
+		if !valueJournal.Exists() {
+			return nil, errors.New("proof does not contain journal")
+		}
 	}
 
 	// get result from proof
