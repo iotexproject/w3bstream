@@ -1,6 +1,17 @@
 # Changelog
 
 ---
+## [0.7.0] - 2024-03-15
+
+### Added
+- Support output to textile
+- Add http plugin for message receive and pack
+- Support postgres data source
+
+### Changed
+- Enode now support pull task from data source
+
+---
 ## [0.6.4] - 2024-02-26
 
 ### Added
