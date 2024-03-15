@@ -27,13 +27,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-        
+
       - name: Setup Docker and Colima
         if: startsWith(matrix.os, 'macos-latest') == true
         run: |
           brew install docker colima
           colima start
-          
+
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v2
 
@@ -63,7 +63,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-sequencer.outputs.tags }}
           labels: ${{ steps.meta-sequencer.outputs.labels }}
-          
+
 
       - name: Extract Docker metadata
         id: meta-node
@@ -91,7 +91,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.PLUGIN_IMAGE_NAME }}
 
       - name: Build and push Docker image http plugin
-        id: build-and-push-node
+        id: build-and-push-http-plugin
         uses: docker/build-push-action@v4
         with:
           context: .
