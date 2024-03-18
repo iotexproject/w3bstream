@@ -131,7 +131,8 @@ func TestManager_doProjectRegistrarWatch(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&contracts.ContractsFilterer{}, "ParseProjectUpserted", &contracts.ContractsProjectUpserted{ProjectId: 1}, nil)
-		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigData", []byte{}, nil)
+		p = p.ApplyFuncReturn(convertConfigs, []*Config{{}}, nil)
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
