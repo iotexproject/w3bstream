@@ -220,7 +220,7 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 			},
 		}
 		p = p.ApplyMethodSeq(&contracts.ContractsCaller{}, "Projects", outputs)
-		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", nil, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigData", nil, errors.New(t.Name()))
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -251,7 +251,8 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 			},
 		}
 		p = p.ApplyMethodSeq(&contracts.ContractsCaller{}, "Projects", outputs)
-		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigData", []byte{}, nil)
+		p = p.ApplyFuncReturn(convertConfigs, []*Config{{}}, nil)
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
