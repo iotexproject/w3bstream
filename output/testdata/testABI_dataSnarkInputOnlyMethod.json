@@ -1,0 +1,19 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_data_snark",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data_snark",
+        "type": "bytes"
+      }
+    ],
+    "name": "testMethod",
+    "outputs": [],
+    "type": "function"
+  }
+]

@@ -17,47 +17,6 @@ import (
 	"github.com/machinefi/sprout/utils/ipfs"
 )
 
-func TestConfig_GetOutput(t *testing.T) {
-	r := require.New(t)
-
-	t.Run("Default", func(t *testing.T) {
-		c := &Config{}
-		_, err := c.GetOutput("", "")
-		r.NoError(err)
-	})
-	t.Run("Stdout", func(t *testing.T) {
-		c := &Config{
-			Output: OutputConfig{
-				Type: types.OutputStdout,
-			},
-		}
-		_, err := c.GetOutput("", "")
-		r.NoError(err)
-	})
-	t.Run("Ethereum", func(t *testing.T) {
-		c := &Config{
-			Output: OutputConfig{
-				Type: types.OutputEthereumContract,
-				Ethereum: EthereumConfig{
-					ContractAbiJSON: `[{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"bytes","name":"_proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]`,
-				},
-			},
-		}
-		_, err := c.GetOutput("c47bbade736b0f82788aa6eaa06140cdf41a544707edef944299642e0d708cab", "")
-		r.NoError(err)
-	})
-	t.Run("Solana", func(t *testing.T) {
-		c := &Config{
-			Output: OutputConfig{
-				Type:   types.OutputSolanaProgram,
-				Solana: SolanaConfig{},
-			},
-		}
-		_, err := c.GetOutput("", "308edd7fca562182adbffaa59264a138d9e04f9f3adbda2c80ef1ca71b7dcfa4")
-		r.NoError(err)
-	})
-}
-
 func TestProjectMeta_GetConfigs_init(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()

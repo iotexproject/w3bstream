@@ -1,0 +1,16 @@
+{
+  "code": "any",
+  "codeExpParam": "any",
+  "vmType": "risc0",
+  "output": {
+    "type": "ethereumContract",
+    "ethereum": {
+      "chainEndpoint": "http://chain_endpoint",
+      "contractAddress": "0x",
+      "contractMethod": "expectedMethod",
+      "contractAbiJSON": "[{\"inputs\": [],\"name\": \"expectedMethod\",\"outputs\": [],\"type\": \"function\"}]"
+    }
+  },
+  "aggregation": {},
+  "version": "0.1"
+}

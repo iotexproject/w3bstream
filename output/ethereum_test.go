@@ -3,7 +3,9 @@ package output
 import (
 	"context"
 	"crypto/ecdsa"
+	_ "embed"
 	"encoding/hex"
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -19,116 +21,302 @@ import (
 	"github.com/machinefi/sprout/types"
 )
 
-func TestNewEthereum(t *testing.T) {
-	r := require.New(t)
+var (
+	testMethodName = "testMethod"
+	//go:embed testdata/testABI_proofInputOnlyMethod.json
+	testABIProofInputOnlyMethod string
+	//go:embed testdata/testABI_projectInputOnlyMethod.json
+	testABIProjectInputOnlyMethod string
+	//go:embed testdata/testABI_dataSnarkInputOnlyMethod.json
+	testABIDataSnarkInputOnlyMethod string
+	//go:embed testdata/testABI_receiverInputOnlyMethod.json
+	testABIReceiverInputOnlyMethod string
+	//go:embed testdata/testABI_otherInputOnlyMethod.json
+	testABIOtherInputOnlyMethod string
+	//go:embed testdata/testABI_otherInputOnlyMethod_address.json
+	testABIOtherInputOnlyMethod_address string
+	//go:embed testdata/testABI_otherInputOnlyMethod_uint256.json
+	testABIOtherInputOnlyMethod_uint256 string
 
-	t.Run("AbiNil", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(abi.JSON, nil, errors.New(t.Name()))
-		_, err := NewEthereum("", "", "", "", "", "")
-		r.ErrorContains(err, t.Name())
-	})
-
-	t.Run("SecretKeyNil", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(abi.JSON, nil, nil)
-		_, err := NewEthereum("", "", "", "", "", "")
-		r.EqualError(err, "secretkey is empty")
-	})
-
-	t.Run("NewEthereumSuccess", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(abi.JSON, nil, nil)
-		_, err := NewEthereum("", "secretKey", "", "", "", "")
-		r.NoError(err)
-	})
-}
-
-func TestEthereumContract_Output(t *testing.T) {
-	r := require.New(t)
-
-	chainEndpoint := "https://iotex"
-	secretKey := "b7255a24"
-	contractAddress := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
-	receiverAddress := "0x5Ea91218CB1E329806a746E0816A8BD533637b42"
-	contractAbiJSON := `[{"inputs":[],"name":"getJournal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getPostStateDigest","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getProjectId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getSeal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes","name":"_proof","type":"bytes"}],"name":"setProof","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_projectId","type":"uint256"},{"internalType":"address","name":"_receiver","type":"address"},{"internalType":"bytes","name":"_data_snark","type":"bytes"}],"name":"submit","outputs":[],"stateMutability":"nonpayable","type":"function"}]`
-	contractMethod := "submit"
-
-	proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"journal\":[82,0,0,0,73,32]}}"
-	hexProof := hex.EncodeToString([]byte(proof))
-
-	task := &types.Task{
-		ID:             1,
-		ProjectID:      uint64(0x1),
-		ProjectVersion: "0.1",
-		Data:           [][]byte{[]byte("data")},
+	conf = &Config{
+		Type: types.OutputEthereumContract,
+		Ethereum: &ethereumConfig{
+			ContractMethod: testMethodName,
+		},
+		prvKeyECDSA:   "any",
+		prvKeyED25519: "any",
 	}
+)
 
-	t.Run("MissMethod", func(t *testing.T) {
-		contractMissMethod := "setProof1"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMissMethod)
-		r.NoError(err)
+func patchEthereumContractSendTX(p *Patches, txhash string, err error) *Patches {
+	return p.ApplyPrivateMethod(&ethereumContract{}, "sendTX",
+		func(contract *ethereumContract, ctx context.Context, data []byte) (string, error) {
+			return txhash, err
+		},
+	)
+}
 
-		_, err = contract.Output(task, []byte("proof"))
-		r.EqualError(err, "contract abi miss the contract method setProof1")
+func Test_ethereumContract_Output(t *testing.T) {
+	r := require.New(t)
+	txHashRet := "anyTxHash"
+
+	t.Run("BuildParameters", func(t *testing.T) {
+		t.Run("Proof", func(t *testing.T) {
+			p := NewPatches()
+			defer p.Reset()
+			p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+			conf.Ethereum.ContractAbiJSON = testABIProofInputOnlyMethod
+			o, err := conf.Output()
+			r.NoError(err)
+			r.Equal(o.Type(), types.OutputEthereumContract)
+
+			txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
+			r.Equal(txHash, txHashRet)
+			r.NoError(err)
+		})
+
+		t.Run("ProjectID", func(t *testing.T) {
+			p := NewPatches()
+			defer p.Reset()
+			p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+			conf.Ethereum.ContractAbiJSON = testABIProjectInputOnlyMethod
+			o, err := conf.Output()
+			r.NoError(err)
+			r.Equal(o.Type(), types.OutputEthereumContract)
+
+			txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
+			r.Equal(txHash, txHashRet)
+			r.NoError(err)
+		})
+
+		t.Run("Receiver", func(t *testing.T) {
+			p := NewPatches()
+			defer p.Reset()
+
+			p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+			conf.Ethereum.ContractAbiJSON = testABIReceiverInputOnlyMethod
+			o, err := conf.Output()
+			r.NoError(err)
+			r.Equal(o.Type(), types.OutputEthereumContract)
+
+			t.Run("ReceiverAddressNotInConfig", func(t *testing.T) {
+				txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
+				r.Equal(txHash, "")
+				r.Equal(err, errMissingReceiverParam)
+			})
+
+			conf.Ethereum.ReceiverAddress = "0x"
+			o, err = conf.Output()
+			r.NoError(err)
+			r.Equal(o.Type(), types.OutputEthereumContract)
+
+			t.Run("Success", func(t *testing.T) {
+				txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
+				r.Equal(txHash, txHashRet)
+				r.NoError(err)
+			})
+		})
+
+		t.Run("DataSnark", func(t *testing.T) {
+			conf.Ethereum.ContractAbiJSON = testABIDataSnarkInputOnlyMethod
+			o, err := conf.Output()
+			r.NoError(err)
+			r.Equal(o.Type(), types.OutputEthereumContract)
+
+			t.Run("FailedToDecodeProof", func(t *testing.T) {
+				txHash, err := o.Output(&types.Task{}, []byte("INVALID_HEX_DECODE"))
+				r.Equal(txHash, "")
+				r.Error(err)
+			})
+			proof := &struct {
+				Snark map[string]string `json:"Snark"`
+			}{
+				Snark: make(map[string]string),
+			}
+			t.Run("MissingSnarkField", func(t *testing.T) {
+				data, err := json.Marshal(proof)
+				r.NoError(err)
+				hexdata := hex.EncodeToString(data)
+
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
+				r.Equal(txHash, "")
+				r.Equal(err, errSnarkProofDataMissingFieldSnark)
+			})
+			t.Run("MissingPostStateDigestField", func(t *testing.T) {
+				proof.Snark["snark"] = "any"
+				data, err := json.Marshal(proof)
+				r.NoError(err)
+				hexdata := hex.EncodeToString(data)
+
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
+				r.Equal(txHash, "")
+				r.Equal(err, errSnarkProofDataMissingFieldPostStateDigest)
+			})
+			t.Run("MissingJournalField", func(t *testing.T) {
+				proof.Snark["post_state_digest"] = "any"
+				data, err := json.Marshal(proof)
+				r.NoError(err)
+				hexdata := hex.EncodeToString(data)
+
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
+				r.Equal(txHash, "")
+				r.Equal(err, errSnarkProofDataMissingFieldJournal)
+			})
+
+			proof.Snark["journal"] = "any"
+			data, err := json.Marshal(proof)
+			r.NoError(err)
+			hexdata := hex.EncodeToString(data)
+
+			t.Run("FailedToNewABIType", func(t *testing.T) {
+				p := NewPatches()
+				defer p.Reset()
+				p = p.ApplyFuncReturn(abi.NewType, nil, errors.New(t.Name()))
+
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
+				r.Equal(txHash, "")
+				r.ErrorContains(err, t.Name())
+			})
+
+			t.Run("FailedToPackArgs", func(t *testing.T) {
+				p := NewPatches()
+				defer p.Reset()
+
+				p = p.ApplyFuncReturn(abi.NewType, abi.Type{}, nil)
+				p = p.ApplyMethodReturn(abi.Arguments{}, "Pack", nil, errors.New(t.Name()))
+
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
+				r.Equal(txHash, "")
+				r.ErrorContains(err, t.Name())
+			})
+
+			t.Run("Success", func(t *testing.T) {
+				p := NewPatches()
+				defer p.Reset()
+
+				p = p.ApplyFuncReturn(abi.NewType, abi.Type{}, nil)
+				p = p.ApplyMethodReturn(abi.Arguments{}, "Pack", []byte("any"), nil)
+				p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
+				r.Equal(txHash, txHashRet)
+				r.NoError(err)
+			})
+		})
+		t.Run("Default", func(t *testing.T) {
+			p := NewPatches()
+			defer p.Reset()
+			p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+			t.Run("MissingMethodNameParam", func(t *testing.T) {
+				conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod
+				o, err := conf.Output()
+				r.NoError(err)
+				r.Equal(o.Type(), types.OutputEthereumContract)
+
+				txHash, err := o.Output(&types.Task{
+					Data: [][]byte{[]byte(`{"other":""}`)},
+				}, nil)
+				r.Equal(txHash, "")
+				r.Error(err)
+			})
+
+			t.Run("BuildParamsByType", func(t *testing.T) {
+				task := &types.Task{
+					Data: [][]byte{[]byte(`{"other":"any"}`)},
+				}
+
+				t.Run("Address", func(t *testing.T) {
+					conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod_address
+					o, err := conf.Output()
+					r.NoError(err)
+					r.Equal(o.Type(), types.OutputEthereumContract)
+
+					txHash, err := o.Output(task, nil)
+					r.Equal(txHash, txHashRet)
+					r.NoError(err)
+				})
+				t.Run("Uint256", func(t *testing.T) {
+					conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod_uint256
+					o, err := conf.Output()
+					r.NoError(err)
+					r.Equal(o.Type(), types.OutputEthereumContract)
+
+					txHash, err := o.Output(task, nil)
+					r.Equal(txHash, txHashRet)
+					r.NoError(err)
+				})
+				t.Run("Other", func(t *testing.T) {
+					conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod
+					o, err := conf.Output()
+					r.NoError(err)
+					r.Equal(o.Type(), types.OutputEthereumContract)
+
+					txHash, err := o.Output(task, nil)
+					r.NoError(err)
+					r.Equal(txHash, txHashRet)
+				})
+			})
+		})
 	})
 
-	t.Run("MissReceiverAddress", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMethod)
-		r.NoError(err)
+	// empty input to skip build parameters
+	conf.Ethereum.ContractAbiJSON = `[{"inputs":[], "outputs":[], "name":"testMethod", "type": "function"}]`
+	o, err := conf.Output()
+	r.NoError(err)
+	r.Equal(o.Type(), types.OutputEthereumContract)
 
-		_, err = contract.Output(task, []byte("this is proof"))
-		r.ErrorContains(err, "miss param")
+	t.Run("PackTxData", func(t *testing.T) {
+		t.Run("FailedToPack", func(t *testing.T) {
+			p := NewPatches()
+			defer p.Reset()
+
+			p = p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, errors.New(t.Name()))
+
+			txHash, err := o.Output(&types.Task{}, nil)
+
+			r.Equal(txHash, "")
+			r.ErrorContains(err, t.Name())
+		})
 	})
 
-	t.Run("GetPostStateDigestFailed", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
-		r.NoError(err)
+	t.Run("SendTxData", func(t *testing.T) {
+		t.Run("FailedToSendTx", func(t *testing.T) {
+			p := NewPatches()
+			defer p.Reset()
+			p = patchEthereumContractSendTX(p, "", errors.New(t.Name()))
 
-		_, err = contract.Output(task, []byte(hexProof))
-		r.ErrorContains(err, "get Snark.post_state_digest failed")
+			txHash, err := o.Output(&types.Task{}, nil)
+
+			r.Equal(txHash, "")
+			r.ErrorContains(err, t.Name())
+		})
 	})
 
-	t.Run("MissProofSnarkParam", func(t *testing.T) {
-		contractSnarkAbiJSON := `[{"inputs":[],"name":"getJournal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getPostStateDigest","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getProjectId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getSeal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes","name":"_proof","type":"bytes"}],"name":"setProof","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_projectId","type":"uint256"},{"internalType":"address","name":"_receiver","type":"address"},{"internalType":"bytes","name":"proof_snark_seal","type":"bytes"},{"internalType":"bytes","name":"proof_snark_post_state_digest","type":"bytes"},{"internalType":"bytes","name":"proof_snark_journal","type":"bytes"}],"name":"submit","outputs":[],"stateMutability":"nonpayable","type":"function"}]`
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractSnarkAbiJSON, contractMethod)
+	t.Run("Success", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+		p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+		txHash, err := o.Output(&types.Task{}, nil)
+
+		r.Equal(txHash, txHashRet)
 		r.NoError(err)
-
-		_, err = contract.Output(task, []byte("this is proof"))
-		r.ErrorContains(err, "miss param")
-	})
-
-	t.Run("MissParam", func(t *testing.T) {
-		contractMissParamAbiJSON := `[{"inputs":[{"internalType":"address","name":"depinRC20Address","type":"address"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"sender","type":"address"},{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"mine","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"depinRC20","outputs":[{"internalType":"contract IDepinRC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}]`
-		contractMissParamMethod := "mine"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractMissParamAbiJSON, contractMissParamMethod)
-		r.NoError(err)
-
-		_, err = contract.Output(task, []byte("this is proof"))
-		r.ErrorContains(err, "miss param")
-	})
-
-	t.Run("TransactionFailed", func(t *testing.T) {
-		contractAbiJSON = `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
-		contractMethod = "setProof"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
-		r.NoError(err)
-
-		_, err = contract.Output(task, []byte("this is proof"))
-		r.ErrorContains(err, "transaction failed")
 	})
 }
 
-func TestEthereumContract_SendTX(t *testing.T) {
+func Test_ethereumContract_sendTX(t *testing.T) {
 	r := require.New(t)
 
-	contract := &ethereumContract{}
+	conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod
+	o, err := conf.Output()
+	r.Equal(o.Type(), types.OutputEthereumContract)
+	r.NoError(err)
+	contract := o.(*ethereumContract)
+
 	ctx := context.Background()
 
 	t.Run("DialEthFailed", func(t *testing.T) {
@@ -137,7 +325,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 
 		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 
-		_, err := contract.sendTX(ctx, "", "", "", nil)
+		_, err := contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -151,7 +339,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", nil, errors.New(t.Name()))
 
-		_, err := contract.sendTX(ctx, "", "", "", nil)
+		_, err := contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -165,7 +353,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, "", "", "", nil)
+		_, err := contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -180,7 +368,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", nil, errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, "", "", "", nil)
+		_, err := contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -196,7 +384,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", nil, errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, "", "", "", nil)
+		_, err := contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -213,7 +401,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
 		p = p.ApplyFuncReturn(ethtypes.SignTx, nil, errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, "", "", "", nil)
+		_, err := contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -231,7 +419,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
 		p = p.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, "", "", "", nil)
+		_, err := contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -250,7 +438,7 @@ func TestEthereumContract_SendTX(t *testing.T) {
 		p = p.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", nil)
 		p = p.ApplyMethodReturn(&ethtypes.Transaction{}, "Hash", common.Hash{})
-		tx, err := contract.sendTX(ctx, "", "", "", nil)
+		tx, err := contract.sendTX(ctx, nil)
 		r.NoError(err)
 		r.Equal(tx, "0x0000000000000000000000000000000000000000000000000000000000000000")
 	})

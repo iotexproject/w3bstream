@@ -21,10 +21,14 @@ type solanaProgram struct {
 	stateAccountPK string
 }
 
+func (e *solanaProgram) Type() types.Output {
+	return types.OutputSolanaProgram
+}
+
 func (e *solanaProgram) Output(task *types.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to solana program", "chain endpoint", e.endpoint)
 	ins := e.packInstructions(proof)
-	txHash, err := e.sendTX(e.endpoint, e.secretKey, ins)
+	txHash, err := e.sendTX(ins)
 	if err != nil {
 		return "", err
 	}
@@ -32,9 +36,9 @@ func (e *solanaProgram) Output(task *types.Task, proof []byte) (string, error) {
 	return txHash, nil
 }
 
-func (e *solanaProgram) sendTX(endpoint, privateKey string, ins []soltypes.Instruction) (string, error) {
-	cli := client.NewClient(endpoint)
-	b := common.FromHex(privateKey)
+func (e *solanaProgram) sendTX(ins []soltypes.Instruction) (string, error) {
+	cli := client.NewClient(e.endpoint)
+	b := common.FromHex(e.secretKey)
 	pk := ed25519.PrivateKey(b)
 	account := soltypes.Account{
 		PublicKey:  solcommon.PublicKeyFromBytes(pk.Public().(ed25519.PublicKey)),
@@ -95,16 +99,4 @@ func (e *solanaProgram) packInstructions(proof []byte) []soltypes.Instruction {
 			Data:      e.encodeData(proof),
 		},
 	}
-}
-
-func NewSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) (Output, error) {
-	if len(secretKey) == 0 {
-		return nil, errors.New("secretkey is empty")
-	}
-	return &solanaProgram{
-		endpoint:       endpoint,
-		programID:      programID,
-		secretKey:      secretKey,
-		stateAccountPK: stateAccountPK,
-	}, nil
 }

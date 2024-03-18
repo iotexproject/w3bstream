@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
+	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil"
@@ -138,7 +139,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		Code:         "code",
 		CodeExpParam: "codeExpParam",
 		VMType:       "vmType",
-		Output:       project.OutputConfig{},
+		Output:       output.Config{},
 		Aggregation:  project.AggregationConfig{},
 		Version:      "",
 	}
