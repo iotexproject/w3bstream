@@ -100,6 +100,31 @@ func GormDBModel(p *Patches, ret *gorm.DB) *Patches {
 	)
 }
 
+func GormDBSelect(p *Patches, ret *gorm.DB) *Patches {
+	return p.ApplyMethod(
+		_targetGormDatabase,
+		"Select",
+		func(_ *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
+			return ret
+		},
+	)
+}
+
+func GormDBTake(p *Patches, inputmut any, ret *gorm.DB) *Patches {
+	return p.ApplyMethod(
+		_targetGormDatabase,
+		"Take",
+		func(_ *gorm.DB, v any, cond ...any) *gorm.DB {
+			vi := reflect.ValueOf(inputmut)
+			vo := reflect.ValueOf(v)
+			if vi.IsValid() && vo.IsValid() {
+				vo.Elem().Set(vi.Elem())
+			}
+			return ret
+		},
+	)
+}
+
 func GormDBUpdate(p *Patches, ret *gorm.DB) *Patches {
 	return p.ApplyMethod(
 		_targetGormDatabase,
