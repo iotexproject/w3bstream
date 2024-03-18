@@ -20,6 +20,7 @@ type Config struct {
 	IPFSEndpoint           string `env:"IPFS_ENDPOINT"`
 	IoID                   string `env:"IO_ID"`
 	ProjectFileDirectory   string `env:"PROJECT_FILE_DIRECTORY,optional"`
+	ProjectCacheDirectory  string `env:"PROJECT_CACHE_DIRECTORY,optional"`
 	LogLevel               int    `env:"LOG_LEVEL,optional"`
 	env                    string `env:"-"`
 }
@@ -52,6 +53,7 @@ var (
 		IoTeXChainID:           2,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		IoID:                   "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6SNgp8",
+		ProjectCacheDirectory:  "./project_cache",
 		LogLevel:               int(slog.LevelDebug),
 	}
 

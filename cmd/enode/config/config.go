@@ -20,6 +20,7 @@ type Config struct {
 	OperatorPrivateKey        string `env:"OPERATOR_PRIVATE_KEY,optional"`
 	OperatorPrivateKeyED25519 string `env:"OPERATOR_PRIVATE_KEY_ED25519,optional"`
 	ProjectFileDirectory      string `env:"PROJECT_FILE_DIRECTORY,optional"`
+	ProjectCacheDirectory     string `env:"PROJECT_CACHE_DIRECTORY,optional"`
 	LogLevel                  int    `env:"LOG_LEVEL,optional"`
 	env                       string `env:"-"`
 }
@@ -49,6 +50,7 @@ var (
 		ProjectContractAddress: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		DIDAuthServerEndpoint:  "localhost:9999",
+		ProjectCacheDirectory:  "./project_cache",
 		LogLevel:               int(slog.LevelDebug),
 	}
 	// integration default config for enode; all config elements come from Makefile in `integration_test` entry

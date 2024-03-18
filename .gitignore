@@ -35,3 +35,5 @@ examples/*/pkg/
 
 .vscode
 bin
+
+project_cache
