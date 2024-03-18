@@ -26,6 +26,7 @@ type Manager struct {
 	instance     *contracts.Contracts
 	ipfsEndpoint string
 	notify       chan uint64
+	cache        *cache
 	// znodes       []string
 	// ioID         string
 }
@@ -93,16 +94,24 @@ func (m *Manager) doProjectRegistrarWatch(logs <-chan *types.Log, subs event.Sub
 			Uri:       ev.Uri,
 			Hash:      ev.Hash,
 		}
-		cs, err := pm.GetConfigs(m.ipfsEndpoint)
+		data, err := pm.GetConfigData(m.ipfsEndpoint)
 		if err != nil {
-			slog.Error("fetch project failed", "err", err)
+			slog.Error("failed to fetch project", "error", err, "project_id", ev.ProjectId)
 			return
 		}
-
+		cs, err := convertConfigs(data)
+		if err != nil {
+			slog.Error("failed to convert project configs", "error", err, "project_id", ev.ProjectId)
+			return
+		}
 		for _, c := range cs {
 			slog.Info("monitor project", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
 			m.Set(pm.ProjectID, c.Version, c)
 		}
+		if m.cache != nil {
+			m.cache.set(ev.ProjectId, data)
+		}
+
 		select {
 		case m.notify <- pm.ProjectID:
 		default:
@@ -156,15 +165,32 @@ func (m *Manager) fillProjectPoolFromContract() {
 			Hash:      mp.Hash,
 			Paused:    mp.Paused,
 		}
-		cs, err := pm.GetConfigs(m.ipfsEndpoint)
+
+		var data []byte
+		cached := true
+		if m.cache != nil {
+			data = m.cache.get(projectID, mp.Hash[:])
+		}
+		if len(data) == 0 {
+			cached = false
+			data, err = pm.GetConfigData(m.ipfsEndpoint)
+			if err != nil {
+				slog.Error("failed to fetch project", "error", err, "project_id", projectID)
+				continue
+			}
+		}
+		cs, err := convertConfigs(data)
 		if err != nil {
-			slog.Error("failed to fetch project", "error", err)
+			slog.Error("failed to convert project config", "error", err, "project_id", projectID)
 			continue
 		}
 
 		for _, c := range cs {
 			slog.Debug("contract project loaded", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
 			m.Set(projectID, c.Version, c)
+		}
+		if !cached && m.cache != nil {
+			m.cache.set(projectID, data)
 		}
 	}
 }
@@ -208,17 +234,21 @@ func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
 	}
 }
 
-func (m *Manager) fillProjectPool(projectFileDir string) {
-	m.fillProjectPoolFromContract()
-	m.fillProjectPoolFromLocal(projectFileDir)
-}
-
-func NewManager(chainEndpoint, contractAddress, projectFileDir, ipfsEndpoint string) (*Manager, error) {
+func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir, ipfsEndpoint string) (*Manager, error) {
+	var c *cache
+	var err error
+	if projectCacheDir != "" {
+		c, err = newCache(projectCacheDir)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to new cache")
+		}
+	}
 	m := &Manager{
 		pool:         make(map[key]*Config),
 		projectIDs:   make(map[uint64]bool),
 		ipfsEndpoint: ipfsEndpoint,
 		notify:       make(chan uint64, 32),
+		cache:        c,
 	}
 
 	if contractAddress != "" {

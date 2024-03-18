@@ -111,7 +111,7 @@ func runZnode(conf *znodeconfig.Config) {
 		},
 	)
 
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IPFSEndpoint)
+	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func runEnode(conf *enodeconfig.Config) {
 
 	_ = clients.NewManager()
 
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IPFSEndpoint)
+	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}

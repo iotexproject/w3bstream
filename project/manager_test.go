@@ -27,7 +27,7 @@ func TestNewManager(t *testing.T) {
 	t.Run("FailedToDialChain", func(t *testing.T) {
 		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "", "")
+		_, err := NewManager("", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 	p = p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
@@ -35,7 +35,7 @@ func TestNewManager(t *testing.T) {
 	t.Run("FailedToNewContracts", func(t *testing.T) {
 		p = p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "", "")
+		_, err := NewManager("", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 	p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
@@ -44,7 +44,7 @@ func TestNewManager(t *testing.T) {
 		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func(string) {})
 		p = p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "", "")
+		_, err := NewManager("", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 	p = p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
@@ -54,7 +54,7 @@ func TestNewManager(t *testing.T) {
 		p = p.ApplyMethodReturn(&Monitor{}, "MustEvents", make(chan *types.Log))
 		p = p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 
-		_, err := NewManager("", "", "", "")
+		_, err := NewManager("", "", "", "", "")
 		r.NoError(err)
 	})
 }
@@ -131,7 +131,8 @@ func TestManager_doProjectRegistrarWatch(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&contracts.ContractsFilterer{}, "ParseProjectUpserted", &contracts.ContractsProjectUpserted{ProjectId: 1}, nil)
-		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigData", []byte{}, nil)
+		p = p.ApplyFuncReturn(convertConfigs, []*Config{{}}, nil)
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -219,7 +220,7 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 			},
 		}
 		p = p.ApplyMethodSeq(&contracts.ContractsCaller{}, "Projects", outputs)
-		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", nil, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigData", nil, errors.New(t.Name()))
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -250,7 +251,8 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 			},
 		}
 		p = p.ApplyMethodSeq(&contracts.ContractsCaller{}, "Projects", outputs)
-		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigs", []*Config{{}}, nil)
+		p = p.ApplyMethodReturn(&ProjectMeta{}, "GetConfigData", []byte{}, nil)
+		p = p.ApplyFuncReturn(convertConfigs, []*Config{{}}, nil)
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
@@ -366,23 +368,6 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 			pool:       map[key]*Config{},
 		}
 		m.fillProjectPoolFromLocal("test")
-		r.Equal(len(m.GetAllProjectID()), 0)
-	})
-}
-
-func TestManager_fillProjectPool(t *testing.T) {
-	r := require.New(t)
-	p := gomonkey.NewPatches()
-	defer p.Reset()
-
-	t.Run("Success", func(t *testing.T) {
-		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPoolFromContract", func() {})
-		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPoolFromLocal", func(string) {})
-
-		m := &Manager{
-			projectIDs: map[uint64]bool{},
-		}
-		m.fillProjectPool("")
 		r.Equal(len(m.GetAllProjectID()), 0)
 	})
 }

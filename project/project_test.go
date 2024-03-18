@@ -66,7 +66,7 @@ func TestProjectMeta_GetConfigs_init(t *testing.T) {
 	t.Run("InvalidUri", func(t *testing.T) {
 		p = p.ApplyFuncReturn(url.Parse, nil, errors.New(t.Name()))
 
-		_, err := (&ProjectMeta{}).GetConfigs("")
+		_, err := (&ProjectMeta{}).GetConfigData("")
 		r.ErrorContains(err, t.Name())
 	})
 }
@@ -100,7 +100,7 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 	t.Run("FailedToGetHTTP", func(t *testing.T) {
 		p = p.ApplyFuncReturn(http.Get, nil, errors.New(t.Name()))
 
-		_, err := pm.GetConfigs("")
+		_, err := pm.GetConfigData("")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToIOReadAll", func(t *testing.T) {
@@ -109,7 +109,7 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 		}, nil)
 		p = p.ApplyFuncReturn(io.ReadAll, nil, errors.New(t.Name()))
 
-		_, err := pm.GetConfigs("")
+		_, err := pm.GetConfigData("")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("HashMismatch", func(t *testing.T) {
@@ -117,20 +117,12 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 
 		npm := *pm
 		npm.Hash = [32]byte{}
-		_, err := npm.GetConfigs("")
-		r.ErrorContains(err, "validate project config hash failed")
+		_, err := npm.GetConfigData("")
+		r.ErrorContains(err, "failed to validate project config hash")
 	})
 	t.Run("Success", func(t *testing.T) {
-		resultConfigs, err := pm.GetConfigs("")
+		_, err := pm.GetConfigData("")
 		r.NoError(err)
-		r.Equal(len(resultConfigs), len(cs))
-		r.Equal(resultConfigs[0].Code, "i am code")
-	})
-	t.Run("FailedToUnmarshalJson", func(t *testing.T) {
-		p = p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
-
-		_, err := pm.GetConfigs("")
-		r.ErrorContains(err, t.Name())
 	})
 }
 
@@ -145,7 +137,7 @@ func TestProjectMeta_GetConfigs_ipfs(t *testing.T) {
 	t.Run("FailedToGetIPFS", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 
-		_, err := pm.GetConfigs("")
+		_, err := pm.GetConfigData("")
 		r.ErrorContains(err, t.Name())
 	})
 }
@@ -162,7 +154,7 @@ func TestProjectMeta_GetConfigs_default(t *testing.T) {
 	t.Run("FailedToGetIPFS", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 
-		_, err := pm.GetConfigs("")
+		_, err := pm.GetConfigData("")
 		r.ErrorContains(err, t.Name())
 	})
 }
