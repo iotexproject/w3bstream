@@ -19,66 +19,88 @@ import (
 )
 
 func TestNewProcessor(t *testing.T) {
-	require := require.New(t)
-	patches := NewPatches()
-	defer patches.Reset()
+	r := require.New(t)
 
 	ps := &p2p.PubSubs{}
 
 	t.Run("NewFailed", func(t *testing.T) {
-		patches = testp2p.P2pNewPubSubs(patches, nil, errors.New(t.Name()))
+		p := NewPatches()
+		defer p.Reset()
+		p = testp2p.P2pNewPubSubs(p, nil, errors.New(t.Name()))
 		_, err := NewProcessor(nil, nil, "", 0)
-		require.ErrorContains(err, t.Name())
+		r.ErrorContains(err, t.Name())
 	})
-	patches = testp2p.P2pNewPubSubs(patches, ps, nil)
 
 	t.Run("AddProjectFailed", func(t *testing.T) {
-		patches = testproject.ProjectManagerGetAllProjectID(patches, append([]uint64{}, 1))
-		patches = testp2p.P2pPubSubsAdd(patches, errors.New(t.Name()))
+		p := NewPatches()
+		defer p.Reset()
+		p = testp2p.P2pNewPubSubs(p, ps, nil)
+
+		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
+		p = testp2p.P2pPubSubsAdd(p, errors.New(t.Name()))
 		_, err := NewProcessor(nil, nil, "", 0)
-		require.ErrorContains(err, t.Name())
+		r.ErrorContains(err, t.Name())
+	})
+
+	t.Run("NewProcessorSuccess", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+		p = testp2p.P2pNewPubSubs(p, ps, nil)
+		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
+		p = testp2p.P2pPubSubsAdd(p, nil)
+
+		pm := &project.Manager{}
+		ch := make(chan uint64, 1)
+		p = p.ApplyMethodReturn(&project.Manager{}, "GetNotify", ch)
+
+		_, err := NewProcessor(nil, pm, "", 0)
+		r.NoError(err)
 	})
 }
 
 func TestProcessor_ReportFail(t *testing.T) {
-	patches := NewPatches()
-	defer patches.Reset()
-	p := &Processor{}
+	processor := &Processor{}
 
 	t.Run("MarshalFailed", func(t *testing.T) {
-		patches = testutil.JsonMarshal(patches, []byte("any"), errors.New(t.Name()))
-		p.reportFail(&types.Task{}, errors.New(t.Name()), nil)
+		p := NewPatches()
+		defer p.Reset()
+		p = testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
+		processor.reportFail(&types.Task{}, errors.New(t.Name()), nil)
 	})
-	patches = testutil.JsonMarshal(patches, []byte("any"), nil)
 
 	t.Run("PublishFailed", func(t *testing.T) {
-		patches = testutil.TopicPublish(patches, errors.New(t.Name()))
-		p.reportFail(&types.Task{}, errors.New(t.Name()), nil)
+		p := NewPatches()
+		defer p.Reset()
+		p = testutil.JsonMarshal(p, []byte("any"), nil)
+
+		p = testutil.TopicPublish(p, errors.New(t.Name()))
+		processor.reportFail(&types.Task{}, errors.New(t.Name()), nil)
 	})
 }
 
 func TestProcessor_ReportSuccess(t *testing.T) {
-	patches := NewPatches()
-	defer patches.Reset()
-	p := &Processor{}
+	processor := &Processor{}
 
 	t.Run("MarshalFailed", func(t *testing.T) {
-		patches = testutil.JsonMarshal(patches, []byte("any"), errors.New(t.Name()))
-		p.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, nil)
+		p := NewPatches()
+		defer p.Reset()
+		p = testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
+		processor.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, nil)
 	})
-	patches = testutil.JsonMarshal(patches, []byte("any"), nil)
 
 	t.Run("PublishFailed", func(t *testing.T) {
-		patches = testutil.TopicPublish(patches, errors.New(t.Name()))
-		p.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, nil)
+		p := NewPatches()
+		defer p.Reset()
+		p = testutil.JsonMarshal(p, []byte("any"), nil)
+
+		p = testutil.TopicPublish(p, errors.New(t.Name()))
+		processor.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, nil)
 	})
 
 }
 
 func TestProcessor_HandleP2PData(t *testing.T) {
-	patches := NewPatches()
-	defer patches.Reset()
-	p := &Processor{
+	processor := &Processor{
 		vmHandler:      &vm.Handler{},
 		projectManager: nil,
 		ps:             nil,
@@ -89,7 +111,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 			Task:         nil,
 			TaskStateLog: nil,
 		}
-		p.handleP2PData(data, nil)
+		processor.handleP2PData(data, nil)
 	})
 
 	data := &p2p.Data{
@@ -103,11 +125,15 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	}
 
 	t.Run("GetProjectFailed", func(t *testing.T) {
-		patches = processorReportSuccess(patches)
-		patches = testproject.ProjectManagerGet(patches, nil, errors.New(t.Name()))
-		patches = processorReportFail(patches)
-		p.handleP2PData(data, nil)
+		p := NewPatches()
+		defer p.Reset()
+
+		p = processorReportSuccess(p)
+		p = testproject.ProjectManagerGet(p, nil, errors.New(t.Name()))
+		p = processorReportFail(p)
+		processor.handleP2PData(data, nil)
 	})
+
 	conf := &project.Config{
 		Code:         "code",
 		CodeExpParam: "codeExpParam",
@@ -116,19 +142,26 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		Aggregation:  project.AggregationConfig{},
 		Version:      "",
 	}
-	patches = testproject.ProjectManagerGet(patches, conf, nil)
 
 	t.Run("ProofFailed", func(t *testing.T) {
-		patches = processorReportSuccess(patches)
-		patches = vmHandlerHandle(patches, nil, errors.New(t.Name()))
-		patches = processorReportFail(patches)
-		p.handleP2PData(data, nil)
+		p := NewPatches()
+		defer p.Reset()
+		p = testproject.ProjectManagerGet(p, conf, nil)
+
+		p = processorReportSuccess(p)
+		p = vmHandlerHandle(p, nil, errors.New(t.Name()))
+		p = processorReportFail(p)
+		processor.handleP2PData(data, nil)
 	})
-	patches = vmHandlerHandle(patches, []byte("res"), nil)
 
 	t.Run("HandleSuccess", func(t *testing.T) {
-		patches = processorReportSuccess(patches)
-		p.handleP2PData(data, nil)
+		p := NewPatches()
+		defer p.Reset()
+		p = testproject.ProjectManagerGet(p, conf, nil)
+		p = vmHandlerHandle(p, []byte("res"), nil)
+
+		p = processorReportSuccess(p)
+		processor.handleP2PData(data, nil)
 	})
 
 }
