@@ -94,18 +94,22 @@ func (m *Manager) doProjectRegistrarWatch(logs <-chan *types.Log, subs event.Sub
 			Uri:       ev.Uri,
 			Hash:      ev.Hash,
 		}
-		cs, err := pm.GetConfigs(m.ipfsEndpoint)
+		data, err := pm.GetConfigData(m.ipfsEndpoint)
 		if err != nil {
-			slog.Error("fetch project failed", "err", err)
+			slog.Error("failed to fetch project", "error", err, "project_id", ev.ProjectId)
 			return
 		}
-
+		cs, err := convertConfigs(data)
+		if err != nil {
+			slog.Error("failed to convert project configs", "error", err, "project_id", ev.ProjectId)
+			return
+		}
 		for _, c := range cs {
 			slog.Info("monitor project", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
 			m.Set(pm.ProjectID, c.Version, c)
 		}
 		if m.cache != nil {
-			m.cache.set(ev.ProjectId, cs)
+			m.cache.set(ev.ProjectId, data)
 		}
 
 		select {
@@ -162,25 +166,31 @@ func (m *Manager) fillProjectPoolFromContract() {
 			Paused:    mp.Paused,
 		}
 
-		var cs []*Config
+		var data []byte
 		cached := true
 		if m.cache != nil {
-			cs = m.cache.get(projectID, mp.Hash[:])
+			data = m.cache.get(projectID, mp.Hash[:])
 		}
-		if len(cs) == 0 {
+		if len(data) == 0 {
 			cached = false
-			cs, err = pm.GetConfigs(m.ipfsEndpoint)
+			data, err = pm.GetConfigData(m.ipfsEndpoint)
 			if err != nil {
-				slog.Error("failed to fetch project", "error", err)
+				slog.Error("failed to fetch project", "error", err, "project_id", projectID)
 				continue
 			}
 		}
+		cs, err := convertConfigs(data)
+		if err != nil {
+			slog.Error("failed to convert project config", "error", err, "project_id", projectID)
+			continue
+		}
+
 		for _, c := range cs {
 			slog.Debug("contract project loaded", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
 			m.Set(projectID, c.Version, c)
 		}
 		if !cached && m.cache != nil {
-			m.cache.set(projectID, cs)
+			m.cache.set(projectID, data)
 		}
 	}
 }
