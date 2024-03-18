@@ -55,7 +55,6 @@ func TestNewProcessor(t *testing.T) {
 
 		_, err := NewProcessor(nil, pm, "", 0)
 		r.NoError(err)
-
 	})
 }
 

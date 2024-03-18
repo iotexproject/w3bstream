@@ -250,3 +250,36 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		r.Equal(uint64(0x1)+1, taskId)
 	})
 }
+
+func TestDispatcher_Dispatch(t *testing.T) {
+	p := NewPatches()
+	defer p.Reset()
+
+	d := &Dispatcher{}
+
+	t.Run("FailedToDispatchTask", func(t *testing.T) {
+		ch := make(chan time.Time, 1)
+		ticker := &time.Timer{C: ch}
+		go func() { ch <- time.Now() }()
+		p = p.ApplyFuncReturn(time.NewTimer, ticker)
+		p = p.ApplyPrivateMethod(d, "dispatchTask", func(nextTaskID uint64) (uint64, error) {
+			return 0, errors.New(t.Name())
+		})
+		go d.Dispatch(uint64(0x1))
+		time.Sleep(1 * time.Second)
+		close(ch)
+	})
+
+	t.Run("DispatchTaskSuccess", func(t *testing.T) {
+		ch := make(chan time.Time, 1)
+		ticker := &time.Timer{C: ch}
+		go func() { ch <- time.Now() }()
+		p = p.ApplyFuncReturn(time.NewTimer, ticker)
+		p = p.ApplyPrivateMethod(d, "dispatchTask", func(nextTaskID uint64) (uint64, error) {
+			return 0, nil
+		})
+		go d.Dispatch(uint64(0x1))
+		time.Sleep(1 * time.Second)
+		close(ch)
+	})
+}
