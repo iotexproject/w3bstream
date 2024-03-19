@@ -46,6 +46,15 @@ func HttpGet(p *Patches, rsp *http.Response, err error) *Patches {
 	)
 }
 
+func HttpNewRequest(p *Patches, req *http.Request, err error) *Patches {
+	return p.ApplyFunc(
+		http.NewRequest,
+		func(method, url string, body io.Reader) (*http.Request, error) {
+			return req, err
+		},
+	)
+}
+
 func URLParse(p *Patches, rsp *url.URL, err error) *Patches {
 	return p.ApplyFunc(
 		url.Parse,

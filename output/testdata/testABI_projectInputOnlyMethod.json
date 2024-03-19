@@ -1,0 +1,19 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_projectId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "projectId",
+        "type": "uint256"
+      }
+    ],
+    "name": "testMethod",
+    "outputs": [],
+    "type": "function"
+  }
+]

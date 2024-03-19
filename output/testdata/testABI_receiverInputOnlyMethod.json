@@ -1,0 +1,19 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_receiver",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      }
+    ],
+    "name": "testMethod",
+    "outputs": [],
+    "type": "function"
+  }
+]
