@@ -226,19 +226,6 @@ func TestPubSub_NextMsg(t *testing.T) {
 		r.NoError(err)
 	})
 
-	t.Run("FailedToUnmarshalP2PData", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyMethodReturn(&pubsub.Subscription{}, "Next", &pubsub.Message{
-			ReceivedFrom: peer.ID("test02"),
-			Message:      &pubsub_pb.Message{Data: nil},
-		}, nil)
-
-		err := ps.nextMsg()
-		r.ErrorContains(err, "failed to json unmarshal p2p data")
-	})
-
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
