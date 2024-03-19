@@ -6,14 +6,13 @@ import (
 	"time"
 
 	. "github.com/agiledragon/gomonkey/v2"
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil/mock"
-	testp2p "github.com/machinefi/sprout/testutil/p2p"
 	testproject "github.com/machinefi/sprout/testutil/project"
 )
 
@@ -30,7 +29,7 @@ func TestNewDispatcher(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = testp2p.P2pNewPubSubs(p, nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 		_, err := NewDispatcher(nil, nil, nil, "", "", "", 0)
 		r.ErrorContains(err, t.Name())
 	})
@@ -38,7 +37,7 @@ func TestNewDispatcher(t *testing.T) {
 	t.Run("New", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testp2p.P2pNewPubSubs(p, nil, nil)
+		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 
 		_, err := NewDispatcher(nil, nil, nil, "", "", "", 0)
 		r.NoError(err)

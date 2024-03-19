@@ -1,0 +1,19 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_proof",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "proof",
+        "type": "bytes"
+      }
+    ],
+    "name": "testMethod",
+    "outputs": [],
+    "type": "function"
+  }
+]

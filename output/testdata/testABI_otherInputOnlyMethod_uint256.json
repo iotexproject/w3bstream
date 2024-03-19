@@ -1,0 +1,16 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "other",
+        "type": "uint256",
+        "indexed": true
+      }
+    ],
+    "name": "testMethod",
+    "outputs": [],
+    "type": "function",
+    "stateMutability": "nonpayable"
+  }
+]

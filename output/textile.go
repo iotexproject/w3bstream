@@ -44,17 +44,21 @@ func (t *textileDB) packData(proof []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to decode proof")
 	}
 
-	valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes")
-	if !valueJournal.Exists() {
-		valueJournal = gjson.GetBytes(proof, "Snark.journal")
-		if !valueJournal.Exists() {
-			return nil, errors.New("proof does not contain journal")
-		}
+	var (
+		result string
+		values []gjson.Result
+	)
+
+	if valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes"); valueJournal.Exists() {
+		values = valueJournal.Array()
+	} else if valueJournal = gjson.GetBytes(proof, "Snark.journal"); valueJournal.Exists() {
+		values = valueJournal.Array()
+	} else {
+		return nil, errors.New("proof does not contain journal")
 	}
 
 	// get result from proof
-	var result string
-	for _, value := range valueJournal.Array() {
+	for _, value := range values {
 		result += fmt.Sprint(value.Int())
 	}
 
@@ -76,16 +80,21 @@ func (t *textileDB) write(data []byte) (string, error) {
 		return "", errors.Wrap(err, "failed to sign data")
 	}
 
+	txHash := hex.EncodeToString(signatureBytes)
+
 	url := fmt.Sprintf("%s?timestamp=%s&signature=%s",
 		t.endpoint,
 		strconv.FormatInt(time.Now().Unix(), 10),
-		hex.EncodeToString(signatureBytes))
-	err = writeEvent(url, data)
-	return "", err
+		txHash)
+	err = writeTextileEvent(url, data)
+	if err != nil {
+		return "", err
+	}
+	return txHash, err
 }
 
-// writeEvent writes a file to a vault via the Basin API.
-func writeEvent(url string, fileData []byte) error {
+// writeTextileEvent writes a file to a vault via the Basin API.
+func writeTextileEvent(url string, fileData []byte) error {
 	req, err := http.NewRequest("POST", url, bytes.NewReader(fileData))
 	if err != nil {
 		return errors.Wrap(err, "failed to create request")
@@ -113,14 +122,11 @@ func writeEvent(url string, fileData []byte) error {
 
 // TODO: refactor textile with a KV database adapter
 func newTextileDBAdapter(vaultID string, secretKey string) (Output, error) {
-	if len(secretKey) == 0 {
-		return nil, errors.New("secretkey is empty")
+	if secretKey == "" {
+		return nil, errors.New("secret key is empty")
 	}
-
-	pk := crypto.ToECDSAUnsafe(common.FromHex(secretKey))
-
 	return &textileDB{
 		endpoint:  fmt.Sprintf("https://basin.tableland.xyz/vaults/%s/events", vaultID),
-		secretKey: pk,
+		secretKey: crypto.ToECDSAUnsafe(common.FromHex(secretKey)),
 	}, nil
 }

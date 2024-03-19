@@ -17,27 +17,29 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+var (
+	errSnarkProofDataMissingFieldSnark           = errors.New("missing field `Snark.snark`")
+	errSnarkProofDataMissingFieldPostStateDigest = errors.New("missing field `Snark.post_state_digest`")
+	errSnarkProofDataMissingFieldJournal         = errors.New("missing field `Snark.journal`")
+	errMissingReceiverParam                      = errors.New("missing receiver param")
+)
+
 type ethereumContract struct {
 	chainEndpoint   string
 	contractAddress string
 	receiverAddress string
 	secretKey       string
 	contractABI     abi.ABI
-	contractMethod  string
+	contractMethod  abi.Method
 }
 
 func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
 	slog.Debug("outputing to ethereum contract", "chain endpoint", e.chainEndpoint)
 
-	method, ok := e.contractABI.Methods[e.contractMethod]
-	if !ok {
-		return "", errors.Errorf("contract abi miss the contract method %s", e.contractMethod)
-	}
-
 	params := []interface{}{}
-	for _, a := range method.Inputs {
+	for _, a := range e.contractMethod.Inputs {
 		switch a.Name {
-		case "proof":
+		case "proof", "_proof":
 			params = append(params, proof)
 
 		case "projectId", "_projectId":
@@ -46,7 +48,7 @@ func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []b
 
 		case "receiver", "_receiver":
 			if e.receiverAddress == "" {
-				return "", errors.Errorf("miss param %s for contract abi", a.Name)
+				return "", errMissingReceiverParam
 			}
 			params = append(params, common.HexToAddress(e.receiverAddress))
 
@@ -57,15 +59,15 @@ func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []b
 			}
 			valueSeal := gjson.GetBytes(proof, "Snark.snark").String()
 			if valueSeal == "" {
-				return "", errors.New("get Snark.snark failed")
+				return "", errSnarkProofDataMissingFieldSnark
 			}
 			valueDigest := gjson.GetBytes(proof, "Snark.post_state_digest").String()
 			if valueDigest == "" {
-				return "", errors.New("get Snark.post_state_digest failed")
+				return "", errSnarkProofDataMissingFieldPostStateDigest
 			}
 			valueJournal := gjson.GetBytes(proof, "Snark.journal").String()
 			if valueJournal == "" {
-				return "", errors.New("get Snark.journal failed")
+				return "", errSnarkProofDataMissingFieldJournal
 			}
 
 			abiBytes, err := abi.NewType("bytes", "", nil)
@@ -102,12 +104,12 @@ func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []b
 			}
 		}
 	}
-	calldata, err := e.contractABI.Pack(e.contractMethod, params...)
+	calldata, err := e.contractABI.Pack(e.contractMethod.Name, params...)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack by contract abi")
 	}
 
-	txHash, err := e.sendTX(context.Background(), e.chainEndpoint, e.secretKey, e.contractAddress, calldata)
+	txHash, err := e.sendTX(context.Background(), calldata)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to send transaction")
 	}
@@ -115,15 +117,15 @@ func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []b
 	return txHash, nil
 }
 
-func (e *ethereumContract) sendTX(ctx context.Context, endpoint, privateKey, toStr string, data []byte) (string, error) {
-	cli, err := ethclient.Dial(endpoint)
+func (e *ethereumContract) sendTX(ctx context.Context, data []byte) (string, error) {
+	cli, err := ethclient.Dial(e.chainEndpoint)
 	if err != nil {
-		return "", errors.Wrapf(err, "dial eth endpoint %s failed", endpoint)
+		return "", errors.Wrapf(err, "dial eth endpoint %s failed", e.chainEndpoint)
 	}
 
-	pk := crypto.ToECDSAUnsafe(common.FromHex(privateKey))
+	pk := crypto.ToECDSAUnsafe(common.FromHex(e.secretKey))
 	sender := crypto.PubkeyToAddress(pk.PublicKey)
-	to := common.HexToAddress(toStr)
+	to := common.HexToAddress(e.contractAddress)
 
 	gasPrice, err := cli.SuggestGasPrice(ctx)
 	if err != nil {
@@ -173,12 +175,16 @@ func (e *ethereumContract) sendTX(ctx context.Context, endpoint, privateKey, toS
 }
 
 func newEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod string) (Output, error) {
+	if secretKey == "" {
+		return nil, errors.New("secret key is empty")
+	}
 	contractABI, err := abi.JSON(strings.NewReader(contractAbiJSON))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to decode contract abi")
 	}
-	if len(secretKey) == 0 {
-		return nil, errors.New("secretkey is empty")
+	method, ok := contractABI.Methods[contractMethod]
+	if !ok {
+		return nil, errors.New("the contract method not exist in abi")
 	}
 	return &ethereumContract{
 		chainEndpoint:   chainEndpoint,
@@ -186,6 +192,6 @@ func newEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, con
 		contractAddress: contractAddress,
 		receiverAddress: receiverAddress,
 		contractABI:     contractABI,
-		contractMethod:  contractMethod,
+		contractMethod:  method,
 	}, nil
 }

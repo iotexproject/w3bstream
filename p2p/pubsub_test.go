@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -13,8 +14,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/machinefi/sprout/testutil"
 )
 
 type mockHost struct{ host.Host }
@@ -159,7 +158,7 @@ func TestPubSubs_Publish(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = testutil.JsonMarshal(p, nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(json.Marshal, nil, errors.New(t.Name()))
 		r.Error(ps.Publish(1, nil))
 	})
 
