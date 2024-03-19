@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil/mock"
@@ -146,7 +147,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
 
-		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(output.New, nil, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
 
@@ -161,7 +162,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
 
-		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(output.New, nil, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
 
@@ -174,7 +175,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
-		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", op, nil)
+		p = p.ApplyFuncReturn(output.New, op, nil)
 
 		op.EXPECT().Output(gomock.Any(), gomock.Any(), gomock.Any()).Return("", errors.New(t.Name())).Times(1)
 		d.handleP2PData(data, nil)
@@ -189,7 +190,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
-		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", op, nil)
+		p = p.ApplyFuncReturn(output.New, op, nil)
 
 		op.EXPECT().Output(gomock.Any(), gomock.Any(), gomock.Any()).Return("", errors.New(t.Name())).Times(1)
 		d.handleP2PData(data, nil)
@@ -204,7 +205,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
-		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", op, nil)
+		p = p.ApplyFuncReturn(output.New, op, nil)
 		op.EXPECT().Output(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).Times(1)
 
 		d.handleP2PData(data, nil)
@@ -219,7 +220,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
-		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", op, nil)
+		p = p.ApplyFuncReturn(output.New, op, nil)
 		op.EXPECT().Output(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).Times(1)
 
 		d.handleP2PData(data, nil)
