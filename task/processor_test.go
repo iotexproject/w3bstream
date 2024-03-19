@@ -37,7 +37,7 @@ func TestNewProcessor(t *testing.T) {
 		p = p.ApplyFuncReturn(p2p.NewPubSubs, ps, nil)
 		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
-		_, err := NewProcessor(nil, nil, "", 0)
+		_, err := NewProcessor(nil, &project.Manager{}, "", 0)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -103,7 +103,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 
 	processor := &Processor{
 		vmHandler:      &vm.Handler{},
-		projectManager: nil,
+		projectManager: &project.Manager{},
 		ps:             nil,
 	}
 
