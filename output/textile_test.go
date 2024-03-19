@@ -91,11 +91,25 @@ func Test_textile_packData(t *testing.T) {
 		r.Error(err)
 	})
 
-	t.Run("MissingFieldStarkJournalBytes", func(t *testing.T) {
+	t.Run("MissingFieldJournalData", func(t *testing.T) {
 		proof := []byte(hex.EncodeToString([]byte(`{}`)))
 		data, err := o.packData(proof)
 		r.Nil(data)
 		r.Error(err)
+	})
+
+	t.Run("HasStarkJournalData", func(t *testing.T) {
+		proof := []byte(hex.EncodeToString([]byte(`{"Stark":{"journal":{"bytes":[1]}}}`)))
+		data, err := o.packData(proof)
+		r.NotEmpty(data)
+		r.NoError(err)
+	})
+
+	t.Run("HasSnarkJournalData", func(t *testing.T) {
+		proof := []byte(hex.EncodeToString([]byte(`{"Snark":{"journal":[1]}}`)))
+		data, err := o.packData(proof)
+		r.NotEmpty(data)
+		r.NoError(err)
 	})
 
 	t.Run("FailedToMarshalData", func(t *testing.T) {

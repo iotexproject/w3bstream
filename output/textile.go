@@ -48,17 +48,20 @@ func (t *textileDB) packData(proof []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to decoding hex string")
 	}
 
-	valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes")
-	//valueJournal := gjson.GetBytes(proof, "Snark.journal")
-	if !valueJournal.Exists() {
+	var (
+		result string
+		values []gjson.Result
+	)
+
+	if valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes"); valueJournal.Exists() {
+		values = valueJournal.Array()
+	} else if valueJournal = gjson.GetBytes(proof, "Snark.journal"); valueJournal.Exists() {
+		values = valueJournal.Array()
+	} else {
 		return nil, errors.New("proof does not contain journal")
 	}
 
 	// get result from proof
-	var (
-		result string
-		values = valueJournal.Array()
-	)
 	for _, value := range values {
 		result += fmt.Sprint(value.Int())
 	}
