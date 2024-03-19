@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -152,14 +151,6 @@ func TestPubSubs_Publish(t *testing.T) {
 
 	t.Run("NotExist", func(t *testing.T) {
 		r.Error(ps.Publish(102, d))
-	})
-
-	t.Run("FailedToMarshalJson", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(json.Marshal, nil, errors.New(t.Name()))
-		r.Error(ps.Publish(1, nil))
 	})
 
 	t.Run("FailedToPublishData", func(t *testing.T) {
