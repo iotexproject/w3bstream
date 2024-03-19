@@ -258,7 +258,7 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		d.datasource = &mockDatasourceSuccess{&Task{ProjectID: uint64(0x1)}}
+		d.datasource = &mockDatasourceSuccess{&Task{ID: uint64(1)}}
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 		_, err := d.dispatchTask(uint64(0x1))
 		r.ErrorContains(err, t.Name())
@@ -282,7 +282,7 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Publish", nil)
 		taskId, err := d.dispatchTask(uint64(0x1))
 		r.NoError(err)
-		r.Equal(uint64(0x1)+1, taskId)
+		r.Equal(uint64(1)+1, taskId)
 	})
 }
 
