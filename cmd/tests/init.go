@@ -20,7 +20,6 @@ import (
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
-	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
 
@@ -104,10 +103,10 @@ func runZnode(conf *znodeconfig.Config) {
 	}
 
 	vmHandler := vm.NewHandler(
-		map[types.VM]string{
-			types.VMRisc0:  conf.Risc0ServerEndpoint,
-			types.VMHalo2:  conf.Halo2ServerEndpoint,
-			types.VMZkwasm: conf.ZKWasmServerEndpoint,
+		map[vm.Type]string{
+			vm.Risc0:  conf.Risc0ServerEndpoint,
+			vm.Halo2:  conf.Halo2ServerEndpoint,
+			vm.ZKwasm: conf.ZKWasmServerEndpoint,
 		},
 	)
 

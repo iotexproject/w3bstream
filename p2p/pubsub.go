@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"strconv"
 	"sync"
@@ -14,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type HandleSubscriptionMessage func(*Data, *pubsub.Topic)
+type HandleSubscriptionMessage func([]byte, *pubsub.Topic)
 
 type PubSubs struct {
 	mux     sync.RWMutex
@@ -56,7 +55,7 @@ func (p *PubSubs) Delete(projectID uint64) {
 	delete(p.pubSubs, projectID)
 }
 
-func (p *PubSubs) Publish(projectID uint64, d *Data) error {
+func (p *PubSubs) Publish(projectID uint64, d []byte) error {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
 
@@ -64,12 +63,8 @@ func (p *PubSubs) Publish(projectID uint64, d *Data) error {
 	if !ok {
 		return errors.Errorf("project %v topic not exist", projectID)
 	}
-	j, err := json.Marshal(d)
-	if err != nil {
-		return errors.Wrap(err, "json marshal p2p data failed")
-	}
-	if err := s.topic.Publish(context.Background(), j); err != nil {
-		return errors.Wrap(err, "publish data to p2p network failed")
+	if err := s.topic.Publish(context.Background(), d); err != nil {
+		return errors.Wrap(err, "failed to publish data to p2p network")
 	}
 	return nil
 }
@@ -136,11 +131,7 @@ func (p *pubSub) nextMsg() error {
 	if m.ReceivedFrom == p.selfID {
 		return nil
 	}
-	d := &Data{}
-	if err := json.Unmarshal(m.Message.Data, d); err != nil {
-		return errors.Wrapf(err, "failed to json unmarshal p2p data")
-	}
-	p.handle(d, p.topic)
+	p.handle(m.Message.Data, p.topic)
 	return nil
 }
 

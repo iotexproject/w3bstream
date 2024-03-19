@@ -15,8 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
-
-	"github.com/machinefi/sprout/types"
 )
 
 type ethereumContract struct {
@@ -28,7 +26,7 @@ type ethereumContract struct {
 	contractMethod  string
 }
 
-func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error) {
+func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
 	slog.Debug("outputing to ethereum contract", "chain endpoint", e.chainEndpoint)
 
 	method, ok := e.contractABI.Methods[e.contractMethod]
@@ -43,7 +41,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			params = append(params, proof)
 
 		case "projectId", "_projectId":
-			i := new(big.Int).SetUint64(task.ProjectID)
+			i := new(big.Int).SetUint64(projectID)
 			params = append(params, i)
 
 		case "receiver", "_receiver":
@@ -87,7 +85,7 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			params = append(params, packed)
 
 		default:
-			value := gjson.GetBytes(task.Data[0], a.Name)
+			value := gjson.GetBytes(taskData[0], a.Name)
 			param := value.String()
 			if param == "" {
 				return "", errors.Errorf("miss param %s for contract abi", a.Name)
@@ -104,14 +102,14 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 			}
 		}
 	}
-	data, err := e.contractABI.Pack(e.contractMethod, params...)
+	calldata, err := e.contractABI.Pack(e.contractMethod, params...)
 	if err != nil {
-		return "", errors.Wrap(err, "contract ABI pack failed")
+		return "", errors.Wrap(err, "failed to pack by contract abi")
 	}
 
-	txHash, err := e.sendTX(context.Background(), e.chainEndpoint, e.secretKey, e.contractAddress, data)
+	txHash, err := e.sendTX(context.Background(), e.chainEndpoint, e.secretKey, e.contractAddress, calldata)
 	if err != nil {
-		return "", errors.Wrap(err, "transaction failed")
+		return "", errors.Wrap(err, "failed to send transaction")
 	}
 
 	return txHash, nil
@@ -174,7 +172,7 @@ func (e *ethereumContract) sendTX(ctx context.Context, endpoint, privateKey, toS
 	return signedTx.Hash().Hex(), nil
 }
 
-func NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod string) (Output, error) {
+func newEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod string) (Output, error) {
 	contractABI, err := abi.JSON(strings.NewReader(contractAbiJSON))
 	if err != nil {
 		return nil, err

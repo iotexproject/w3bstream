@@ -12,64 +12,21 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/utils/ipfs"
+	"github.com/machinefi/sprout/vm"
 )
 
 type Config struct {
 	Code         string            `json:"code"`
 	CodeExpParam string            `json:"codeExpParam,omitempty"`
-	VMType       types.VM          `json:"vmType"`
-	Output       OutputConfig      `json:"output"`
+	VMType       vm.Type           `json:"vmType"`
+	Output       output.Config     `json:"output"`
 	Aggregation  AggregationConfig `json:"aggregation"`
 	Version      string            `json:"version"`
 }
 
 type AggregationConfig struct {
 	Amount uint `json:"amount,omitempty"`
-}
-
-type OutputConfig struct {
-	Type     types.Output   `json:"type"`
-	Ethereum EthereumConfig `json:"ethereum,omitempty"`
-	Solana   SolanaConfig   `json:"solana,omitempty"`
-	Textile  TextileConfig  `json:"textile,omitempty"`
-}
-
-type EthereumConfig struct {
-	ChainEndpoint   string `json:"chainEndpoint"`
-	ContractAddress string `json:"contractAddress"`
-	ReceiverAddress string `json:"receiverAddress,omitempty"`
-	ContractMethod  string `json:"contractMethod"`
-	ContractAbiJSON string `json:"contractAbiJSON"`
-}
-
-type SolanaConfig struct {
-	ChainEndpoint  string `json:"chainEndpoint"`
-	ProgramID      string `json:"programID"`
-	StateAccountPK string `json:"stateAccountPK"`
-}
-
-type TextileConfig struct {
-	VaultID string `json:"vaultID"`
-}
-
-func (c *Config) GetOutput(privateKeyECDSA, privateKeyED25519 string) (output.Output, error) {
-	outConf := c.Output
-
-	switch outConf.Type {
-	case types.OutputEthereumContract:
-		ethConf := outConf.Ethereum
-		return output.NewEthereum(ethConf.ChainEndpoint, privateKeyECDSA, ethConf.ContractAddress, ethConf.ReceiverAddress, ethConf.ContractAbiJSON, ethConf.ContractMethod)
-	case types.OutputSolanaProgram:
-		solConf := outConf.Solana
-		return output.NewSolanaProgram(solConf.ChainEndpoint, solConf.ProgramID, privateKeyED25519, solConf.StateAccountPK)
-	case types.OutputTextile:
-		textileConf := outConf.Textile
-		return output.NewTextileDBAdapter(textileConf.VaultID, privateKeyECDSA)
-	default:
-		return output.NewStdout(), nil
-	}
 }
 
 type ProjectMeta struct {

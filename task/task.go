@@ -1,4 +1,4 @@
-package types
+package task
 
 import "time"
 
@@ -45,4 +45,9 @@ func (s TaskState) String() string {
 	default:
 		return "invalid"
 	}
+}
+
+type p2pData struct {
+	Task         *Task         `json:"task,omitempty"`
+	TaskStateLog *TaskStateLog `json:"taskStateLog,omitempty"`
 }

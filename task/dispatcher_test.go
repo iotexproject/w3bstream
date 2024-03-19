@@ -1,6 +1,7 @@
 package task
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -10,13 +11,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil/mock"
 	testp2p "github.com/machinefi/sprout/testutil/p2p"
 	testproject "github.com/machinefi/sprout/testutil/project"
-	"github.com/machinefi/sprout/types"
 )
+
+type mockPersistence struct{}
+
+func (m *mockPersistence) Create(tl *TaskStateLog) error {
+	return nil
+}
 
 func TestNewDispatcher(t *testing.T) {
 	r := require.New(t)
@@ -41,57 +46,69 @@ func TestNewDispatcher(t *testing.T) {
 }
 
 func TestDispatcher_HandleP2PData(t *testing.T) {
+	r := require.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	op := mock.NewMockOutput(ctrl)
 
 	d := &Dispatcher{
 		pubSubs:                   nil,
-		persistence:               &persistence.Postgres{},
+		persistence:               &mockPersistence{},
 		projectManager:            nil,
 		operatorPrivateKeyECDSA:   "",
 		operatorPrivateKeyED25519: "",
 	}
 
 	t.Run("TaskStateLogNil", func(t *testing.T) {
-		data := &p2p.Data{
+		data, err := json.Marshal(&p2pData{
 			Task:         nil,
 			TaskStateLog: nil,
-		}
+		})
+		r.NoError(err)
 		d.handleP2PData(data, nil)
 	})
 
-	data := &p2p.Data{
+	data, err := json.Marshal(&p2pData{
 		Task: nil,
-		TaskStateLog: &types.TaskStateLog{
-			Task:      types.Task{ID: 1},
-			State:     types.TaskStatePacked,
+		TaskStateLog: &TaskStateLog{
+			Task:      Task{ID: 1},
+			State:     TaskStatePacked,
 			Comment:   "Comment",
 			CreatedAt: time.Now(),
 		},
-	}
+	})
+	r.NoError(err)
 
 	t.Run("FailedToCreateTaskStateLog", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = p.ApplyMethodReturn(&persistence.Postgres{}, "Create", errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&mockPersistence{}, "Create", errors.New(t.Name()))
 		d.handleP2PData(data, nil)
 	})
 
 	t.Run("NotTaskStateProved", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = p.ApplyMethodReturn(&persistence.Postgres{}, "Create", nil)
+		p = p.ApplyMethodReturn(&mockPersistence{}, "Create", nil)
 
 		d.handleP2PData(data, nil)
 	})
 
-	data.TaskStateLog.State = types.TaskStateProved
+	data, err = json.Marshal(&p2pData{
+		Task: nil,
+		TaskStateLog: &TaskStateLog{
+			Task:      Task{ID: 1},
+			State:     TaskStateProved,
+			Comment:   "Comment",
+			CreatedAt: time.Now(),
+		},
+	})
+	r.NoError(err)
 
 	t.Run("FailedToGetProject", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = p.ApplyMethodReturn(&persistence.Postgres{}, "Create", nil)
+		p = p.ApplyMethodReturn(&mockPersistence{}, "Create", nil)
 
 		p = testproject.ProjectManagerGet(p, nil, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
@@ -105,7 +122,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 			{Values: Params{errors.New(t.Name())}},
 		}
-		p = p.ApplyMethodSeq(&persistence.Postgres{}, "Create", outputCell)
+		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
 
 		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", nil, errors.New(t.Name()))
@@ -120,7 +137,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 			{Values: Params{nil}},
 		}
-		p = p.ApplyMethodSeq(&persistence.Postgres{}, "Create", outputCell)
+		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
 
 		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", nil, errors.New(t.Name()))
@@ -134,7 +151,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 			{Values: Params{errors.New(t.Name())}},
 		}
-		p = p.ApplyMethodSeq(&persistence.Postgres{}, "Create", outputCell)
+		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
 		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", op, nil)
 
@@ -149,7 +166,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 			{Values: Params{nil}},
 		}
-		p = p.ApplyMethodSeq(&persistence.Postgres{}, "Create", outputCell)
+		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
 		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", op, nil)
 
@@ -164,7 +181,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 			{Values: Params{errors.New(t.Name())}},
 		}
-		p = p.ApplyMethodSeq(&persistence.Postgres{}, "Create", outputCell)
+		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
 		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", op, nil)
 		op.EXPECT().Output(gomock.Any(), gomock.Any()).Return("", nil).Times(1)
@@ -179,7 +196,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 			{Values: Params{nil}},
 		}
-		p = p.ApplyMethodSeq(&persistence.Postgres{}, "Create", outputCell)
+		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
 		p = testproject.ProjectManagerGet(p, &project.Config{}, nil)
 		p = p.ApplyMethodReturn(&project.Config{}, "GetOutput", op, nil)
 		op.EXPECT().Output(gomock.Any(), gomock.Any()).Return("", nil).Times(1)
@@ -221,7 +238,7 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		ds.EXPECT().Retrieve(gomock.Any()).Return(&types.Task{ProjectID: uint64(0x1)}, nil).Times(1)
+		ds.EXPECT().Retrieve(gomock.Any()).Return(&Task{ProjectID: uint64(0x1)}, nil).Times(1)
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 		_, err := d.dispatchTask(uint64(0x1))
 		r.ErrorContains(err, t.Name())
@@ -231,7 +248,7 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		ds.EXPECT().Retrieve(gomock.Any()).Return(&types.Task{ProjectID: uint64(0x1)}, nil).Times(1)
+		ds.EXPECT().Retrieve(gomock.Any()).Return(&Task{ProjectID: uint64(0x1)}, nil).Times(1)
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Publish", errors.New(t.Name()))
 		_, err := d.dispatchTask(uint64(0x1))
@@ -242,7 +259,7 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		ds.EXPECT().Retrieve(gomock.Any()).Return(&types.Task{ID: uint64(0x1), ProjectID: uint64(0x1)}, nil).Times(1)
+		ds.EXPECT().Retrieve(gomock.Any()).Return(&Task{ID: uint64(0x1), ProjectID: uint64(0x1)}, nil).Times(1)
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Publish", nil)
 		taskId, err := d.dispatchTask(uint64(0x1))

@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
+	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/testutil"
-	"github.com/machinefi/sprout/types"
 )
 
 func TestPostgres_Create(t *testing.T) {
@@ -31,13 +31,13 @@ func TestPostgres_Create(t *testing.T) {
 		ndb.Error = errors.New(t.Name())
 		p = testutil.GormDBCreate(p, nil, &ndb)
 
-		err := v.Create(&types.TaskStateLog{})
+		err := v.Create(&task.TaskStateLog{})
 		r.ErrorContains(err, t.Name())
 	})
 	p = testutil.GormDBCreate(p, nil, db)
 
 	t.Run("Success", func(t *testing.T) {
-		err := v.Create(&types.TaskStateLog{})
+		err := v.Create(&task.TaskStateLog{})
 		r.NoError(err)
 	})
 }

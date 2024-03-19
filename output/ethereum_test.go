@@ -15,8 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/machinefi/sprout/types"
 )
 
 func TestNewEthereum(t *testing.T) {
@@ -27,7 +25,7 @@ func TestNewEthereum(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyFuncReturn(abi.JSON, nil, errors.New(t.Name()))
-		_, err := NewEthereum("", "", "", "", "", "")
+		_, err := newEthereum("", "", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -36,7 +34,7 @@ func TestNewEthereum(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyFuncReturn(abi.JSON, nil, nil)
-		_, err := NewEthereum("", "", "", "", "", "")
+		_, err := newEthereum("", "", "", "", "", "")
 		r.EqualError(err, "secretkey is empty")
 	})
 
@@ -45,7 +43,7 @@ func TestNewEthereum(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyFuncReturn(abi.JSON, nil, nil)
-		_, err := NewEthereum("", "secretKey", "", "", "", "")
+		_, err := newEthereum("", "secretKey", "", "", "", "")
 		r.NoError(err)
 	})
 }
@@ -62,65 +60,59 @@ func TestEthereumContract_Output(t *testing.T) {
 
 	proof := "{\"Snark\":{\"snark\":{\"a\":[[11,176,218,102,82,247],[19,201,71,203,]],\"b\":[[[37,238,237,46],[36,124,137]],[[5,237,77],[41,187,159]]],\"c\":[[31,108,130],[34,189,130]],\"public\":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,197],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5]]},\"journal\":[82,0,0,0,73,32]}}"
 	hexProof := hex.EncodeToString([]byte(proof))
-
-	task := &types.Task{
-		ID:             1,
-		ProjectID:      uint64(0x1),
-		ProjectVersion: "0.1",
-		Data:           [][]byte{[]byte("data")},
-	}
+	data := [][]byte{[]byte("data")}
 
 	t.Run("MissMethod", func(t *testing.T) {
 		contractMissMethod := "setProof1"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMissMethod)
+		contract, err := newEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMissMethod)
 		r.NoError(err)
 
-		_, err = contract.Output(task, []byte("proof"))
+		_, err = contract.Output(1, data, []byte("proof"))
 		r.EqualError(err, "contract abi miss the contract method setProof1")
 	})
 
 	t.Run("MissReceiverAddress", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMethod)
+		contract, err := newEthereum(chainEndpoint, secretKey, contractAddress, "", contractAbiJSON, contractMethod)
 		r.NoError(err)
 
-		_, err = contract.Output(task, []byte("this is proof"))
+		_, err = contract.Output(1, data, []byte("this is proof"))
 		r.ErrorContains(err, "miss param")
 	})
 
 	t.Run("GetPostStateDigestFailed", func(t *testing.T) {
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
+		contract, err := newEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
 		r.NoError(err)
 
-		_, err = contract.Output(task, []byte(hexProof))
+		_, err = contract.Output(1, data, []byte(hexProof))
 		r.ErrorContains(err, "get Snark.post_state_digest failed")
 	})
 
 	t.Run("MissProofSnarkParam", func(t *testing.T) {
 		contractSnarkAbiJSON := `[{"inputs":[],"name":"getJournal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getPostStateDigest","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getProjectId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getSeal","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes","name":"_proof","type":"bytes"}],"name":"setProof","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_projectId","type":"uint256"},{"internalType":"address","name":"_receiver","type":"address"},{"internalType":"bytes","name":"proof_snark_seal","type":"bytes"},{"internalType":"bytes","name":"proof_snark_post_state_digest","type":"bytes"},{"internalType":"bytes","name":"proof_snark_journal","type":"bytes"}],"name":"submit","outputs":[],"stateMutability":"nonpayable","type":"function"}]`
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractSnarkAbiJSON, contractMethod)
+		contract, err := newEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractSnarkAbiJSON, contractMethod)
 		r.NoError(err)
 
-		_, err = contract.Output(task, []byte("this is proof"))
+		_, err = contract.Output(1, data, []byte("this is proof"))
 		r.ErrorContains(err, "miss param")
 	})
 
 	t.Run("MissParam", func(t *testing.T) {
 		contractMissParamAbiJSON := `[{"inputs":[{"internalType":"address","name":"depinRC20Address","type":"address"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"sender","type":"address"},{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"mine","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"depinRC20","outputs":[{"internalType":"contract IDepinRC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}]`
 		contractMissParamMethod := "mine"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractMissParamAbiJSON, contractMissParamMethod)
+		contract, err := newEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractMissParamAbiJSON, contractMissParamMethod)
 		r.NoError(err)
 
-		_, err = contract.Output(task, []byte("this is proof"))
+		_, err = contract.Output(1, data, []byte("this is proof"))
 		r.ErrorContains(err, "miss param")
 	})
 
 	t.Run("TransactionFailed", func(t *testing.T) {
 		contractAbiJSON = `[{"constant":false,"inputs":[{"internalType":"bytes","name":"proof","type":"bytes"}],"name":"setProof","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getProof","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"}]`
 		contractMethod = "setProof"
-		contract, err := NewEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
+		contract, err := newEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod)
 		r.NoError(err)
 
-		_, err = contract.Output(task, []byte("this is proof"))
+		_, err = contract.Output(1, data, []byte("this is proof"))
 		r.ErrorContains(err, "transaction failed")
 	})
 }

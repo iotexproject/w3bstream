@@ -27,7 +27,7 @@ func TestNewPubSubs(t *testing.T) {
 	r := require.New(t)
 
 	var (
-		handle = func(data *Data, topic *pubsub.Topic) {}
+		handle = func(data []byte, topic *pubsub.Topic) {}
 		_host  = &mockHost{}
 	)
 
@@ -149,10 +149,7 @@ func TestPubSubs_Publish(t *testing.T) {
 
 	projectID := uint64(0x1)
 	ps := &PubSubs{pubSubs: map[uint64]*pubSub{1: {}}}
-	d := &Data{
-		Task:         nil,
-		TaskStateLog: nil,
-	}
+	d := []byte("1")
 
 	t.Run("NotExist", func(t *testing.T) {
 		r.Error(ps.Publish(102, d))
@@ -217,7 +214,7 @@ func TestPubSub_NextMsg(t *testing.T) {
 	ps := &pubSub{
 		selfID:       peer.ID("test01"),
 		subscription: &pubsub.Subscription{},
-		handle:       func(data *Data, topic *pubsub.Topic) {},
+		handle:       func(data []byte, topic *pubsub.Topic) {},
 	}
 
 	t.Run("FailedToGetP2PData", func(t *testing.T) {

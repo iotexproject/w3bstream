@@ -1,4 +1,4 @@
-package vm_test
+package vm
 
 import (
 	"encoding/hex"
@@ -8,30 +8,27 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/types"
-	"github.com/machinefi/sprout/vm"
 	"github.com/machinefi/sprout/vm/server"
 )
 
 func TestHandler_Handle(t *testing.T) {
 	r := require.New(t)
 
-	h := vm.NewHandler(
-		map[types.VM]string{
-			types.VMRisc0:  "any",
-			types.VMHalo2:  "any",
-			types.VMZkwasm: "any",
+	h := NewHandler(
+		map[Type]string{
+			Risc0:  "any",
+			Halo2:  "any",
+			ZKwasm: "any",
 		},
 	)
-	task := &types.Task{Data: [][]byte{[]byte("test")}}
 
 	t.Run("MissingMessages", func(t *testing.T) {
-		_, err := h.Handle(nil, types.VMZkwasm, "any", "any")
+		_, err := h.Handle(1, ZKwasm, "any", "any", [][]byte{})
 		r.Error(err)
 	})
 
 	t.Run("UnsupportedVMType", func(t *testing.T) {
-		_, err := h.Handle(&types.Task{}, types.VM("other"), "any", "any")
+		_, err := h.Handle(1, Type("other"), "any", "any", [][]byte{})
 		r.Error(err)
 	})
 
@@ -40,7 +37,7 @@ func TestHandler_Handle(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyMethodReturn(&server.Mgr{}, "Acquire", nil, errors.New(t.Name()))
-		_, err := h.Handle(task, types.VMZkwasm, "any", "any")
+		_, err := h.Handle(1, ZKwasm, "any", "any", [][]byte{})
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -52,7 +49,7 @@ func TestHandler_Handle(t *testing.T) {
 		p = p.ApplyMethod(&server.Mgr{}, "Release", func(*server.Mgr, uint64, *server.Instance) {})
 		p = p.ApplyMethodReturn(&server.Instance{}, "Execute", nil, errors.New(t.Name()))
 
-		_, err := h.Handle(task, types.VMZkwasm, "any", "any")
+		_, err := h.Handle(1, ZKwasm, "any", "any", [][]byte{})
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -65,7 +62,7 @@ func TestHandler_Handle(t *testing.T) {
 		p = p.ApplyMethodReturn(&server.Instance{}, "Execute", []byte("any"), nil)
 		p = p.ApplyFuncReturn(hex.DecodeString, []byte("any"), nil)
 
-		_, err := h.Handle(task, types.VMZkwasm, "any", "any")
+		_, err := h.Handle(1, ZKwasm, "any", "any", [][]byte{})
 		r.NoError(err)
 	})
 }

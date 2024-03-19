@@ -28,6 +28,8 @@ func init() {
 func main() {
 	flag.Parse()
 
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(logLevel)})))
+
 	p, err := newPersistence(databaseDSN)
 	if err != nil {
 		log.Fatal(err)

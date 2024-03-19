@@ -10,8 +10,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
-
-	"github.com/machinefi/sprout/types"
 )
 
 type message struct {
@@ -34,21 +32,14 @@ type persistence struct {
 	db *gorm.DB
 }
 
-func (p *persistence) createMessageTx(tx *gorm.DB, msg *types.Message) error {
-	m := &message{
-		MessageID:      msg.ID,
-		ClientDID:      msg.ClientDID,
-		ProjectID:      msg.ProjectID,
-		ProjectVersion: msg.ProjectVersion,
-		Data:           []byte(msg.Data),
-	}
+func (p *persistence) createMessageTx(tx *gorm.DB, m *message) error {
 	if err := tx.Create(m).Error; err != nil {
 		return errors.Wrap(err, "failed to create message")
 	}
 	return nil
 }
 
-func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *types.Message) error {
+func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message) error {
 	messages := make([]*message, 0)
 	if amount == 0 {
 		amount = 1
@@ -90,7 +81,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *types.Message)
 	return nil
 }
 
-func (p *persistence) save(msg *types.Message, aggregationAmount uint) error {
+func (p *persistence) save(msg *message, aggregationAmount uint) error {
 	return p.db.Transaction(func(tx *gorm.DB) error {
 		if err := p.createMessageTx(tx, msg); err != nil {
 			return err

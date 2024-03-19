@@ -18,8 +18,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tablelandnetwork/basin-cli/pkg/signing"
 	"github.com/tidwall/gjson"
-
-	"github.com/machinefi/sprout/types"
 )
 
 type textileDB struct {
@@ -27,7 +25,7 @@ type textileDB struct {
 	secretKey *ecdsa.PrivateKey
 }
 
-func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
+func (t *textileDB) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
 	slog.Debug("outputing to textileDB", "chain endpoint", t.endpoint)
 	encodedData, err := t.packData(proof)
 	if err != nil {
@@ -42,6 +40,9 @@ func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
 
 func (t *textileDB) packData(proof []byte) ([]byte, error) {
 	proof, err := hex.DecodeString(string(proof))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode proof")
+	}
 
 	valueJournal := gjson.GetBytes(proof, "Stark.journal.bytes")
 	if !valueJournal.Exists() {
@@ -111,7 +112,7 @@ func writeEvent(url string, fileData []byte) error {
 }
 
 // TODO: refactor textile with a KV database adapter
-func NewTextileDBAdapter(vaultID string, secretKey string) (Output, error) {
+func newTextileDBAdapter(vaultID string, secretKey string) (Output, error) {
 	if len(secretKey) == 0 {
 		return nil, errors.New("secretkey is empty")
 	}

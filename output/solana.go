@@ -10,8 +10,6 @@ import (
 	soltypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-
-	"github.com/machinefi/sprout/types"
 )
 
 type solanaProgram struct {
@@ -21,7 +19,7 @@ type solanaProgram struct {
 	stateAccountPK string
 }
 
-func (e *solanaProgram) Output(task *types.Task, proof []byte) (string, error) {
+func (e *solanaProgram) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
 	slog.Debug("outputing to solana program", "chain endpoint", e.endpoint)
 	ins := e.packInstructions(proof)
 	txHash, err := e.sendTX(e.endpoint, e.secretKey, ins)
@@ -97,7 +95,7 @@ func (e *solanaProgram) packInstructions(proof []byte) []soltypes.Instruction {
 	}
 }
 
-func NewSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) (Output, error) {
+func newSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) (Output, error) {
 	if len(secretKey) == 0 {
 		return nil, errors.New("secretkey is empty")
 	}

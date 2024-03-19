@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/project/contracts"
-	wstypes "github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/vm"
 )
 
 func TestNewManager(t *testing.T) {
@@ -293,7 +293,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 	cs := []*Config{
 		{
 			Code:    "i am code",
-			VMType:  wstypes.VMHalo2,
+			VMType:  vm.Halo2,
 			Version: "0.1",
 		},
 	}

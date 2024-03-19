@@ -1,6 +1,7 @@
 package task
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -9,12 +10,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
+	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil"
 	testp2p "github.com/machinefi/sprout/testutil/p2p"
 	testproject "github.com/machinefi/sprout/testutil/project"
-	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
 
@@ -65,7 +66,7 @@ func TestProcessor_ReportFail(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 		p = testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
-		processor.reportFail(&types.Task{}, errors.New(t.Name()), nil)
+		processor.reportFail(&Task{}, errors.New(t.Name()), nil)
 	})
 
 	t.Run("PublishFailed", func(t *testing.T) {
@@ -74,7 +75,7 @@ func TestProcessor_ReportFail(t *testing.T) {
 		p = testutil.JsonMarshal(p, []byte("any"), nil)
 
 		p = testutil.TopicPublish(p, errors.New(t.Name()))
-		processor.reportFail(&types.Task{}, errors.New(t.Name()), nil)
+		processor.reportFail(&Task{}, errors.New(t.Name()), nil)
 	})
 }
 
@@ -85,7 +86,7 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 		p = testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
-		processor.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, nil)
+		processor.reportSuccess(&Task{}, TaskStatePacked, nil, nil)
 	})
 
 	t.Run("PublishFailed", func(t *testing.T) {
@@ -94,12 +95,14 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 		p = testutil.JsonMarshal(p, []byte("any"), nil)
 
 		p = testutil.TopicPublish(p, errors.New(t.Name()))
-		processor.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, nil)
+		processor.reportSuccess(&Task{}, TaskStatePacked, nil, nil)
 	})
 
 }
 
 func TestProcessor_HandleP2PData(t *testing.T) {
+	r := require.New(t)
+
 	processor := &Processor{
 		vmHandler:      &vm.Handler{},
 		projectManager: nil,
@@ -107,22 +110,25 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {
-		data := &p2p.Data{
+		data, err := json.Marshal(&p2pData{
 			Task:         nil,
 			TaskStateLog: nil,
-		}
+		})
+		r.NoError(err)
+
 		processor.handleP2PData(data, nil)
 	})
 
-	data := &p2p.Data{
-		Task: &types.Task{
+	data, err := json.Marshal(&p2pData{
+		Task: &Task{
 			ID:             1,
 			ProjectID:      uint64(0x1),
 			ProjectVersion: "0.1",
 			Data:           [][]byte{[]byte("data")},
 		},
 		TaskStateLog: nil,
-	}
+	})
+	r.NoError(err)
 
 	t.Run("GetProjectFailed", func(t *testing.T) {
 		p := NewPatches()
@@ -138,7 +144,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		Code:         "code",
 		CodeExpParam: "codeExpParam",
 		VMType:       "vmType",
-		Output:       project.OutputConfig{},
+		Output:       output.Config{},
 		Aggregation:  project.AggregationConfig{},
 		Version:      "",
 	}
@@ -168,7 +174,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 
 func processorReportSuccess(p *Patches) *Patches {
 	var pro *Processor
-	return p.ApplyPrivateMethod(pro, "reportSuccess", func(taskID string, state types.TaskState, comment string, topic *pubsub.Topic) {})
+	return p.ApplyPrivateMethod(pro, "reportSuccess", func(taskID string, state TaskState, comment string, topic *pubsub.Topic) {})
 }
 
 func processorReportFail(p *Patches) *Patches {
@@ -181,7 +187,7 @@ func vmHandlerHandle(p *Patches, res []byte, err error) *Patches {
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(handler),
 		"Handle",
-		func(task *types.Task, vmtype types.VM, code string, expParam string) ([]byte, error) {
+		func(projectID uint64, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error) {
 			return res, err
 		},
 	)

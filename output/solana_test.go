@@ -8,20 +8,18 @@ import (
 	soltypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/machinefi/sprout/types"
 )
 
 func TestNewSolanaProgram(t *testing.T) {
 	require := require.New(t)
 
 	t.Run("NewSolana", func(t *testing.T) {
-		_, err := NewSolanaProgram("", "", "secretKey", "")
+		_, err := newSolanaProgram("", "", "secretKey", "")
 		require.NoError(err)
 	})
 
 	t.Run("SecretKeyNil", func(t *testing.T) {
-		_, err := NewSolanaProgram("", "", "", "")
+		_, err := newSolanaProgram("", "", "", "")
 		require.EqualError(err, "secretkey is empty")
 	})
 }
@@ -36,13 +34,13 @@ func TestSolanaProgram_Output(t *testing.T) {
 	t.Run("SendTXFailed", func(t *testing.T) {
 		patches = solanaProgramPackInstructions(patches, nil)
 		patches = solanaProgramSendTX(patches, "", errors.New(t.Name()))
-		_, err := contract.Output(&types.Task{}, []byte("proof"))
+		_, err := contract.Output(1, nil, []byte("proof"))
 		require.EqualError(err, t.Name())
 	})
 
 	t.Run("SendTXSuccess", func(t *testing.T) {
 		patches = solanaProgramSendTX(patches, "hash", nil)
-		txHash, err := contract.Output(&types.Task{}, []byte("proof"))
+		txHash, err := contract.Output(1, nil, []byte("proof"))
 		require.NoError(err)
 		require.Equal("hash", txHash)
 	})
