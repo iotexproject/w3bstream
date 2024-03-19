@@ -14,7 +14,6 @@ import (
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil"
-	testp2p "github.com/machinefi/sprout/testutil/p2p"
 	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/vm"
 )
@@ -27,7 +26,7 @@ func TestNewProcessor(t *testing.T) {
 	t.Run("NewFailed", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testp2p.P2pNewPubSubs(p, nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 		_, err := NewProcessor(nil, nil, "", 0)
 		r.ErrorContains(err, t.Name())
 	})
@@ -35,10 +34,9 @@ func TestNewProcessor(t *testing.T) {
 	t.Run("AddProjectFailed", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testp2p.P2pNewPubSubs(p, ps, nil)
-
+		p = p.ApplyFuncReturn(p2p.NewPubSubs, ps, nil)
 		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
-		p = testp2p.P2pPubSubsAdd(p, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 		_, err := NewProcessor(nil, nil, "", 0)
 		r.ErrorContains(err, t.Name())
 	})
@@ -46,9 +44,9 @@ func TestNewProcessor(t *testing.T) {
 	t.Run("NewProcessorSuccess", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testp2p.P2pNewPubSubs(p, ps, nil)
+		p = p.ApplyFuncReturn(p2p.NewPubSubs, ps, nil)
 		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
-		p = testp2p.P2pPubSubsAdd(p, nil)
+		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 
 		pm := &project.Manager{}
 		ch := make(chan uint64, 1)
