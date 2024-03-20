@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm/proto"
 )
 
@@ -36,13 +35,13 @@ func NewInstance(ctx context.Context, endpoint string, projectID uint64, execute
 	return &Instance{conn: conn, resp: resp}, nil
 }
 
-func (i *Instance) Execute(ctx context.Context, task *types.Task) ([]byte, error) {
+func (i *Instance) Execute(ctx context.Context, projectID uint64, data [][]byte) ([]byte, error) {
 	ds := []string{}
-	for _, d := range task.Data {
+	for _, d := range data {
 		ds = append(ds, string(d))
 	}
 	req := &proto.ExecuteRequest{
-		ProjectID: task.ProjectID,
+		ProjectID: projectID,
 		Datas:     ds,
 	}
 	cli := proto.NewVmRuntimeClient(i.conn)

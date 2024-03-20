@@ -11,8 +11,23 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/utils/ipfs"
+	"github.com/machinefi/sprout/vm"
 )
+
+type Config struct {
+	Code         string            `json:"code"`
+	CodeExpParam string            `json:"codeExpParam,omitempty"`
+	VMType       vm.Type           `json:"vmType"`
+	Output       output.Config     `json:"output"`
+	Aggregation  AggregationConfig `json:"aggregation"`
+	Version      string            `json:"version"`
+}
+
+type AggregationConfig struct {
+	Amount uint `json:"amount,omitempty"`
+}
 
 type ProjectMeta struct {
 	ProjectID uint64

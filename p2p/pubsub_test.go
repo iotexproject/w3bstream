@@ -13,8 +13,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/machinefi/sprout/testutil"
 )
 
 type mockHost struct{ host.Host }
@@ -27,7 +25,7 @@ func TestNewPubSubs(t *testing.T) {
 	r := require.New(t)
 
 	var (
-		handle = func(data *Data, topic *pubsub.Topic) {}
+		handle = func(data []byte, topic *pubsub.Topic) {}
 		_host  = &mockHost{}
 	)
 
@@ -149,21 +147,10 @@ func TestPubSubs_Publish(t *testing.T) {
 
 	projectID := uint64(0x1)
 	ps := &PubSubs{pubSubs: map[uint64]*pubSub{1: {}}}
-	d := &Data{
-		Task:         nil,
-		TaskStateLog: nil,
-	}
+	d := []byte("1")
 
 	t.Run("NotExist", func(t *testing.T) {
 		r.Error(ps.Publish(102, d))
-	})
-
-	t.Run("FailedToMarshalJson", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p = testutil.JsonMarshal(p, nil, errors.New(t.Name()))
-		r.Error(ps.Publish(1, nil))
 	})
 
 	t.Run("FailedToPublishData", func(t *testing.T) {
@@ -217,7 +204,7 @@ func TestPubSub_NextMsg(t *testing.T) {
 	ps := &pubSub{
 		selfID:       peer.ID("test01"),
 		subscription: &pubsub.Subscription{},
-		handle:       func(data *Data, topic *pubsub.Topic) {},
+		handle:       func(data []byte, topic *pubsub.Topic) {},
 	}
 
 	t.Run("FailedToGetP2PData", func(t *testing.T) {
@@ -237,19 +224,6 @@ func TestPubSub_NextMsg(t *testing.T) {
 
 		err := ps.nextMsg()
 		r.NoError(err)
-	})
-
-	t.Run("FailedToUnmarshalP2PData", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyMethodReturn(&pubsub.Subscription{}, "Next", &pubsub.Message{
-			ReceivedFrom: peer.ID("test02"),
-			Message:      &pubsub_pb.Message{Data: nil},
-		}, nil)
-
-		err := ps.nextMsg()
-		r.ErrorContains(err, "failed to json unmarshal p2p data")
 	})
 
 	t.Run("Success", func(t *testing.T) {

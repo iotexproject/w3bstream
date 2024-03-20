@@ -10,24 +10,32 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
 
+type VMHandler interface {
+	Handle(projectID uint64, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error)
+}
+
 type Processor struct {
-	vmHandler      *vm.Handler
-	projectManager *project.Manager
+	vmHandler      VMHandler
+	projectManager ProjectManager
 	ps             *p2p.PubSubs
 }
 
-func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
+func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
+	d := p2pData{}
+	if err := json.Unmarshal(data, &d); err != nil {
+		slog.Error("failed to unmarshal p2p data", "error", err)
+		return
+	}
 	if d.Task == nil {
 		return
 	}
+
 	t := d.Task
 	slog.Debug("get a new task", "task_id", t.ID)
-	r.reportSuccess(t, types.TaskStateDispatched, nil, topic)
+	r.reportSuccess(t, TaskStateDispatched, nil, topic)
 
 	config, err := r.projectManager.Get(t.ProjectID, t.ProjectVersion)
 	if err != nil {
@@ -36,20 +44,20 @@ func (r *Processor) handleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 
-	res, err := r.vmHandler.Handle(t, config.VMType, config.Code, config.CodeExpParam)
+	res, err := r.vmHandler.Handle(t.ProjectID, config.VMType, config.Code, config.CodeExpParam, t.Data)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)
 		return
 	}
-	r.reportSuccess(t, types.TaskStateProved, res, topic)
+	r.reportSuccess(t, TaskStateProved, res, topic)
 }
 
-func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
-	j, err := json.Marshal(&p2p.Data{
-		TaskStateLog: &types.TaskStateLog{
+func (r *Processor) reportFail(t *Task, err error, topic *pubsub.Topic) {
+	d, err := json.Marshal(&p2pData{
+		TaskStateLog: &TaskStateLog{
 			Task:      *t,
-			State:     types.TaskStateFailed,
+			State:     TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		},
@@ -58,14 +66,14 @@ func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
 		slog.Error("failed to marshal p2p task state log data to json", "error", err, "task_id", t.ID)
 		return
 	}
-	if err := topic.Publish(context.Background(), j); err != nil {
+	if err := topic.Publish(context.Background(), d); err != nil {
 		slog.Error("failed to publish task state log data to p2p network", "error", err, "task_id", t.ID)
 	}
 }
 
-func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, topic *pubsub.Topic) {
-	j, err := json.Marshal(&p2p.Data{
-		TaskStateLog: &types.TaskStateLog{
+func (r *Processor) reportSuccess(t *Task, state TaskState, result []byte, topic *pubsub.Topic) {
+	d, err := json.Marshal(&p2pData{
+		TaskStateLog: &TaskStateLog{
 			Task:      *t,
 			State:     state,
 			Result:    result,
@@ -76,7 +84,7 @@ func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result [
 		slog.Error("failed to marshal p2p task state log data to json", "error", err, "task_id", t.ID)
 		return
 	}
-	if err := topic.Publish(context.Background(), j); err != nil {
+	if err := topic.Publish(context.Background(), d); err != nil {
 		slog.Error("failed to publish task state log data to p2p network", "error", err, "task_id", t.ID)
 	}
 }
@@ -85,7 +93,7 @@ func (r *Processor) Run() {
 	// TODO project load & delete
 }
 
-func NewProcessor(vmHandler *vm.Handler, projectManager *project.Manager, bootNodeMultiaddr string, iotexChainID int) (*Processor, error) {
+func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, bootNodeMultiaddr string, iotexChainID int) (*Processor, error) {
 	p := &Processor{
 		vmHandler:      vmHandler,
 		projectManager: projectManager,

@@ -13,11 +13,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"github.com/tablelandnetwork/basin-cli/pkg/signing"
 	"github.com/tidwall/gjson"
-
-	"github.com/machinefi/sprout/types"
 )
 
 type textileDB struct {
@@ -25,11 +25,7 @@ type textileDB struct {
 	secretKey *ecdsa.PrivateKey
 }
 
-func (t *textileDB) Type() types.Output {
-	return types.OutputTextile
-}
-
-func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
+func (t *textileDB) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
 	slog.Debug("outputing to textileDB", "chain endpoint", t.endpoint)
 	encodedData, err := t.packData(proof)
 	if err != nil {
@@ -45,7 +41,7 @@ func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
 func (t *textileDB) packData(proof []byte) ([]byte, error) {
 	proof, err := hex.DecodeString(string(proof))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to decoding hex string")
+		return nil, errors.Wrap(err, "failed to decode proof")
 	}
 
 	var (
@@ -122,4 +118,15 @@ func writeTextileEvent(url string, fileData []byte) error {
 
 	slog.Debug("Write event", "response", string(responseBody))
 	return nil
+}
+
+// TODO: refactor textile with a KV database adapter
+func newTextileDBAdapter(vaultID string, secretKey string) (Output, error) {
+	if secretKey == "" {
+		return nil, errors.New("secret key is empty")
+	}
+	return &textileDB{
+		endpoint:  fmt.Sprintf("https://basin.tableland.xyz/vaults/%s/events", vaultID),
+		secretKey: crypto.ToECDSAUnsafe(common.FromHex(secretKey)),
+	}, nil
 }

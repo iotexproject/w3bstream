@@ -13,8 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/utils/ipfs"
+	"github.com/machinefi/sprout/vm"
 )
 
 func TestProjectMeta_GetConfigs_init(t *testing.T) {
@@ -38,7 +38,7 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 	cs := []*Config{
 		{
 			Code:    "i am code",
-			VMType:  types.VMHalo2,
+			VMType:  vm.Halo2,
 			Version: "0.1",
 		},
 	}

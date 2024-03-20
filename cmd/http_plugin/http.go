@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/types"
+	taskpkg "github.com/machinefi/sprout/task"
 )
 
 type httpServer struct {
@@ -51,12 +51,12 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	}
 
 	id := uuid.NewString()
-	if err := s.p.save(&types.Message{
-		ID:             id,
+	if err := s.p.save(&message{
+		MessageID:      id,
 		ClientDID:      "",
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
-		Data:           req.Data,
+		Data:           []byte(req.Data),
 	}, s.aggregationAmount); err != nil {
 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
 		return
@@ -96,7 +96,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 			return
 		}
 		ss = append(ss, &apitypes.StateLog{
-			State: types.TaskStatePacked.String(),
+			State: taskpkg.TaskStatePacked.String(),
 			Time:  ts[0].CreatedAt,
 		})
 		resp, err := http.Get(fmt.Sprintf("http://%s/%s/%d/%d", s.enodeAddress, "task", m.ProjectID, ts[0].ID))

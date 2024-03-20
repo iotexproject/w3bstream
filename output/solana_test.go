@@ -8,8 +8,6 @@ import (
 	soltypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/machinefi/sprout/types"
 )
 
 func patchSolanaProgramSendTX(p *Patches, txhash string, err error) *Patches {
@@ -28,11 +26,11 @@ func Test_solanaProgram_Output(t *testing.T) {
 		defer p.Reset()
 		p = patchSolanaProgramSendTX(p, "", errors.New(t.Name()))
 
-		txHash, err := e1.Output(&types.Task{}, nil)
+		txHash, err := e1.Output(1, [][]byte{}, nil)
 		r.Equal(txHash, "")
 		r.ErrorContains(err, t.Name())
 
-		txHash, err = e2.Output(&types.Task{}, nil)
+		txHash, err = e2.Output(1, [][]byte{}, nil)
 		r.Equal(txHash, "")
 		r.ErrorContains(err, t.Name())
 	})
@@ -43,11 +41,11 @@ func Test_solanaProgram_Output(t *testing.T) {
 		defer p.Reset()
 		p = patchSolanaProgramSendTX(p, txHashRet, nil)
 
-		txHash, err := e1.Output(&types.Task{}, nil)
+		txHash, err := e1.Output(1, [][]byte{}, nil)
 		r.Equal(txHash, txHashRet)
 		r.NoError(err)
 
-		txHash, err = e2.Output(&types.Task{}, nil)
+		txHash, err = e2.Output(1, [][]byte{}, nil)
 		r.Equal(txHash, txHashRet)
 		r.NoError(err)
 	})

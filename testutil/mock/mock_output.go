@@ -13,8 +13,6 @@ import (
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
-
-	types "github.com/machinefi/sprout/types"
 )
 
 //go:generate mockgen -write_generate_directive -package=mock -destination=./mock_output.go -source=../../output/output.go
@@ -43,30 +41,16 @@ func (m *MockOutput) EXPECT() *MockOutputMockRecorder {
 }
 
 // Output mocks base method.
-func (m *MockOutput) Output(task *types.Task, proof []byte) (string, error) {
+func (m *MockOutput) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Output", task, proof)
+	ret := m.ctrl.Call(m, "Output", projectID, taskData, proof)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Output indicates an expected call of Output.
-func (mr *MockOutputMockRecorder) Output(task, proof any) *gomock.Call {
+func (mr *MockOutputMockRecorder) Output(projectID, taskData, proof any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Output", reflect.TypeOf((*MockOutput)(nil).Output), task, proof)
-}
-
-// Type mocks base method.
-func (m *MockOutput) Type() types.Output {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(types.Output)
-	return ret0
-}
-
-// Type indicates an expected call of Type.
-func (mr *MockOutputMockRecorder) Type() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockOutput)(nil).Type))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Output", reflect.TypeOf((*MockOutput)(nil).Output), projectID, taskData, proof)
 }
