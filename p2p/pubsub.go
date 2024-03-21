@@ -3,34 +3,37 @@ package p2p
 import (
 	"context"
 	"log/slog"
-	"strconv"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/pkg/errors"
 )
 
-func newSubscriber(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*subscriber, error) {
-	topic, err := ps.Join("w3bstream-project-" + strconv.FormatUint(projectID, 10))
+func newSubscriber(topic string, ps *pubsub.PubSub, handler P2PDataHandler, selfID peer.ID) (*subscriber, error) {
+	l := slog.With("topic", topic)
+
+	_topic, err := ps.Join(topic)
 	if err != nil {
-		return nil, errors.Wrapf(err, "join topic %v failed", projectID)
+		l.Error(err.Error())
+		return nil, errors.Wrap(err, errFailedToJoinP2P.Error())
 	}
-	sub, err := topic.Subscribe()
+	sub, err := _topic.Subscribe()
 	if err != nil {
-		return nil, errors.Wrapf(err, "topic %v subscription failed", projectID)
+		l.Error(err.Error())
+		return nil, errors.Wrap(err, errFailedToSubscribeTopic.Error())
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
 	_ps := &subscriber{
 		selfID:       selfID,
-		topic:        topic,
+		topic:        _topic,
 		subscription: sub,
-		handle:       handle,
+		handler:      handler,
 		cancel:       cancel,
 	}
 
 	go _ps.run(ctx)
-	slog.With("project", projectID).Info("subscribe started")
+	l.Info("subscribing started")
 
 	return _ps, nil
 }
@@ -39,7 +42,7 @@ type subscriber struct {
 	selfID       peer.ID
 	topic        *pubsub.Topic
 	subscription *pubsub.Subscription
-	handle       HandleSubscriptionMessage
+	handler      P2PDataHandler
 	cancel       context.CancelFunc
 }
 
@@ -51,6 +54,10 @@ func (p *subscriber) release() {
 	}
 }
 
+func (p *subscriber) publish(data []byte) error {
+	return p.topic.Publish(context.Background(), data)
+}
+
 func (p *subscriber) run(ctx context.Context) {
 	for {
 		select {
@@ -58,7 +65,6 @@ func (p *subscriber) run(ctx context.Context) {
 			slog.With("ctx.Err()", ctx.Err()).Info("pubsub stopped caused by")
 			return
 		default:
-			// p.handle([]byte(""), p.topic)
 			m, err := p.subscription.Next(ctx)
 			if err != nil {
 				slog.Error("failed to get p2p data", "error", err)
@@ -68,7 +74,12 @@ func (p *subscriber) run(ctx context.Context) {
 				slog.Info("skip message from self")
 				continue
 			}
-			p.handle(m.Message.Data, p.topic)
+			outputs := p.handler.Handle(m.Message.Data)
+			for _, output := range outputs {
+				if err := p.topic.Publish(context.Background(), output); err != nil {
+					slog.Error("failed to publish output", "error", err)
+				}
+			}
 		}
 	}
 }

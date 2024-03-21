@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"context"
-	"log/slog"
 	"testing"
 	"time"
 
@@ -22,7 +21,7 @@ func Test_newSubscriber(t *testing.T) {
 
 		p = p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", nil, errors.New(t.Name()))
 
-		_, err := newSubscriber(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		_, err := newSubscriber("any", &pubsub.PubSub{}, nil, peer.ID("0"))
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -33,7 +32,7 @@ func Test_newSubscriber(t *testing.T) {
 		p = p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", &pubsub.Topic{}, nil)
 		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", nil, errors.New(t.Name()))
 
-		_, err := newSubscriber(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		_, err := newSubscriber("any", &pubsub.PubSub{}, nil, peer.ID("0"))
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -44,7 +43,7 @@ func Test_newSubscriber(t *testing.T) {
 		p = p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", &pubsub.Topic{}, nil)
 		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", &pubsub.Subscription{}, nil)
 
-		_, err := newSubscriber(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		_, err := newSubscriber("any", &pubsub.PubSub{}, nil, peer.ID("0"))
 		r.NoError(err)
 	})
 }
@@ -77,6 +76,12 @@ func Test_subscriber_release(t *testing.T) {
 	})
 }
 
+type mockP2PDataHandler struct{}
+
+func (h *mockP2PDataHandler) Handle([]byte) [][]byte {
+	return nil
+}
+
 func Test_subscriber_run(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -86,10 +91,7 @@ func Test_subscriber_run(t *testing.T) {
 		selfID:       selfID,
 		topic:        &pubsub.Topic{},
 		subscription: &pubsub.Subscription{},
-		handle: func([]byte, *pubsub.Topic) {
-			slog.Info("handle p2p data")
-			time.Sleep(time.Millisecond * 100)
-		},
+		handler:      &mockP2PDataHandler{},
 	}
 
 	t.Run("ContextDone", func(t *testing.T) {

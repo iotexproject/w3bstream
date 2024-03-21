@@ -18,13 +18,15 @@ func (h mockHost) ID() peer.ID {
 	return ""
 }
 
+type mockTopicEventMonitor struct{}
+
+func (m *mockTopicEventMonitor) Subscribe() <-chan *TopicEvent {
+	ch := make(chan *TopicEvent, 10)
+	return ch
+}
+
 func TestNewPubSubs(t *testing.T) {
 	r := require.New(t)
-
-	var (
-		handle = func(data []byte, topic *pubsub.Topic) {}
-		_host  = &mockHost{}
-	)
 
 	t.Run("FailedToNewP2PHost", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -32,17 +34,17 @@ func TestNewPubSubs(t *testing.T) {
 
 		p = p.ApplyFuncReturn(libp2p.New, nil, errors.New(t.Name()))
 
-		_, err := NewPubSubs(handle, "", 0)
+		_, err := NewPubSubs(&mockTopicEventMonitor{}, &mockP2PDataHandler{}, "any", 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToNewGossip", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(libp2p.New, _host, nil)
+		p = p.ApplyFuncReturn(libp2p.New, &mockHost{}, nil)
 		p = p.ApplyFuncReturn(pubsub.NewGossipSub, nil, errors.New(t.Name()))
 
-		_, err := NewPubSubs(handle, "", 0)
+		_, err := NewPubSubs(&mockTopicEventMonitor{}, &mockP2PDataHandler{}, "any", 0)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -50,11 +52,11 @@ func TestNewPubSubs(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(libp2p.New, _host, nil)
+		p = p.ApplyFuncReturn(libp2p.New, &mockHost{}, nil)
 		p = p.ApplyFuncReturn(pubsub.NewGossipSub, &pubsub.PubSub{}, nil)
 		p = p.ApplyFuncReturn(discoverPeers, errors.New(t.Name()))
 
-		_, err := NewPubSubs(handle, "", 0)
+		_, err := NewPubSubs(&mockTopicEventMonitor{}, &mockP2PDataHandler{}, "any", 0)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -62,22 +64,22 @@ func TestNewPubSubs(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(libp2p.New, _host, nil)
+		p = p.ApplyFuncReturn(libp2p.New, &mockHost{}, nil)
 		p = p.ApplyFuncReturn(pubsub.NewGossipSub, nil, nil)
 		p = p.ApplyFuncReturn(discoverPeers, nil)
 
-		_, err := NewPubSubs(handle, "any", 0)
+		_, err := NewPubSubs(&mockTopicEventMonitor{}, &mockP2PDataHandler{}, "any", 0)
 		r.NoError(err)
 	})
 }
 
-func TestPubSubs_Add(t *testing.T) {
+func TestPubSubs_add(t *testing.T) {
 	r := require.New(t)
 
-	ps := &PubSubs{pubSubs: map[uint64]*subscriber{1: {}}}
+	ps := &PubSubs{subscribers: map[string]*subscriber{"exists": {}}}
 
 	t.Run("ProjectIDAlreadyExists", func(t *testing.T) {
-		r.Nil(ps.Add(1))
+		r.Nil(ps.add("exists"))
 	})
 
 	t.Run("FailedToNewSubscriber", func(t *testing.T) {
@@ -86,7 +88,7 @@ func TestPubSubs_Add(t *testing.T) {
 
 		p = p.ApplyFuncReturn(newSubscriber, nil, errors.New(t.Name()))
 
-		err := ps.Add(2)
+		err := ps.add("nonexistent1")
 		r.EqualError(err, t.Name())
 	})
 
@@ -96,18 +98,18 @@ func TestPubSubs_Add(t *testing.T) {
 
 		p = p.ApplyFuncReturn(newSubscriber, &subscriber{}, nil)
 
-		err := ps.Add(3)
+		err := ps.add("nonexistent2")
 		r.NoError(err)
 	})
 }
 
-func TestPubSubs_Delete(t *testing.T) {
+func TestPubSubs_delete(t *testing.T) {
 	ps := &PubSubs{
-		pubSubs: map[uint64]*subscriber{1: {}},
+		subscribers: map[string]*subscriber{"exists": {}},
 	}
 
 	t.Run("IDNotExist", func(t *testing.T) {
-		ps.Delete(101)
+		ps.delete("nonexistent")
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -117,19 +119,18 @@ func TestPubSubs_Delete(t *testing.T) {
 		p = p.ApplyFuncReturn(newSubscriber, &subscriber{}, nil)
 		p = p.ApplyPrivateMethod(&subscriber{}, "release", func(_ *subscriber) {})
 
-		ps.Delete(1)
+		ps.delete("exists")
 	})
 }
 
-func TestPubSubs_Publish(t *testing.T) {
+func TestPubSubs_publish(t *testing.T) {
 	r := require.New(t)
 
-	projectID := uint64(0x1)
-	ps := &PubSubs{pubSubs: map[uint64]*subscriber{1: {}}}
+	ps := &PubSubs{subscribers: map[string]*subscriber{"exists": {}}}
 	d := []byte("1")
 
 	t.Run("NotExist", func(t *testing.T) {
-		r.Error(ps.Publish(102, d))
+		r.Error(ps.Publish("nonexistent", d))
 	})
 
 	t.Run("FailedToPublishData", func(t *testing.T) {
@@ -137,7 +138,7 @@ func TestPubSubs_Publish(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Publish", errors.New(t.Name()))
-		r.ErrorContains(ps.Publish(projectID, d), t.Name())
+		r.ErrorContains(ps.Publish("exists", d), errFailedToPublish.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -145,6 +146,6 @@ func TestPubSubs_Publish(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Publish", nil)
-		r.NoError(ps.Publish(projectID, d))
+		r.NoError(ps.Publish("exists", d))
 	})
 }
