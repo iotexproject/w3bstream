@@ -36,7 +36,7 @@ func main() {
 
 	_ = clients.NewManager()
 
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
+	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint, "", nil)
 	if err != nil {
 		log.Fatal(err)
 	}

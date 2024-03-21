@@ -27,7 +27,7 @@ func TestNewManager(t *testing.T) {
 	t.Run("FailedToDialChain", func(t *testing.T) {
 		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "", "", "")
+		_, err := NewManager("", "", "", "", "", "", nil)
 		r.ErrorContains(err, t.Name())
 	})
 	p = p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
@@ -35,7 +35,7 @@ func TestNewManager(t *testing.T) {
 	t.Run("FailedToNewContracts", func(t *testing.T) {
 		p = p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "", "", "")
+		_, err := NewManager("", "", "", "", "", "", nil)
 		r.ErrorContains(err, t.Name())
 	})
 	p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
@@ -44,7 +44,7 @@ func TestNewManager(t *testing.T) {
 		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func(string) {})
 		p = p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "", "", "")
+		_, err := NewManager("", "", "", "", "", "", nil)
 		r.ErrorContains(err, t.Name())
 	})
 	p = p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
@@ -54,7 +54,7 @@ func TestNewManager(t *testing.T) {
 		p = p.ApplyMethodReturn(&Monitor{}, "MustEvents", make(chan *types.Log))
 		p = p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 
-		_, err := NewManager("", "", "", "", "")
+		_, err := NewManager("", "", "", "", "", "", nil)
 		r.NoError(err)
 	})
 }
@@ -79,7 +79,7 @@ func TestManager_Get(t *testing.T) {
 	})
 	t.Run("Success", func(t *testing.T) {
 		m := &Manager{
-			pool: map[key]*Config{getKey(1, "0.1"): {}},
+			pool: map[key]*Project{getKey(1, "0.1"): {}},
 		}
 		_, err := m.Get(1, "0.1")
 		r.NoError(err)
@@ -89,10 +89,10 @@ func TestManager_Get(t *testing.T) {
 func TestManager_Set(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		m := &Manager{
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 			projectIDs: map[uint64]bool{},
 		}
-		m.Set(1, "0.1", &Config{})
+		m.set(1, "0.1", &Config{}, nil)
 	})
 }
 
@@ -136,7 +136,7 @@ func TestManager_doProjectRegistrarWatch(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 			notify:     make(chan uint64, 1),
 			instance:   &contracts.Contracts{},
 		}
@@ -178,7 +178,7 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 			instance:   &contracts.Contracts{},
 		}
 		m.fillProjectPoolFromContract()
@@ -193,7 +193,7 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 			instance:   &contracts.Contracts{},
 		}
 		m.fillProjectPoolFromContract()
@@ -224,7 +224,7 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 			instance:   &contracts.Contracts{},
 		}
 		m.fillProjectPoolFromContract()
@@ -256,7 +256,7 @@ func TestManager_fillProjectPoolFromContract(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 			instance:   &contracts.Contracts{},
 		}
 		m.fillProjectPoolFromContract()
@@ -303,7 +303,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 	t.Run("ProjectFileDirParamIsEmpty", func(t *testing.T) {
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 		}
 		m.fillProjectPoolFromLocal("")
 		r.Equal(len(m.GetAllProjectID()), 0)
@@ -313,7 +313,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 		}
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 0)
@@ -323,7 +323,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 		}
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 0)
@@ -334,7 +334,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 		}
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 0)
@@ -344,7 +344,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 		}
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 0)
@@ -355,7 +355,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 		}
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 1)
@@ -365,7 +365,7 @@ func TestManager_fillProjectPoolFromLocal(t *testing.T) {
 
 		m := &Manager{
 			projectIDs: map[uint64]bool{},
-			pool:       map[key]*Config{},
+			pool:       map[key]*Project{},
 		}
 		m.fillProjectPoolFromLocal("test")
 		r.Equal(len(m.GetAllProjectID()), 0)

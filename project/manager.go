@@ -2,11 +2,15 @@ package project
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math/big"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -21,14 +25,14 @@ import (
 
 type Manager struct {
 	mux          sync.Mutex
-	pool         map[key]*Config
+	pool         map[key]*Project
 	projectIDs   map[uint64]bool
 	instance     *contracts.Contracts
 	ipfsEndpoint string
 	notify       chan uint64
-	cache        *cache
-	// znodes       []string
-	// ioID         string
+	cache        *cache   // optional
+	znodes       []string // optional
+	ioID         string   // optional
 }
 
 type key string
@@ -37,7 +41,7 @@ func getKey(projectID uint64, version string) key {
 	return key(fmt.Sprintf("%d_%s", projectID, version))
 }
 
-func (m *Manager) Get(projectID uint64, version string) (*Config, error) {
+func (m *Manager) Get(projectID uint64, version string) (*Project, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -47,20 +51,14 @@ func (m *Manager) Get(projectID uint64, version string) (*Config, error) {
 	return nil, errors.Errorf("project config not exist, projectID %d, version %s", projectID, version)
 }
 
-func (m *Manager) Set(projectID uint64, version string, c *Config) {
+func (m *Manager) set(projectID uint64, version string, c *Config, provers []string) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	key := getKey(projectID, version)
-	old, ok := m.pool[key]
-	m.pool[key] = c
-	if ok {
-		slog.Warn("project was overwritten", "project_id", projectID, "version", version, "old_version", old.Version)
-	}
+	m.pool[getKey(projectID, version)] = &Project{Config: c, Provers: provers}
 	m.projectIDs[projectID] = true
 }
 
-// TODO will delete when node konw how to fetch message
 func (m *Manager) GetAllProjectID() []uint64 {
 	m.mux.Lock()
 	defer m.mux.Unlock()
@@ -106,7 +104,7 @@ func (m *Manager) doProjectRegistrarWatch(logs <-chan *types.Log, subs event.Sub
 		}
 		for _, c := range cs {
 			slog.Info("monitor project", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
-			m.Set(pm.ProjectID, c.Version, c)
+			m.set(pm.ProjectID, c.Version, c, nil)
 		}
 		if m.cache != nil {
 			m.cache.set(ev.ProjectId, data)
@@ -126,6 +124,11 @@ func (m *Manager) watchProjectRegistrar(logs <-chan *types.Log, subs event.Subsc
 	}
 }
 
+type distance struct {
+	distance *big.Int
+	hash     [sha256.Size]byte
+}
+
 func (m *Manager) fillProjectPoolFromContract() {
 	for projectID := uint64(1); ; projectID++ {
 		emptyHash := [32]byte{}
@@ -139,25 +142,6 @@ func (m *Manager) fillProjectPoolFromContract() {
 			slog.Info("load project from contract completed", "max project_id", projectID-1)
 			return
 		}
-
-		// znodeMap := map[[sha256.Size]byte]string{}
-		// for _, n := range znodes {
-		// 	znodeMap[sha256.Sum256([]byte(n))] = n
-		// }
-
-		// max := new(big.Int).SetUint64(0)
-		// maxZnode := ioID
-		// for h, id := range znodeMap {
-		// 	n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetUint64(i))
-		// 	if n.Cmp(max) > 0 {
-		// 		max = n
-		// 		maxZnode = id
-		// 	}
-		// }
-		// if maxZnode != ioID {
-		// 	slog.Info("the project not scheduld to this znode", "projectID", i)
-		// 	continue
-		// }
 
 		pm := &ProjectMeta{
 			ProjectID: projectID,
@@ -179,18 +163,71 @@ func (m *Manager) fillProjectPoolFromContract() {
 				continue
 			}
 		}
+		if !cached && m.cache != nil {
+			m.cache.set(projectID, data)
+		}
+
 		cs, err := convertConfigs(data)
 		if err != nil {
 			slog.Error("failed to convert project config", "error", err, "project_id", projectID)
 			continue
 		}
 
+		var provers []string
+
+		if m.ioID != "" {
+			c := cs[0]
+			if c.ResourceRequest.ProverAmount > uint(len(m.znodes)) {
+				slog.Error("no enough resource for the project", "require prover amount", c.ResourceRequest.ProverAmount, "current prover", len(m.znodes), "project_id", projectID)
+				continue
+			}
+			znodeMap := map[[sha256.Size]byte]string{}
+			for _, n := range m.znodes {
+				znodeMap[sha256.Sum256([]byte(n))] = n
+			}
+
+			b := make([]byte, 8)
+			binary.LittleEndian.PutUint64(b, projectID)
+			projectIDHash := sha256.Sum256(b)
+
+			ds := make([]distance, 0, len(m.znodes))
+
+			for h := range znodeMap {
+				n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetBytes(projectIDHash[:]))
+				ds = append(ds, distance{
+					distance: n,
+					hash:     h,
+				})
+			}
+
+			sort.SliceStable(ds, func(i, j int) bool {
+				return ds[i].distance.Cmp(ds[j].distance) < 0
+			})
+
+			amount := c.ResourceRequest.ProverAmount
+			if amount == 0 {
+				amount = 1
+			}
+
+			ds = ds[:amount]
+			for _, d := range ds {
+				provers = append(provers, znodeMap[d.hash])
+			}
+			isMe := false
+			for _, p := range provers {
+				if p == m.ioID {
+					isMe = true
+				}
+			}
+			if !isMe {
+				slog.Info("the project not scheduld to this znode", "project_id", projectID)
+				continue
+			}
+		}
+
 		for _, c := range cs {
 			slog.Debug("contract project loaded", "project_id", pm.ProjectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
-			m.Set(projectID, c.Version, c)
-		}
-		if !cached && m.cache != nil {
-			m.cache.set(projectID, data)
+			m.set(projectID, c.Version, c, provers)
 		}
 	}
 }
@@ -226,15 +263,19 @@ func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
 			slog.Error("parse project config failed", "filename", f.Name())
 			continue
 		}
+		var provers []string
+		if m.ioID != "" {
+			provers = append(provers, m.ioID)
+		}
 
 		for _, c := range cs {
 			slog.Info("local project loaded", "project_id", projectID, "version", c.Version, "vm_type", c.VMType, "code_size", len(c.Code))
-			m.Set(projectID, c.Version, c)
+			m.set(projectID, c.Version, c, provers)
 		}
 	}
 }
 
-func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir, ipfsEndpoint string) (*Manager, error) {
+func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir, ipfsEndpoint, ioID string, znodes []string) (*Manager, error) {
 	var c *cache
 	var err error
 	if projectCacheDir != "" {
@@ -244,11 +285,13 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir,
 		}
 	}
 	m := &Manager{
-		pool:         make(map[key]*Config),
+		pool:         make(map[key]*Project),
 		projectIDs:   make(map[uint64]bool),
 		ipfsEndpoint: ipfsEndpoint,
 		notify:       make(chan uint64, 32),
 		cache:        c,
+		ioID:         ioID,
+		znodes:       znodes,
 	}
 
 	if contractAddress != "" {

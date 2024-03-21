@@ -23,7 +23,7 @@ type Persistence interface {
 }
 
 type ProjectManager interface {
-	Get(projectID uint64, version string) (*project.Config, error)
+	Get(projectID uint64, version string) (*project.Project, error)
 	GetAllProjectID() []uint64
 	GetNotify() <-chan uint64
 }
@@ -94,13 +94,13 @@ func (d *Dispatcher) handleP2PData(rawdata []byte, topic *pubsub.Topic) {
 		return
 	}
 
-	config, err := d.projectManager.Get(l.Task.ProjectID, l.Task.ProjectVersion)
+	p, err := d.projectManager.Get(l.Task.ProjectID, l.Task.ProjectVersion)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", l.Task.ProjectID, "project_version", l.Task.ProjectVersion)
 		return
 	}
 
-	output, err := output.New(&config.Output, d.operatorPrivateKeyECDSA, d.operatorPrivateKeyED25519)
+	output, err := output.New(&p.Config.Output, d.operatorPrivateKeyECDSA, d.operatorPrivateKeyED25519)
 	if err != nil {
 		slog.Error("failed to init output", "error", err)
 		if err := d.persistence.Create(&TaskStateLog{
