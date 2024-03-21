@@ -138,13 +138,15 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		processor.handleP2PData(data, nil)
 	})
 
-	conf := &project.Config{
-		Code:         "code",
-		CodeExpParam: "codeExpParam",
-		VMType:       "vmType",
-		Output:       output.Config{},
-		Aggregation:  project.AggregationConfig{},
-		Version:      "",
+	conf := &project.Project{
+		Config: &project.Config{
+			Code:         "code",
+			CodeExpParam: "codeExpParam",
+			VMType:       "vmType",
+			Output:       output.Config{},
+			Aggregation:  project.AggregationConfig{},
+			Version:      "",
+		},
 	}
 
 	t.Run("ProofFailed", func(t *testing.T) {
