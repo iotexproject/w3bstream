@@ -42,6 +42,7 @@ func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
 	if d.Task == nil {
 		return
 	}
+
 	t := d.Task
 
 	p, err := r.projectManager.Get(t.ProjectID, t.ProjectVersion)
