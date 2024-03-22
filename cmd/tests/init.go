@@ -107,6 +107,7 @@ func runZnode(conf *znodeconfig.Config) {
 			vm.Risc0:  conf.Risc0ServerEndpoint,
 			vm.Halo2:  conf.Halo2ServerEndpoint,
 			vm.ZKwasm: conf.ZKWasmServerEndpoint,
+			vm.Wasm:   conf.WasmServerEndpoint,
 		},
 	)
 

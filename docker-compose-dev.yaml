@@ -31,6 +31,14 @@ services:
     ports:
      - "4001:4001"
 
+  wasm:
+    image: wangweixiaohao2944/wasmserver:v0.0.1.rc0
+    container_name: wasm-service
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - "4004:4001"
+
   postgres:
     image: postgres:14
     container_name: w3bstream-node-postgres

@@ -33,6 +33,7 @@ services:
       - "risc0"
       - "halo2"
       - "zkwasm"
+      - "wasm"
       - "postgres"
     container_name: w3bstream-znode
     platform: linux/x86_64
@@ -63,6 +64,12 @@ services:
       DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
       BONSAI_URL: https://api.bonsai.xyz
       BONSAI_KEY: "${BONSAI_KEY:-}"
+
+  wasm:
+    image: wangweixiaohao2944/wasmserver:v0.0.1.rc0
+    container_name: wasm-service
+    platform: linux/x86_64
+    restart: always
 
   postgres:
     image: postgres:14

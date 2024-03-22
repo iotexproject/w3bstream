@@ -11,6 +11,7 @@ type Config struct {
 	Risc0ServerEndpoint    string `env:"RISC0_SERVER_ENDPOINT"`
 	Halo2ServerEndpoint    string `env:"HALO2_SERVER_ENDPOINT"`
 	ZKWasmServerEndpoint   string `env:"ZKWASM_SERVER_ENDPOINT"`
+	WasmServerEndpoint     string `env:"WASM_SERVER_ENDPOINT"`
 	ChainEndpoint          string `env:"CHAIN_ENDPOINT"`
 	ProjectContractAddress string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
 	DatabaseDSN            string `env:"DATABASE_DSN"`
@@ -30,6 +31,7 @@ var (
 		Risc0ServerEndpoint:    "risc0:4001",
 		Halo2ServerEndpoint:    "halo2:4001",
 		ZKWasmServerEndpoint:   "zkwasm:4001",
+		WasmServerEndpoint:     "wasm:4001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		ProjectContractAddress: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		DatabaseDSN:            "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
@@ -45,6 +47,7 @@ var (
 		Risc0ServerEndpoint:    "localhost:4001",
 		Halo2ServerEndpoint:    "localhost:4002",
 		ZKWasmServerEndpoint:   "localhost:4003",
+		WasmServerEndpoint:     "localhost:4004",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		ProjectContractAddress: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
@@ -61,6 +64,7 @@ var (
 		Risc0ServerEndpoint:    "localhost:14001",
 		Halo2ServerEndpoint:    "localhost:14002",
 		ZKWasmServerEndpoint:   "localhost:14003",
+		WasmServerEndpoint:     "localhost:14004",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		ProjectContractAddress: "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
