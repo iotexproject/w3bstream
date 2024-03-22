@@ -6,9 +6,10 @@ integration_test_depends_stop:
 	@docker stop halo2_test || true && docker container rm halo2_test || true
 	@docker stop risc0_test || true && docker container rm risc0_test || true
 	@docker stop zkwasm_test || true && docker container rm zkwasm_test || true
+	@docker stop wasm_test || true && docker container rm wasm_test || true
 
 .PHONY: integration_test_depends
-integration_test_depends: integration_test_depends_stop postgres_test didkit_test halo2_test risc0_test zkwasm_test
+integration_test_depends: integration_test_depends_stop postgres_test didkit_test halo2_test risc0_test zkwasm_test wasm_test
 
 .PHONY: postgres_test
 postgres_test:
@@ -52,6 +53,13 @@ zkwasm_test:
 	--platform linux/x86_64 \
 	-p 14003:4003 \
 	-d iotexdev/zkwasmserver:v0.0.3
+
+.PHONY: wasm_test
+wasm_test:
+	docker run --name wasm_test \
+	--platform linux/x86_64 \
+	-p 14004:4004 \
+	-d wangweixiaohao2944/wasmserver:v0.0.1.rc0
 
 integration_test: integration_test_depends
 	@cd cmd/test/ && go test ./... -v

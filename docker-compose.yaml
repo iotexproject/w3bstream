@@ -64,6 +64,12 @@ services:
       BONSAI_URL: https://api.bonsai.xyz
       BONSAI_KEY: "${BONSAI_KEY:-}"
 
+  wasm:
+    image: wangweixiaohao2944/wasmserver:v0.0.1.rc0
+    container_name: wasm-service
+    platform: linux/x86_64
+    restart: always
+
   postgres:
     image: postgres:14
     container_name: w3bstream-node-postgres
