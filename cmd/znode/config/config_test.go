@@ -19,6 +19,7 @@ func TestConfig_Init(t *testing.T) {
 			Risc0ServerEndpoint:    "risc0:1111",
 			Halo2ServerEndpoint:    "halo2:2222",
 			ZKWasmServerEndpoint:   "zkwasm:3333",
+			WasmServerEndpoint:     "wasm:4444",
 			ChainEndpoint:          "http://abc.def.com",
 			ProjectContractAddress: "0x123",
 			DatabaseDSN:            "postgres://root@localhost/abc?ext=666",
@@ -33,6 +34,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("RISC0_SERVER_ENDPOINT", expected.Risc0ServerEndpoint)
 		_ = os.Setenv("HALO2_SERVER_ENDPOINT", expected.Halo2ServerEndpoint)
 		_ = os.Setenv("ZKWASM_SERVER_ENDPOINT", expected.ZKWasmServerEndpoint)
+		_ = os.Setenv("WASM_SERVER_ENDPOINT", expected.WasmServerEndpoint)
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATABASE_DSN", expected.DatabaseDSN)
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
