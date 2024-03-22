@@ -307,7 +307,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir,
 		m.fillProjectPoolFromContract()
 
 		topic := "ProjectUpserted(uint64,string,bytes32)"
-		monitor, err := NewDefaultMonitor(
+		monitor, err := newDefaultMonitor(
 			chainEndpoint,
 			[]string{contractAddress},
 			[]string{topic},
@@ -316,7 +316,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir,
 			return nil, errors.Wrap(err, "failed to new contract monitor")
 		}
 		go monitor.run()
-		go m.watchProjectRegistrar(monitor.MustEvents(topic), monitor)
+		go m.watchProjectRegistrar(monitor.mustEvents(topic), monitor)
 	}
 
 	m.fillProjectPoolFromLocal(projectFileDir)

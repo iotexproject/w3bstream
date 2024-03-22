@@ -42,16 +42,16 @@ func TestNewManager(t *testing.T) {
 
 	t.Run("FailedToNewDefaultMonitor", func(t *testing.T) {
 		p = p.ApplyPrivateMethod(&Manager{}, "fillProjectPool", func(string) {})
-		p = p.ApplyFuncReturn(NewDefaultMonitor, nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(newDefaultMonitor, nil, errors.New(t.Name()))
 
 		_, err := NewManager("", "", "", "", "", "", nil)
 		r.ErrorContains(err, t.Name())
 	})
-	p = p.ApplyFuncReturn(NewDefaultMonitor, &Monitor{}, nil)
+	p = p.ApplyFuncReturn(newDefaultMonitor, &monitor{}, nil)
 
 	t.Run("Success", func(t *testing.T) {
-		p = p.ApplyPrivateMethod(&Monitor{}, "run", func() {})
-		p = p.ApplyMethodReturn(&Monitor{}, "MustEvents", make(chan *types.Log))
+		p = p.ApplyPrivateMethod(&monitor{}, "run", func() {})
+		p = p.ApplyMethodReturn(&monitor{}, "mustEvents", make(chan *types.Log))
 		p = p.ApplyPrivateMethod(&Manager{}, "watchProjectRegistrar", func(<-chan *types.Log, event.Subscription) {})
 
 		_, err := NewManager("", "", "", "", "", "", nil)
