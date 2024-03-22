@@ -33,6 +33,7 @@ services:
       - "risc0"
       - "halo2"
       - "zkwasm"
+      - "wasm"
       - "postgres"
     container_name: w3bstream-znode
     platform: linux/x86_64
