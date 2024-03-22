@@ -4,10 +4,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	taskpkg "github.com/machinefi/sprout/task"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
+
+	"github.com/pkg/errors"
+
+	taskpkg "github.com/machinefi/sprout/task"
 )
 
 type tablelandMessage struct {
