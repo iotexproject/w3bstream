@@ -16,7 +16,7 @@ type Config struct {
 	ProjectContractAddress string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
 	DatabaseDSN            string `env:"DATABASE_DSN"`
 	BootNodeMultiAddr      string `env:"BOOTNODE_MULTIADDR"`
-	ZnodeContractAddress   string `env:"ZNODE_CONTRACT_ADDRESS"`
+	ProverContractAddress  string `env:"PROVER_CONTRACT_ADDRESS"`
 	IoTeXChainID           int    `env:"IOTEX_CHAINID"`
 	IPFSEndpoint           string `env:"IPFS_ENDPOINT"`
 	IoID                   string `env:"IO_ID"`
@@ -36,7 +36,7 @@ var (
 		ProjectContractAddress: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		DatabaseDSN:            "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
-		ZnodeContractAddress:   "0xacBd882f56579Be4C2088E86eE050F9b660cf556",
+		ProverContractAddress:  "0xacBd882f56579Be4C2088E86eE050F9b660cf556",
 		IoTeXChainID:           2,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		IoID:                   "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6SNgp8",
@@ -52,7 +52,7 @@ var (
 		ProjectContractAddress: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
-		ZnodeContractAddress:   "0xacBd882f56579Be4C2088E86eE050F9b660cf556",
+		ProverContractAddress:  "0xacBd882f56579Be4C2088E86eE050F9b660cf556",
 		IoTeXChainID:           2,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		IoID:                   "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6123", // did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6123
@@ -69,7 +69,7 @@ var (
 		ProjectContractAddress: "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
-		ZnodeContractAddress:   "0xacBd882f56579Be4C2088E86eE050F9b660cf556",
+		ProverContractAddress:  "0xacBd882f56579Be4C2088E86eE050F9b660cf556",
 		IoTeXChainID:           2,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		IoID:                   "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6SNgp8",
@@ -93,7 +93,7 @@ func (c *Config) Env() string {
 
 func Get() (*Config, error) {
 	var conf *Config
-	env := os.Getenv("ZNODE_ENV")
+	env := os.Getenv("PROVER_ENV")
 	switch env {
 	case "INTEGRATION_TEST":
 		conf = defaultTestConfig

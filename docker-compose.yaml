@@ -1,45 +1,45 @@
 version: "3.6"
 
 services:
-  http-plugin:
-    image: ghcr.io/machinefi/http-plugin:v0.7.0
+  sequencer:
+    image: ghcr.io/machinefi/sequencer:v0.7.0
     depends_on:
       - "postgres"
-      - "enode"
-    container_name: w3bstream-http-plugin
+      - "coordinator"
+    container_name: w3bstream-sequencer
     platform: linux/x86_64
     restart: always
     ports:
       - "9000:9000"
-    command: [ "-enodeAddress", "enode:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
+    command: [ "-coordinatorAddress", "coordinator:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
 
-  enode:
-    image: ghcr.io/machinefi/enode:v0.7.0
+  coordinator:
+    image: ghcr.io/machinefi/coordinator:v0.7.0
     depends_on:
       - "postgres"
-    container_name: w3bstream-enode
+    container_name: w3bstream-coordinator
     platform: linux/x86_64
     restart: always
     ports:
       - "9001:9001"
     environment:
-      ENODE_ENV: PROD
+      COORDINATOR_ENV: PROD
       OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
       OPERATOR_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
 
-  znode:
-    image: ghcr.io/machinefi/znode:v0.7.0
+  prover:
+    image: ghcr.io/machinefi/prover:v0.7.0
     depends_on:
       - "risc0"
       - "halo2"
       - "zkwasm"
       - "wasm"
       - "postgres"
-    container_name: w3bstream-znode
+    container_name: w3bstream-prover
     platform: linux/x86_64
     restart: always
     environment:
-      ZNODE_ENV: PROD
+      PROVER_ENV: PROD
 
   halo2:
     image: iotexdev/halo2-server:0.0.5
@@ -73,7 +73,7 @@ services:
 
   postgres:
     image: postgres:14
-    container_name: w3bstream-node-postgres
+    container_name: w3bstream-sprout-postgres
     restart: always
     command:
       [

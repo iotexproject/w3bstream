@@ -7,11 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/pkg/errors"
-
 	"github.com/machinefi/sprout/clients"
-	"github.com/machinefi/sprout/cmd/enode/api"
-	"github.com/machinefi/sprout/cmd/enode/config"
+	"github.com/machinefi/sprout/cmd/coordinator/api"
+	"github.com/machinefi/sprout/cmd/coordinator/config"
 	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
@@ -24,10 +22,10 @@ func main() {
 	var err error
 	conf, err = config.Get()
 	if err != nil {
-		panic(errors.Wrap(err, "failed to init enode config"))
+		log.Fatal(err)
 	}
 	conf.Print()
-	slog.Info("enode config loaded")
+	slog.Info("coordinator config loaded")
 
 	persistence, err := persistence.NewPostgres(conf.DatabaseDSN)
 	if err != nil {
