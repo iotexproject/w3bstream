@@ -16,6 +16,7 @@ const (
 	Risc0  Type = "risc0"
 	Halo2  Type = "halo2"
 	ZKwasm Type = "zkwasm"
+	Wasm   Type = "wasm"
 )
 
 type Handler struct {
