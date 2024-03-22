@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/cmd/enode/config"
+	"github.com/machinefi/sprout/cmd/coordinator/config"
 )
 
 func TestConfig_Init(t *testing.T) {

@@ -13,15 +13,15 @@ import (
 
 	"github.com/machinefi/sprout/apitypes"
 	"github.com/machinefi/sprout/auth/didvc"
-	"github.com/machinefi/sprout/cmd/enode/config"
+	"github.com/machinefi/sprout/cmd/coordinator/config"
 	"github.com/machinefi/sprout/persistence"
 )
 
 type HttpServer struct {
-	engine      *gin.Engine
-	persistence *persistence.Postgres
-	conf        *config.Config
-	enodeConf   *apitypes.ENodeConfigRsp
+	engine          *gin.Engine
+	persistence     *persistence.Postgres
+	conf            *config.Config
+	coordinatorConf *apitypes.CoordinatorConfigRsp
 }
 
 func NewHttpServer(persistence *persistence.Postgres, conf *config.Config) *HttpServer {
@@ -31,14 +31,14 @@ func NewHttpServer(persistence *persistence.Postgres, conf *config.Config) *Http
 		conf:        conf,
 	}
 
-	s.enodeConf = &apitypes.ENodeConfigRsp{
+	s.coordinatorConf = &apitypes.CoordinatorConfigRsp{
 		ProjectContractAddress: s.conf.ProjectContractAddress,
 	}
 
 	if len(s.conf.OperatorPrivateKey) > 0 {
 		pk := crypto.ToECDSAUnsafe(common.FromHex(s.conf.OperatorPrivateKey))
 		sender := crypto.PubkeyToAddress(pk.PublicKey)
-		s.enodeConf.OperatorETHAddress = sender.String()
+		s.coordinatorConf.OperatorETHAddress = sender.String()
 	}
 
 	if len(s.conf.OperatorPrivateKeyED25519) > 0 {
@@ -46,13 +46,13 @@ func NewHttpServer(persistence *persistence.Postgres, conf *config.Config) *Http
 		if err != nil {
 			panic(errors.Wrapf(err, "invalid solana wallet address"))
 		}
-		s.enodeConf.OperatorSolanaAddress = wallet.PublicKey.String()
+		s.coordinatorConf.OperatorSolanaAddress = wallet.PublicKey.String()
 	}
 
 	s.engine.GET("/live", s.liveness)
 	s.engine.GET("/task/:project_id/:task_id", s.getTaskStateLog)
 	s.engine.POST("/sign_credential", s.issueJWTCredential)
-	s.engine.GET("/enode_config", s.getENodeConfigInfo)
+	s.engine.GET("/coordinator_config", s.getCoordinatorConfigInfo)
 
 	return s
 }
@@ -139,9 +139,8 @@ func (s *HttpServer) issueJWTCredential(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, rsp)
-	return
 }
 
-func (s *HttpServer) getENodeConfigInfo(c *gin.Context) {
-	c.JSON(http.StatusOK, s.enodeConf)
+func (s *HttpServer) getCoordinatorConfigInfo(c *gin.Context) {
+	c.JSON(http.StatusOK, s.coordinatorConf)
 }

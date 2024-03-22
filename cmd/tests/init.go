@@ -13,9 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/clients"
-	"github.com/machinefi/sprout/cmd/enode/api"
-	enodeconfig "github.com/machinefi/sprout/cmd/enode/config"
-	znodeconfig "github.com/machinefi/sprout/cmd/znode/config"
+	"github.com/machinefi/sprout/cmd/coordinator/api"
+	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
+	proverconfig "github.com/machinefi/sprout/cmd/prover/config"
 	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
@@ -28,24 +28,24 @@ var (
 )
 
 func init() {
-	_ = os.Setenv("ZNODE_ENV", env)
-	_ = os.Setenv("ENODE_ENV", env)
+	_ = os.Setenv("PROVER_ENV", env)
+	_ = os.Setenv("COORDINATOR_ENV", env)
 
-	znodeconf, err := znodeconfig.Get()
+	proverConf, err := proverconfig.Get()
 	if err != nil {
 		os.Exit(-1)
 	}
-	enodeconf, err := enodeconfig.Get()
+	coordinatorConf, err := coordinatorconfig.Get()
 	if err != nil {
 		os.Exit(-1)
 	}
 
-	go runZnode(znodeconf)
-	go runEnode(enodeconf)
+	go runProver(proverConf)
+	go runCoordinator(coordinatorConf)
 
 	// repeat 3 and duration 5s
 	if err := checkLiveness(3, 5, func() error {
-		if _, e := http.Get(fmt.Sprintf("http://localhost%s/live", enodeconf.ServiceEndpoint)); err != nil {
+		if _, e := http.Get(fmt.Sprintf("http://localhost%s/live", coordinatorConf.ServiceEndpoint)); err != nil {
 			return e
 		}
 		return nil
@@ -97,7 +97,7 @@ func migrateDatabase(dsn string) error {
 	return nil
 }
 
-func runZnode(conf *znodeconfig.Config) {
+func runProver(conf *proverconfig.Config) {
 	if err := migrateDatabase(conf.DatabaseDSN); err != nil {
 		log.Fatal(err)
 	}
@@ -123,10 +123,10 @@ func runZnode(conf *znodeconfig.Config) {
 
 	taskProcessor.Run()
 
-	slog.Info("znode started")
+	slog.Info("prover started")
 }
 
-func runEnode(conf *enodeconfig.Config) {
+func runCoordinator(conf *coordinatorconfig.Config) {
 	pg, err := persistence.NewPostgres(conf.DatabaseDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -161,5 +161,5 @@ func runEnode(conf *enodeconfig.Config) {
 		}
 	}()
 
-	slog.Info("znode started")
+	slog.Info("prover started")
 }

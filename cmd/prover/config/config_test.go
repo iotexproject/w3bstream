@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/cmd/znode/config"
+	"github.com/machinefi/sprout/cmd/prover/config"
 )
 
 func TestConfig_Init(t *testing.T) {
@@ -24,7 +24,7 @@ func TestConfig_Init(t *testing.T) {
 			ProjectContractAddress: "0x123",
 			DatabaseDSN:            "postgres://root@localhost/abc?ext=666",
 			BootNodeMultiAddr:      "/dsn4/abc/123",
-			ZnodeContractAddress:   "0x456",
+			ProverContractAddress:  "0x456",
 			IoTeXChainID:           5,
 			IPFSEndpoint:           "abc.ipfs.net",
 			IoID:                   "did:key:pub",
@@ -38,7 +38,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATABASE_DSN", expected.DatabaseDSN)
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
-		_ = os.Setenv("ZNODE_CONTRACT_ADDRESS", expected.ZnodeContractAddress)
+		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddress)
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddress)
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)

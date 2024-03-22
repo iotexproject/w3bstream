@@ -15,18 +15,18 @@ import (
 )
 
 type httpServer struct {
-	engine            *gin.Engine
-	p                 *persistence
-	enodeAddress      string
-	aggregationAmount uint
+	engine             *gin.Engine
+	p                  *persistence
+	coordinatorAddress string
+	aggregationAmount  uint
 }
 
-func newHttpServer(p *persistence, aggregationAmount uint, enodeAddress string) *httpServer {
+func newHttpServer(p *persistence, aggregationAmount uint, coordinatorAddress string) *httpServer {
 	s := &httpServer{
-		engine:            gin.Default(),
-		p:                 p,
-		enodeAddress:      enodeAddress,
-		aggregationAmount: aggregationAmount,
+		engine:             gin.Default(),
+		p:                  p,
+		coordinatorAddress: coordinatorAddress,
+		aggregationAmount:  aggregationAmount,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
@@ -99,7 +99,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 			State: taskpkg.TaskStatePacked.String(),
 			Time:  ts[0].CreatedAt,
 		})
-		resp, err := http.Get(fmt.Sprintf("http://%s/%s/%d/%d", s.enodeAddress, "task", m.ProjectID, ts[0].ID))
+		resp, err := http.Get(fmt.Sprintf("http://%s/%s/%d/%d", s.coordinatorAddress, "task", m.ProjectID, ts[0].ID))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
 			return

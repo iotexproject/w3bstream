@@ -13,14 +13,14 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/machinefi/sprout/apitypes"
-	enodeconfig "github.com/machinefi/sprout/cmd/enode/config"
+	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
 	"github.com/machinefi/sprout/task"
 )
 
 func TestHttpApi(t *testing.T) {
 	r := require.New(t)
 
-	conf, err := enodeconfig.Get()
+	conf, err := coordinatorconfig.Get()
 	r.NoError(err)
 
 	t.Run("BadRequest", func(t *testing.T) {
@@ -35,6 +35,7 @@ func TestHttpApi(t *testing.T) {
 		r.Equal(400, resp.StatusCode)
 		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
+		r.NoError(err)
 		r.Equal(`{"error":"Key: 'HandleMessageReq.Data' Error:Field validation for 'Data' failed on the 'required' tag"}`, string(body))
 	})
 
@@ -51,6 +52,7 @@ func TestHttpApi(t *testing.T) {
 		r.Equal(400, resp.StatusCode)
 		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
+		r.NoError(err)
 		r.Equal(`{"error":"project config not exist, projectID 99999, version 0.1"}`, string(body))
 	})
 

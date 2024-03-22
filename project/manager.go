@@ -31,7 +31,7 @@ type Manager struct {
 	ipfsEndpoint string
 	notify       chan uint64
 	cache        *cache   // optional
-	znodes       []string // optional
+	provers      []string // optional
 	ioID         string   // optional
 }
 
@@ -177,22 +177,22 @@ func (m *Manager) fillProjectPoolFromContract() {
 
 		if m.ioID != "" {
 			c := cs[0]
-			if c.ResourceRequest.ProverAmount > uint(len(m.znodes)) {
-				slog.Error("no enough resource for the project", "require prover amount", c.ResourceRequest.ProverAmount, "current prover", len(m.znodes), "project_id", projectID)
+			if c.ResourceRequest.ProverAmount > uint(len(m.provers)) {
+				slog.Error("no enough resource for the project", "require prover amount", c.ResourceRequest.ProverAmount, "current prover", len(m.provers), "project_id", projectID)
 				continue
 			}
-			znodeMap := map[[sha256.Size]byte]string{}
-			for _, n := range m.znodes {
-				znodeMap[sha256.Sum256([]byte(n))] = n
+			proverMap := map[[sha256.Size]byte]string{}
+			for _, n := range m.provers {
+				proverMap[sha256.Sum256([]byte(n))] = n
 			}
 
 			b := make([]byte, 8)
 			binary.LittleEndian.PutUint64(b, projectID)
 			projectIDHash := sha256.Sum256(b)
 
-			ds := make([]distance, 0, len(m.znodes))
+			ds := make([]distance, 0, len(m.provers))
 
-			for h := range znodeMap {
+			for h := range proverMap {
 				n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetBytes(projectIDHash[:]))
 				ds = append(ds, distance{
 					distance: n,
@@ -211,7 +211,7 @@ func (m *Manager) fillProjectPoolFromContract() {
 
 			ds = ds[:amount]
 			for _, d := range ds {
-				provers = append(provers, znodeMap[d.hash])
+				provers = append(provers, proverMap[d.hash])
 			}
 			isMe := false
 			for _, p := range provers {
@@ -220,7 +220,7 @@ func (m *Manager) fillProjectPoolFromContract() {
 				}
 			}
 			if !isMe {
-				slog.Info("the project not scheduld to this znode", "project_id", projectID)
+				slog.Info("the project not scheduld to this prover", "project_id", projectID)
 				continue
 			}
 		}
@@ -275,7 +275,7 @@ func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
 	}
 }
 
-func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir, ipfsEndpoint, ioID string, znodes []string) (*Manager, error) {
+func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir, ipfsEndpoint, ioID string, provers []string) (*Manager, error) {
 	var c *cache
 	var err error
 	if projectCacheDir != "" {
@@ -291,7 +291,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir,
 		notify:       make(chan uint64, 32),
 		cache:        c,
 		ioID:         ioID,
-		znodes:       znodes,
+		provers:      provers,
 	}
 
 	if contractAddress != "" {

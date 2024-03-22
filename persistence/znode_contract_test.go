@@ -13,10 +13,10 @@ import (
 	"github.com/machinefi/sprout/testutil/znodecontract"
 )
 
-func PatchNewZnode(p *gomonkey.Patches, node *ZNode, err error) *gomonkey.Patches {
+func PatchNewZnode(p *gomonkey.Patches, node *Prover, err error) *gomonkey.Patches {
 	return p.ApplyFunc(
-		NewZNode,
-		func(_, _ string) (*ZNode, error) {
+		NewProver,
+		func(_, _ string) (*Prover, error) {
 			return node, err
 		},
 	)
@@ -32,7 +32,7 @@ func TestNewZnode(t *testing.T) {
 
 			p = testutil.EthClientDial(p, nil, errors.New(t.Name()))
 
-			z, err := NewZNode("any", "any")
+			z, err := NewProver("any", "any")
 			r.Nil(z)
 			r.ErrorContains(err, t.Name())
 		})
@@ -45,7 +45,7 @@ func TestNewZnode(t *testing.T) {
 			p = testutil.EthClientDial(p, nil, nil)
 			p = znodecontract.PatchNewZnode(p, nil, errors.New(t.Name()))
 
-			z, err := NewZNode("any", "any")
+			z, err := NewProver("any", "any")
 			r.Nil(z)
 			r.ErrorContains(err, t.Name())
 		})
@@ -77,7 +77,7 @@ func TestNewZnode(t *testing.T) {
 				Err    error
 			}{Did: "", Err: nil},
 		)
-		z, err := NewZNode("any", "any")
+		z, err := NewProver("any", "any")
 		r.NotNil(z)
 		r.Nil(err)
 	})
@@ -86,14 +86,14 @@ func TestNewZnode(t *testing.T) {
 func TestZNode_GetAll(t *testing.T) {
 	r := require.New(t)
 
-	zn := &ZNode{
+	zn := &Prover{
 		mux: sync.Mutex{},
-		znodeDIDs: map[string]bool{
+		proverIDs: map[string]bool{
 			"any1": true,
 			"any2": true,
 		},
 	}
 
 	nodes := zn.GetAll()
-	r.Equal(len(nodes), len(zn.znodeDIDs))
+	r.Equal(len(nodes), len(zn.proverIDs))
 }

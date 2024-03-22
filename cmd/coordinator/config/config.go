@@ -26,7 +26,7 @@ type Config struct {
 }
 
 var (
-	// prod default config for enode; all config elements come from docker-compose.yaml in root of project
+	// prod default config for coordinator; all config elements come from docker-compose.yaml in root of project
 	defaultConfig = &Config{
 		ServiceEndpoint:        ":9001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
@@ -39,7 +39,7 @@ var (
 		DIDAuthServerEndpoint:  "didkit:9999",
 		LogLevel:               int(slog.LevelDebug),
 	}
-	// local debug default config for enode; all config elements come from docker-compose-dev.yaml in root of project
+	// local debug default config for coordinator; all config elements come from docker-compose-dev.yaml in root of project
 	defaultDebugConfig = &Config{
 		ServiceEndpoint:        ":9001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
@@ -53,7 +53,7 @@ var (
 		ProjectCacheDirectory:  "./project_cache",
 		LogLevel:               int(slog.LevelDebug),
 	}
-	// integration default config for enode; all config elements come from Makefile in `integration_test` entry
+	// integration default config for coordinator; all config elements come from Makefile in `integration_test` entry
 	defaultTestConfig = &Config{
 		ServiceEndpoint:        ":19001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
@@ -84,7 +84,7 @@ func (c *Config) Env() string {
 
 func Get() (*Config, error) {
 	var conf *Config
-	env := os.Getenv("ENODE_ENV")
+	env := os.Getenv("COORDINATOR_ENV")
 	switch env {
 	case "INTEGRATION_TEST":
 		conf = defaultTestConfig

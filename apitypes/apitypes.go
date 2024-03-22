@@ -42,7 +42,7 @@ type QueryMessageStateLogRsp struct {
 	States    []*StateLog `json:"states"`
 }
 
-type ENodeConfigRsp struct {
+type CoordinatorConfigRsp struct {
 	ProjectContractAddress string `json:"projectContractAddress"`
 	OperatorETHAddress     string `json:"OperatorETHAddress,omitempty"`
 	OperatorSolanaAddress  string `json:"operatorSolanaAddress,omitempty"`
