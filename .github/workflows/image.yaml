@@ -2,14 +2,13 @@ name: build_image
 
 on:
   push:
-    branches: ["release"]
     tags: ["v*.*.*"]
 
 env:
   REGISTRY: ghcr.io
-  SEQUENCER_IMAGE_NAME: machinefi/enode
-  NODE_IMAGE_NAME: machinefi/znode
-  HTTPPLUGIN_IMAGE_NAME: machinefi/http-plugin
+  COORDINATOR_IMAGE_NAME: machinefi/coordinator
+  PROVER_IMAGE_NAME: machinefi/prover
+  SEQUENCER_IMAGE_NAME: machinefi/sequencer
 
 jobs:
   build_docker_image:
@@ -47,57 +46,57 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Docker metadata
+        id: meta-coordinator
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.COORDINATOR_IMAGE_NAME }}
+
+
+      - name: Build and push Docker image coordinator
+        id: build-and-push-coordinator
+        uses: docker/build-push-action@v4
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: .
+          file: ./coordinator.Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-coordinator.outputs.tags }}
+          labels: ${{ steps.meta-coordinator.outputs.labels }}
+
+
+      - name: Extract Docker metadata
+        id: meta-prover
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.PROVER_IMAGE_NAME }}
+
+      - name: Build and push Docker image prover
+        id: build-and-push-prover
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          file: ./prover.Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-prover.outputs.tags }}
+          labels: ${{ steps.meta-prover.outputs.labels }}
+
+      - name: Extract Docker metadata
         id: meta-sequencer
         uses: docker/metadata-action@v4
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.SEQUENCER_IMAGE_NAME }}
 
-
-      - name: Build and push Docker image enode
+      - name: Build and push Docker image sequencer
         id: build-and-push-sequencer
         uses: docker/build-push-action@v4
         with:
-          platforms: linux/amd64,linux/arm64
           context: .
-          file: ./enode.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          file: ./sequencer.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-sequencer.outputs.tags }}
           labels: ${{ steps.meta-sequencer.outputs.labels }}
-
-
-      - name: Extract Docker metadata
-        id: meta-node
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ env.REGISTRY }}/${{ env.NODE_IMAGE_NAME }}
-
-      - name: Build and push Docker image znode
-        id: build-and-push-node
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          file: ./znode.Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-node.outputs.tags }}
-          labels: ${{ steps.meta-node.outputs.labels }}
-
-      - name: Extract Docker metadata
-        id: meta-http-plugin
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ env.REGISTRY }}/${{ env.HTTPPLUGIN_IMAGE_NAME }}
-
-      - name: Build and push Docker image http plugin
-        id: build-and-push-http-plugin
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          file: ./http_plugin.Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-http-plugin.outputs.tags }}
-          labels: ${{ steps.meta-http-plugin.outputs.labels }}
