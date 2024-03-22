@@ -2,8 +2,12 @@ package task
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"log/slog"
+	"math/big"
+	"sort"
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -21,6 +25,12 @@ type Processor struct {
 	vmHandler      VMHandler
 	projectManager ProjectManager
 	ps             *p2p.PubSubs
+	ioID           string
+}
+
+type distance struct {
+	distance *big.Int
+	hash     [sha256.Size]byte
 }
 
 func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
@@ -34,17 +44,47 @@ func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
 	}
 
 	t := d.Task
-	slog.Debug("get a new task", "task_id", t.ID)
-	r.reportSuccess(t, TaskStateDispatched, nil, topic)
 
-	config, err := r.projectManager.Get(t.ProjectID, t.ProjectVersion)
+	p, err := r.projectManager.Get(t.ProjectID, t.ProjectVersion)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID, "project_version", t.ProjectVersion)
 		r.reportFail(t, err, topic)
 		return
 	}
 
-	res, err := r.vmHandler.Handle(t.ProjectID, config.VMType, config.Code, config.CodeExpParam, t.Data)
+	if len(p.Provers) > 1 {
+		proverMap := map[[sha256.Size]byte]string{}
+		for _, p := range p.Provers {
+			proverMap[sha256.Sum256([]byte(p))] = p
+		}
+
+		b := make([]byte, 8)
+		binary.LittleEndian.PutUint64(b, t.ID)
+		taskIDHash := sha256.Sum256(b)
+
+		ds := make([]distance, 0, len(p.Provers))
+
+		for h := range proverMap {
+			n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetBytes(taskIDHash[:]))
+			ds = append(ds, distance{
+				distance: n,
+				hash:     h,
+			})
+		}
+		sort.SliceStable(ds, func(i, j int) bool {
+			return ds[i].distance.Cmp(ds[j].distance) < 0
+		})
+
+		if proverMap[ds[0].hash] != r.ioID {
+			slog.Info("the task not scheduld to this prover", "project_id", t.ProjectID, "task_id", t.ID)
+			return
+		}
+	}
+
+	slog.Debug("get a new task", "task_id", t.ID)
+	r.reportSuccess(t, TaskStateDispatched, nil, topic)
+
+	res, err := r.vmHandler.Handle(t.ProjectID, p.Config.VMType, p.Config.Code, p.Config.CodeExpParam, t.Data)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)
@@ -93,10 +133,11 @@ func (r *Processor) Run() {
 	// TODO project load & delete
 }
 
-func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, bootNodeMultiaddr string, iotexChainID int) (*Processor, error) {
+func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, bootNodeMultiaddr, ioID string, iotexChainID int) (*Processor, error) {
 	p := &Processor{
 		vmHandler:      vmHandler,
 		projectManager: projectManager,
+		ioID:           ioID,
 	}
 
 	ps, err := p2p.NewPubSubs(p.handleP2PData, bootNodeMultiaddr, iotexChainID)

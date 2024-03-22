@@ -121,7 +121,6 @@ func (m *Monitor) doRun() bool {
 			time.Sleep(m.interval)
 			return false
 		}
-		slog.Debug("query latest block", "block number", latestBlk)
 		if uint64(m.latest) > latestBlk {
 			time.Sleep(m.interval)
 			return false
@@ -135,7 +134,6 @@ func (m *Monitor) doRun() bool {
 			time.Sleep(m.interval)
 			return false
 		}
-		slog.Debug("filter logs", "from", query.FromBlock.Uint64(), "to", query.ToBlock.Uint64())
 		m.latest = query.ToBlock.Int64()
 		if len(logs) == 0 {
 			goto TryLater

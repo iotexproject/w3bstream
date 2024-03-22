@@ -17,16 +17,26 @@ import (
 )
 
 type Config struct {
-	Code         string            `json:"code"`
-	CodeExpParam string            `json:"codeExpParam,omitempty"`
-	VMType       vm.Type           `json:"vmType"`
-	Output       output.Config     `json:"output"`
-	Aggregation  AggregationConfig `json:"aggregation"`
-	Version      string            `json:"version"`
+	VMType          vm.Type           `json:"vmType"`
+	Output          output.Config     `json:"output"`
+	Aggregation     AggregationConfig `json:"aggregation"`
+	ResourceRequest ResourceRequest   `json:"resourceRequest"`
+	Version         string            `json:"version"`
+	CodeExpParam    string            `json:"codeExpParam,omitempty"`
+	Code            string            `json:"code"`
 }
 
 type AggregationConfig struct {
 	Amount uint `json:"amount,omitempty"`
+}
+
+type ResourceRequest struct {
+	ProverAmount uint `json:"proverAmount,omitempty"`
+}
+
+type Project struct {
+	Config  *Config
+	Provers []string
 }
 
 type ProjectMeta struct {

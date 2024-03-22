@@ -31,12 +31,12 @@ func ProjectManagerGetNotify(p *Patches, c <-chan uint64) *Patches {
 	)
 }
 
-func ProjectManagerGet(p *Patches, conf *project.Config, err error) *Patches {
+func ProjectManagerGet(p *Patches, conf *project.Project, err error) *Patches {
 	var pm *project.Manager
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(pm),
 		"Get",
-		func(projectID uint64, version string) (*project.Config, error) {
+		func(projectID uint64, version string) (*project.Project, error) {
 			return conf, err
 		},
 	)

@@ -27,7 +27,7 @@ func TestNewProcessor(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
-		_, err := NewProcessor(nil, nil, "", 0)
+		_, err := NewProcessor(nil, nil, "", "", 0)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -37,7 +37,7 @@ func TestNewProcessor(t *testing.T) {
 		p = p.ApplyFuncReturn(p2p.NewPubSubs, ps, nil)
 		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
-		_, err := NewProcessor(nil, &project.Manager{}, "", 0)
+		_, err := NewProcessor(nil, &project.Manager{}, "", "", 0)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -52,7 +52,7 @@ func TestNewProcessor(t *testing.T) {
 		ch := make(chan uint64, 1)
 		p = p.ApplyMethodReturn(&project.Manager{}, "GetNotify", ch)
 
-		_, err := NewProcessor(nil, pm, "", 0)
+		_, err := NewProcessor(nil, pm, "", "", 0)
 		r.NoError(err)
 	})
 }
@@ -138,13 +138,15 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		processor.handleP2PData(data, nil)
 	})
 
-	conf := &project.Config{
-		Code:         "code",
-		CodeExpParam: "codeExpParam",
-		VMType:       "vmType",
-		Output:       output.Config{},
-		Aggregation:  project.AggregationConfig{},
-		Version:      "",
+	conf := &project.Project{
+		Config: &project.Config{
+			Code:         "code",
+			CodeExpParam: "codeExpParam",
+			VMType:       "vmType",
+			Output:       output.Config{},
+			Aggregation:  project.AggregationConfig{},
+			Version:      "",
+		},
 	}
 
 	t.Run("ProofFailed", func(t *testing.T) {
