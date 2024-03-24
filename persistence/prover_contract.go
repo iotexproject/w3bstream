@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/persistence/znode"
+	"github.com/machinefi/sprout/persistence/prover"
 )
 
 type Prover struct {
@@ -36,7 +36,7 @@ func NewProver(chainEndpoint, contractAddress string) (*Prover, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "dial chain endpoint failed, endpoint %s", chainEndpoint)
 	}
-	instance, err := znode.NewZnode(common.HexToAddress(contractAddress), client)
+	instance, err := prover.NewProver(common.HexToAddress(contractAddress), client)
 	if err != nil {
 		return nil, errors.Wrapf(err, "new prover contract instance failed, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
@@ -44,15 +44,15 @@ func NewProver(chainEndpoint, contractAddress string) (*Prover, error) {
 	proverIDs := map[string]bool{}
 
 	for i := uint64(1); ; i++ {
-		prover, err := instance.Znodes(nil, i)
+		prover, err := instance.Provers(nil, i)
 		if err != nil {
 			slog.Error("get prover from chain failed", "prover_id", i, "error", err)
 			continue
 		}
-		if prover.Did == "" {
+		if prover.Id == "" {
 			break
 		}
-		proverIDs[prover.Did] = true
+		proverIDs[prover.Id] = true
 	}
 
 	return &Prover{

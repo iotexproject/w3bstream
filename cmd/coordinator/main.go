@@ -16,11 +16,8 @@ import (
 	"github.com/machinefi/sprout/task"
 )
 
-var conf *config.Config
-
 func main() {
-	var err error
-	conf, err = config.Get()
+	conf, err := config.Get()
 	if err != nil {
 		log.Fatal(err)
 	}

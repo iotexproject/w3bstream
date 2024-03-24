@@ -25,7 +25,7 @@ type Processor struct {
 	vmHandler      VMHandler
 	projectManager ProjectManager
 	ps             *p2p.PubSubs
-	ioID           string
+	proverID       string
 }
 
 type distance struct {
@@ -75,7 +75,7 @@ func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
 			return ds[i].distance.Cmp(ds[j].distance) < 0
 		})
 
-		if proverMap[ds[0].hash] != r.ioID {
+		if proverMap[ds[0].hash] != r.proverID {
 			slog.Info("the task not scheduld to this prover", "project_id", t.ProjectID, "task_id", t.ID)
 			return
 		}
@@ -133,11 +133,11 @@ func (r *Processor) Run() {
 	// TODO project load & delete
 }
 
-func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, bootNodeMultiaddr, ioID string, iotexChainID int) (*Processor, error) {
+func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, bootNodeMultiaddr, proverID string, iotexChainID int) (*Processor, error) {
 	p := &Processor{
 		vmHandler:      vmHandler,
 		projectManager: projectManager,
-		ioID:           ioID,
+		proverID:       proverID,
 	}
 
 	ps, err := p2p.NewPubSubs(p.handleP2PData, bootNodeMultiaddr, iotexChainID)

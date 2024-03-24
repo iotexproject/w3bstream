@@ -161,5 +161,5 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 		}
 	}()
 
-	slog.Info("prover started")
+	slog.Info("coordinator started")
 }

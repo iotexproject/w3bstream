@@ -32,7 +32,7 @@ type Manager struct {
 	notify       chan uint64
 	cache        *cache   // optional
 	provers      []string // optional
-	ioID         string   // optional
+	proverID     string   // optional
 }
 
 type key string
@@ -175,7 +175,7 @@ func (m *Manager) fillProjectPoolFromContract() {
 
 		var provers []string
 
-		if m.ioID != "" {
+		if m.proverID != "" {
 			c := cs[0]
 			if c.ResourceRequest.ProverAmount > uint(len(m.provers)) {
 				slog.Error("no enough resource for the project", "require prover amount", c.ResourceRequest.ProverAmount, "current prover", len(m.provers), "project_id", projectID)
@@ -215,7 +215,7 @@ func (m *Manager) fillProjectPoolFromContract() {
 			}
 			isMe := false
 			for _, p := range provers {
-				if p == m.ioID {
+				if p == m.proverID {
 					isMe = true
 				}
 			}
@@ -264,8 +264,8 @@ func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
 			continue
 		}
 		var provers []string
-		if m.ioID != "" {
-			provers = append(provers, m.ioID)
+		if m.proverID != "" {
+			provers = append(provers, m.proverID)
 		}
 
 		for _, c := range cs {
@@ -275,7 +275,7 @@ func (m *Manager) fillProjectPoolFromLocal(projectFileDir string) {
 	}
 }
 
-func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir, ipfsEndpoint, ioID string, provers []string) (*Manager, error) {
+func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir, ipfsEndpoint, proverID string, provers []string) (*Manager, error) {
 	var c *cache
 	var err error
 	if projectCacheDir != "" {
@@ -290,7 +290,7 @@ func NewManager(chainEndpoint, contractAddress, projectFileDir, projectCacheDir,
 		ipfsEndpoint: ipfsEndpoint,
 		notify:       make(chan uint64, 32),
 		cache:        c,
-		ioID:         ioID,
+		proverID:     proverID,
 		provers:      provers,
 	}
 
