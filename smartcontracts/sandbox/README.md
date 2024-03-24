@@ -40,10 +40,10 @@ MockRisc0SnarkReceiver deployed to 0xC3e814db991924c64d94EfCb7a1ad6A479b1D728
 ```
 export ETH_RPC_URL=https://babel-api.testnet.iotex.io
 export PRIVATE_KEY=$PROJECT_OWNER_PRIVATE_KEY
-cast send 0x16ca331641a9537e346e12C7403fDA014Da72F16 "register(address)" $ENODE_OPERATOR_ADDRESS --legacy --private-key=$PRIVATE_KEY
+cast send 0x16ca331641a9537e346e12C7403fDA014Da72F16 "register(address)" $COORDINATOR_OPERATOR_ADDRESS --legacy --private-key=$PRIVATE_KEY
 ```
 
-3. Allow enode for project
+3. Allow coordinator for project
 
 ```
 export ETH_RPC_URL=https://babel-api.testnet.iotex.io

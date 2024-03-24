@@ -17,7 +17,7 @@ docker compose version
 
 - **Blockchain Wallet**: W3bstream will dispatch proofs to a blockchain contract, which requires a funded wallet account on the target blockchain (for IoTeX Testnet, see how to [create a wallet](https://docs.iotex.io/the-iotex-stack/wallets/metamask), and [claim test IOTX](https://docs.iotex.io/the-iotex-stack/iotx-faucets/testnet-tokens#the-iotex-developer-portal))
 
-- **Bonsai API Key**: If you plan to generate RISC0 snark proofs, as the ZNode protocol currently relies on the [Bonsai API](https://dev.risczero.com/api/bonsai/) you'll need to get [their API key](https://docs.google.com/forms/d/e/1FAIpQLSf9mu18V65862GS4PLYd7tFTEKrl90J5GTyzw_d14ASxrruFQ/viewform).
+- **Bonsai API Key**: If you plan to generate RISC0 snark proofs, as the Prover protocol currently relies on the [Bonsai API](https://dev.risczero.com/api/bonsai/) you'll need to get [their API key](https://docs.google.com/forms/d/e/1FAIpQLSf9mu18V65862GS4PLYd7tFTEKrl90J5GTyzw_d14ASxrruFQ/viewform).
 
 ## Create project config file
 after [build circuit](BUILD-CIRCUIT.md)
@@ -66,7 +66,7 @@ After that, you can use ```ioctl config get wsEndpoint``` to make sure the confi
 Monitor the W3bstream instance status with:
 
 ```bash
-docker-compose logs -f enode znode
+docker-compose logs -f coordinator prover
 ```
 
 Shut down the W3bstream instance with:

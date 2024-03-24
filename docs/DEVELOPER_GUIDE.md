@@ -123,7 +123,7 @@ The values of `image_id` and `elf` are variable names, and will be found in the 
 ##### Upload your project to IPFS
 
 ```bash
-# set local w3bstream enode as w3bstream endpoint
+# set local w3bstream sequencer as w3bstream endpoint
 ioctl config set wsEndpoint 'localhost:9000'
 # set the default project register contract address
 ioctl config set wsRegisterContract 0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26 
