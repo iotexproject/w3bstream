@@ -73,7 +73,7 @@ docker compose up -d
 Monitor the W3bstream instance status:
 
 ```bash
-docker-compose logs -f enode znode
+docker-compose logs -f coordinator prover
 ```
 
 To shut down the W3bstream instance:

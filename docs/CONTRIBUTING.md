@@ -33,7 +33,7 @@ There are many ways to contribute to this project:
 
 1. Ensure all required env variables are exported:
     ```bash
-    # enode env
+    # coordinator env
 
     export HTTP_SERVICE_ENDPOINT=:9000
     export DATABASE_DSN=postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable
@@ -45,7 +45,7 @@ There are many ways to contribute to this project:
     ```
 
     ```bash
-    # znode env
+    # prover env
     # --- Edit the following
 
     # The RPC of the destination chain where proofs must be sent
@@ -74,10 +74,10 @@ There are many ways to contribute to this project:
     docker compose -f docker-compose-dev.yaml up -d
     ```
 
-4. Start enode server:
+4. Start coordinator server:
     
     ```bash
-    cd cmd/enode && go run .
+    cd cmd/coordinator && go run .
     ```
 
 5. Open the repository in VS Code and create a launch.json file with the following content:
@@ -92,7 +92,7 @@ There are many ways to contribute to this project:
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/cmd/znode"
+            "program": "${workspaceFolder}/cmd/prover"
         }
       ]
     }

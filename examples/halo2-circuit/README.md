@@ -53,7 +53,7 @@ Then you can deploy the smart contract to IoTeX chain or other ETH-compatible ch
 
 ## Local verify proof
 1. Get halo2 proof 
-if you can send messages to znode successfully, then you can execute `ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"` to obtain a halo2 proof, then put it in a file, like `halo2-simple-proof.json`.
+if you can send messages to prover successfully, then you can execute `ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"` to obtain a halo2 proof, then put it in a file, like `halo2-simple-proof.json`.
 
 2. verify
 `--proof` is proof file, and `--public` is the public input

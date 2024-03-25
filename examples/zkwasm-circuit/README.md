@@ -3,7 +3,7 @@ Zkwasm locally verify proof
 
 ## Verify with docker image
 1. Get zkwasm proof
-   If you can send messages to znode successfully, then you can execute `ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [2] }"` to obtain a zkwasm proof, then put it in a file, like `zkwasm-proof.json`.
+   If you can send messages to prover successfully, then you can execute `ioctl ws message send --project-id 10002 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [2] }"` to obtain a zkwasm proof, then put it in a file, like `zkwasm-proof.json`.
 
 2. Execute the `docker run` command for local verification. Note that the directory where the proof is located needs to be mounted into the image.
    It's simple, just input the proof file. You can also use the help command to check how to use it.
