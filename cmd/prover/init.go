@@ -9,7 +9,7 @@ import (
 )
 
 // TODO it's risc0 depend tables, will move to risc0
-func migrateDatabase() error {
+func migrateDatabase(dsn string) error {
 	var schema = `
 	CREATE TABLE IF NOT EXISTS vms (
 		id SERIAL PRIMARY KEY,
@@ -29,7 +29,6 @@ func migrateDatabase() error {
 		create_at TIMESTAMP NOT NULL DEFAULT now()
 	  );`
 
-	dsn := conf.DatabaseDSN
 	slog.Debug("connecting database", "dsn", dsn)
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {

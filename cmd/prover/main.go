@@ -14,18 +14,15 @@ import (
 	"github.com/machinefi/sprout/vm"
 )
 
-var conf *config.Config
-
 func main() {
-	var err error
-	conf, err = config.Get()
+	conf, err := config.Get()
 	if err != nil {
 		log.Fatal(err)
 	}
 	conf.Print()
 	slog.Info("prover config loaded")
 
-	if err := migrateDatabase(); err != nil {
+	if err := migrateDatabase(conf.DatabaseDSN); err != nil {
 		log.Fatal(err)
 	}
 
@@ -43,12 +40,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.IoID, provers.GetAll())
+	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProverID, provers.GetAll())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, conf.BootNodeMultiAddr, conf.IoID, conf.IoTeXChainID)
+	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, conf.BootNodeMultiAddr, conf.ProverID, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}

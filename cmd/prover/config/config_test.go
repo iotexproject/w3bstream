@@ -27,7 +27,7 @@ func TestConfig_Init(t *testing.T) {
 			ProverContractAddress:  "0x456",
 			IoTeXChainID:           5,
 			IPFSEndpoint:           "abc.ipfs.net",
-			IoID:                   "did:key:pub",
+			ProverID:               "did:key:pub",
 			ProjectFileDirectory:   "/path/to/project/configs",
 		}
 
@@ -42,7 +42,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddress)
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
-		_ = os.Setenv("IO_ID", expected.IoID)
+		_ = os.Setenv("PROVER_ID", expected.ProverID)
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDirectory)
 
 		c := &config.Config{}
