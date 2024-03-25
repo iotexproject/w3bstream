@@ -1,6 +1,19 @@
 # Changelog
 
 ---
+## [0.8.0] - 2024-03-25
+
+### Added
+- Support prover scheduling
+- Support multi prover
+- Support wasm vm
+
+### Changed
+- Rename "znode" to "prover"
+- Rename "enode" to "coordinator"
+- Rename "http_plugin" to "sequencer"
+
+---
 ## [0.7.0] - 2024-03-15
 
 ### Added

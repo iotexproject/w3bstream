@@ -30,7 +30,6 @@ func newSubscriber(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptio
 	}
 
 	go _ps.run(ctx)
-	slog.With("project", projectID).Info("subscribe started")
 
 	return _ps, nil
 }
@@ -58,14 +57,12 @@ func (p *subscriber) run(ctx context.Context) {
 			slog.With("ctx.Err()", ctx.Err()).Info("pubsub stopped caused by")
 			return
 		default:
-			// p.handle([]byte(""), p.topic)
 			m, err := p.subscription.Next(ctx)
 			if err != nil {
 				slog.Error("failed to get p2p data", "error", err)
 				continue
 			}
 			if m.ReceivedFrom == p.selfID {
-				slog.Info("skip message from self")
 				continue
 			}
 			p.handle(m.Message.Data, p.topic)
