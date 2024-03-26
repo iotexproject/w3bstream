@@ -61,7 +61,6 @@ func (p *PubSubs) Add(projectID uint64) error {
 	return nil
 }
 
-// TODO delete not used currently
 func (p *PubSubs) Delete(projectID uint64) {
 	p.mux.Lock()
 	defer p.mux.Unlock()
