@@ -10,10 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/persistence/prover"
 	"github.com/machinefi/sprout/project/contracts"
 	"github.com/machinefi/sprout/utils/hash"
-	"github.com/pkg/errors"
 )
 
 func newProverContractInstance(chainEndpoint, proverContractAddress string) (*prover.Prover, error) {
