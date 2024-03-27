@@ -138,11 +138,11 @@ func (d *Dispatcher) handleP2PData(rawdata []byte, topic *pubsub.Topic) {
 	}
 }
 
-func NewDispatcher(persistence Persistence, projectManager ProjectConfigManager, datasource Datasource, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, iotexChainID int) (*Dispatcher, error) {
+func NewDispatcher(persistence Persistence, projectConfigManager ProjectConfigManager, datasource Datasource, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, iotexChainID int) (*Dispatcher, error) {
 	d := &Dispatcher{
 		datasource:                datasource,
 		persistence:               persistence,
-		projectConfigManager:      projectManager,
+		projectConfigManager:      projectConfigManager,
 		operatorPrivateKeyECDSA:   operatorPrivateKey,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
 	}

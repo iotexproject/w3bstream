@@ -114,10 +114,10 @@ func (r *Processor) Run() {
 	// TODO project load & delete
 }
 
-func NewProcessor(vmHandler VMHandler, projectManager ProjectConfigManager, bootNodeMultiaddr, proverID string, iotexChainID int) (*Processor, error) {
+func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, bootNodeMultiaddr, proverID string, iotexChainID int) (*Processor, error) {
 	p := &Processor{
 		vmHandler:            vmHandler,
-		projectConfigManager: projectManager,
+		projectConfigManager: projectConfigManager,
 		proverID:             proverID,
 	}
 
