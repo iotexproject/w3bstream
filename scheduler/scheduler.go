@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"crypto/sha256"
-	"encoding/binary"
 	"log/slog"
 	"math/big"
 	"sort"
@@ -11,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/utils/hash"
 )
 
 type HandleProjectProvers func(projectID uint64, provers []string)
@@ -18,7 +18,7 @@ type HandleProjectProvers func(projectID uint64, provers []string)
 type scheduler struct {
 	provers              *sync.Map // proverID(string) -> true(bool)
 	projectOffsets       *sync.Map // project offset in interval(uint64) -> projectID(uint64)
-	interval             uint64
+	epoch                uint64
 	pubSubs              *p2p.PubSubs
 	chainHead            chan *types.Header
 	projectManager       *project.Manager // TODO define interface
@@ -33,7 +33,7 @@ type distance struct {
 
 func (s *scheduler) schedule() {
 	for head := range s.chainHead {
-		offset := s.interval - (head.Number.Uint64() % s.interval)
+		offset := s.epoch - (head.Number.Uint64() % s.epoch)
 		projectIDValue, ok := s.projectOffsets.Load(offset)
 		if !ok {
 			continue
@@ -54,10 +54,7 @@ func (s *scheduler) schedule() {
 		for _, n := range provers {
 			proverMap[sha256.Sum256([]byte(n))] = n
 		}
-
-		b := make([]byte, 8)
-		binary.LittleEndian.PutUint64(b, projectID)
-		projectIDHash := sha256.Sum256(b)
+		projectIDHash := hash.Sum256Uint64(projectID)
 
 		ds := make([]distance, 0, len(provers))
 
@@ -110,20 +107,20 @@ func (s *scheduler) getAllProver() []string {
 	return provers
 }
 
-func Run(interval uint64, chainEndpoint, proverContractAddress, projectContractAddress, proverID string, pubSubs *p2p.PubSubs, projectManager *project.Manager, handleProjectProvers HandleProjectProvers) error {
+func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, proverID string, pubSubs *p2p.PubSubs, projectManager *project.Manager, handleProjectProvers HandleProjectProvers) error {
 	provers := &sync.Map{}
 	if err := watchProver(provers, chainEndpoint, proverContractAddress); err != nil {
 		return err
 	}
-	if err := fillProver(provers, chainEndpoint, proverContractAddress); err != nil {
+	if err := listAndFillProver(provers, chainEndpoint, proverContractAddress); err != nil {
 		return err
 	}
 
 	projectOffsets := &sync.Map{}
-	if err := watchProject(projectOffsets, interval, chainEndpoint, projectContractAddress); err != nil {
+	if err := watchProject(projectOffsets, epoch, chainEndpoint, projectContractAddress); err != nil {
 		return err
 	}
-	if err := fillProject(projectOffsets, interval, chainEndpoint, projectContractAddress); err != nil {
+	if err := listAndFillProject(projectOffsets, epoch, chainEndpoint, projectContractAddress); err != nil {
 		return err
 	}
 
@@ -135,7 +132,7 @@ func Run(interval uint64, chainEndpoint, proverContractAddress, projectContractA
 	s := &scheduler{
 		provers:              provers,
 		projectOffsets:       projectOffsets,
-		interval:             interval,
+		epoch:                epoch,
 		pubSubs:              pubSubs,
 		chainHead:            chainHead,
 		proverID:             proverID,

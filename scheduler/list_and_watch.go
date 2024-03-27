@@ -3,8 +3,6 @@ package scheduler
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/binary"
 	"log/slog"
 	"math/big"
 	"sync"
@@ -14,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/machinefi/sprout/persistence/prover"
 	"github.com/machinefi/sprout/project/contracts"
+	"github.com/machinefi/sprout/utils/hash"
 	"github.com/pkg/errors"
 )
 
@@ -29,7 +28,7 @@ func newProverContractInstance(chainEndpoint, proverContractAddress string) (*pr
 	return instance, nil
 }
 
-func fillProver(provers *sync.Map, chainEndpoint, proverContractAddress string) error {
+func listAndFillProver(provers *sync.Map, chainEndpoint, proverContractAddress string) error {
 	instance, err := newProverContractInstance(chainEndpoint, proverContractAddress)
 	if err != nil {
 		return err
@@ -84,7 +83,7 @@ func newProjectContractInstance(chainEndpoint, projectContractAddress string) (*
 	return instance, nil
 }
 
-func fillProject(projectOffsets *sync.Map, interval uint64, chainEndpoint, projectContractAddress string) error {
+func listAndFillProject(projectOffsets *sync.Map, epoch uint64, chainEndpoint, projectContractAddress string) error {
 	instance, err := newProjectContractInstance(chainEndpoint, projectContractAddress)
 	if err != nil {
 		return err
@@ -99,11 +98,11 @@ func fillProject(projectOffsets *sync.Map, interval uint64, chainEndpoint, proje
 		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
 			return nil
 		}
-		setProjectOffsets(projectOffsets, interval, projectID)
+		setProjectOffsets(projectOffsets, epoch, projectID)
 	}
 }
 
-func watchProject(projectOffsets *sync.Map, interval uint64, chainEndpoint, projectContractAddress string) error {
+func watchProject(projectOffsets *sync.Map, epoch uint64, chainEndpoint, projectContractAddress string) error {
 	instance, err := newProjectContractInstance(chainEndpoint, projectContractAddress)
 	if err != nil {
 		return err
@@ -120,7 +119,7 @@ func watchProject(projectOffsets *sync.Map, interval uint64, chainEndpoint, proj
 			case err := <-sub.Err():
 				slog.Error("got an error when watching project upserted event", "error", err)
 			case e := <-events:
-				setProjectOffsets(projectOffsets, interval, e.ProjectId)
+				setProjectOffsets(projectOffsets, epoch, e.ProjectId)
 			}
 		}
 	}()
@@ -128,9 +127,7 @@ func watchProject(projectOffsets *sync.Map, interval uint64, chainEndpoint, proj
 }
 
 func setProjectOffsets(projectOffsets *sync.Map, interval, projectID uint64) {
-	projectIDBytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(projectIDBytes, projectID)
-	projectIDHash := sha256.Sum256(projectIDBytes)
+	projectIDHash := hash.Sum256Uint64(projectID)
 	offset := new(big.Int).SetBytes(projectIDHash[:]).Uint64() % interval
 	projectOffsets.Store(offset, projectID)
 }
