@@ -9,7 +9,6 @@ import (
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 
-	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/utils/distance"
 	"github.com/machinefi/sprout/vm"
 )
@@ -21,7 +20,6 @@ type VMHandler interface {
 type Processor struct {
 	vmHandler            VMHandler
 	projectConfigManager ProjectConfigManager
-	ps                   *p2p.PubSubs
 	proverID             string
 	projectProvers       sync.Map
 }
@@ -30,7 +28,7 @@ func (r *Processor) HandleProjectProvers(projectID uint64, provers []string) {
 	r.projectProvers.Store(projectID, provers)
 }
 
-func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
+func (r *Processor) HandleP2PData(data []byte, topic *pubsub.Topic) {
 	d := p2pData{}
 	if err := json.Unmarshal(data, &d); err != nil {
 		slog.Error("failed to unmarshal p2p data", "error", err)
@@ -110,21 +108,10 @@ func (r *Processor) reportSuccess(t *Task, state TaskState, result []byte, topic
 	}
 }
 
-func (r *Processor) Run() {
-	// TODO project load & delete
-}
-
-func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, bootNodeMultiaddr, proverID string, iotexChainID int) (*Processor, error) {
-	p := &Processor{
+func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, proverID string) *Processor {
+	return &Processor{
 		vmHandler:            vmHandler,
 		projectConfigManager: projectConfigManager,
 		proverID:             proverID,
 	}
-
-	ps, err := p2p.NewPubSubs(p.handleP2PData, bootNodeMultiaddr, iotexChainID)
-	if err != nil {
-		return nil, err
-	}
-	p.ps = ps
-	return p, nil
 }

@@ -17,8 +17,10 @@ import (
 	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
 	proverconfig "github.com/machinefi/sprout/cmd/prover/config"
 	"github.com/machinefi/sprout/datasource"
+	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/scheduler"
 	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/vm"
 )
@@ -116,12 +118,16 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(err)
 	}
 
-	taskProcessor, err := task.NewProcessor(vmHandler, projectConfigManager, conf.BootNodeMultiAddr, "", conf.IoTeXChainID)
+	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, conf.ProverID)
+
+	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	taskProcessor.Run()
+	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, conf.ProverID, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
+		log.Fatal(err)
+	}
 
 	slog.Info("prover started")
 }

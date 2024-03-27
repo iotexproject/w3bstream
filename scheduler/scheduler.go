@@ -17,7 +17,7 @@ type scheduler struct {
 	provers              *sync.Map // proverID(string) -> true(bool)
 	projectOffsets       *sync.Map // project offset in interval(uint64) -> projectMeta(*project.ProjectMeta)
 	epoch                uint64
-	pubSubs              *p2p.PubSubs
+	pubSubs              *p2p.PubSubs // TODO define interface
 	chainHead            chan *types.Header
 	proverID             string
 	handleProjectProvers HandleProjectProvers
