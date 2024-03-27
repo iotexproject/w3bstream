@@ -15,11 +15,10 @@ type HandleProjectProvers func(projectID uint64, provers []string)
 
 type scheduler struct {
 	provers              *sync.Map // proverID(string) -> true(bool)
-	projectOffsets       *sync.Map // project offset in interval(uint64) -> projectID(uint64)
+	projectOffsets       *sync.Map // project offset in interval(uint64) -> projectMeta(*project.ProjectMeta)
 	epoch                uint64
 	pubSubs              *p2p.PubSubs
 	chainHead            chan *types.Header
-	projectManager       *project.Manager // TODO define interface
 	proverID             string
 	handleProjectProvers HandleProjectProvers
 }
@@ -27,28 +26,23 @@ type scheduler struct {
 func (s *scheduler) schedule() {
 	for head := range s.chainHead {
 		offset := s.epoch - (head.Number.Uint64() % s.epoch)
-		projectIDValue, ok := s.projectOffsets.Load(offset)
+		metaValue, ok := s.projectOffsets.Load(offset)
 		if !ok {
 			continue
 		}
-		projectID := projectIDValue.(uint64)
+		meta := metaValue.(*project.ProjectMeta)
 		provers := s.getAllProver()
 
-		projectConfig, err := s.projectManager.Get(projectID, "0.1") // TODO change project version
-		if err != nil {
-			slog.Error("failed to get project config", "error", err, "project_id", projectID)
-			continue
-		}
-		amount := projectConfig.Config.ResourceRequest.ProverAmount
+		amount := meta.ProverAmount
 		if amount == 0 {
 			amount = 1
 		}
 		if amount > uint(len(provers)) {
-			slog.Error("no enough resource for the project", "require prover amount", amount, "current prover", len(provers), "project_id", projectID)
+			slog.Error("no enough resource for the project", "require prover amount", amount, "current prover", len(provers), "project_id", meta.ProjectID)
 			continue
 		}
 
-		projectProvers := distance.GetMinNLocation(provers, projectID, uint64(amount))
+		projectProvers := distance.GetMinNLocation(provers, meta.ProjectID, uint64(amount))
 
 		isMy := false
 		for _, p := range projectProvers {
@@ -57,13 +51,13 @@ func (s *scheduler) schedule() {
 			}
 		}
 		if !isMy {
-			slog.Info("the project not scheduld to this prover", "project_id", projectID)
-			s.pubSubs.Delete(projectID)
+			slog.Info("the project not scheduld to this prover", "project_id", meta.ProjectID)
+			s.pubSubs.Delete(meta.ProjectID)
 			continue
 		}
-		s.handleProjectProvers(projectID, projectProvers)
-		s.pubSubs.Add(projectID)
-		slog.Info("the project scheduld to this prover", "project_id", projectID)
+		s.handleProjectProvers(meta.ProjectID, projectProvers)
+		s.pubSubs.Add(meta.ProjectID)
+		slog.Info("the project scheduld to this prover", "project_id", meta.ProjectID)
 	}
 }
 
@@ -76,7 +70,7 @@ func (s *scheduler) getAllProver() []string {
 	return provers
 }
 
-func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, proverID string, pubSubs *p2p.PubSubs, projectManager *project.Manager, handleProjectProvers HandleProjectProvers) error {
+func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers) error {
 	provers := &sync.Map{}
 	if err := watchProver(provers, chainEndpoint, proverContractAddress); err != nil {
 		return err
@@ -105,7 +99,6 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 		pubSubs:              pubSubs,
 		chainHead:            chainHead,
 		proverID:             proverID,
-		projectManager:       projectManager,
 		handleProjectProvers: handleProjectProvers,
 	}
 	go s.schedule()

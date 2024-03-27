@@ -22,16 +22,14 @@ type Persistence interface {
 	Create(tl *TaskStateLog) error
 }
 
-type ProjectManager interface {
-	Get(projectID uint64, version string) (*project.Project, error)
-	GetAllProjectID() []uint64
-	GetNotify() <-chan uint64
+type ProjectConfigManager interface {
+	Get(projectID uint64, version string) (*project.Config, error)
 }
 
 type Dispatcher struct {
 	datasource                Datasource
 	persistence               Persistence
-	projectManager            ProjectManager
+	projectConfigManager      ProjectConfigManager
 	pubSubs                   *p2p.PubSubs
 	operatorPrivateKeyECDSA   string
 	operatorPrivateKeyED25519 string
@@ -94,13 +92,13 @@ func (d *Dispatcher) handleP2PData(rawdata []byte, topic *pubsub.Topic) {
 		return
 	}
 
-	p, err := d.projectManager.Get(l.Task.ProjectID, l.Task.ProjectVersion)
+	p, err := d.projectConfigManager.Get(l.Task.ProjectID, l.Task.ProjectVersion)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", l.Task.ProjectID, "project_version", l.Task.ProjectVersion)
 		return
 	}
 
-	output, err := output.New(&p.Config.Output, d.operatorPrivateKeyECDSA, d.operatorPrivateKeyED25519)
+	output, err := output.New(&p.Output, d.operatorPrivateKeyECDSA, d.operatorPrivateKeyED25519)
 	if err != nil {
 		slog.Error("failed to init output", "error", err)
 		if err := d.persistence.Create(&TaskStateLog{
@@ -140,11 +138,11 @@ func (d *Dispatcher) handleP2PData(rawdata []byte, topic *pubsub.Topic) {
 	}
 }
 
-func NewDispatcher(persistence Persistence, projectManager ProjectManager, datasource Datasource, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, iotexChainID int) (*Dispatcher, error) {
+func NewDispatcher(persistence Persistence, projectManager ProjectConfigManager, datasource Datasource, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, iotexChainID int) (*Dispatcher, error) {
 	d := &Dispatcher{
 		datasource:                datasource,
 		persistence:               persistence,
-		projectManager:            projectManager,
+		projectConfigManager:      projectManager,
 		operatorPrivateKeyECDSA:   operatorPrivateKey,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
 	}

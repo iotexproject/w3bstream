@@ -37,7 +37,7 @@ func TestNewProcessor(t *testing.T) {
 		p = p.ApplyFuncReturn(p2p.NewPubSubs, ps, nil)
 		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
-		_, err := NewProcessor(nil, &project.Manager{}, "", "", 0)
+		_, err := NewProcessor(nil, &project.ConfigManager{}, "", "", 0)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -48,9 +48,9 @@ func TestNewProcessor(t *testing.T) {
 		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 
-		pm := &project.Manager{}
+		pm := &project.ConfigManager{}
 		ch := make(chan uint64, 1)
-		p = p.ApplyMethodReturn(&project.Manager{}, "GetNotify", ch)
+		p = p.ApplyMethodReturn(&project.ConfigManager{}, "GetNotify", ch)
 
 		_, err := NewProcessor(nil, pm, "", "", 0)
 		r.NoError(err)
@@ -102,9 +102,9 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	r := require.New(t)
 
 	processor := &Processor{
-		vmHandler:      &vm.Handler{},
-		projectManager: &project.Manager{},
-		ps:             nil,
+		vmHandler:            &vm.Handler{},
+		projectConfigManager: &project.ConfigManager{},
+		ps:                   nil,
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {

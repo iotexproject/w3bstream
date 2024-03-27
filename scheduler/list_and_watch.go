@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/persistence/prover"
+	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/project/contracts"
 	"github.com/machinefi/sprout/utils/hash"
 )
@@ -99,7 +100,11 @@ func listAndFillProject(projectOffsets *sync.Map, epoch uint64, chainEndpoint, p
 		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
 			return nil
 		}
-		setProjectOffsets(projectOffsets, epoch, projectID)
+		setProjectOffsets(projectOffsets, epoch, &project.ProjectMeta{
+			ProjectID: projectID,
+			Uri:       mp.Uri,
+			Hash:      mp.Hash,
+		})
 	}
 }
 
@@ -120,17 +125,21 @@ func watchProject(projectOffsets *sync.Map, epoch uint64, chainEndpoint, project
 			case err := <-sub.Err():
 				slog.Error("got an error when watching project upserted event", "error", err)
 			case e := <-events:
-				setProjectOffsets(projectOffsets, epoch, e.ProjectId)
+				setProjectOffsets(projectOffsets, epoch, &project.ProjectMeta{
+					ProjectID: e.ProjectId,
+					Uri:       e.Uri,
+					Hash:      e.Hash,
+				})
 			}
 		}
 	}()
 	return nil
 }
 
-func setProjectOffsets(projectOffsets *sync.Map, interval, projectID uint64) {
-	projectIDHash := hash.Sum256Uint64(projectID)
-	offset := new(big.Int).SetBytes(projectIDHash[:]).Uint64() % interval
-	projectOffsets.Store(offset, projectID)
+func setProjectOffsets(projectOffsets *sync.Map, epoch uint64, meta *project.ProjectMeta) {
+	projectIDHash := hash.Sum256Uint64(meta.ProjectID)
+	offset := new(big.Int).SetBytes(projectIDHash[:]).Uint64() % epoch
+	projectOffsets.Store(offset, meta)
 }
 
 func watchChainHead(head chan<- *types.Header, chainEndpoint string) error {

@@ -76,7 +76,7 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 	d := &Dispatcher{
 		pubSubs:                   nil,
 		persistence:               &mockPersistence{},
-		projectManager:            &project.Manager{},
+		projectConfigManager:      &project.ConfigManager{},
 		operatorPrivateKeyECDSA:   "",
 		operatorPrivateKeyED25519: "",
 	}
@@ -236,7 +236,7 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 	d := &Dispatcher{
 		pubSubs:                   nil,
 		persistence:               nil,
-		projectManager:            nil,
+		projectConfigManager:      nil,
 		operatorPrivateKeyECDSA:   "",
 		operatorPrivateKeyED25519: "",
 	}

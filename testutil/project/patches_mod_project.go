@@ -10,7 +10,7 @@ import (
 )
 
 func ProjectManagerGetAllProjectID(p *Patches, ids []uint64) *Patches {
-	var pm *project.Manager
+	var pm *project.ConfigManager
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(pm),
 		"GetAllProjectID",
@@ -21,7 +21,7 @@ func ProjectManagerGetAllProjectID(p *Patches, ids []uint64) *Patches {
 }
 
 func ProjectManagerGetNotify(p *Patches, c <-chan uint64) *Patches {
-	var pm *project.Manager
+	var pm *project.ConfigManager
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(pm),
 		"GetNotify",
@@ -32,7 +32,7 @@ func ProjectManagerGetNotify(p *Patches, c <-chan uint64) *Patches {
 }
 
 func ProjectManagerGet(p *Patches, conf *project.Project, err error) *Patches {
-	var pm *project.Manager
+	var pm *project.ConfigManager
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(pm),
 		"Get",
