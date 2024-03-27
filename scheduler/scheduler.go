@@ -1,17 +1,14 @@
 package scheduler
 
 import (
-	"crypto/sha256"
 	"log/slog"
-	"math/big"
-	"sort"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/utils/hash"
+	"github.com/machinefi/sprout/utils/distance"
 )
 
 type HandleProjectProvers func(projectID uint64, provers []string)
@@ -25,11 +22,6 @@ type scheduler struct {
 	projectManager       *project.Manager // TODO define interface
 	proverID             string
 	handleProjectProvers HandleProjectProvers
-}
-
-type distance struct {
-	distance *big.Int
-	hash     [sha256.Size]byte
 }
 
 func (s *scheduler) schedule() {
@@ -47,41 +39,17 @@ func (s *scheduler) schedule() {
 			slog.Error("failed to get project config", "error", err, "project_id", projectID)
 			continue
 		}
-		if a := projectConfig.Config.ResourceRequest.ProverAmount; a > uint(len(provers)) {
-			slog.Error("no enough resource for the project", "require prover amount", a, "current prover", len(provers), "project_id", projectID)
-			continue
-		}
-		proverMap := map[[sha256.Size]byte]string{}
-		for _, n := range provers {
-			proverMap[sha256.Sum256([]byte(n))] = n
-		}
-		projectIDHash := hash.Sum256Uint64(projectID)
-
-		ds := make([]distance, 0, len(provers))
-
-		for h := range proverMap {
-			n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetBytes(projectIDHash[:]))
-			ds = append(ds, distance{
-				distance: n,
-				hash:     h,
-			})
-		}
-
-		sort.Slice(ds, func(i, j int) bool {
-			return ds[i].distance.Cmp(ds[j].distance) < 0
-		})
-
 		amount := projectConfig.Config.ResourceRequest.ProverAmount
 		if amount == 0 {
 			amount = 1
 		}
-
-		projectProvers := []string{}
-
-		ds = ds[:amount]
-		for _, d := range ds {
-			projectProvers = append(projectProvers, proverMap[d.hash])
+		if amount > uint(len(provers)) {
+			slog.Error("no enough resource for the project", "require prover amount", amount, "current prover", len(provers), "project_id", projectID)
+			continue
 		}
+
+		projectProvers := distance.GetMinNLocation(provers, projectID, uint64(amount))
+
 		isMy := false
 		for _, p := range projectProvers {
 			if p == s.proverID {
