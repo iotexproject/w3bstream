@@ -2,18 +2,16 @@ package task
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/binary"
 	"encoding/json"
 	"log/slog"
-	"math/big"
-	"sort"
+	"sync"
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/utils/distance"
 	"github.com/machinefi/sprout/vm"
 )
 
@@ -26,11 +24,11 @@ type Processor struct {
 	projectManager ProjectManager
 	ps             *p2p.PubSubs
 	proverID       string
+	projectProvers sync.Map
 }
 
-type distance struct {
-	distance *big.Int
-	hash     [sha256.Size]byte
+func (r *Processor) HandleProjectProvers(projectID uint64, provers []string) {
+	r.projectProvers.Store(projectID, provers)
 }
 
 func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
@@ -52,30 +50,14 @@ func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
 		return
 	}
 
-	if len(p.Provers) > 1 {
-		proverMap := map[[sha256.Size]byte]string{}
-		for _, p := range p.Provers {
-			proverMap[sha256.Sum256([]byte(p))] = p
-		}
-
-		b := make([]byte, 8)
-		binary.LittleEndian.PutUint64(b, t.ID)
-		taskIDHash := sha256.Sum256(b)
-
-		ds := make([]distance, 0, len(p.Provers))
-
-		for h := range proverMap {
-			n := new(big.Int).Xor(new(big.Int).SetBytes(h[:]), new(big.Int).SetBytes(taskIDHash[:]))
-			ds = append(ds, distance{
-				distance: n,
-				hash:     h,
-			})
-		}
-		sort.SliceStable(ds, func(i, j int) bool {
-			return ds[i].distance.Cmp(ds[j].distance) < 0
-		})
-
-		if proverMap[ds[0].hash] != r.proverID {
+	var provers []string
+	proversValue, ok := r.projectProvers.Load(t.ProjectID)
+	if ok {
+		provers = proversValue.([]string)
+	}
+	if len(provers) > 1 {
+		workProver := distance.GetMinNLocation(provers, t.ID, 1)
+		if workProver[0] != r.proverID {
 			slog.Info("the task not scheduld to this prover", "project_id", t.ProjectID, "task_id", t.ID)
 			return
 		}
