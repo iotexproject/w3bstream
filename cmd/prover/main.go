@@ -8,7 +8,6 @@ import (
 	"syscall"
 
 	"github.com/machinefi/sprout/cmd/prover/config"
-	"github.com/machinefi/sprout/persistence"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/vm"
@@ -35,17 +34,12 @@ func main() {
 		},
 	)
 
-	provers, err := persistence.NewProver(conf.ChainEndpoint, conf.ProverContractAddress)
+	projectConfigManager, err := project.NewConfigManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProverID, provers.GetAll())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, conf.BootNodeMultiAddr, conf.ProverID, conf.IoTeXChainID)
+	taskProcessor, err := task.NewProcessor(vmHandler, projectConfigManager, conf.BootNodeMultiAddr, conf.ProverID, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}

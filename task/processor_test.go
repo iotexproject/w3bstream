@@ -31,28 +31,12 @@ func TestNewProcessor(t *testing.T) {
 		r.ErrorContains(err, t.Name())
 	})
 
-	t.Run("AddProjectFailed", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-		p = p.ApplyFuncReturn(p2p.NewPubSubs, ps, nil)
-		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
-		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
-		_, err := NewProcessor(nil, &project.Manager{}, "", "", 0)
-		r.ErrorContains(err, t.Name())
-	})
-
 	t.Run("NewProcessorSuccess", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 		p = p.ApplyFuncReturn(p2p.NewPubSubs, ps, nil)
-		p = testproject.ProjectManagerGetAllProjectID(p, append([]uint64{}, 1))
-		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 
-		pm := &project.Manager{}
-		ch := make(chan uint64, 1)
-		p = p.ApplyMethodReturn(&project.Manager{}, "GetNotify", ch)
-
-		_, err := NewProcessor(nil, pm, "", "", 0)
+		_, err := NewProcessor(nil, &project.ConfigManager{}, "", "", 0)
 		r.NoError(err)
 	})
 }
@@ -102,9 +86,9 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	r := require.New(t)
 
 	processor := &Processor{
-		vmHandler:      &vm.Handler{},
-		projectManager: &project.Manager{},
-		ps:             nil,
+		vmHandler:            &vm.Handler{},
+		projectConfigManager: &project.ConfigManager{},
+		ps:                   nil,
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {
@@ -133,26 +117,24 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		defer p.Reset()
 
 		p = processorReportSuccess(p)
-		p = testproject.ProjectManagerGet(p, nil, errors.New(t.Name()))
+		p = testproject.ProjectConfigManagerGet(p, nil, errors.New(t.Name()))
 		p = processorReportFail(p)
 		processor.handleP2PData(data, nil)
 	})
 
-	conf := &project.Project{
-		Config: &project.Config{
-			Code:         "code",
-			CodeExpParam: "codeExpParam",
-			VMType:       "vmType",
-			Output:       output.Config{},
-			Aggregation:  project.AggregationConfig{},
-			Version:      "",
-		},
+	conf := &project.Config{
+		Code:         "code",
+		CodeExpParam: "codeExpParam",
+		VMType:       "vmType",
+		Output:       output.Config{},
+		Aggregation:  project.AggregationConfig{},
+		Version:      "",
 	}
 
 	t.Run("ProofFailed", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testproject.ProjectManagerGet(p, conf, nil)
+		p = testproject.ProjectConfigManagerGet(p, conf, nil)
 
 		p = processorReportSuccess(p)
 		p = vmHandlerHandle(p, nil, errors.New(t.Name()))
@@ -163,7 +145,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	t.Run("HandleSuccess", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testproject.ProjectManagerGet(p, conf, nil)
+		p = testproject.ProjectConfigManagerGet(p, conf, nil)
 		p = vmHandlerHandle(p, []byte("res"), nil)
 
 		p = processorReportSuccess(p)

@@ -40,10 +40,11 @@ type Project struct {
 }
 
 type ProjectMeta struct {
-	ProjectID uint64
-	Uri       string
-	Hash      [32]byte
-	Paused    bool
+	ProjectID    uint64
+	Uri          string
+	Hash         [32]byte
+	Paused       bool
+	ProverAmount uint // TODO change this after contract code updated
 }
 
 func (m *ProjectMeta) GetConfigData(ipfsEndpoint string) ([]byte, error) {

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/utils/distance"
@@ -20,11 +19,11 @@ type VMHandler interface {
 }
 
 type Processor struct {
-	vmHandler      VMHandler
-	projectManager ProjectManager
-	ps             *p2p.PubSubs
-	proverID       string
-	projectProvers sync.Map
+	vmHandler            VMHandler
+	projectConfigManager ProjectConfigManager
+	ps                   *p2p.PubSubs
+	proverID             string
+	projectProvers       sync.Map
 }
 
 func (r *Processor) HandleProjectProvers(projectID uint64, provers []string) {
@@ -43,7 +42,7 @@ func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
 
 	t := d.Task
 
-	p, err := r.projectManager.Get(t.ProjectID, t.ProjectVersion)
+	p, err := r.projectConfigManager.Get(t.ProjectID, t.ProjectVersion)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID, "project_version", t.ProjectVersion)
 		r.reportFail(t, err, topic)
@@ -66,7 +65,7 @@ func (r *Processor) handleP2PData(data []byte, topic *pubsub.Topic) {
 	slog.Debug("get a new task", "task_id", t.ID)
 	r.reportSuccess(t, TaskStateDispatched, nil, topic)
 
-	res, err := r.vmHandler.Handle(t.ProjectID, p.Config.VMType, p.Config.Code, p.Config.CodeExpParam, t.Data)
+	res, err := r.vmHandler.Handle(t.ProjectID, p.VMType, p.Code, p.CodeExpParam, t.Data)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)
@@ -115,11 +114,11 @@ func (r *Processor) Run() {
 	// TODO project load & delete
 }
 
-func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, bootNodeMultiaddr, proverID string, iotexChainID int) (*Processor, error) {
+func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, bootNodeMultiaddr, proverID string, iotexChainID int) (*Processor, error) {
 	p := &Processor{
-		vmHandler:      vmHandler,
-		projectManager: projectManager,
-		proverID:       proverID,
+		vmHandler:            vmHandler,
+		projectConfigManager: projectConfigManager,
+		proverID:             proverID,
 	}
 
 	ps, err := p2p.NewPubSubs(p.handleP2PData, bootNodeMultiaddr, iotexChainID)
@@ -127,23 +126,5 @@ func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, bootNodeMu
 		return nil, err
 	}
 	p.ps = ps
-
-	for _, id := range projectManager.GetAllProjectID() {
-		if err := ps.Add(id); err != nil {
-			return nil, errors.Wrapf(err, "add project %d pubsub failed", id)
-		}
-		slog.Debug("processor project added", "projectID", id)
-	}
-
-	notify := projectManager.GetNotify()
-	go func() {
-		for id := range notify {
-			if err := ps.Add(id); err != nil {
-				slog.Error("add project pubsub failed", "projectID", id, "error", err)
-			}
-			slog.Debug("processor project added", "projectID", id)
-		}
-	}()
-
 	return p, nil
 }

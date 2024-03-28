@@ -111,12 +111,12 @@ func runProver(conf *proverconfig.Config) {
 		},
 	)
 
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint, "", nil)
+	projectConfigManager, err := project.NewConfigManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	taskProcessor, err := task.NewProcessor(vmHandler, projectManager, conf.BootNodeMultiAddr, "", conf.IoTeXChainID)
+	taskProcessor, err := task.NewProcessor(vmHandler, projectConfigManager, conf.BootNodeMultiAddr, "", conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 
 	_ = clients.NewManager()
 
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.ProjectCacheDirectory, conf.IPFSEndpoint, "", nil)
+	projectConfigManager, err := project.NewConfigManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 		log.Fatal(err)
 	}
 
-	dispatcher, err := task.NewDispatcher(pg, projectManager, datasource, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID)
+	dispatcher, err := task.NewDispatcher(pg, projectConfigManager, datasource, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}
