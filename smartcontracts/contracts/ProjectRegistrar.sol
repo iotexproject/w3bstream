@@ -14,14 +14,13 @@ contract ProjectRegistrar is IProjectRegistrar, OwnableUpgradeable, ERC721Upgrad
     mapping(uint256 => Project) projects;
     uint256 nextProjectId;
 
-    modifier onlyProjectOperator(uint256 _projectId) {
-        require(projects[_projectId].operator == msg.sender, "Only project operator to operate");
-        _;
-    }
-
     modifier onlyProjectOwner(uint256 _projectId) {
         require(ownerOf(_projectId) == msg.sender, "Only project owner to operate");
         _;
+    }
+
+    function _requireOperator(address _operator) internal view virtual {
+        require(_operator == msg.sender, "Only project operator to operate");
     }
 
     function initialize(uint256 _fee, string calldata _name, string calldata _symbol) public initializer {
@@ -71,8 +70,10 @@ contract ProjectRegistrar is IProjectRegistrar, OwnableUpgradeable, ERC721Upgrad
         emit ProjectOperatorChanged(_projectId, _operator);
     }
 
-    function pause(uint256 _projectId) external override onlyProjectOperator(_projectId) {
+    function pause(uint256 _projectId) external override {
+        _requireMinted(_projectId);
         Project storage _project = projects[_projectId];
+        _requireOperator(_project.operator);
         require(!_project.paused, "project already paused");
 
         _project.paused = true;
@@ -80,8 +81,10 @@ contract ProjectRegistrar is IProjectRegistrar, OwnableUpgradeable, ERC721Upgrad
         emit ProjectPaused(_projectId);
     }
 
-    function resume(uint256 _projectId) external override onlyProjectOperator(_projectId) {
+    function resume(uint256 _projectId) external override {
+        _requireMinted(_projectId);
         Project storage _project = projects[_projectId];
+        _requireOperator(_project.operator);
         require(_project.paused, "project already actived");
 
         _project.paused = false;
@@ -89,31 +92,30 @@ contract ProjectRegistrar is IProjectRegistrar, OwnableUpgradeable, ERC721Upgrad
         emit ProjectResumed(_projectId);
     }
 
-    function updateConfig(
-        uint256 _projectId,
-        string calldata _uri,
-        bytes32 _hash
-    ) external override onlyProjectOperator(_projectId) {
+    function updateConfig(uint256 _projectId, string calldata _uri, bytes32 _hash) external override {
+        _requireMinted(_projectId);
         Project storage _project = projects[_projectId];
+        _requireOperator(_project.operator);
         _project.hash = _hash;
         _project.uri = _uri;
 
         emit ProjectConfigUpdated(_projectId);
     }
 
-    function updateMetadata(
-        uint256 _projectId,
-        bytes32 _name,
-        bytes calldata _value
-    ) external override onlyProjectOperator(_projectId) {
+    function updateMetadata(uint256 _projectId, bytes32 _name, bytes calldata _value) external override {
+        _requireMinted(_projectId);
         Project storage _project = projects[_projectId];
+        _requireOperator(_project.operator);
         _project.metadata[_name] = _value;
 
         emit ProjectMetadataUpdated(_projectId, _name);
     }
 
-    function removeMetadata(uint256 _projectId, bytes32 _name) external override onlyProjectOperator(_projectId) {
+    function removeMetadata(uint256 _projectId, bytes32 _name) external override {
+        _requireMinted(_projectId);
         Project storage _project = projects[_projectId];
+        _requireOperator(_project.operator);
+
         delete _project.metadata[_name];
 
         emit ProjectMetadataRemoved(_projectId, _name);
