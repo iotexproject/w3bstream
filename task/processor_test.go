@@ -11,35 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil"
 	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/vm"
 )
-
-func TestNewProcessor(t *testing.T) {
-	r := require.New(t)
-
-	ps := &p2p.PubSubs{}
-
-	t.Run("NewFailed", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
-		_, err := NewProcessor(nil, nil, "", "", 0)
-		r.ErrorContains(err, t.Name())
-	})
-
-	t.Run("NewProcessorSuccess", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-		p = p.ApplyFuncReturn(p2p.NewPubSubs, ps, nil)
-
-		_, err := NewProcessor(nil, &project.ConfigManager{}, "", "", 0)
-		r.NoError(err)
-	})
-}
 
 func TestProcessor_ReportFail(t *testing.T) {
 	processor := &Processor{}
@@ -88,7 +64,6 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	processor := &Processor{
 		vmHandler:            &vm.Handler{},
 		projectConfigManager: &project.ConfigManager{},
-		ps:                   nil,
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {
@@ -98,7 +73,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		})
 		r.NoError(err)
 
-		processor.handleP2PData(data, nil)
+		processor.HandleP2PData(data, nil)
 	})
 
 	data, err := json.Marshal(&p2pData{
@@ -119,7 +94,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		p = processorReportSuccess(p)
 		p = testproject.ProjectConfigManagerGet(p, nil, errors.New(t.Name()))
 		p = processorReportFail(p)
-		processor.handleP2PData(data, nil)
+		processor.HandleP2PData(data, nil)
 	})
 
 	conf := &project.Config{
@@ -139,7 +114,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		p = processorReportSuccess(p)
 		p = vmHandlerHandle(p, nil, errors.New(t.Name()))
 		p = processorReportFail(p)
-		processor.handleP2PData(data, nil)
+		processor.HandleP2PData(data, nil)
 	})
 
 	t.Run("HandleSuccess", func(t *testing.T) {
@@ -149,7 +124,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		p = vmHandlerHandle(p, []byte("res"), nil)
 
 		p = processorReportSuccess(p)
-		processor.handleP2PData(data, nil)
+		processor.HandleP2PData(data, nil)
 	})
 
 }

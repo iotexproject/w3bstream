@@ -26,6 +26,7 @@ func TestConfig_Init(t *testing.T) {
 			BootNodeMultiAddr:      "/dsn4/abc/123",
 			ProverContractAddress:  "0x456",
 			IoTeXChainID:           5,
+			SchedulerEpoch:         720,
 			IPFSEndpoint:           "abc.ipfs.net",
 			ProverID:               "did:key:pub",
 			ProjectFileDirectory:   "/path/to/project/configs",
@@ -40,6 +41,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
 		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddress)
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
+		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddress)
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
 		_ = os.Setenv("PROVER_ID", expected.ProverID)

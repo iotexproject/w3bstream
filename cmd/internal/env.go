@@ -47,6 +47,8 @@ func ParseEnv(c any) error {
 			fv.Set(reflect.ValueOf(viper.GetString(key)))
 		case reflect.Int:
 			fv.Set(reflect.ValueOf(viper.GetInt(key)))
+		case reflect.Uint64:
+			fv.Set(reflect.ValueOf(viper.GetUint64(key)))
 		}
 	}
 	return nil

@@ -19,6 +19,7 @@ type Config struct {
 	ProverContractAddress  string `env:"PROVER_CONTRACT_ADDRESS"`
 	ProverID               string `env:"PROVER_ID"`
 	IoTeXChainID           int    `env:"IOTEX_CHAINID"`
+	SchedulerEpoch         uint64 `env:"SCHEDULER_EPOCH"`
 	IPFSEndpoint           string `env:"IPFS_ENDPOINT"`
 	ProjectFileDirectory   string `env:"PROJECT_FILE_DIRECTORY,optional"`
 	ProjectCacheDirectory  string `env:"PROJECT_CACHE_DIRECTORY,optional"`
@@ -39,6 +40,7 @@ var (
 		ProverContractAddress:  "0xB2b3f3c8BB00493c6f12232C2cb3e20A65698939",
 		ProverID:               "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6123",
 		IoTeXChainID:           2,
+		SchedulerEpoch:         720,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		LogLevel:               int(slog.LevelDebug),
 	}
@@ -55,6 +57,7 @@ var (
 		ProverContractAddress:  "",
 		ProverID:               "",
 		IoTeXChainID:           2,
+		SchedulerEpoch:         720,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		ProjectCacheDirectory:  "./project_cache",
 		LogLevel:               int(slog.LevelDebug),
@@ -72,6 +75,7 @@ var (
 		ProverContractAddress:  "",
 		ProverID:               "",
 		IoTeXChainID:           2,
+		SchedulerEpoch:         720,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		ProjectFileDirectory:   "./testdata",
 		LogLevel:               int(slog.LevelDebug),
