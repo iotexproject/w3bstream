@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "./interfaces/IProject.sol";
 import "./interfaces/IProver.sol";
 import "./interfaces/IFleetManagement.sol";
 
@@ -11,6 +12,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, OwnableUpgradeable {
     uint256 public override epoch;
     uint256 public override minStake;
+    address public override project;
     address public override prover;
 
     struct PendingWithdraw {
@@ -21,13 +23,18 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
     mapping(uint256 => uint256) public override stakedAmount;
     mapping(uint256 => PendingWithdraw) public pendingWithdraw;
 
-    function initialize(uint256 _minStake, address _prover) public initializer {
+    function initialize(uint256 _minStake, address _project, address _prover) public initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
 
         epoch = 1 hours;
         minStake = _minStake;
+        project = _project;
         prover = _prover;
+    }
+
+    function isNormalProject(uint256 _projectId) external view returns (bool) {
+        return !IProject(project).isPaused(_projectId);
     }
 
     function isNormalProver(uint256 _proverId) external view returns (bool) {

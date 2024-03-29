@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-interface IApp {
+interface IDapp {
     function process(bytes calldata _data) external;
 }
