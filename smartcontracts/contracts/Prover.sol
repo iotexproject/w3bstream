@@ -4,10 +4,10 @@ pragma solidity ^0.8.19;
 import "./interfaces/IProver.sol";
 import "./interfaces/IFleetManagement.sol";
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract Prover is IProver, Ownable, ERC721 {
+contract Prover is IProver, OwnableUpgradeable, ERC721Upgradeable {
     event FleetManagementSetted(address indexed fleetManagement);
 
     uint256 nextId;
@@ -24,7 +24,11 @@ contract Prover is IProver, Ownable, ERC721 {
         _;
     }
 
-    constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
+    function initialize(address _fleetManagement, string memory _name, string memory _symbol) public initializer {
+        __Ownable_init();
+        __ERC721_init(_name, _symbol);
+        fleetManagement = IFleetManagement(_fleetManagement);
+    }
 
     function nodeType(uint256 _id) external view override returns (Type) {
         _requireMinted(_id);
