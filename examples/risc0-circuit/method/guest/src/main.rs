@@ -61,20 +61,4 @@ pub fn main() {
             );
         env::commit(&s);
     }
-
-    // the string is a json array
-    // let input_v: JsonValue = serde_json::from_str(&input).unwrap();
-    // let item_str = input_v.as_array().unwrap()[0].as_str().unwrap();
-    // let v: JsonValue = serde_json::from_str(item_str).unwrap();
-
-    // // Load the first number from the host, is a private key
-    // let a: String = v["private_input"].as_str().unwrap().to_string();
-    // // Load the second number from the host, is a public key
-    // let b: String = v["public_input"].as_str().unwrap().to_string();
-
-    // let pri_a = a.trim().parse::<f32>().unwrap();
-    // let pri_b = b.trim().parse::<f32>().unwrap();
-
-    // let p = pri_a + pri_b;
-    // env::commit(&format!("{}", p));
 }
