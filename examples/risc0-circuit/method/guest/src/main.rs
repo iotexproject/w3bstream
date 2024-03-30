@@ -21,16 +21,19 @@ use serde_json::Value as JsonValue;
 risc0_zkvm::guest::entry!(main);
 
 pub fn main() {
-    let input: String = env::read();
+    let project_id: u64 = env::read();
+    env::log(&format!("project_id {}", project_id));
+    let task_id: u64 = env::read();
+    env::log(&format!("task_id {}", task_id));
+    let client_id: String = env::read();
+    env::log(&format!("client_id {}", client_id));
+    let sequencer_sign: String = env::read();
+    env::log(&format!("sequencer_sign {}", sequencer_sign));
+    let datas: Vec<String> = env::read();
+    env::log(&format!("datas {:?}", datas));
 
-    // the string is a json array
-    let input_v: JsonValue = serde_json::from_str(&input).unwrap();
-    let item_str = input_v.as_array().unwrap()[0].as_str().unwrap();
-    let v: JsonValue = serde_json::from_str(item_str).unwrap();
- 
-    // Load the first number from the host, is a private key
+    let v: JsonValue = serde_json::from_str(&datas[0]).unwrap();
     let a: String = v["private_input"].as_str().unwrap().to_string();
-    // Load the second number from the host, is a public key
     let b: String = v["public_input"].as_str().unwrap().to_string();
 
     let pri_a = a.trim().parse::<u64>().unwrap();
@@ -53,9 +56,9 @@ pub fn main() {
         env::commit(&s);
     } else {
         let s = format!(
-            "I know your private input is not greater than {} or less than {}, and I can not prove it!",
-            pub_b, pub_c
-        );
+                "I know your private input is not greater than {} or less than {}, and I can not prove it!",
+                pub_b, pub_c
+            );
         env::commit(&s);
     }
 }

@@ -13,8 +13,8 @@ use crate::circuits::simple::SimpleCircuit;
 use serde_json::Value as JsonValue;
 
 #[wasm_bindgen]
-pub fn prove(input: &str) -> std::string::String {
-
+pub fn prove(project_id: u64, task_id: u64, client_id: &str, sequencer_sign: &str, input: &str) -> std::string::String {
+    
     // TODO parse input json, like {"private_a": 3, "private_b": 4}
     let input_v: JsonValue = serde_json::from_str(&input).unwrap();
     let item_str = &input_v.as_array().unwrap()[0].as_str().unwrap();
