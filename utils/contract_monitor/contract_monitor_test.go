@@ -2,6 +2,7 @@ package contract_monitor
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -66,7 +67,7 @@ func TestNewContractMonitor(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
-		monitor, err := NewContractMonitor("any", "any", "any", 0, 10, time.Second)
+		monitor, err := NewContractMonitor("any", "any", "any", 0, 0, time.Second)
 
 		r.Nil(monitor)
 		r.ErrorContains(err, t.Name())
@@ -107,7 +108,7 @@ func TestContractMonitor_query(t *testing.T) {
 		p = p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(100), nil)
 
 		queried, err := monitor.query(context.Background())
-		r.Equal(queried, 0)
+		r.Equal(queried, -1)
 		r.NoError(err)
 	})
 
@@ -166,7 +167,7 @@ func TestContractMonitor_Start(t *testing.T) {
 				if times%3 == 1 {
 					return 0, errors.New("any")
 				} else if times%3 == 2 {
-					return 0, nil
+					return -1, nil
 				} else {
 					return 10, nil
 				}
@@ -189,4 +190,43 @@ func TestContractMonitor_Start(t *testing.T) {
 		time.Sleep(time.Second)
 		r.ErrorContains(<-m.Err(), "monitoring stopped")
 	})
+}
+
+func TestExampleContractMonitor(t *testing.T) {
+	t.Skip("local debug")
+	monitor, err := NewContractMonitor(
+		"https://babel-api.testnet.iotex.io",
+		"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
+		"ProjectUpserted(uint64,string,bytes32)",
+		0,
+		1000000,
+		time.Second*10,
+	)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+
+	stop := make(chan struct{})
+
+	go monitor.Start()
+
+	go func() {
+		events := monitor.Events()
+		for {
+			select {
+			case err := <-monitor.Err():
+				t.Log(err)
+			case l := <-events:
+				content, err := json.MarshalIndent(l, "", "  ")
+				if err != nil {
+					t.Log(err)
+				}
+				t.Log(string(content))
+				stop <- struct{}{}
+			}
+		}
+	}()
+
+	<-stop
 }
