@@ -12,6 +12,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 contract Router is IRouter, Initializable {
     address public override fleetManagement;
     mapping(uint256 => address) public override dapp;
+    mapping(uint256 => uint256) public override credits;
 
     function initialize(address _fleetManagement) public initializer {
         fleetManagement = _fleetManagement;
@@ -26,9 +27,10 @@ contract Router is IRouter, Initializable {
         require(_fm.isNormalProver(_proverId), "invalid prover");
 
         try IDapp(_dapp).process(_data) {
-            emit DataProcessed(msg.sender, true, "");
+            credits[_proverId] += 1;
+            emit DataProcessed(_projectId, _proverId, msg.sender, true, "");
         } catch Error(string memory revertReason) {
-            emit DataProcessed(msg.sender, false, revertReason);
+            emit DataProcessed(_projectId, _proverId, msg.sender, false, revertReason);
         }
     }
 
