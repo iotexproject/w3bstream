@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/coordinator/api"
 	"github.com/machinefi/sprout/cmd/coordinator/config"
 	"github.com/machinefi/sprout/datasource"
@@ -28,8 +27,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	_ = clients.NewManager()
 
 	projectConfigManager, err := project.NewConfigManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {

@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	solanatypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -12,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/cmd/coordinator/config"
 	"github.com/machinefi/sprout/persistence"
 )
@@ -51,7 +49,6 @@ func NewHttpServer(persistence *persistence.Postgres, conf *config.Config) *Http
 
 	s.engine.GET("/live", s.liveness)
 	s.engine.GET("/task/:project_id/:task_id", s.getTaskStateLog)
-	s.engine.POST("/sign_credential", s.issueJWTCredential)
 	s.engine.GET("/coordinator_config", s.getCoordinatorConfigInfo)
 
 	return s
@@ -70,20 +67,6 @@ func (s *HttpServer) liveness(c *gin.Context) {
 }
 
 func (s *HttpServer) getTaskStateLog(c *gin.Context) {
-	tok := c.GetHeader("Authorization")
-	if tok == "" {
-		tok = c.Query("authorization")
-	}
-	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
-
-	if tok != "" {
-		err := didvc.VerifyJWTCredential(s.conf.DIDAuthServerEndpoint, tok)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
-			return
-		}
-	}
-
 	projectID, err := strconv.ParseUint(c.Param("project_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
@@ -123,22 +106,6 @@ func (s *HttpServer) getTaskStateLog(c *gin.Context) {
 		ProjectID: projectID,
 		States:    ss,
 	})
-}
-
-func (s *HttpServer) issueJWTCredential(c *gin.Context) {
-	req := new(didvc.IssueCredentialReq)
-	if err := c.ShouldBindJSON(req); err != nil {
-		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
-		return
-	}
-
-	rsp, err := didvc.IssueCredential(s.conf.DIDAuthServerEndpoint, req, true)
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	c.JSON(http.StatusOK, rsp)
 }
 
 func (s *HttpServer) getCoordinatorConfigInfo(c *gin.Context) {
