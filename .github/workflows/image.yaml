@@ -1,3 +1,6 @@
+permissions:
+  packages: write
+
 name: build_image
 
 on:
