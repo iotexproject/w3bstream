@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,15 +24,17 @@ type httpServer struct {
 	coordinatorAddress    string
 	aggregationAmount     uint
 	didAuthServerEndpoint string
+	privateKey            *ecdsa.PrivateKey
 }
 
-func newHttpServer(p *persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string) *httpServer {
+func newHttpServer(p *persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey) *httpServer {
 	s := &httpServer{
 		engine:                gin.Default(),
 		p:                     p,
 		coordinatorAddress:    coordinatorAddress,
 		aggregationAmount:     aggregationAmount,
 		didAuthServerEndpoint: didAuthServerEndpoint,
+		privateKey:            sk,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
@@ -81,7 +84,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           []byte(req.Data),
-	}, s.aggregationAmount); err != nil {
+	}, s.aggregationAmount, s.privateKey); err != nil {
 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
 		return
 	}
