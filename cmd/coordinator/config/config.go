@@ -22,6 +22,7 @@ type Config struct {
 	ProjectFileDirectory      string `env:"PROJECT_FILE_DIRECTORY,optional"`
 	ProjectCacheDirectory     string `env:"PROJECT_CACHE_DIRECTORY,optional"`
 	LogLevel                  int    `env:"LOG_LEVEL,optional"`
+	SequencerPubKey           string `env:"SEQUENCER_PUBKEY,optional"`
 	env                       string `env:"-"`
 }
 
@@ -37,6 +38,7 @@ var (
 		ProjectContractAddress: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		DIDAuthServerEndpoint:  "didkit:9999",
+		SequencerPubKey:        "",
 		LogLevel:               int(slog.LevelDebug),
 	}
 	// local debug default config for coordinator; all config elements come from docker-compose-dev.yaml in root of project
@@ -51,6 +53,7 @@ var (
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		DIDAuthServerEndpoint:  "localhost:9999",
 		ProjectCacheDirectory:  "./project_cache",
+		SequencerPubKey:        "",
 		LogLevel:               int(slog.LevelDebug),
 	}
 	// integration default config for coordinator; all config elements come from Makefile in `integration_test` entry
@@ -65,6 +68,7 @@ var (
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		DIDAuthServerEndpoint:  "localhost:19999",
 		ProjectFileDirectory:   "./testdata",
+		SequencerPubKey:        "",
 		LogLevel:               int(slog.LevelDebug),
 	}
 )

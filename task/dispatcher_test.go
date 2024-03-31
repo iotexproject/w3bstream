@@ -243,15 +243,29 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 
 	t.Run("FailedToRetrieve", func(t *testing.T) {
 		d.datasource = &mockDatasourceErr{errors.New(t.Name())}
-		_, err := d.dispatchTask(uint64(0x1))
+		_, err := d.dispatchTask(uint64(0x1), []byte("any"))
 		r.ErrorContains(err, t.Name())
 	})
 
 	t.Run("NilTask", func(t *testing.T) {
 		d.datasource = &mockDatasourceNil{}
-		taskId, err := d.dispatchTask(uint64(0x1))
+		taskId, err := d.dispatchTask(uint64(0x1), []byte("any"))
 		r.NoError(err)
 		r.Equal(uint64(0x1), taskId)
+	})
+
+	t.Run("FailedToVerifyTaskSign", func(t *testing.T) {
+		d.datasource = &mockDatasourceSuccess{&Task{}}
+
+		p := NewPatches()
+		defer p.Reset()
+
+		p = p.ApplyPrivateMethod(&Task{}, "verify", func(pubkey []byte) error {
+			return errors.New(t.Name())
+		})
+
+		_, err := d.dispatchTask(uint64(0x1), []byte("any"))
+		r.ErrorContains(err, t.Name())
 	})
 
 	t.Run("FailedToAdd", func(t *testing.T) {
@@ -259,8 +273,12 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		defer p.Reset()
 
 		d.datasource = &mockDatasourceSuccess{&Task{ID: uint64(1)}}
+
+		p = p.ApplyPrivateMethod(&Task{}, "verify", func(pubkey []byte) error {
+			return nil
+		})
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
-		_, err := d.dispatchTask(uint64(0x1))
+		_, err := d.dispatchTask(uint64(0x1), []byte("any"))
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -268,9 +286,12 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
+		p = p.ApplyPrivateMethod(&Task{}, "verify", func(pubkey []byte) error {
+			return nil
+		})
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Publish", errors.New(t.Name()))
-		_, err := d.dispatchTask(uint64(0x1))
+		_, err := d.dispatchTask(uint64(0x1), []byte("any"))
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -278,9 +299,12 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
+		p = p.ApplyPrivateMethod(&Task{}, "verify", func(pubkey []byte) error {
+			return nil
+		})
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Publish", nil)
-		taskId, err := d.dispatchTask(uint64(0x1))
+		taskId, err := d.dispatchTask(uint64(0x1), []byte("any"))
 		r.NoError(err)
 		r.Equal(uint64(1)+1, taskId)
 	})
@@ -300,7 +324,7 @@ func TestDispatcher_Dispatch(t *testing.T) {
 		p = p.ApplyPrivateMethod(d, "dispatchTask", func(nextTaskID uint64) (uint64, error) {
 			return 0, errors.New(t.Name())
 		})
-		go d.Dispatch(uint64(0x1))
+		go d.Dispatch(uint64(0x1), []byte("any"))
 		time.Sleep(1 * time.Second)
 		close(ch)
 	})
@@ -313,7 +337,7 @@ func TestDispatcher_Dispatch(t *testing.T) {
 		p = p.ApplyPrivateMethod(d, "dispatchTask", func(nextTaskID uint64) (uint64, error) {
 			return 0, nil
 		})
-		go d.Dispatch(uint64(0x1))
+		go d.Dispatch(uint64(0x1), []byte("any"))
 		time.Sleep(1 * time.Second)
 		close(ch)
 	})
