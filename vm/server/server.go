@@ -35,14 +35,17 @@ func NewInstance(ctx context.Context, endpoint string, projectID uint64, execute
 	return &Instance{conn: conn, resp: resp}, nil
 }
 
-func (i *Instance) Execute(ctx context.Context, projectID uint64, data [][]byte) ([]byte, error) {
+func (i *Instance) Execute(ctx context.Context, taskID, projectID uint64, clientID, sequencerSign string, data [][]byte) ([]byte, error) {
 	ds := []string{}
 	for _, d := range data {
 		ds = append(ds, string(d))
 	}
 	req := &proto.ExecuteRequest{
-		ProjectID: projectID,
-		Datas:     ds,
+		ProjectID:     projectID,
+		TaskID:        taskID,
+		ClientID:      clientID,
+		SequencerSign: sequencerSign,
+		Datas:         ds,
 	}
 	cli := proto.NewVmRuntimeClient(i.conn)
 	resp, err := cli.ExecuteOperator(ctx, req)

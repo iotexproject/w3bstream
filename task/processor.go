@@ -14,7 +14,7 @@ import (
 )
 
 type VMHandler interface {
-	Handle(projectID uint64, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error)
+	Handle(taskID, projectID uint64, clientID, sign string, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error)
 }
 
 type Processor struct {
@@ -63,7 +63,7 @@ func (r *Processor) HandleP2PData(data []byte, topic *pubsub.Topic) {
 	slog.Debug("get a new task", "task_id", t.ID)
 	r.reportSuccess(t, TaskStateDispatched, nil, topic)
 
-	res, err := r.vmHandler.Handle(t.ProjectID, p.VMType, p.Code, p.CodeExpParam, t.Data)
+	res, err := r.vmHandler.Handle(t.ID, t.ProjectID, t.ClientDID, t.Sign, p.VMType, p.Code, p.CodeExpParam, t.Data)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)
