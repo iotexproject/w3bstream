@@ -17,6 +17,7 @@ import (
 )
 
 type Config struct {
+	DatasourceURI   string            // TODO change this after contract code updated
 	VMType          vm.Type           `json:"vmType"`
 	Output          output.Config     `json:"output"`
 	Aggregation     AggregationConfig `json:"aggregation"`
