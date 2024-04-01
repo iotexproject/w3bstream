@@ -59,7 +59,7 @@ func (t *dispatcherTask) handleState(s *types.TaskStateLog) {
 		return
 	}
 
-	outRes, err := output.Output(t.task.ProjectID, t.task.Data, s.Result)
+	outRes, err := output.Output(t.task, s.Result)
 	if err != nil {
 		slog.Error("failed to output", "error", err, "task_id", t.task.ID)
 		if err := t.persistence.Create(&types.TaskStateLog{

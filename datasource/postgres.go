@@ -65,7 +65,7 @@ func (p *postgres) Retrieve(nextTaskID uint64) (*types.Task, error) {
 		ProjectID:      ms[0].ProjectID,
 		ProjectVersion: ms[0].ProjectVersion,
 		Data:           ds,
-		ClientDID:      ms[0].ClientDID,
+		ClientID:       ms[0].ClientDID,
 		Signature:      t.Signature,
 	}, nil
 }

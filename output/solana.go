@@ -9,6 +9,7 @@ import (
 	solcommon "github.com/blocto/solana-go-sdk/common"
 	soltypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 )
 
@@ -19,7 +20,7 @@ type solanaProgram struct {
 	stateAccountPK string
 }
 
-func (e *solanaProgram) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
+func (e *solanaProgram) Output(task *types.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to solana program", "chain endpoint", e.endpoint)
 	ins := e.packInstructions(proof)
 	txHash, err := e.sendTX(ins)

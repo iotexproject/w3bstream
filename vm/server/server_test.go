@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
+	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm/proto"
 	"github.com/machinefi/sprout/vm/server"
 )
@@ -74,7 +75,7 @@ func TestInstance_Execute(t *testing.T) {
 		p = p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
 		p = p.ApplyMethodReturn(&MockClient{}, "ExecuteOperator", nil, errors.New(t.Name()))
 
-		_, err := i.Execute(context.Background(), 1, 1, "any", "any", [][]byte{})
+		_, err := i.Execute(context.Background(), &types.Task{})
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -85,7 +86,7 @@ func TestInstance_Execute(t *testing.T) {
 		p = p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
 		p = p.ApplyMethodReturn(&MockClient{}, "ExecuteOperator", &proto.ExecuteResponse{Result: []byte("any")}, nil)
 
-		res, err := i.Execute(context.Background(), 1, 1, "any", "any", [][]byte{})
+		res, err := i.Execute(context.Background(), &types.Task{})
 		r.NoError(err, t.Name())
 		r.Equal(res, []byte("any"))
 	})

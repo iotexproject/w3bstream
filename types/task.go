@@ -15,7 +15,7 @@ type Task struct {
 	ProjectID      uint64   `json:"projectID"`
 	ProjectVersion string   `json:"projectVersion"`
 	Data           [][]byte `json:"data"`
-	ClientDID      string   `json:"clientDID"`
+	ClientID       string   `json:"clientID"`
 	Signature      string   `json:"sign"`
 }
 
@@ -25,7 +25,7 @@ func (t *Task) VerifySignature(pubkey []byte) error {
 		return errors.Wrap(err, "failed to decode task sign")
 	}
 
-	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientDID)))
+	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientID)))
 	for _, v := range t.Data {
 		data.Write(v)
 	}
@@ -74,7 +74,7 @@ func (l *TaskStateLog) VerifySignature(pubkey string, task *Task) error {
 		return errors.Wrap(err, "failed to decode task sign")
 	}
 
-	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", task.ID, task.ProjectID, task.ClientDID)))
+	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", task.ID, task.ProjectID, task.ClientID)))
 	for _, v := range task.Data {
 		data.Write(v)
 	}
