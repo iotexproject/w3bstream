@@ -144,7 +144,7 @@ func vmHandlerHandle(p *Patches, res []byte, err error) *Patches {
 	return p.ApplyMethodFunc(
 		reflect.TypeOf(handler),
 		"Handle",
-		func(projectID uint64, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error) {
+		func(taskID, projectID uint64, clientDID, sign string, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error) {
 			return res, err
 		},
 	)
