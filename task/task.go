@@ -54,11 +54,37 @@ const (
 )
 
 type TaskStateLog struct {
-	Task      Task
-	State     TaskState
-	Comment   string
-	Result    []byte
-	CreatedAt time.Time
+	Task       Task
+	State      TaskState
+	Comment    string
+	Result     []byte
+	SignResult string
+	// TODO del
+	proverPubKey []byte
+	CreatedAt    time.Time
+}
+
+func (l *TaskStateLog) verify(pubkey []byte) error {
+	sig, err := hexutil.Decode(l.Task.Sign)
+	if err != nil {
+		return errors.Wrap(err, "failed to decode task sign")
+	}
+
+	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", l.Task.ID, l.Task.ProjectID, l.Task.ClientDID)))
+	for _, v := range l.Task.Data {
+		data.Write(v)
+	}
+	data.Write(l.Result)
+
+	h := crypto.Keccak256Hash(data.Bytes())
+	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
+	if err != nil {
+		return errors.Wrap(err, "failed to recover public key")
+	}
+	if !bytes.Equal(sigpk, pubkey) {
+		return errors.New("proof sign unmatched")
+	}
+	return nil
 }
 
 func (s TaskState) String() string {

@@ -7,6 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/cmd/prover/config"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
@@ -41,14 +44,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, conf.ProverID)
+	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
+	}
+	proverPubKey, err := hexutil.Decode(conf.ProverPubKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to decode prover pubkey"))
+	}
+	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, conf.ProverPrivateKey, sequencerPubKey, proverPubKey)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, conf.ProverID, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
+	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, conf.ProverPrivateKey, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
 		log.Fatal(err)
 	}
 

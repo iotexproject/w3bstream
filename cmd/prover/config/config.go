@@ -17,13 +17,15 @@ type Config struct {
 	DatabaseDSN            string `env:"DATABASE_DSN"`
 	BootNodeMultiAddr      string `env:"BOOTNODE_MULTIADDR"`
 	ProverContractAddress  string `env:"PROVER_CONTRACT_ADDRESS,optional"`
-	ProverID               string `env:"PROVER_ID,optional"`
+	ProverPrivateKey       string `env:"PROVER_PRIVATE_KEY,optional"`
 	IoTeXChainID           int    `env:"IOTEX_CHAINID"`
 	SchedulerEpoch         uint64 `env:"SCHEDULER_EPOCH"`
 	IPFSEndpoint           string `env:"IPFS_ENDPOINT"`
 	ProjectFileDirectory   string `env:"PROJECT_FILE_DIRECTORY,optional"`
 	ProjectCacheDirectory  string `env:"PROJECT_CACHE_DIRECTORY,optional"`
 	LogLevel               int    `env:"LOG_LEVEL,optional"`
+	SequencerPubKey        string `env:"SEQUENCER_PUBKEY,optional"`
+	ProverPubKey           string `env:"PROVER_PUBKEY,optional"`
 	env                    string `env:"-"`
 }
 
@@ -38,11 +40,13 @@ var (
 		DatabaseDSN:            "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		ProverContractAddress:  "0xB2b3f3c8BB00493c6f12232C2cb3e20A65698939",
-		ProverID:               "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6123",
+		ProverPrivateKey:       "did:key:z6MkmF1AgufHf8ASaxDcCR8iSZjEsEbJMp7LkqyEHw6123",
 		IoTeXChainID:           2,
 		SchedulerEpoch:         720,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		LogLevel:               int(slog.LevelDebug),
+		SequencerPubKey:        "",
+		ProverPubKey:           "",
 	}
 
 	defaultDebugConfig = &Config{
@@ -55,12 +59,14 @@ var (
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		ProverContractAddress:  "",
-		ProverID:               "",
+		ProverPrivateKey:       "",
 		IoTeXChainID:           2,
 		SchedulerEpoch:         720,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		ProjectCacheDirectory:  "./project_cache",
 		LogLevel:               int(slog.LevelDebug),
+		SequencerPubKey:        "",
+		ProverPubKey:           "",
 	}
 
 	defaultTestConfig = &Config{
@@ -73,12 +79,14 @@ var (
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		ProverContractAddress:  "",
-		ProverID:               "",
+		ProverPrivateKey:       "",
 		IoTeXChainID:           2,
 		SchedulerEpoch:         720,
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
 		ProjectFileDirectory:   "./testdata",
 		LogLevel:               int(slog.LevelDebug),
+		SequencerPubKey:        "",
+		ProverPubKey:           "",
 	}
 )
 
