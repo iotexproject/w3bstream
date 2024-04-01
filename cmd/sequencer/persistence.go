@@ -20,7 +20,7 @@ import (
 type message struct {
 	gorm.Model
 	MessageID      string `gorm:"index:message_id,not null"`
-	ClientDID      string `gorm:"column:client_did;index:message_fetch,not null,default:''"`
+	ClientID       string `gorm:"index:message_fetch,not null,default:''"`
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
 	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
 	Data           []byte `gorm:"size:4096"`
@@ -68,7 +68,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *e
 		Order("created_at").
 		Where(
 			"project_id = ? AND project_version = ? AND client_did = ? AND internal_task_id = ?",
-			m.ProjectID, m.ProjectVersion, m.ClientDID, "",
+			m.ProjectID, m.ProjectVersion, m.ClientID, "",
 		).Limit(amount).Find(&messages).Error; err != nil {
 		return errors.Wrap(err, "failed to fetch unpacked messages")
 	}
@@ -104,7 +104,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *e
 		data = append(data, v.Data)
 	}
 
-	sig, err := t.sign(sk, m.ProjectID, m.ClientDID, data...)
+	sig, err := t.sign(sk, m.ProjectID, m.ClientID, data...)
 	if err != nil {
 		return errors.Wrap(err, "failed to sign task")
 	}

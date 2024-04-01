@@ -80,7 +80,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	id := uuid.NewString()
 	if err := s.p.save(&message{
 		MessageID:      id,
-		ClientDID:      clientDID,
+		ClientID:       clientDID,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           []byte(req.Data),
@@ -122,7 +122,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
 			return
 		}
-		if m.ClientDID != clientDID {
+		if m.ClientID != clientDID {
 			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.New("unmatched client DID")))
 			return
 		}
