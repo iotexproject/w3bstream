@@ -159,7 +159,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go dispatcher.Dispatch(nextTaskID)
+	go dispatcher.Dispatch(nextTaskID, nil)
 
 	go func() {
 		if err := api.NewHttpServer(pg, conf).Run(conf.ServiceEndpoint); err != nil {

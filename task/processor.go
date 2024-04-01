@@ -9,6 +9,8 @@ import (
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 
+	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/utils/distance"
 	"github.com/machinefi/sprout/vm"
 )
@@ -28,16 +30,10 @@ func (r *Processor) HandleProjectProvers(projectID uint64, provers []string) {
 	r.projectProvers.Store(projectID, provers)
 }
 
-func (r *Processor) HandleP2PData(data []byte, topic *pubsub.Topic) {
-	d := p2pData{}
-	if err := json.Unmarshal(data, &d); err != nil {
-		slog.Error("failed to unmarshal p2p data", "error", err)
-		return
-	}
+func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	if d.Task == nil {
 		return
 	}
-
 	t := d.Task
 
 	p, err := r.projectConfigManager.Get(t.ProjectID, t.ProjectVersion)
@@ -61,7 +57,7 @@ func (r *Processor) HandleP2PData(data []byte, topic *pubsub.Topic) {
 	}
 
 	slog.Debug("get a new task", "task_id", t.ID)
-	r.reportSuccess(t, TaskStateDispatched, nil, topic)
+	r.reportSuccess(t, types.TaskStateDispatched, nil, topic)
 
 	res, err := r.vmHandler.Handle(t.ID, t.ProjectID, t.ClientDID, t.Sign, p.VMType, p.Code, p.CodeExpParam, t.Data)
 	if err != nil {
@@ -69,14 +65,14 @@ func (r *Processor) HandleP2PData(data []byte, topic *pubsub.Topic) {
 		r.reportFail(t, err, topic)
 		return
 	}
-	r.reportSuccess(t, TaskStateProved, res, topic)
+	r.reportSuccess(t, types.TaskStateProved, res, topic)
 }
 
-func (r *Processor) reportFail(t *Task, err error, topic *pubsub.Topic) {
-	d, err := json.Marshal(&p2pData{
-		TaskStateLog: &TaskStateLog{
-			Task:      *t,
-			State:     TaskStateFailed,
+func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
+	d, err := json.Marshal(&p2p.Data{
+		TaskStateLog: &types.TaskStateLog{
+			TaskID:    t.ID,
+			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		},
@@ -90,10 +86,10 @@ func (r *Processor) reportFail(t *Task, err error, topic *pubsub.Topic) {
 	}
 }
 
-func (r *Processor) reportSuccess(t *Task, state TaskState, result []byte, topic *pubsub.Topic) {
-	d, err := json.Marshal(&p2pData{
-		TaskStateLog: &TaskStateLog{
-			Task:      *t,
+func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, topic *pubsub.Topic) {
+	d, err := json.Marshal(&p2p.Data{
+		TaskStateLog: &types.TaskStateLog{
+			TaskID:    t.ID,
 			State:     state,
 			Result:    result,
 			CreatedAt: time.Now(),

@@ -1,7 +1,7 @@
 package datasource
 
-import taskpkg "github.com/machinefi/sprout/task"
+import "github.com/machinefi/sprout/types"
 
 type Datasource interface {
-	Retrieve(nextTaskID uint64) (*taskpkg.Task, error)
+	Retrieve(nextTaskID uint64) (*types.Task, error)
 }

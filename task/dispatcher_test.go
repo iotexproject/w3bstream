@@ -1,7 +1,6 @@
 package task
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -15,17 +14,18 @@ import (
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil/mock"
 	testproject "github.com/machinefi/sprout/testutil/project"
+	"github.com/machinefi/sprout/types"
 )
 
 type mockPersistence struct{}
 
-func (m *mockPersistence) Create(tl *TaskStateLog) error {
+func (m *mockPersistence) Create(t *types.Task, tl *types.TaskStateLog) error {
 	return nil
 }
 
 type mockDatasourceNil struct{}
 
-func (m *mockDatasourceNil) Retrieve(nextTaskID uint64) (*Task, error) {
+func (m *mockDatasourceNil) Retrieve(nextTaskID uint64) (*types.Task, error) {
 	return nil, nil
 }
 
@@ -33,15 +33,15 @@ type mockDatasourceErr struct {
 	err error
 }
 
-func (m *mockDatasourceErr) Retrieve(nextTaskID uint64) (*Task, error) {
+func (m *mockDatasourceErr) Retrieve(nextTaskID uint64) (*types.Task, error) {
 	return nil, m.err
 }
 
 type mockDatasourceSuccess struct {
-	task *Task
+	task *types.Task
 }
 
-func (m *mockDatasourceSuccess) Retrieve(nextTaskID uint64) (*Task, error) {
+func (m *mockDatasourceSuccess) Retrieve(nextTaskID uint64) (*types.Task, error) {
 	return m.task, nil
 }
 
@@ -82,24 +82,21 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 	}
 
 	t.Run("TaskStateLogNil", func(t *testing.T) {
-		data, err := json.Marshal(&p2pData{
+		d.handleP2PData(&p2p.Data{
 			Task:         nil,
 			TaskStateLog: nil,
-		})
-		r.NoError(err)
-		d.handleP2PData(data, nil)
+		}, nil)
 	})
 
-	data, err := json.Marshal(&p2pData{
+	data := &p2p.Data{
 		Task: nil,
-		TaskStateLog: &TaskStateLog{
-			Task:      Task{ID: 1},
-			State:     TaskStatePacked,
+		TaskStateLog: &types.TaskStateLog{
+			TaskID:    1,
+			State:     types.TaskStatePacked,
 			Comment:   "Comment",
 			CreatedAt: time.Now(),
 		},
-	})
-	r.NoError(err)
+	}
 
 	t.Run("FailedToCreateTaskStateLog", func(t *testing.T) {
 		p := NewPatches()
@@ -116,16 +113,15 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		d.handleP2PData(data, nil)
 	})
 
-	data, err = json.Marshal(&p2pData{
+	data = &p2p.Data{
 		Task: nil,
-		TaskStateLog: &TaskStateLog{
-			Task:      Task{ID: 1},
-			State:     TaskStateProved,
+		TaskStateLog: &types.TaskStateLog{
+			TaskID:    1,
+			State:     types.TaskStateProved,
 			Comment:   "Comment",
 			CreatedAt: time.Now(),
 		},
-	})
-	r.NoError(err)
+	}
 
 	t.Run("FailedToGetProject", func(t *testing.T) {
 		p := NewPatches()
@@ -255,12 +251,12 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 	})
 
 	t.Run("FailedToVerifyTaskSign", func(t *testing.T) {
-		d.datasource = &mockDatasourceSuccess{&Task{}}
+		d.datasource = &mockDatasourceSuccess{&types.Task{}}
 
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyPrivateMethod(&Task{}, "verify", func(pubkey []byte) error {
+		p = p.ApplyPrivateMethod(&types.Task{}, "verify", func(pubkey []byte) error {
 			return errors.New(t.Name())
 		})
 
@@ -272,9 +268,9 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		d.datasource = &mockDatasourceSuccess{&Task{ID: uint64(1)}}
+		d.datasource = &mockDatasourceSuccess{&types.Task{ID: uint64(1)}}
 
-		p = p.ApplyPrivateMethod(&Task{}, "verify", func(pubkey []byte) error {
+		p = p.ApplyPrivateMethod(&types.Task{}, "verify", func(pubkey []byte) error {
 			return nil
 		})
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
@@ -286,7 +282,7 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyPrivateMethod(&Task{}, "verify", func(pubkey []byte) error {
+		p = p.ApplyPrivateMethod(&types.Task{}, "verify", func(pubkey []byte) error {
 			return nil
 		})
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
@@ -299,7 +295,7 @@ func TestDispatcher_DispatchTask(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyPrivateMethod(&Task{}, "verify", func(pubkey []byte) error {
+		p = p.ApplyPrivateMethod(&types.Task{}, "verify", func(pubkey []byte) error {
 			return nil
 		})
 		p = p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)

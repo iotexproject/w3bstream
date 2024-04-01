@@ -22,7 +22,7 @@ func TestNewPubSubs(t *testing.T) {
 	r := require.New(t)
 
 	var (
-		handle = func(data []byte, topic *pubsub.Topic) {}
+		handle = func(data *Data, topic *pubsub.Topic) {}
 		_host  = &mockHost{}
 	)
 
@@ -126,7 +126,7 @@ func TestPubSubs_Publish(t *testing.T) {
 
 	projectID := uint64(0x1)
 	ps := &PubSubs{pubSubs: map[uint64]*subscriber{1: {}}}
-	d := []byte("1")
+	d := &Data{}
 
 	t.Run("NotExist", func(t *testing.T) {
 		r.Error(ps.Publish(102, d))

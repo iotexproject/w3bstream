@@ -86,7 +86,7 @@ func Test_subscriber_run(t *testing.T) {
 		selfID:       selfID,
 		topic:        &pubsub.Topic{},
 		subscription: &pubsub.Subscription{},
-		handle: func([]byte, *pubsub.Topic) {
+		handle: func(*Data, *pubsub.Topic) {
 			slog.Info("handle p2p data")
 			time.Sleep(time.Millisecond * 100)
 		},

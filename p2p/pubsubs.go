@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
 	"github.com/libp2p/go-libp2p"
@@ -10,8 +11,6 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/muxer/yamux"
 	"github.com/pkg/errors"
 )
-
-type HandleSubscriptionMessage func([]byte, *pubsub.Topic)
 
 func NewPubSubs(handle HandleSubscriptionMessage, bootNodeMultiaddr string, iotexChainID int) (*PubSubs, error) {
 	ctx := context.Background()
@@ -81,7 +80,12 @@ func (p *PubSubs) get(projectID uint64) (*subscriber, bool) {
 	return s, ok
 }
 
-func (p *PubSubs) Publish(projectID uint64, d []byte) error {
+func (p *PubSubs) Publish(projectID uint64, data *Data) error {
+	d, err := json.Marshal(data)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal p2p data")
+	}
+
 	s, ok := p.get(projectID)
 	if !ok {
 		return errors.Errorf("project %v topic not exist", projectID)

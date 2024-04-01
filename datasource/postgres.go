@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	taskpkg "github.com/machinefi/sprout/task"
+	"github.com/machinefi/sprout/types"
 )
 
 type message struct {
@@ -33,7 +33,7 @@ type postgres struct {
 	db *gorm.DB
 }
 
-func (p *postgres) Retrieve(nextTaskID uint64) (*taskpkg.Task, error) {
+func (p *postgres) Retrieve(nextTaskID uint64) (*types.Task, error) {
 	t := task{}
 	if err := p.db.Where("id >= ?", nextTaskID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -60,7 +60,7 @@ func (p *postgres) Retrieve(nextTaskID uint64) (*taskpkg.Task, error) {
 		ds = append(ds, m.Data)
 	}
 
-	return &taskpkg.Task{
+	return &types.Task{
 		ID:             uint64(t.ID),
 		ProjectID:      ms[0].ProjectID,
 		ProjectVersion: ms[0].ProjectVersion,

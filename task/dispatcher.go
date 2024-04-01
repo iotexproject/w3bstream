@@ -1,25 +1,23 @@
 package task
 
 import (
-	"encoding/json"
-	"fmt"
 	"log/slog"
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/types"
 )
 
 type Datasource interface {
-	Retrieve(nextTaskID uint64) (*Task, error)
+	Retrieve(nextTaskID uint64) (*types.Task, error)
 }
 
 type Persistence interface {
-	Create(tl *TaskStateLog) error
+	Create(t *types.Task, tl *types.TaskStateLog) error
 }
 
 type ProjectConfigManager interface {
@@ -57,87 +55,37 @@ func (d *Dispatcher) dispatchTask(nextTaskID uint64, pubkey []byte) (uint64, err
 	if t == nil {
 		return nextTaskID, nil
 	}
-	if err := t.verify(pubkey); err != nil {
+	if err := t.VerifySign(pubkey); err != nil {
 		return 0, errors.Wrap(err, "failed to verify task sign")
 	}
 	if err := d.pubSubs.Add(t.ProjectID); err != nil {
 		return 0, errors.Wrapf(err, "failed to add project pubsub, project_id %v", t.ProjectID)
 	}
-	data, err := json.Marshal(&p2pData{
-		Task: t,
-	})
-	if err != nil {
-		return 0, errors.Wrapf(err, "failed to marshal p2p data, project_id %v", t.ProjectID)
-	}
-	if err := d.pubSubs.Publish(t.ProjectID, data); err != nil {
+	if err := d.pubSubs.Publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
 		return 0, errors.Wrapf(err, "failed to publish data, project_id %v", t.ProjectID)
 	}
 	slog.Debug("dispatched a task", "project_id", t.ProjectID, "task_id", t.ID)
 	return t.ID + 1, nil
 }
 
-func (d *Dispatcher) handleP2PData(rawdata []byte, topic *pubsub.Topic) {
-	data := p2pData{}
-	if err := json.Unmarshal(rawdata, &data); err != nil {
-		slog.Error("failed to unmarshal p2p data", "error", err)
-		return
-	}
+func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	if data.TaskStateLog == nil {
 		return
 	}
-
 	l := data.TaskStateLog
-	if err := d.persistence.Create(l); err != nil {
-		slog.Error("failed to create task state log", "error", err, "taskID", l.Task.ID)
+
+	if err := d.persistence.Create(nil /*TODO*/, l); err != nil {
+		slog.Error("failed to create task state log", "error", err, "task_id", l.TaskID)
 		return
 	}
-	if l.State != TaskStateProved {
+	if l.State != types.TaskStateProved {
 		return
 	}
 
-	p, err := d.projectConfigManager.Get(l.Task.ProjectID, l.Task.ProjectVersion)
+	_, err := d.projectConfigManager.Get(0, "") // TODO
 	if err != nil {
-		slog.Error("failed to get project", "error", err, "project_id", l.Task.ProjectID, "project_version", l.Task.ProjectVersion)
+		//slog.Error("failed to get project", "error", err, "project_id", l.Task.ProjectID, "project_version", l.Task.ProjectVersion)
 		return
-	}
-
-	output, err := output.New(&p.Output, d.operatorPrivateKeyECDSA, d.operatorPrivateKeyED25519)
-	if err != nil {
-		slog.Error("failed to init output", "error", err)
-		if err := d.persistence.Create(&TaskStateLog{
-			Task:      l.Task,
-			State:     TaskStateFailed,
-			Comment:   err.Error(),
-			CreatedAt: time.Now(),
-		}); err != nil {
-			slog.Error("failed to create failed task state", "error", err, "taskID", l.Task.ID)
-		}
-		return
-	}
-
-	slog.Debug("output proof", "outputter", fmt.Sprintf("%T", output))
-
-	outRes, err := output.Output(l.Task.ProjectID, l.Task.Data, l.Result)
-	if err != nil {
-		slog.Error("failed to output", "error", err, "taskID", l.Task.ID)
-		if err := d.persistence.Create(&TaskStateLog{
-			Task:      l.Task,
-			State:     TaskStateFailed,
-			Comment:   err.Error(),
-			CreatedAt: time.Now(),
-		}); err != nil {
-			slog.Error("failed to create failed task state", "error", err, "taskID", l.Task.ID)
-		}
-		return
-	}
-
-	if err := d.persistence.Create(&TaskStateLog{
-		Task:      l.Task,
-		State:     TaskStateOutputted,
-		Result:    []byte(outRes),
-		CreatedAt: time.Now(),
-	}); err != nil {
-		slog.Error("failed to create outputted task state", "error", err, "taskID", l.Task.ID)
 	}
 }
 
