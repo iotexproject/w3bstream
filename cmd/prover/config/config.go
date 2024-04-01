@@ -25,7 +25,7 @@ type Config struct {
 	ProjectCacheDirectory  string `env:"PROJECT_CACHE_DIRECTORY,optional"`
 	LogLevel               int    `env:"LOG_LEVEL,optional"`
 	SequencerPubKey        string `env:"SEQUENCER_PUBKEY,optional"`
-	ProverPubKey           string `env:"PROVER_PUBKEY,optional"`
+	ProverPubKey           string `env:"PROVER_PUBKEY,optional"` // TODO del, get from contract
 	env                    string `env:"-"`
 }
 
