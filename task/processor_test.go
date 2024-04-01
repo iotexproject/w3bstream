@@ -44,7 +44,7 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 		p = testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
-		processor.reportSuccess(&Task{}, TaskStatePacked, nil, nil)
+		processor.reportSuccess(&Task{}, TaskStatePacked, nil, "", nil)
 	})
 
 	t.Run("PublishFailed", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 		p = testutil.JsonMarshal(p, []byte("any"), nil)
 
 		p = testutil.TopicPublish(p, errors.New(t.Name()))
-		processor.reportSuccess(&Task{}, TaskStatePacked, nil, nil)
+		processor.reportSuccess(&Task{}, TaskStatePacked, nil, "", nil)
 	})
 
 }

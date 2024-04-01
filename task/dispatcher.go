@@ -95,6 +95,11 @@ func (d *Dispatcher) handleP2PData(rawdata []byte, topic *pubsub.Topic) {
 		return
 	}
 
+	if err := l.verify(l.proverID); err != nil {
+		slog.Error("failed to verify proof sign", "error", err)
+		return
+	}
+
 	p, err := d.projectConfigManager.Get(l.Task.ProjectID, l.Task.ProjectVersion)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", l.Task.ProjectID, "project_version", l.Task.ProjectVersion)
