@@ -7,6 +7,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
+
+	"github.com/machinefi/sprout/clients"
 )
 
 var (
@@ -15,6 +20,8 @@ var (
 	address            string
 	coordinatorAddress string
 	databaseDSN        string
+	didAuthServer      string
+	privateKey         string
 )
 
 func init() {
@@ -23,6 +30,8 @@ func init() {
 	flag.StringVar(&address, "address", ":9000", "http listen address")
 	flag.StringVar(&coordinatorAddress, "coordinatorAddress", "localhost:9001", "coordinator address")
 	flag.StringVar(&databaseDSN, "databaseDSN", "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable", "database dsn")
+	flag.StringVar(&didAuthServer, "didAuthServer", "localhost:9999", "did auth server endpoint")
+	flag.StringVar(&privateKey, "privateKey", "", "sequencer private key")
 }
 
 func main() {
@@ -30,13 +39,20 @@ func main() {
 
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(logLevel)})))
 
+	sk, err := crypto.HexToECDSA(privateKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed parse private key"))
+	}
+
+	_ = clients.NewManager()
+
 	p, err := newPersistence(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
-		if err := newHttpServer(p, aggregationAmount, coordinatorAddress).run(address); err != nil {
+		if err := newHttpServer(p, aggregationAmount, coordinatorAddress, didAuthServer, sk).run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()

@@ -16,8 +16,8 @@ type Config struct {
 	ProjectContractAddress string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
 	DatabaseDSN            string `env:"DATABASE_DSN"`
 	BootNodeMultiAddr      string `env:"BOOTNODE_MULTIADDR"`
-	ProverContractAddress  string `env:"PROVER_CONTRACT_ADDRESS"`
-	ProverID               string `env:"PROVER_ID"`
+	ProverContractAddress  string `env:"PROVER_CONTRACT_ADDRESS,optional"`
+	ProverID               string `env:"PROVER_ID,optional"`
 	IoTeXChainID           int    `env:"IOTEX_CHAINID"`
 	SchedulerEpoch         uint64 `env:"SCHEDULER_EPOCH"`
 	IPFSEndpoint           string `env:"IPFS_ENDPOINT"`

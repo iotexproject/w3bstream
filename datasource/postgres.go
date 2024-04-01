@@ -26,6 +26,7 @@ type task struct {
 	gorm.Model
 	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
 	MessageIDs     datatypes.JSON `gorm:"not null"`
+	Sign           string
 }
 
 type postgres struct {
@@ -64,6 +65,8 @@ func (p *postgres) Retrieve(nextTaskID uint64) (*taskpkg.Task, error) {
 		ProjectID:      ms[0].ProjectID,
 		ProjectVersion: ms[0].ProjectVersion,
 		Data:           ds,
+		ClientDID:      ms[0].ClientDID,
+		Sign:           t.Sign,
 	}, nil
 }
 

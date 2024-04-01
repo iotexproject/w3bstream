@@ -36,11 +36,11 @@ type Dispatcher struct {
 }
 
 // will block caller
-func (d *Dispatcher) Dispatch(nextTaskID uint64) {
+func (d *Dispatcher) Dispatch(nextTaskID uint64, pubkey []byte) {
 	ticker := time.NewTicker(3 * time.Second)
 
 	for range ticker.C {
-		next, err := d.dispatchTask(nextTaskID)
+		next, err := d.dispatchTask(nextTaskID, pubkey)
 		if err != nil {
 			slog.Error("failed to dispatch task", "error", err)
 			continue
@@ -49,13 +49,16 @@ func (d *Dispatcher) Dispatch(nextTaskID uint64) {
 	}
 }
 
-func (d *Dispatcher) dispatchTask(nextTaskID uint64) (uint64, error) {
+func (d *Dispatcher) dispatchTask(nextTaskID uint64, pubkey []byte) (uint64, error) {
 	t, err := d.datasource.Retrieve(nextTaskID)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to retrieve task from data source")
 	}
 	if t == nil {
 		return nextTaskID, nil
+	}
+	if err := t.verify(pubkey); err != nil {
+		return 0, errors.Wrap(err, "failed to verify task sign")
 	}
 	if err := d.pubSubs.Add(t.ProjectID); err != nil {
 		return 0, errors.Wrapf(err, "failed to add project pubsub, project_id %v", t.ProjectID)

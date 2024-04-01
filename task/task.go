@@ -1,12 +1,43 @@
 package task
 
-import "time"
+import (
+	"bytes"
+	"fmt"
+	"time"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
+)
 
 type Task struct {
 	ID             uint64   `json:"id"`
 	ProjectID      uint64   `json:"projectID"`
 	ProjectVersion string   `json:"projectVersion"`
 	Data           [][]byte `json:"data"`
+	ClientDID      string   `json:"clientDID"`
+	Sign           string   `json:"sign"`
+}
+
+func (t *Task) verify(pubkey []byte) error {
+	sig, err := hexutil.Decode(t.Sign)
+	if err != nil {
+		return errors.Wrap(err, "failed to decode task sign")
+	}
+
+	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientDID)))
+	for _, v := range t.Data {
+		data.Write(v)
+	}
+	h := crypto.Keccak256Hash(data.Bytes())
+	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
+	if err != nil {
+		return errors.Wrap(err, "failed to recover public key")
+	}
+	if !bytes.Equal(sigpk, pubkey) {
+		return errors.New("task sign unmatched")
+	}
+	return nil
 }
 
 type TaskState uint8

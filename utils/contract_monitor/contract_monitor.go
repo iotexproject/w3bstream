@@ -15,6 +15,13 @@ import (
 )
 
 func NewContractMonitor(endpoint, address, topic string, from, step uint64, interval time.Duration) (*ContractMonitor, error) {
+	if from == 0 {
+		from = 1
+	}
+	if step == 0 {
+		step = 100000
+	}
+
 	var (
 		err     error
 		monitor = &ContractMonitor{
@@ -92,13 +99,17 @@ func (m *ContractMonitor) Start() {
 			if err != nil {
 				slog.Warn("failed to query", "error", err)
 			}
-			if queried == 0 {
+			if queried == -1 {
 				time.Sleep(m.interval)
 				continue
 			}
 			slog.Info("event queried", "latest_block", m.latest, "queried_events", queried)
 		}
 	}
+}
+
+func (m *ContractMonitor) Events() <-chan *types.Log {
+	return m.events
 }
 
 func (m *ContractMonitor) query(ctx context.Context) (queried int, err error) {
@@ -111,7 +122,7 @@ func (m *ContractMonitor) query(ctx context.Context) (queried int, err error) {
 	}
 
 	if m.latest >= latest {
-		return
+		return -1, nil
 	}
 
 	var (

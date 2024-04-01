@@ -1,32 +1,40 @@
 package main
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/apitypes"
+	"github.com/machinefi/sprout/auth/didvc"
+	"github.com/machinefi/sprout/clients"
 	taskpkg "github.com/machinefi/sprout/task"
 )
 
 type httpServer struct {
-	engine             *gin.Engine
-	p                  *persistence
-	coordinatorAddress string
-	aggregationAmount  uint
+	engine                *gin.Engine
+	p                     *persistence
+	coordinatorAddress    string
+	aggregationAmount     uint
+	didAuthServerEndpoint string
+	privateKey            *ecdsa.PrivateKey
 }
 
-func newHttpServer(p *persistence, aggregationAmount uint, coordinatorAddress string) *httpServer {
+func newHttpServer(p *persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey) *httpServer {
 	s := &httpServer{
-		engine:             gin.Default(),
-		p:                  p,
-		coordinatorAddress: coordinatorAddress,
-		aggregationAmount:  aggregationAmount,
+		engine:                gin.Default(),
+		p:                     p,
+		coordinatorAddress:    coordinatorAddress,
+		aggregationAmount:     aggregationAmount,
+		didAuthServerEndpoint: didAuthServerEndpoint,
+		privateKey:            sk,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
@@ -50,14 +58,33 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		return
 	}
 
+	tok := c.GetHeader("Authorization")
+	if tok == "" {
+		tok = c.Query("authorization")
+	}
+	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
+
+	clientDID := ""
+	if tok != "" {
+		err := didvc.VerifyJWTCredential(s.didAuthServerEndpoint, tok)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
+			return
+		}
+		if clientDID, err = clients.VerifySessionAndProjectPermission(tok, req.ProjectID); err != nil {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
+			return
+		}
+	}
+
 	id := uuid.NewString()
 	if err := s.p.save(&message{
 		MessageID:      id,
-		ClientDID:      "",
+		ClientDID:      clientDID,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           []byte(req.Data),
-	}, s.aggregationAmount); err != nil {
+	}, s.aggregationAmount, s.privateKey); err != nil {
 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
 		return
 	}
@@ -78,6 +105,29 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 		return
 	}
 	m := ms[0]
+
+	tok := c.GetHeader("Authorization")
+	if tok == "" {
+		tok = c.Query("authorization")
+	}
+	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
+
+	if tok != "" {
+		if err = didvc.VerifyJWTCredential(s.didAuthServerEndpoint, tok); err != nil {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
+			return
+		}
+		clientDID := ""
+		if clientDID, err = clients.VerifySessionAndProjectPermission(tok, m.ProjectID); err != nil {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
+			return
+		}
+		if m.ClientDID != clientDID {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.New("unmatched client DID")))
+			return
+		}
+	}
+
 	ss := []*apitypes.StateLog{
 		{
 			State: "received",
@@ -119,4 +169,20 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID, States: ss})
+}
+
+func (s *httpServer) issueJWTCredential(c *gin.Context) {
+	req := new(didvc.IssueCredentialReq)
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
+		return
+	}
+
+	rsp, err := didvc.IssueCredential(s.didAuthServerEndpoint, req, true)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, rsp)
 }

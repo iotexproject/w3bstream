@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"crypto/ecdsa"
 	"encoding/json"
+	"fmt"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gorm.io/datatypes"
@@ -26,6 +31,20 @@ type task struct {
 	gorm.Model
 	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
 	MessageIDs     datatypes.JSON `gorm:"not null"`
+	Sign           string
+}
+
+func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientDID string, messages ...[]byte) (string, error) {
+	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, projectID, clientDID)))
+	for _, v := range messages {
+		buf.Write(v)
+	}
+	h := crypto.Keccak256Hash(buf.Bytes())
+	sig, err := crypto.Sign(h.Bytes(), sk)
+	if err != nil {
+		return "", err
+	}
+	return hexutil.Encode(sig), nil
 }
 
 type persistence struct {
@@ -39,7 +58,7 @@ func (p *persistence) createMessageTx(tx *gorm.DB, m *message) error {
 	return nil
 }
 
-func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message) error {
+func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *ecdsa.PrivateKey) error {
 	messages := make([]*message, 0)
 	if amount == 0 {
 		amount = 1
@@ -72,21 +91,38 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message) error
 		return errors.Wrap(err, "failed to marshal message id array")
 	}
 
-	if err := tx.Create(&task{
+	t := &task{
 		InternalTaskID: taskID,
 		MessageIDs:     messageIDsJson,
-	}).Error; err != nil {
+	}
+
+	if err := tx.Create(t).Error; err != nil {
 		return errors.Wrap(err, "failed to create task")
 	}
+	data := make([][]byte, 0, len(messages))
+	for _, v := range messages {
+		data = append(data, v.Data)
+	}
+
+	sig, err := t.sign(sk, m.ProjectID, m.ClientDID, data...)
+	if err != nil {
+		return errors.Wrap(err, "failed to sign task")
+	}
+
+	t.Sign = sig
+	if err := tx.Model(t).Update("sign", sig).Where("id = ?", t.ID).Error; err != nil {
+		return errors.Wrap(err, "failed to update task sign")
+	}
+
 	return nil
 }
 
-func (p *persistence) save(msg *message, aggregationAmount uint) error {
+func (p *persistence) save(msg *message, aggregationAmount uint, sk *ecdsa.PrivateKey) error {
 	return p.db.Transaction(func(tx *gorm.DB) error {
 		if err := p.createMessageTx(tx, msg); err != nil {
 			return err
 		}
-		if err := p.aggregateTaskTx(tx, int(aggregationAmount), msg); err != nil {
+		if err := p.aggregateTaskTx(tx, int(aggregationAmount), msg, sk); err != nil {
 			return err
 		}
 		return nil
