@@ -1,7 +1,10 @@
 package tests
 
 import (
+	"crypto/x509"
+	"encoding/hex"
 	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	"log"
 	"log/slog"
 	"net/http"
@@ -119,22 +122,30 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(err)
 	}
 
+	sk, err := crypto.HexToECDSA(conf.ProverPrivateKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed parse prover private key"))
+	}
+	pubKeyBytes, err := x509.MarshalPKIXPublicKey(sk.PublicKey)
+	if err != nil {
+		fmt.Println("Error marshaling public key:", err)
+		return
+	}
+	pubKeyHex := hex.EncodeToString(pubKeyBytes)
+
 	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
-	proverPubKey, err := hexutil.Decode(conf.ProverPubKey)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to decode prover pubkey"))
-	}
-	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, conf.ProverPrivateKey, sequencerPubKey, proverPubKey)
+
+	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, sk, sequencerPubKey, pubKeyHex)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, conf.ProverPrivateKey, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
+	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, pubKeyHex, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
 		log.Fatal(err)
 	}
 
