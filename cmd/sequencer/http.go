@@ -117,12 +117,12 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
 			return
 		}
-		clientDID := ""
-		if clientDID, err = clients.VerifySessionAndProjectPermission(tok, m.ProjectID); err != nil {
+		clientID := ""
+		if clientID, err = clients.VerifySessionAndProjectPermission(tok, m.ProjectID); err != nil {
 			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
 			return
 		}
-		if m.ClientID != clientDID {
+		if m.ClientID != clientID {
 			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.New("unmatched client DID")))
 			return
 		}

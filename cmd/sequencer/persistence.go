@@ -34,8 +34,8 @@ type task struct {
 	Signature      string
 }
 
-func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientDID string, messages ...[]byte) (string, error) {
-	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, projectID, clientDID)))
+func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientID string, messages ...[]byte) (string, error) {
+	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, projectID, clientID)))
 	for _, v := range messages {
 		buf.Write(v)
 	}
