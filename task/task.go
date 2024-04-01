@@ -60,8 +60,8 @@ type TaskStateLog struct {
 	Result     []byte
 	SignResult string
 	// TODO del
-	proverPubKey []byte
-	CreatedAt    time.Time
+	proverID  string
+	CreatedAt time.Time
 }
 
 func (l *TaskStateLog) verify(pubkey []byte) error {

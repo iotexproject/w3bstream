@@ -14,12 +14,12 @@ import (
 type HandleProjectProvers func(projectID uint64, provers []string)
 
 type scheduler struct {
-	provers              *sync.Map // proverPrivateKey(string) -> true(bool)
+	provers              *sync.Map // proverID(string) -> true(bool)
 	projectOffsets       *sync.Map // project offset in interval(uint64) -> projectMeta(*project.ProjectMeta)
 	epoch                uint64
 	pubSubs              *p2p.PubSubs // TODO define interface
 	chainHead            chan *types.Header
-	proverPrivateKey     string
+	proverID             string
 	handleProjectProvers HandleProjectProvers
 }
 
@@ -46,7 +46,7 @@ func (s *scheduler) schedule() {
 
 		isMy := false
 		for _, p := range projectProvers {
-			if p == s.proverPrivateKey {
+			if p == s.proverID {
 				isMy = true
 			}
 		}
@@ -70,7 +70,7 @@ func (s *scheduler) getAllProver() []string {
 	return provers
 }
 
-func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, proverPrivateKey string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers) error {
+func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers) error {
 	provers := &sync.Map{}
 	if err := watchProver(provers, chainEndpoint, proverContractAddress); err != nil {
 		return err
@@ -98,7 +98,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 		epoch:                epoch,
 		pubSubs:              pubSubs,
 		chainHead:            chainHead,
-		proverPrivateKey:     proverPrivateKey,
+		proverID:             proverID,
 		handleProjectProvers: handleProjectProvers,
 	}
 	go s.schedule()

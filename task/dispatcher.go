@@ -3,9 +3,11 @@ package task
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"log/slog"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
 
@@ -95,7 +97,11 @@ func (d *Dispatcher) handleP2PData(rawdata []byte, topic *pubsub.Topic) {
 		return
 	}
 
-	if err := l.verify(l.proverPubKey); err != nil {
+	proverPubKey, err := hexutil.Decode(l.proverID)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to decode prover pubkey"))
+	}
+	if err := l.verify(proverPubKey); err != nil {
 		slog.Error("failed to verify proof sign", "error", err)
 		return
 	}

@@ -3,6 +3,7 @@ package task
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -25,9 +26,9 @@ type VMHandler interface {
 type Processor struct {
 	vmHandler            VMHandler
 	projectConfigManager ProjectConfigManager
-	proverPrivateKey     string
+	proverPrivateKey     *ecdsa.PrivateKey
 	sequencerPubKey      []byte
-	proverPubKey         []byte
+	proverID             string
 	projectProvers       sync.Map
 }
 
@@ -61,7 +62,7 @@ func (r *Processor) HandleP2PData(data []byte, topic *pubsub.Topic) {
 	}
 	if len(provers) > 1 {
 		workProver := distance.GetMinNLocation(provers, t.ID, 1)
-		if workProver[0] != r.proverPrivateKey {
+		if workProver[0] != r.proverID {
 			slog.Info("the task not scheduld to this prover", "project_id", t.ProjectID, "task_id", t.ID)
 			return
 		}
@@ -99,12 +100,7 @@ func (r *Processor) signProof(t *Task, res []byte) (string, error) {
 	buf.Write(res)
 
 	h := crypto.Keccak256Hash(buf.Bytes())
-	sk, err := crypto.HexToECDSA(r.proverPrivateKey)
-	if err != nil {
-		return "", errors.Wrap(err, "failed parse private key")
-	}
-
-	sig, err := crypto.Sign(h.Bytes(), sk)
+	sig, err := crypto.Sign(h.Bytes(), r.proverPrivateKey)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to sign proof")
 	}
@@ -132,12 +128,12 @@ func (r *Processor) reportFail(t *Task, err error, topic *pubsub.Topic) {
 func (r *Processor) reportSuccess(t *Task, state TaskState, result []byte, sign string, topic *pubsub.Topic) {
 	d, err := json.Marshal(&p2pData{
 		TaskStateLog: &TaskStateLog{
-			Task:         *t,
-			State:        state,
-			Result:       result,
-			SignResult:   sign,
-			proverPubKey: r.proverPubKey,
-			CreatedAt:    time.Now(),
+			Task:       *t,
+			State:      state,
+			Result:     result,
+			SignResult: sign,
+			proverID:   r.proverID,
+			CreatedAt:  time.Now(),
 		},
 	})
 	if err != nil {
@@ -149,12 +145,12 @@ func (r *Processor) reportSuccess(t *Task, state TaskState, result []byte, sign 
 	}
 }
 
-func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, proverPrivateKey string, seqPubkey, proverPubkey []byte) *Processor {
+func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID string) *Processor {
 	return &Processor{
 		vmHandler:            vmHandler,
 		projectConfigManager: projectConfigManager,
 		proverPrivateKey:     proverPrivateKey,
 		sequencerPubKey:      seqPubkey,
-		proverPubKey:         proverPubkey,
+		proverID:             proverID,
 	}
 }
