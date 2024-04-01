@@ -42,7 +42,7 @@ func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientDID string, me
 	h := crypto.Keccak256Hash(buf.Bytes())
 	sig, err := crypto.Sign(h.Bytes(), sk)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return hexutil.Encode(sig), nil
 }
