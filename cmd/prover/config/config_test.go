@@ -28,7 +28,7 @@ func TestConfig_Init(t *testing.T) {
 			IoTeXChainID:           5,
 			SchedulerEpoch:         720,
 			IPFSEndpoint:           "abc.ipfs.net",
-			ProverID:               "did:key:pub",
+			ProverPrivateKey:       "private key",
 			ProjectFileDirectory:   "/path/to/project/configs",
 		}
 
@@ -44,7 +44,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddress)
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
-		_ = os.Setenv("PROVER_ID", expected.ProverID)
+		_ = os.Setenv("PROVER_PRIVATE_KEY", expected.ProverPrivateKey)
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDirectory)
 
 		c := &config.Config{}

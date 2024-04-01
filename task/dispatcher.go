@@ -55,7 +55,7 @@ func (d *Dispatcher) dispatchTask(nextTaskID uint64, pubkey []byte) (uint64, err
 	if t == nil {
 		return nextTaskID, nil
 	}
-	if err := t.VerifySign(pubkey); err != nil {
+	if err := t.Verify(pubkey); err != nil {
 		return 0, errors.Wrap(err, "failed to verify task sign")
 	}
 	if err := d.pubSubs.Add(t.ProjectID); err != nil {
@@ -82,11 +82,16 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 
-	_, err := d.projectConfigManager.Get(0, "") // TODO
-	if err != nil {
-		//slog.Error("failed to get project", "error", err, "project_id", l.Task.ProjectID, "project_version", l.Task.ProjectVersion)
+	if err := l.Verify("", nil /*prover pubkey*/); err != nil {
+		slog.Error("failed to verify proof sign", "error", err)
 		return
 	}
+
+	// p, err := d.projectConfigManager.Get(l.Task.ProjectID, l.Task.ProjectVersion)
+	// if err != nil {
+	// 	//slog.Error("failed to get project", "error", err, "project_id", l.Task.ProjectID, "project_version", l.Task.ProjectVersion)
+	// 	return
+	// }
 }
 
 func NewDispatcher(persistence Persistence, projectConfigManager ProjectConfigManager, datasource Datasource, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, iotexChainID int) (*Dispatcher, error) {

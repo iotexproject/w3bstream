@@ -1,13 +1,19 @@
 package task
 
 import (
+	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/types"
@@ -22,6 +28,8 @@ type VMHandler interface {
 type Processor struct {
 	vmHandler            VMHandler
 	projectConfigManager ProjectConfigManager
+	proverPrivateKey     *ecdsa.PrivateKey
+	sequencerPubKey      []byte
 	proverID             string
 	projectProvers       sync.Map
 }
@@ -56,8 +64,13 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		}
 	}
 
+	if err := t.Verify(r.sequencerPubKey); err != nil {
+		slog.Error("failed to verify task sign", "error", err)
+		return
+	}
+
 	slog.Debug("get a new task", "task_id", t.ID)
-	r.reportSuccess(t, types.TaskStateDispatched, nil, topic)
+	r.reportSuccess(t, types.TaskStateDispatched, nil, "", topic)
 
 	res, err := r.vmHandler.Handle(t.ID, t.ProjectID, t.ClientDID, t.Sign, p.VMType, p.Code, p.CodeExpParam, t.Data)
 	if err != nil {
@@ -65,7 +78,29 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		r.reportFail(t, err, topic)
 		return
 	}
-	r.reportSuccess(t, types.TaskStateProved, res, topic)
+	signProof, err := r.signProof(t, res)
+	if err != nil {
+		slog.Error("failed to sign proof", "error", err)
+		r.reportFail(t, err, topic)
+		return
+	}
+
+	r.reportSuccess(t, types.TaskStateProved, res, signProof, topic)
+}
+
+func (r *Processor) signProof(t *types.Task, res []byte) (string, error) {
+	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientDID)))
+	for _, v := range t.Data {
+		buf.Write(v)
+	}
+	buf.Write(res)
+
+	h := crypto.Keccak256Hash(buf.Bytes())
+	sig, err := crypto.Sign(h.Bytes(), r.proverPrivateKey)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to sign proof")
+	}
+	return hexutil.Encode(sig), nil
 }
 
 func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
@@ -86,13 +121,15 @@ func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
 	}
 }
 
-func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, topic *pubsub.Topic) {
+func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, sign string, topic *pubsub.Topic) {
 	d, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
-			TaskID:    t.ID,
-			State:     state,
-			Result:    result,
-			CreatedAt: time.Now(),
+			TaskID:     t.ID,
+			State:      state,
+			Result:     result,
+			SignResult: sign,
+			ProverID:   r.proverID,
+			CreatedAt:  time.Now(),
 		},
 	})
 	if err != nil {
@@ -104,10 +141,12 @@ func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result [
 	}
 }
 
-func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, proverID string) *Processor {
+func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID string) *Processor {
 	return &Processor{
 		vmHandler:            vmHandler,
 		projectConfigManager: projectConfigManager,
+		proverPrivateKey:     proverPrivateKey,
+		sequencerPubKey:      seqPubkey,
 		proverID:             proverID,
 	}
 }

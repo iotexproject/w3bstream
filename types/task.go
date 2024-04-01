@@ -16,10 +16,10 @@ type Task struct {
 	ProjectVersion string   `json:"projectVersion"`
 	Data           [][]byte `json:"data"`
 	ClientDID      string   `json:"clientDID"`
-	Sign           string   `json:"signature"`
+	Sign           string   `json:"sign"`
 }
 
-func (t *Task) VerifySign(pubkey []byte) error {
+func (t *Task) Verify(pubkey []byte) error {
 	sig, err := hexutil.Decode(t.Sign)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode task sign")
@@ -54,11 +54,41 @@ const (
 )
 
 type TaskStateLog struct {
-	TaskID    uint64
-	State     TaskState
-	Comment   string
-	Result    []byte
-	CreatedAt time.Time
+	TaskID     uint64
+	State      TaskState
+	Comment    string
+	Result     []byte
+	SignResult string
+	ProverID   string
+	CreatedAt  time.Time
+}
+
+func (l *TaskStateLog) Verify(pubkey string, task *Task) error {
+	proverPubKey, err := hexutil.Decode(pubkey)
+	if err != nil {
+		return errors.Wrap(err, "failed to decode prover pubkey")
+	}
+
+	sig, err := hexutil.Decode(task.Sign)
+	if err != nil {
+		return errors.Wrap(err, "failed to decode task sign")
+	}
+
+	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", task.ID, task.ProjectID, task.ClientDID)))
+	for _, v := range task.Data {
+		data.Write(v)
+	}
+	data.Write(l.Result)
+
+	h := crypto.Keccak256Hash(data.Bytes())
+	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
+	if err != nil {
+		return errors.Wrap(err, "failed to recover public key")
+	}
+	if !bytes.Equal(sigpk, proverPubKey) {
+		return errors.New("proof sign unmatched")
+	}
+	return nil
 }
 
 func (s TaskState) String() string {
@@ -76,9 +106,4 @@ func (s TaskState) String() string {
 	default:
 		return "invalid"
 	}
-}
-
-type p2pData struct {
-	Task         *Task         `json:"task,omitempty"`
-	TaskStateLog *TaskStateLog `json:"taskStateLog,omitempty"`
 }
