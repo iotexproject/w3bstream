@@ -131,6 +131,13 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 		p = p.ApplyMethodReturn(&mockPersistence{}, "Create", nil)
+		p = p.ApplyPrivateMethod(
+			&TaskStateLog{},
+			"verify",
+			func(pubkey string) error {
+				return nil
+			},
+		)
 
 		p = testproject.ProjectConfigManagerGet(p, nil, errors.New(t.Name()))
 		d.handleP2PData(data, nil)
@@ -145,6 +152,14 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{errors.New(t.Name())}},
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
+		p = p.ApplyPrivateMethod(
+			&TaskStateLog{},
+			"verify",
+			func(pubkey string) error {
+				return nil
+			},
+		)
+
 		p = testproject.ProjectConfigManagerGet(p, &project.Config{}, nil)
 
 		p = p.ApplyFuncReturn(output.New, nil, errors.New(t.Name()))
@@ -160,6 +175,14 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
+		p = p.ApplyPrivateMethod(
+			&TaskStateLog{},
+			"verify",
+			func(pubkey string) error {
+				return nil
+			},
+		)
+
 		p = testproject.ProjectConfigManagerGet(p, &project.Config{}, nil)
 
 		p = p.ApplyFuncReturn(output.New, nil, errors.New(t.Name()))
@@ -174,6 +197,14 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{errors.New(t.Name())}},
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
+		p = p.ApplyPrivateMethod(
+			&TaskStateLog{},
+			"verify",
+			func(pubkey string) error {
+				return nil
+			},
+		)
+
 		p = testproject.ProjectConfigManagerGet(p, &project.Config{}, nil)
 		p = p.ApplyFuncReturn(output.New, op, nil)
 
@@ -189,6 +220,14 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
+		p = p.ApplyPrivateMethod(
+			&TaskStateLog{},
+			"verify",
+			func(pubkey string) error {
+				return nil
+			},
+		)
+
 		p = testproject.ProjectConfigManagerGet(p, &project.Config{}, nil)
 		p = p.ApplyFuncReturn(output.New, op, nil)
 
@@ -204,6 +243,14 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{errors.New(t.Name())}},
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
+		p = p.ApplyPrivateMethod(
+			&TaskStateLog{},
+			"verify",
+			func(pubkey string) error {
+				return nil
+			},
+		)
+
 		p = testproject.ProjectConfigManagerGet(p, &project.Config{}, nil)
 		p = p.ApplyFuncReturn(output.New, op, nil)
 		op.EXPECT().Output(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).Times(1)
@@ -219,6 +266,14 @@ func TestDispatcher_HandleP2PData(t *testing.T) {
 			{Values: Params{nil}},
 		}
 		p = p.ApplyMethodSeq(&mockPersistence{}, "Create", outputCell)
+		p = p.ApplyPrivateMethod(
+			&TaskStateLog{},
+			"verify",
+			func(pubkey string) error {
+				return nil
+			},
+		)
+
 		p = testproject.ProjectConfigManagerGet(p, &project.Config{}, nil)
 		p = p.ApplyFuncReturn(output.New, op, nil)
 		op.EXPECT().Output(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).Times(1)

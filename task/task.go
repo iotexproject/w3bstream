@@ -64,7 +64,12 @@ type TaskStateLog struct {
 	CreatedAt time.Time
 }
 
-func (l *TaskStateLog) verify(pubkey []byte) error {
+func (l *TaskStateLog) verify(pubkey string) error {
+	proverPubKey, err := hexutil.Decode(pubkey)
+	if err != nil {
+		return errors.Wrap(err, "failed to decode prover pubkey")
+	}
+
 	sig, err := hexutil.Decode(l.Task.Sign)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode task sign")
@@ -81,7 +86,7 @@ func (l *TaskStateLog) verify(pubkey []byte) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to recover public key")
 	}
-	if !bytes.Equal(sigpk, pubkey) {
+	if !bytes.Equal(sigpk, proverPubKey) {
 		return errors.New("proof sign unmatched")
 	}
 	return nil
