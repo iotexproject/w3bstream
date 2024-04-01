@@ -69,7 +69,7 @@ func (p *subscriber) run(ctx context.Context) {
 			d := Data{}
 			if err := json.Unmarshal(m.Message.Data, &d); err != nil {
 				slog.Error("failed to unmarshal p2p data", "error", err)
-				return
+				continue
 			}
 			p.handle(&d, p.topic)
 		}
