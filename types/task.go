@@ -16,11 +16,11 @@ type Task struct {
 	ProjectVersion string   `json:"projectVersion"`
 	Data           [][]byte `json:"data"`
 	ClientDID      string   `json:"clientDID"`
-	Sign           string   `json:"sign"`
+	Signature      string   `json:"sign"`
 }
 
-func (t *Task) Verify(pubkey []byte) error {
-	sig, err := hexutil.Decode(t.Sign)
+func (t *Task) VerifySignature(pubkey []byte) error {
+	sig, err := hexutil.Decode(t.Signature)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode task sign")
 	}
@@ -54,22 +54,22 @@ const (
 )
 
 type TaskStateLog struct {
-	TaskID     uint64
-	State      TaskState
-	Comment    string
-	Result     []byte
-	SignResult string
-	ProverID   string
-	CreatedAt  time.Time
+	TaskID    uint64
+	State     TaskState
+	Comment   string
+	Result    []byte
+	Signature string
+	ProverID  string
+	CreatedAt time.Time
 }
 
-func (l *TaskStateLog) Verify(pubkey string, task *Task) error {
+func (l *TaskStateLog) VerifySignature(pubkey string, task *Task) error {
 	proverPubKey, err := hexutil.Decode(pubkey)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode prover pubkey")
 	}
 
-	sig, err := hexutil.Decode(task.Sign)
+	sig, err := hexutil.Decode(task.Signature)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode task sign")
 	}

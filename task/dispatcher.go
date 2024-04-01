@@ -55,7 +55,7 @@ func (d *Dispatcher) dispatchTask(nextTaskID uint64, pubkey []byte) (uint64, err
 	if t == nil {
 		return nextTaskID, nil
 	}
-	if err := t.Verify(pubkey); err != nil {
+	if err := t.VerifySignature(pubkey); err != nil {
 		return 0, errors.Wrap(err, "failed to verify task sign")
 	}
 	if err := d.pubSubs.Add(t.ProjectID); err != nil {
@@ -82,7 +82,7 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 
-	if err := l.Verify("", nil /*prover pubkey*/); err != nil {
+	if err := l.VerifySignature("", nil /*prover pubkey*/); err != nil {
 		slog.Error("failed to verify proof sign", "error", err)
 		return
 	}

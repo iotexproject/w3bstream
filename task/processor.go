@@ -64,7 +64,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		}
 	}
 
-	if err := t.Verify(r.sequencerPubKey); err != nil {
+	if err := t.VerifySignature(r.sequencerPubKey); err != nil {
 		slog.Error("failed to verify task sign", "error", err)
 		return
 	}
@@ -72,20 +72,20 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	slog.Debug("get a new task", "task_id", t.ID)
 	r.reportSuccess(t, types.TaskStateDispatched, nil, "", topic)
 
-	res, err := r.vmHandler.Handle(t.ID, t.ProjectID, t.ClientDID, t.Sign, p.VMType, p.Code, p.CodeExpParam, t.Data)
+	res, err := r.vmHandler.Handle(t.ID, t.ProjectID, t.ClientDID, t.Signature, p.VMType, p.Code, p.CodeExpParam, t.Data)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)
 		return
 	}
-	signProof, err := r.signProof(t, res)
+	signature, err := r.signProof(t, res)
 	if err != nil {
 		slog.Error("failed to sign proof", "error", err)
 		r.reportFail(t, err, topic)
 		return
 	}
 
-	r.reportSuccess(t, types.TaskStateProved, res, signProof, topic)
+	r.reportSuccess(t, types.TaskStateProved, res, signature, topic)
 }
 
 func (r *Processor) signProof(t *types.Task, res []byte) (string, error) {
@@ -121,15 +121,15 @@ func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
 	}
 }
 
-func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, sign string, topic *pubsub.Topic) {
+func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, signature string, topic *pubsub.Topic) {
 	d, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
-			TaskID:     t.ID,
-			State:      state,
-			Result:     result,
-			SignResult: sign,
-			ProverID:   r.proverID,
-			CreatedAt:  time.Now(),
+			TaskID:    t.ID,
+			State:     state,
+			Result:    result,
+			Signature: signature,
+			ProverID:  r.proverID,
+			CreatedAt: time.Now(),
 		},
 	})
 	if err != nil {
