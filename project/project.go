@@ -16,21 +16,10 @@ import (
 	"github.com/machinefi/sprout/vm"
 )
 
-//	type Config struct {
-//		DatasourceURI   string            // TODO change this after contract code updated
-//		VMType          vm.Type           `json:"vmType"`
-//		Output          output.Config     `json:"output"`
-//		Aggregation     AggregationConfig `json:"aggregation"`
-//		ResourceRequest ResourceRequest   `json:"resourceRequest"`
-//		Version         string            `json:"version"`
-//		CodeExpParam    string            `json:"codeExpParam,omitempty"`
-//		Code            string            `json:"code"`
-//	}
 var (
-	errEmptyVersionData   = errors.New("")
-	errEmptyProjectCode   = errors.New("")
-	errUnsupportedVMType  = errors.New("")
-	errNoValidVersionData = errors.New("")
+	errEmptyConfigData    = errors.New("empty config data")
+	errInvalidProjectCode = errors.New("invalid project code")
+	errUnsupportedVMType  = errors.New("unsupported vm type")
 )
 
 type Config struct {
@@ -43,7 +32,7 @@ type Config struct {
 
 func (c *Config) Validate() error {
 	if len(c.Versions) == 0 {
-		return errEmptyVersionData
+		return errEmptyConfigData
 	}
 
 	// remove invalid version data and set default
@@ -67,7 +56,7 @@ func (c *Config) Validate() error {
 
 	// ensure contains at least one valid version data
 	if firstVersionData == nil {
-		return errNoValidVersionData
+		return errEmptyConfigData
 	}
 
 	c.defaultData = c.versions[c.DefaultVersion]
@@ -104,7 +93,7 @@ type ConfigData struct {
 
 func (d *ConfigData) Validate() error {
 	if len(d.Code) == 0 {
-		return errEmptyProjectCode
+		return errInvalidProjectCode
 	}
 	switch d.VMType {
 	default:
