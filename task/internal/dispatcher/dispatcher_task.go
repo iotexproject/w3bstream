@@ -23,13 +23,9 @@ type dispatcherTask struct {
 
 func (t *dispatcherTask) handleState(s *types.TaskStateLog) {
 	if t.handler.Handle(s, t.task) {
-		t.finish()
+		t.cancel()
+		t.finished.Store(true)
 	}
-}
-
-func (t *dispatcherTask) finish() {
-	t.cancel()
-	t.finished.Store(true)
 }
 
 func (t *dispatcherTask) runWatchdog(ctx context.Context) {
