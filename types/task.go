@@ -15,17 +15,17 @@ type Task struct {
 	ProjectID      uint64   `json:"projectID"`
 	ProjectVersion string   `json:"projectVersion"`
 	Data           [][]byte `json:"data"`
-	ClientDID      string   `json:"clientDID"`
-	Signature      string   `json:"sign"`
+	ClientID       string   `json:"clientID"`
+	Signature      string   `json:"signature"`
 }
 
 func (t *Task) VerifySignature(pubkey []byte) error {
 	sig, err := hexutil.Decode(t.Signature)
 	if err != nil {
-		return errors.Wrap(err, "failed to decode task sign")
+		return errors.Wrap(err, "failed to decode task signature")
 	}
 
-	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientDID)))
+	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientID)))
 	for _, v := range t.Data {
 		data.Write(v)
 	}
@@ -35,7 +35,7 @@ func (t *Task) VerifySignature(pubkey []byte) error {
 		return errors.Wrap(err, "failed to recover public key")
 	}
 	if !bytes.Equal(sigpk, pubkey) {
-		return errors.New("task sign unmatched")
+		return errors.New("task signature unmatched")
 	}
 	return nil
 }
@@ -71,10 +71,10 @@ func (l *TaskStateLog) VerifySignature(pubkey string, task *Task) error {
 
 	sig, err := hexutil.Decode(task.Signature)
 	if err != nil {
-		return errors.Wrap(err, "failed to decode task sign")
+		return errors.Wrap(err, "failed to decode task signature")
 	}
 
-	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", task.ID, task.ProjectID, task.ClientDID)))
+	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", task.ID, task.ProjectID, task.ClientID)))
 	for _, v := range task.Data {
 		data.Write(v)
 	}
@@ -86,7 +86,7 @@ func (l *TaskStateLog) VerifySignature(pubkey string, task *Task) error {
 		return errors.Wrap(err, "failed to recover public key")
 	}
 	if !bytes.Equal(sigpk, proverPubKey) {
-		return errors.New("proof sign unmatched")
+		return errors.New("proof signature unmatched")
 	}
 	return nil
 }

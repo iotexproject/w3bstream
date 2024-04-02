@@ -22,7 +22,7 @@ import (
 )
 
 type VMHandler interface {
-	Handle(taskID, projectID uint64, clientID, sign string, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error)
+	Handle(task *types.Task, vmtype vm.Type, code string, expParam string) ([]byte, error)
 }
 
 type Processor struct {
@@ -72,7 +72,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	slog.Debug("get a new task", "task_id", t.ID)
 	r.reportSuccess(t, types.TaskStateDispatched, nil, "", topic)
 
-	res, err := r.vmHandler.Handle(t.ID, t.ProjectID, t.ClientDID, t.Signature, p.VMType, p.Code, p.CodeExpParam, t.Data)
+	res, err := r.vmHandler.Handle(t, p.VMType, p.Code, p.CodeExpParam)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)
@@ -89,7 +89,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 }
 
 func (r *Processor) signProof(t *types.Task, res []byte) (string, error) {
-	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientDID)))
+	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientID)))
 	for _, v := range t.Data {
 		buf.Write(v)
 	}

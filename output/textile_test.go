@@ -14,6 +14,7 @@ import (
 	"github.com/tablelandnetwork/basin-cli/pkg/signing"
 
 	"github.com/machinefi/sprout/testutil"
+	"github.com/machinefi/sprout/types"
 )
 
 func patchTextileDBPackData(p *Patches, data []byte, err error) *Patches {
@@ -143,7 +144,7 @@ func Test_textile_Output(t *testing.T) {
 		defer p.Reset()
 		p = patchTextileDBPackData(p, nil, errors.New(t.Name()))
 
-		txHash, err := o.Output(0, nil, []byte("any"))
+		txHash, err := o.Output(&types.Task{}, []byte("any"))
 		r.Empty(txHash)
 		r.ErrorContains(err, t.Name())
 	})
@@ -154,7 +155,7 @@ func Test_textile_Output(t *testing.T) {
 		p = patchTextileDBPackData(p, []byte("any"), nil)
 		p = patchTextileDBWrite(p, "", errors.New(t.Name()))
 
-		txHash, err := o.Output(0, nil, []byte("any"))
+		txHash, err := o.Output(&types.Task{}, []byte("any"))
 		r.Empty(txHash)
 		r.ErrorContains(err, t.Name())
 	})
@@ -165,7 +166,7 @@ func Test_textile_Output(t *testing.T) {
 		p = patchTextileDBPackData(p, []byte("any"), nil)
 		p = patchTextileDBWrite(p, "any", nil)
 
-		txHash, err := o.Output(0, nil, []byte("any"))
+		txHash, err := o.Output(&types.Task{}, []byte("any"))
 		r.NotEmpty(txHash)
 		r.NoError(err)
 	})

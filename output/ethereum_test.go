@@ -15,6 +15,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -68,7 +69,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
 
-			txHash, err := o.Output(1, [][]byte{}, []byte("any proof data"))
+			txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
 			r.Equal(txHash, txHashRet)
 			r.NoError(err)
 		})
@@ -84,7 +85,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
 
-			txHash, err := o.Output(1, [][]byte{}, []byte("any proof data"))
+			txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
 			r.Equal(txHash, txHashRet)
 			r.NoError(err)
 		})
@@ -102,7 +103,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			r.True(ok)
 
 			t.Run("ReceiverAddressNotInConfig", func(t *testing.T) {
-				txHash, err := o.Output(1, [][]byte{}, []byte("any proof data"))
+				txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
 				r.Equal(txHash, "")
 				r.Equal(err, errMissingReceiverParam)
 			})
@@ -114,7 +115,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			r.True(ok)
 
 			t.Run("Success", func(t *testing.T) {
-				txHash, err := o.Output(1, [][]byte{}, []byte("any proof data"))
+				txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
 				r.Equal(txHash, txHashRet)
 				r.NoError(err)
 			})
@@ -128,7 +129,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			r.True(ok)
 
 			t.Run("FailedToDecodeProof", func(t *testing.T) {
-				txHash, err := o.Output(1, [][]byte{}, []byte("INVALID_HEX_DECODE"))
+				txHash, err := o.Output(&types.Task{}, []byte("INVALID_HEX_DECODE"))
 				r.Equal(txHash, "")
 				r.Error(err)
 			})
@@ -142,7 +143,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				r.NoError(err)
 				hexdata := hex.EncodeToString(data)
 
-				txHash, err := o.Output(1, [][]byte{}, []byte(hexdata))
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
 				r.Equal(txHash, "")
 				r.Equal(err, errSnarkProofDataMissingFieldSnark)
 			})
@@ -152,7 +153,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				r.NoError(err)
 				hexdata := hex.EncodeToString(data)
 
-				txHash, err := o.Output(1, [][]byte{}, []byte(hexdata))
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
 				r.Equal(txHash, "")
 				r.Equal(err, errSnarkProofDataMissingFieldPostStateDigest)
 			})
@@ -162,7 +163,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				r.NoError(err)
 				hexdata := hex.EncodeToString(data)
 
-				txHash, err := o.Output(1, [][]byte{}, []byte(hexdata))
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
 				r.Equal(txHash, "")
 				r.Equal(err, errSnarkProofDataMissingFieldJournal)
 			})
@@ -177,7 +178,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				defer p.Reset()
 				p = p.ApplyFuncReturn(abi.NewType, nil, errors.New(t.Name()))
 
-				txHash, err := o.Output(1, [][]byte{}, []byte(hexdata))
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
 				r.Equal(txHash, "")
 				r.ErrorContains(err, t.Name())
 			})
@@ -189,7 +190,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				p = p.ApplyFuncReturn(abi.NewType, abi.Type{}, nil)
 				p = p.ApplyMethodReturn(abi.Arguments{}, "Pack", nil, errors.New(t.Name()))
 
-				txHash, err := o.Output(1, [][]byte{}, []byte(hexdata))
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
 				r.Equal(txHash, "")
 				r.ErrorContains(err, t.Name())
 			})
@@ -202,7 +203,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				p = p.ApplyMethodReturn(abi.Arguments{}, "Pack", []byte("any"), nil)
 				p = patchEthereumContractSendTX(p, txHashRet, nil)
 
-				txHash, err := o.Output(1, [][]byte{}, []byte(hexdata))
+				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
 				r.Equal(txHash, txHashRet)
 				r.NoError(err)
 			})
@@ -219,7 +220,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 				_, ok := o.(*ethereumContract)
 				r.True(ok)
 
-				txHash, err := o.Output(1, [][]byte{[]byte(`{"other":""}`)}, nil)
+				txHash, err := o.Output(&types.Task{
+					ProjectID: 1,
+					Data:      [][]byte{[]byte(`{"other":""}`)},
+				}, nil)
 				r.Equal(txHash, "")
 				r.Error(err)
 			})
@@ -232,7 +236,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(1, [][]byte{[]byte(`{"other":"any"}`)}, nil)
+					txHash, err := o.Output(&types.Task{
+						ProjectID: 1,
+						Data:      [][]byte{[]byte(`{"other":"any"}`)},
+					}, nil)
 					r.Equal(txHash, txHashRet)
 					r.NoError(err)
 				})
@@ -243,7 +250,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(1, [][]byte{[]byte(`{"other":"any"}`)}, nil)
+					txHash, err := o.Output(&types.Task{
+						ProjectID: 1,
+						Data:      [][]byte{[]byte(`{"other":"any"}`)},
+					}, nil)
 					r.Equal(txHash, txHashRet)
 					r.NoError(err)
 				})
@@ -254,7 +264,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(1, [][]byte{[]byte(`{"other":"any"}`)}, nil)
+					txHash, err := o.Output(&types.Task{
+						ProjectID: 1,
+						Data:      [][]byte{[]byte(`{"other":"any"}`)},
+					}, nil)
 					r.NoError(err)
 					r.Equal(txHash, txHashRet)
 				})
@@ -276,7 +289,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 			p = p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, errors.New(t.Name()))
 
-			txHash, err := o.Output(1, [][]byte{}, nil)
+			txHash, err := o.Output(&types.Task{
+				ProjectID: 1,
+				Data:      [][]byte{[]byte(`{"other":""}`)},
+			}, nil)
 
 			r.Equal(txHash, "")
 			r.ErrorContains(err, t.Name())
@@ -289,7 +305,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 			defer p.Reset()
 			p = patchEthereumContractSendTX(p, "", errors.New(t.Name()))
 
-			txHash, err := o.Output(1, [][]byte{}, nil)
+			txHash, err := o.Output(&types.Task{
+				ProjectID: 1,
+				Data:      [][]byte{[]byte(`{"other":""}`)},
+			}, nil)
 
 			r.Equal(txHash, "")
 			r.ErrorContains(err, t.Name())
@@ -301,7 +320,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 		defer p.Reset()
 		p = patchEthereumContractSendTX(p, txHashRet, nil)
 
-		txHash, err := o.Output(1, [][]byte{}, nil)
+		txHash, err := o.Output(&types.Task{
+			ProjectID: 1,
+			Data:      [][]byte{[]byte(`{"other":""}`)},
+		}, nil)
 
 		r.Equal(txHash, txHashRet)
 		r.NoError(err)
