@@ -8,11 +8,11 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 contract Prover is IProver, OwnableUpgradeable, ERC721Upgradeable {
-    event FleetManagementSetted(address indexed fleetManagement);
+    event FleetManagementSet(address indexed fleetManagement);
 
     uint256 nextId;
 
-    mapping(uint256 => Type) _nodeType;
+    mapping(uint256 => uint256) _nodeTypes;
     mapping(uint256 => address) _operators;
     mapping(uint256 => bool) _paused;
     mapping(uint256 => PendingOperator) _pendingOperators;
@@ -30,13 +30,22 @@ contract Prover is IProver, OwnableUpgradeable, ERC721Upgradeable {
         fleetManagement = IFleetManagement(_fleetManagement);
     }
 
-    function nodeType(uint256 _id) external view override returns (Type) {
+    function count() external view override returns (uint256) {
+        return nextId + 1;
+    }
+
+    function nodeType(uint256 _id) external view override returns (uint256) {
         _requireMinted(_id);
-        return _nodeType[_id];
+        return _nodeTypes[_id];
     }
 
     function operator(uint256 _id) external view override returns (address) {
         _requireMinted(_id);
+        PendingOperator memory pending = _pendingOperators[_id];
+        if (pending.timestamp >= block.timestamp) {
+            return pending.operator;
+        }
+
         return _operators[_id];
     }
 
@@ -47,6 +56,9 @@ contract Prover is IProver, OwnableUpgradeable, ERC721Upgradeable {
 
     function pendingOperator(uint256 _id) external view override returns (PendingOperator memory) {
         _requireMinted(_id);
+        PendingOperator memory pending = _pendingOperators[_id];
+        require(pending.timestamp > 0 && pending.timestamp < block.timestamp, "no pending operator");
+
         return _pendingOperators[_id];
     }
 
@@ -58,40 +70,41 @@ contract Prover is IProver, OwnableUpgradeable, ERC721Upgradeable {
         require(_fleetManagement != address(0), "zero address");
 
         fleetManagement = IFleetManagement(_fleetManagement);
-        emit FleetManagementSetted(_fleetManagement);
+        emit FleetManagementSet(_fleetManagement);
     }
 
     function register(Type _type, address _operator) public override returns (uint256 _id) {
         _id = ++nextId;
+        _mint(msg.sender, _id);
 
-        _nodeType[_id] = _type;
-        _operators[_id] = _operator;
-        _paused[_id] = false;
+        _paused[_id] = true;
+        updateNodeTypeInternal(_id, _type);
+        updateOperatorInternal(_id, _operator);
+    }
 
-        emit ProverCreated(_id, _operator);
+    function updateOperatorInternal(uint256 _id, address _operator) internal {
+        PendingOperator storage _pending = _pendingOperators[_id];
+        _pending.timestamp = block.timestamp + fleetManagement.epoch();
+        _pending.operator = _operator;
+        emit PendingOperatorAdded(_id, _operator);
+    }
+
+    function updateNodeTypeInternal(uint256 _id, uint256 _type) internal {
+        _nodeTypes[_id] = _type;
+        emit NodeTypeUpdated(_id, _type);
+    }
+
+    function updateNodeType(uint256 _id, uint256 _type) external override onlyProverOwner(_id) {
+        updateNodeTypeInternal(_id, _type);
     }
 
     function changeOperator(uint256 _id, address _operator) external override onlyProverOwner(_id) {
         require(_operator != address(0), "zero address");
-
-        PendingOperator storage _pending = _pendingOperators[_id];
-        _pending.timestamp = block.timestamp;
-        _pending.operator = _operator;
-
-        emit PendingOperatorAdded(_id, _operator);
-    }
-
-    function activePendingOperator(uint256 _id) external override {
-        PendingOperator memory _pending = _pendingOperators[_id];
-
-        require(
-            _pending.timestamp > 0 && _pending.timestamp <= block.timestamp + fleetManagement.epoch(),
-            "time to short"
-        );
-        _operators[_id] = _pending.operator;
-        delete _operators[_id];
-
-        emit OperatorActived(_id, _pending.operator);
+        PendingOperator memory pending = _pendingOperators[_id];
+        if (pending.timestamp > 0 && pending.timestamp >= block.timestamp) {
+            _operators[_id] = pending.operator;
+        }
+        updateOperatorInternal(_id, _operator);
     }
 
     function pause(uint256 _id) external override onlyProverOwner(_id) {

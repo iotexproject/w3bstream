@@ -9,8 +9,8 @@ interface IRouter {
         bool success,
         string revertReason
     );
-    event BindDapp(uint256 indexed projectId, address indexed operator, address dapp);
-    event UnbindDapp(uint256 indexed projectId, address indexed operator);
+    event DappBound(uint256 indexed projectId, address indexed operator, address dapp);
+    event DappUnbounded(uint256 indexed projectId, address indexed operator);
 
     function fleetManagement() external view returns (address);
     function dapp(uint256 _projectId) external view returns (address);

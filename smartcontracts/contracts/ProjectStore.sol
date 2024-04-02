@@ -1,28 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./interfaces/IProject.sol";
+import "./interfaces/IProjectStore.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract Project is IProject, OwnableUpgradeable, ERC721Upgradeable {
+contract ProjectStore is IProjectStore, OwnableUpgradeable, ERC721Upgradeable {
     event MinterChanged(address indexed minter);
 
-    mapping(uint256 => mapping(address => bool)) public override operators;
+    mapping(uint256 => Project) projects;
+    mapping(uint256 => bool) paused;
     mapping(uint256 => mapping(bytes32 => bytes)) public override attributes;
 
-    mapping(uint256 => Project) projects;
     address public minter;
     uint256 nextProjectId;
 
     modifier onlyProjectOwner(uint256 _projectId) {
         require(ownerOf(_projectId) == msg.sender, "not owner");
-        _;
-    }
-
-    modifier onlyProjectOperator(uint256 _projectId) {
-        require(ownerOf(_projectId) == msg.sender || operators[_projectId][msg.sender], "not operator");
         _;
     }
 
@@ -35,17 +30,17 @@ contract Project is IProject, OwnableUpgradeable, ERC721Upgradeable {
 
     function isPaused(uint256 _projectId) external view override returns (bool) {
         _requireMinted(_projectId);
-        return projects[_projectId].paused;
+        return paused[_projectId];
     }
 
-    function hash(uint256 _projectId) external view override returns (bytes32) {
+    function project(uint256 _projectId) external view override returns (Project memory) {
         _requireMinted(_projectId);
-        return projects[_projectId].hash;
+        Project memory project = projects[_projectId];
+        return (project.uri, project.hash);
     }
 
-    function uri(uint256 _projectId) external view override returns (string memory) {
-        _requireMinted(_projectId);
-        return projects[_projectId].uri;
+    function attribute(uint256 _projectId, bytes32 _name) external view returns (bytes calldata) {
+        return attributes[_projectId][_name];
     }
 
     function attributesOf(
@@ -64,21 +59,18 @@ contract Project is IProject, OwnableUpgradeable, ERC721Upgradeable {
     function mint(address _owner, string calldata _uri, bytes32 _hash) external override returns (uint256 _projectId) {
         require(msg.sender == minter, "not minter");
 
-        _projectId = ++nextProjectId;
-        Project storage _project = projects[_projectId];
-        _project.paused = false;
-        _project.hash = _hash;
-        _project.uri = _uri;
+        projectId = ++nextProjectId;
 
-        _mint(_owner, _projectId);
-        emit ProjectCreated(_owner, _projectId, _uri, _hash);
+        _mint(_owner, projectId);
+        paused[projectId] = true;
+        updateProjectInternal(projectId, _uri, _hash);
     }
 
     function setAttributes(
         uint64 _projectId,
         bytes32[] memory _keys,
         bytes[] memory _values
-    ) external onlyProjectOperator(_projectId) {
+    ) external onlyProjectOwner(_projectId) {
         require(_keys.length == _values.length, "invalid input");
 
         mapping(bytes32 => bytes) storage _attributes = attributes[_projectId];
@@ -88,21 +80,14 @@ contract Project is IProject, OwnableUpgradeable, ERC721Upgradeable {
         }
     }
 
-    function addOperator(uint256 _projectId, address _operator) external override onlyProjectOwner(_projectId) {
-        operators[_projectId][_operator] = true;
-        emit OperatorAdded(_projectId, _operator);
+    function count() external view returns (uint256) {
+        return nextProjectId + 1;
     }
-
-    function removeOperator(uint256 _projectId, address _operator) external override onlyProjectOwner(_projectId) {
-        operators[_projectId][_operator] = false;
-        emit OperatorRemoved(_projectId, _operator);
-    }
-
-    function updateProject(
+    function updateProjectInternal(
         uint256 _projectId,
         string memory _uri,
         bytes32 _hash
-    ) external override onlyProjectOwner(_projectId) {
+    ) internal {
         require(bytes(_uri).length != 0, "empty uri");
         Project storage project = projects[_projectId];
         project.uri = _uri;
@@ -111,20 +96,24 @@ contract Project is IProject, OwnableUpgradeable, ERC721Upgradeable {
         emit ProjectUpdated(_projectId, _uri, _hash);
     }
 
-    function pause(uint256 _projectId) external override onlyProjectOperator(_projectId) {
-        Project storage _project = projects[_projectId];
-        require(!_project.paused, "project already paused");
+    function updateProject(
+        uint256 _projectId,
+        string memory _uri,
+        bytes32 _hash
+    ) external override onlyProjectOwner(_projectId) {
+        updateProjectInternal(_projectId, _uri, _hash);
+    }
 
-        _project.paused = true;
+    function pause(uint256 _projectId) external override onlyProjectOwner(_projectId) {
+        require(!paused[_projectId], "project already paused");
+        paused[_projectId] = true;
 
         emit ProjectPaused(_projectId);
     }
 
-    function resume(uint256 _projectId) external override onlyProjectOperator(_projectId) {
-        Project storage _project = projects[_projectId];
-        require(_project.paused, "project already actived");
-
-        _project.paused = false;
+    function resume(uint256 _projectId) external override onlyProjectOwner(_projectId) {
+        require(paused[_projectId], "project already actived");
+        paused[_projectId] = false;
 
         emit ProjectResumed(_projectId);
     }

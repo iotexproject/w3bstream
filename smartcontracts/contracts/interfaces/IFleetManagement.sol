@@ -12,8 +12,7 @@ interface IFleetManagement {
     function prover() external view returns (address);
     function minStake() external view returns (uint256);
     function stakedAmount(uint256 _proverId) external view returns (uint256);
-    function isNormalProject(uint256 _projectId) external view returns (bool);
-    function isNormalProver(uint256 _proverId) external view returns (bool);
+    function isActiveProver(uint256 _proverId) external view returns (bool);
 
     function stake(uint256 _proverId) external payable;
     function unstake(uint256 _proverId, uint256 _amount) external;

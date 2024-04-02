@@ -1,29 +1,43 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./interfaces/IProject.sol";
+import "./interfaces/IProjectStore.sol";
 import "./interfaces/IProver.sol";
 import "./interfaces/IRouter.sol";
 import "./interfaces/IFleetManagement.sol";
 import "./interfaces/IDapp.sol";
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Router is IRouter, Initializable {
     address public override fleetManagement;
+    address public override projectStore;
+
     mapping(uint256 => address) public override dapp;
     mapping(uint256 => uint256) public override credits;
 
-    function initialize(address _fleetManagement) public initializer {
+    modifier onlyProjectOwner(uint256 _projectId) {
+        require(
+            IERC721(IFleetManagement(fleetManagement).project()).ownerOf(_projectId) == msg.sender,
+            "not project owner"
+        );
+        _;
+    }
+
+    function initialize(address _fleetManagement, address _projectStore) public initializer {
         fleetManagement = _fleetManagement;
+        projectStore = _projectStore;
     }
 
     function route(uint256 _projectId, uint256 _proverId, bytes calldata _data) external override {
         address _dapp = dapp[_projectId];
         require(_dapp != address(0), "no dapp");
         IFleetManagement _fm = IFleetManagement(fleetManagement);
-        require(IProver(_fm.prover()).operator(_proverId) == msg.sender, "invalid prover operator");
-        require(_fm.isNormalProject(_projectId), "invalid project");
+        // TODO: add coordinator whitelist
+        // require(IProver(_fm.prover()).operator(_proverId) == msg.sender, "invalid prover operator");
+        IProjectStore store = IProjectStore(projectStore);
+        require(_projectId > 0 && _projectId <= store.count() && !store.isPaused(_projectId));
         require(_fm.isNormalProver(_proverId), "invalid prover");
 
         try IDapp(_dapp).process(_data) {
@@ -34,23 +48,13 @@ contract Router is IRouter, Initializable {
         }
     }
 
-    function bindDapp(uint256 _projectId, address _dapp) external override {
-        require(
-            IProject(IFleetManagement(fleetManagement).project()).operators(_projectId, msg.sender),
-            "not operator"
-        );
-
+    function bindDapp(uint256 _projectId, address _dapp) external override onlyPorjectOwner(_projectId) {
         dapp[_projectId] = _dapp;
-        emit BindDapp(_projectId, msg.sender, _dapp);
+        emit DappBound(_projectId, msg.sender, _dapp);
     }
 
-    function unbindDapp(uint256 _projectId) external override {
-        require(
-            IProject(IFleetManagement(fleetManagement).project()).operators(_projectId, msg.sender),
-            "not operator"
-        );
-
+    function unbindDapp(uint256 _projectId) external override onlyProjectOwner(_projectId) {
         delete dapp[_projectId];
-        emit UnbindDapp(_projectId, msg.sender);
+        emit DappUnbound(_projectId, msg.sender);
     }
 }
