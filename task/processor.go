@@ -107,6 +107,7 @@ func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
 	d, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
 			TaskID:    t.ID,
+			ProjectID: t.ProjectID,
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
@@ -125,6 +126,7 @@ func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result [
 	d, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
 			TaskID:    t.ID,
+			ProjectID: t.ProjectID,
 			State:     state,
 			Result:    result,
 			Signature: signature,

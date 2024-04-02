@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/cmd/coordinator/api"
@@ -21,45 +20,35 @@ import (
 func main() {
 	conf, err := config.Get()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Wrap(err, "failed to get config"))
 	}
 	conf.Print()
 	slog.Info("coordinator config loaded")
 
 	persistence, err := persistence.NewPostgres(conf.DatabaseDSN)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Wrap(err, "failed to new postgres persistence"))
 	}
 
 	projectConfigManager, err := project.NewConfigManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Wrap(err, "failed to new project config manager"))
 	}
 
-	datasource, err := datasource.NewPostgres(conf.DatasourceDSN)
-	if err != nil {
-		log.Fatal(err)
+	if err := task.RunDispatcher(persistence, datasource.NewPostgres, projectConfigManager.Get, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.ChainEndpoint, conf.ProjectContractAddress, conf.IoTeXChainID); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}
 
-	nextTaskID, err := persistence.FetchNextTaskID()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	dispatcher, err := task.NewDispatcher(persistence, projectConfigManager, datasource, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
-	}
-	go dispatcher.Dispatch(nextTaskID, sequencerPubKey)
+	// TODO verify sig
+	// sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	// if err != nil {
+	// 	log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
+	// }
+	//go dispatcher.Dispatch(nextTaskID, sequencerPubKey)
 
 	go func() {
 		if err := api.NewHttpServer(persistence, conf).Run(conf.ServiceEndpoint); err != nil {
-			log.Fatal(err)
+			log.Fatal(errors.Wrap(err, "failed to run http server"))
 		}
 	}()
 

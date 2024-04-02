@@ -15,6 +15,7 @@ type window struct {
 	tasks   []*dispatcherTask
 	publish Publish
 	handler *handler.TaskStateHandler
+	upsert  UpsertProcessedTask
 }
 
 func (w *window) consume(s *types.TaskStateLog) {
@@ -59,8 +60,11 @@ func (w *window) enQueue(value *dispatcherTask) {
 
 func (w *window) deQueue() {
 	for !w.isEmpty() {
-		if w.tasks[w.front].finished.Load() {
+		if t := w.tasks[w.front]; t.finished.Load() {
 			w.front = (w.front + 1) % len(w.tasks)
+			if err := w.upsert(t.task.ProjectID, t.task.ID); err != nil {
+				slog.Error("failed to upsert processed task", "project_id", t.task.ProjectID, "task_id", t.task.ID)
+			}
 		} else {
 			return
 		}
@@ -75,11 +79,12 @@ func (w *window) isFull() bool {
 	return (w.rear+1)%len(w.tasks) == w.front
 }
 
-func newWindow(size uint, publish Publish, handler *handler.TaskStateHandler) *window {
+func newWindow(size uint, publish Publish, handler *handler.TaskStateHandler, upsert UpsertProcessedTask) *window {
 	return &window{
 		cond:    sync.NewCond(&sync.Mutex{}),
 		tasks:   make([]*dispatcherTask, size+1),
 		publish: publish,
 		handler: handler,
+		upsert:  upsert,
 	}
 }

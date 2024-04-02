@@ -4,10 +4,17 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 
 	"github.com/machinefi/sprout/types"
 )
+
+type projectProcessedTask struct {
+	gorm.Model
+	TaskID    uint64 `gorm:"not null"`
+	ProjectID uint64 `gorm:"uniqueIndex:project_id,not null"`
+}
 
 type taskStateLog struct {
 	gorm.Model
@@ -23,7 +30,32 @@ type Postgres struct {
 	db *gorm.DB
 }
 
-func (p *Postgres) Create(t *types.Task, tl *types.TaskStateLog) error {
+func (p *Postgres) FetchProjectProcessedTaskID(projectID uint64) (uint64, error) {
+	t := projectProcessedTask{}
+	if err := p.db.Where("project_id = ?", projectID).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return 0, nil
+		}
+		return 0, errors.Wrapf(err, "failed to query project processed task_id, project_id %v", projectID)
+	}
+	return t.TaskID, nil
+}
+
+func (p *Postgres) UpsertProjectProcessedTask(projectID, taskID uint64) error {
+	t := projectProcessedTask{
+		ProjectID: projectID,
+		TaskID:    taskID,
+	}
+	if err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "project_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"task_id"}),
+	}).Create(&t).Error; err != nil {
+		return errors.Wrapf(err, "failed to upsert project processed task, project_id %v, task_id %v", projectID, taskID)
+	}
+	return nil
+}
+
+func (p *Postgres) Create(tl *types.TaskStateLog, t *types.Task) error {
 	l := &taskStateLog{
 		TaskID:         tl.TaskID,
 		ProjectID:      t.ProjectID,
@@ -59,18 +91,6 @@ func (p *Postgres) Fetch(taskID, projectID uint64) ([]*types.TaskStateLog, error
 	return tls, nil
 }
 
-func (p *Postgres) FetchNextTaskID() (uint64, error) {
-	max := uint64(0)
-
-	if err := p.db.Model(&taskStateLog{}).Select("CASE WHEN MAX(task_id) IS NULL THEN 0 ELSE MAX(task_id) END").Take(&max).Error; err != nil {
-		return 0, errors.Wrap(err, "failed to query max task id")
-	}
-	if max != 0 {
-		max++
-	}
-	return max, nil
-}
-
 func NewPostgres(pgEndpoint string) (*Postgres, error) {
 	db, err := gorm.Open(postgres.Open(pgEndpoint), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -78,7 +98,7 @@ func NewPostgres(pgEndpoint string) (*Postgres, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&taskStateLog{}); err != nil {
+	if err := db.AutoMigrate(&taskStateLog{}, &projectProcessedTask{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &Postgres{db}, nil

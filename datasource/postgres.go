@@ -24,18 +24,19 @@ type message struct {
 
 type task struct {
 	gorm.Model
+	ProjectID      uint64         `gorm:"index:task_fetch,not null"`
 	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
 	MessageIDs     datatypes.JSON `gorm:"not null"`
-	Signature      string
+	Signature      string         `gorm:"not null,default:''"`
 }
 
 type postgres struct {
 	db *gorm.DB
 }
 
-func (p *postgres) Retrieve(nextTaskID uint64) (*types.Task, error) {
+func (p *postgres) Retrieve(projectID, nextTaskID uint64) (*types.Task, error) {
 	t := task{}
-	if err := p.db.Where("id >= ?", nextTaskID).First(&t).Error; err != nil {
+	if err := p.db.Where("id >= ? AND project_id = ?", nextTaskID, projectID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}

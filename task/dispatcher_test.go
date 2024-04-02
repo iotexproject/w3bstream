@@ -2,7 +2,6 @@ package task
 
 import (
 	"testing"
-	"time"
 
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/pkg/errors"
@@ -48,7 +47,7 @@ func TestNewDispatcher(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
-		_, err := NewDispatcher(nil, nil, nil, "", "", "", 0)
+		err := RunDispatcher(nil, nil, nil, "", "", "", "", "", 0)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -57,7 +56,7 @@ func TestNewDispatcher(t *testing.T) {
 		defer p.Reset()
 		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 
-		_, err := NewDispatcher(nil, nil, nil, "", "", "", 0)
+		err := RunDispatcher(nil, nil, nil, "", "", "", "", "", 0)
 		r.NoError(err)
 	})
 }
@@ -297,36 +296,3 @@ func TestNewDispatcher(t *testing.T) {
 // 		r.Equal(uint64(1)+1, taskId)
 // 	})
 // }
-
-func TestDispatcher_Dispatch(t *testing.T) {
-	p := NewPatches()
-	defer p.Reset()
-
-	d := &Dispatcher{}
-
-	t.Run("FailedToDispatchTask", func(t *testing.T) {
-		ch := make(chan time.Time, 1)
-		ticker := &time.Timer{C: ch}
-		go func() { ch <- time.Now() }()
-		p = p.ApplyFuncReturn(time.NewTimer, ticker)
-		p = p.ApplyPrivateMethod(d, "dispatchTask", func(nextTaskID uint64) (uint64, error) {
-			return 0, errors.New(t.Name())
-		})
-		go d.Dispatch(uint64(0x1), []byte("any"))
-		time.Sleep(1 * time.Second)
-		close(ch)
-	})
-
-	t.Run("DispatchTaskSuccess", func(t *testing.T) {
-		ch := make(chan time.Time, 1)
-		ticker := &time.Timer{C: ch}
-		go func() { ch <- time.Now() }()
-		p = p.ApplyFuncReturn(time.NewTimer, ticker)
-		p = p.ApplyPrivateMethod(d, "dispatchTask", func(nextTaskID uint64) (uint64, error) {
-			return 0, nil
-		})
-		go d.Dispatch(uint64(0x1), []byte("any"))
-		time.Sleep(1 * time.Second)
-		close(ch)
-	})
-}

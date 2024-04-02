@@ -9,7 +9,7 @@ import (
 	"github.com/machinefi/sprout/types"
 )
 
-type SaveTaskStateLog func(s *types.TaskStateLog) error
+type SaveTaskStateLog func(s *types.TaskStateLog, t *types.Task) error
 
 type GetProjectConfig func(projectID uint64, version string) (*project.Config, error)
 
@@ -21,7 +21,8 @@ type TaskStateHandler struct {
 }
 
 func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finished bool) {
-	if err := h.saveTaskStateLog(s); err != nil {
+	// TODO Verify TaskStateLog Signature
+	if err := h.saveTaskStateLog(s, t); err != nil {
 		slog.Error("failed to create task state log", "error", err, "task_id", s.TaskID)
 		return
 	}
@@ -46,7 +47,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
-		}); err != nil {
+		}, t); err != nil {
 			slog.Error("failed to create failed task state", "error", err, "task_id", s.TaskID)
 			return
 		}
@@ -61,7 +62,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
-		}); err != nil {
+		}, t); err != nil {
 			slog.Error("failed to create failed task state", "error", err, "task_id", s.TaskID)
 			return
 		}
@@ -74,7 +75,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 		Comment:   "output type: " + string(p.Output.Type),
 		Result:    []byte(outRes),
 		CreatedAt: time.Now(),
-	}); err != nil {
+	}, t); err != nil {
 		slog.Error("failed to create outputted task state", "error", err, "task_id", s.TaskID)
 		return
 	}

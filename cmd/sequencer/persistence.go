@@ -29,9 +29,10 @@ type message struct {
 
 type task struct {
 	gorm.Model
+	ProjectID      uint64         `gorm:"index:task_fetch,not null"`
 	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
 	MessageIDs     datatypes.JSON `gorm:"not null"`
-	Signature      string
+	Signature      string         `gorm:"not null,default:''"`
 }
 
 func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientID string, messages ...[]byte) (string, error) {
@@ -93,6 +94,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *e
 
 	t := &task{
 		InternalTaskID: taskID,
+		ProjectID:      m.ProjectID,
 		MessageIDs:     messageIDsJson,
 	}
 
