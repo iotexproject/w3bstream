@@ -4,10 +4,11 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
 )
 
 type ProjectDispatcher struct {
