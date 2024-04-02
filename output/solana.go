@@ -9,8 +9,9 @@ import (
 	solcommon "github.com/blocto/solana-go-sdk/common"
 	soltypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
+
+	"github.com/machinefi/sprout/types"
 )
 
 type solanaProgram struct {
