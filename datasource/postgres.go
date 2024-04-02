@@ -15,7 +15,7 @@ import (
 type message struct {
 	gorm.Model
 	MessageID      string `gorm:"index:message_id,not null"`
-	ClientDID      string `gorm:"column:client_did;index:message_fetch,not null,default:''"`
+	ClientID       string `gorm:"index:message_fetch,not null,default:''"`
 	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
 	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
 	Data           []byte `gorm:"size:4096"`
@@ -65,7 +65,7 @@ func (p *postgres) Retrieve(nextTaskID uint64) (*types.Task, error) {
 		ProjectID:      ms[0].ProjectID,
 		ProjectVersion: ms[0].ProjectVersion,
 		Data:           ds,
-		ClientDID:      ms[0].ClientDID,
+		ClientID:       ms[0].ClientID,
 		Signature:      t.Signature,
 	}, nil
 }

@@ -15,6 +15,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/tablelandnetwork/basin-cli/pkg/signing"
 	"github.com/tidwall/gjson"
@@ -25,7 +26,7 @@ type textileDB struct {
 	secretKey *ecdsa.PrivateKey
 }
 
-func (t *textileDB) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
+func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to textileDB", "chain endpoint", t.endpoint)
 	encodedData, err := t.packData(proof)
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 )
@@ -33,7 +34,7 @@ type ethereumContract struct {
 	contractMethod  abi.Method
 }
 
-func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []byte) (string, error) {
+func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to ethereum contract", "chain endpoint", e.chainEndpoint)
 
 	params := []interface{}{}
@@ -43,7 +44,7 @@ func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []b
 			params = append(params, proof)
 
 		case "projectId", "_projectId":
-			i := new(big.Int).SetUint64(projectID)
+			i := new(big.Int).SetUint64(task.ProjectID)
 			params = append(params, i)
 
 		case "receiver", "_receiver":
@@ -87,7 +88,7 @@ func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []b
 			params = append(params, packed)
 
 		default:
-			value := gjson.GetBytes(taskData[0], a.Name)
+			value := gjson.GetBytes(task.Data[0], a.Name)
 			param := value.String()
 			if param == "" {
 				return "", errors.Errorf("miss param %s for contract abi", a.Name)
