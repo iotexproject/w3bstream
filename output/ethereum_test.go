@@ -238,7 +238,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 					txHash, err := o.Output(&types.Task{
 						ProjectID: 1,
-						Data:      [][]byte{[]byte(`{"other":""}`)},
+						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
 					r.Equal(txHash, txHashRet)
 					r.NoError(err)
@@ -252,7 +252,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 					txHash, err := o.Output(&types.Task{
 						ProjectID: 1,
-						Data:      [][]byte{[]byte(`{"other":""}`)},
+						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
 					r.Equal(txHash, txHashRet)
 					r.NoError(err)
@@ -266,7 +266,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 					txHash, err := o.Output(&types.Task{
 						ProjectID: 1,
-						Data:      [][]byte{[]byte(`{"other":""}`)},
+						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
 					r.NoError(err)
 					r.Equal(txHash, txHashRet)
