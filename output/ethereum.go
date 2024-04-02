@@ -2,7 +2,6 @@ package output
 
 import (
 	"context"
-	"encoding/hex"
 	"log/slog"
 	"math/big"
 	"strings"
@@ -53,10 +52,6 @@ func (e *ethereumContract) Output(projectID uint64, taskData [][]byte, proof []b
 			params = append(params, common.HexToAddress(e.receiverAddress))
 
 		case "data_snark", "_data_snark":
-			proof, err := hex.DecodeString(string(proof))
-			if err != nil {
-				return "", errors.Wrap(err, "failed to decode proof by hex format")
-			}
 			valueSeal := gjson.GetBytes(proof, "Snark.snark").String()
 			if valueSeal == "" {
 				return "", errSnarkProofDataMissingFieldSnark
