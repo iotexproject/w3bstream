@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"strconv"
 
@@ -65,7 +66,12 @@ func (p *subscriber) run(ctx context.Context) {
 			if m.ReceivedFrom == p.selfID {
 				continue
 			}
-			p.handle(m.Message.Data, p.topic)
+			d := Data{}
+			if err := json.Unmarshal(m.Message.Data, &d); err != nil {
+				slog.Error("failed to unmarshal p2p data", "error", err)
+				continue
+			}
+			p.handle(&d, p.topic)
 		}
 	}
 }

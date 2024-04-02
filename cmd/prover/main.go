@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/x509"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -50,12 +49,11 @@ func main() {
 
 	sk, err := crypto.HexToECDSA(conf.ProverPrivateKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed parse prover private key"))
+		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}
 	pubKeyBytes, err := x509.MarshalPKIXPublicKey(sk.PublicKey)
 	if err != nil {
-		fmt.Println("Error marshaling public key:", err)
-		return
+		log.Fatal(errors.Wrap(err, "failed to marshal public key"))
 	}
 	pubKeyHex := hex.EncodeToString(pubKeyBytes)
 

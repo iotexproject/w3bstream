@@ -15,6 +15,8 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/utils/distance"
 	"github.com/machinefi/sprout/vm"
 )
@@ -36,16 +38,10 @@ func (r *Processor) HandleProjectProvers(projectID uint64, provers []string) {
 	r.projectProvers.Store(projectID, provers)
 }
 
-func (r *Processor) HandleP2PData(data []byte, topic *pubsub.Topic) {
-	d := p2pData{}
-	if err := json.Unmarshal(data, &d); err != nil {
-		slog.Error("failed to unmarshal p2p data", "error", err)
-		return
-	}
+func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	if d.Task == nil {
 		return
 	}
-
 	t := d.Task
 
 	p, err := r.projectConfigManager.Get(t.ProjectID, t.ProjectVersion)
@@ -68,31 +64,31 @@ func (r *Processor) HandleP2PData(data []byte, topic *pubsub.Topic) {
 		}
 	}
 
-	if err := t.verify(r.sequencerPubKey); err != nil {
+	if err := t.VerifySignature(r.sequencerPubKey); err != nil {
 		slog.Error("failed to verify task sign", "error", err)
 		return
 	}
 
 	slog.Debug("get a new task", "task_id", t.ID)
-	r.reportSuccess(t, TaskStateDispatched, nil, "", topic)
+	r.reportSuccess(t, types.TaskStateDispatched, nil, "", topic)
 
-	res, err := r.vmHandler.Handle(t.ID, t.ProjectID, t.ClientDID, t.Sign, p.VMType, p.Code, p.CodeExpParam, t.Data)
+	res, err := r.vmHandler.Handle(t.ID, t.ProjectID, t.ClientDID, t.Signature, p.VMType, p.Code, p.CodeExpParam, t.Data)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)
 		return
 	}
-	signProof, err := r.signProof(t, res)
+	signature, err := r.signProof(t, res)
 	if err != nil {
 		slog.Error("failed to sign proof", "error", err)
 		r.reportFail(t, err, topic)
 		return
 	}
 
-	r.reportSuccess(t, TaskStateProved, res, signProof, topic)
+	r.reportSuccess(t, types.TaskStateProved, res, signature, topic)
 }
 
-func (r *Processor) signProof(t *Task, res []byte) (string, error) {
+func (r *Processor) signProof(t *types.Task, res []byte) (string, error) {
 	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientDID)))
 	for _, v := range t.Data {
 		buf.Write(v)
@@ -107,11 +103,11 @@ func (r *Processor) signProof(t *Task, res []byte) (string, error) {
 	return hexutil.Encode(sig), nil
 }
 
-func (r *Processor) reportFail(t *Task, err error, topic *pubsub.Topic) {
-	d, err := json.Marshal(&p2pData{
-		TaskStateLog: &TaskStateLog{
-			Task:      *t,
-			State:     TaskStateFailed,
+func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
+	d, err := json.Marshal(&p2p.Data{
+		TaskStateLog: &types.TaskStateLog{
+			TaskID:    t.ID,
+			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		},
@@ -125,15 +121,15 @@ func (r *Processor) reportFail(t *Task, err error, topic *pubsub.Topic) {
 	}
 }
 
-func (r *Processor) reportSuccess(t *Task, state TaskState, result []byte, sign string, topic *pubsub.Topic) {
-	d, err := json.Marshal(&p2pData{
-		TaskStateLog: &TaskStateLog{
-			Task:       *t,
-			State:      state,
-			Result:     result,
-			SignResult: sign,
-			proverID:   r.proverID,
-			CreatedAt:  time.Now(),
+func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, signature string, topic *pubsub.Topic) {
+	d, err := json.Marshal(&p2p.Data{
+		TaskStateLog: &types.TaskStateLog{
+			TaskID:    t.ID,
+			State:     state,
+			Result:    result,
+			Signature: signature,
+			ProverID:  r.proverID,
+			CreatedAt: time.Now(),
 		},
 	})
 	if err != nil {

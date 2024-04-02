@@ -6,15 +6,15 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/machinefi/sprout/task"
+	"github.com/machinefi/sprout/types"
 )
 
 type taskStateLog struct {
 	gorm.Model
-	TaskID         uint64         `gorm:"index:state_fetch,not null"`
-	ProjectID      uint64         `gorm:"index:state_fetch,not null"`
-	ProjectVersion string         `gorm:"index:state_fetch,not null"`
-	State          task.TaskState `gorm:"not null"`
+	TaskID         uint64          `gorm:"index:state_fetch,not null"`
+	ProjectID      uint64          `gorm:"index:state_fetch,not null"`
+	ProjectVersion string          `gorm:"index:state_fetch,not null"`
+	State          types.TaskState `gorm:"not null"`
 	Comment        string
 	Result         []byte
 }
@@ -23,11 +23,11 @@ type Postgres struct {
 	db *gorm.DB
 }
 
-func (p *Postgres) Create(tl *task.TaskStateLog) error {
+func (p *Postgres) Create(t *types.Task, tl *types.TaskStateLog) error {
 	l := &taskStateLog{
-		TaskID:         tl.Task.ID,
-		ProjectID:      tl.Task.ProjectID,
-		ProjectVersion: tl.Task.ProjectVersion,
+		TaskID:         tl.TaskID,
+		ProjectID:      t.ProjectID,
+		ProjectVersion: t.ProjectVersion,
 		State:          tl.State,
 		Comment:        tl.Comment,
 		Result:         tl.Result,
@@ -41,15 +41,15 @@ func (p *Postgres) Create(tl *task.TaskStateLog) error {
 	return nil
 }
 
-func (p *Postgres) Fetch(taskID, projectID uint64) ([]*task.TaskStateLog, error) {
+func (p *Postgres) Fetch(taskID, projectID uint64) ([]*types.TaskStateLog, error) {
 	ls := []*taskStateLog{}
 	if err := p.db.Order("created_at").Where("task_id = ? AND project_id = ?", taskID, projectID).Find(&ls).Error; err != nil {
 		return nil, errors.Wrapf(err, "failed to query task state log, task_id %v, project_id %v", taskID, projectID)
 	}
-	tls := []*task.TaskStateLog{}
+	tls := []*types.TaskStateLog{}
 	for _, l := range ls {
-		tls = append(tls, &task.TaskStateLog{
-			Task:      task.Task{ID: taskID},
+		tls = append(tls, &types.TaskStateLog{
+			TaskID:    taskID,
 			State:     l.State,
 			Comment:   l.Comment,
 			Result:    l.Result,

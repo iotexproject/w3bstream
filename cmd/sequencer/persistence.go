@@ -31,7 +31,7 @@ type task struct {
 	gorm.Model
 	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
 	MessageIDs     datatypes.JSON `gorm:"not null"`
-	Sign           string
+	Signature      string
 }
 
 func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientDID string, messages ...[]byte) (string, error) {
@@ -109,7 +109,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *e
 		return errors.Wrap(err, "failed to sign task")
 	}
 
-	t.Sign = sig
+	t.Signature = sig
 	if err := tx.Model(t).Update("sign", sig).Where("id = ?", t.ID).Error; err != nil {
 		return errors.Wrap(err, "failed to update task sign")
 	}
