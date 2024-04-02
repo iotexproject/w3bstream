@@ -16,8 +16,72 @@ import (
 	"github.com/machinefi/sprout/vm"
 )
 
+var (
+	errEmptyConfigData    = errors.New("empty config data")
+	errInvalidProjectCode = errors.New("invalid project code")
+	errUnsupportedVMType  = errors.New("unsupported vm type")
+)
+
 type Config struct {
-	DatasourceURI   string            // TODO change this after contract code updated
+	Datasource     string        `json:"datasource"`
+	DefaultVersion string        `json:"defaultVersion"`
+	Versions       []*ConfigData `json:"versions"`
+	defaultData    *ConfigData
+	versions       map[string]*ConfigData
+}
+
+func (c *Config) Validate() error {
+	if len(c.Versions) == 0 {
+		return errEmptyConfigData
+	}
+
+	// remove invalid version data and set default
+	var firstVersionData *ConfigData
+	for i, v := range c.Versions {
+		if err := v.Validate(); err != nil {
+			c.Versions = append(c.Versions[:i], c.Versions[i+1:]...)
+			continue
+		}
+		if c.versions == nil {
+			c.versions = make(map[string]*ConfigData)
+		}
+		if _, ok := c.versions[v.Version]; ok {
+			continue // to avoid overwrite exist version data
+		}
+		c.versions[v.Version] = v
+		if firstVersionData == nil {
+			firstVersionData = v
+		}
+	}
+
+	// ensure contains at least one valid version data
+	if firstVersionData == nil {
+		return errEmptyConfigData
+	}
+
+	c.defaultData = c.versions[c.DefaultVersion]
+	if c.defaultData == nil {
+		c.defaultData = firstVersionData
+	}
+
+	// inherit default values
+	if c.defaultData.DatasourceURI == "" {
+		c.defaultData.DatasourceURI = c.Datasource
+	}
+
+	return nil
+}
+
+func (c *Config) DefaultConfigData() *ConfigData {
+	return c.defaultData
+}
+
+func (c *Config) GetConfigDataByVersion(version string) *ConfigData {
+	return c.versions[version]
+}
+
+type ConfigData struct {
+	DatasourceURI   string            `json:"datasourceURI"`
 	VMType          vm.Type           `json:"vmType"`
 	Output          output.Config     `json:"output"`
 	Aggregation     AggregationConfig `json:"aggregation"`
@@ -25,6 +89,18 @@ type Config struct {
 	Version         string            `json:"version"`
 	CodeExpParam    string            `json:"codeExpParam,omitempty"`
 	Code            string            `json:"code"`
+}
+
+func (d *ConfigData) Validate() error {
+	if len(d.Code) == 0 {
+		return errInvalidProjectCode
+	}
+	switch d.VMType {
+	default:
+		return errUnsupportedVMType
+	case vm.Halo2, vm.Wasm, vm.Risc0, vm.ZKwasm:
+		return nil
+	}
 }
 
 type AggregationConfig struct {
@@ -93,18 +169,13 @@ func (m *ProjectMeta) GetConfigData(ipfsEndpoint string) ([]byte, error) {
 	return data, nil
 }
 
-func convertConfigs(data []byte) ([]*Config, error) {
-	cs := []*Config{}
-	if err := json.Unmarshal(data, &cs); err != nil {
+func convertConfigs(data []byte) (*Config, error) {
+	c := &Config{}
+	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal project config")
 	}
-	if len(cs) == 0 {
-		return nil, errors.Errorf("empty project config")
+	if err := c.Validate(); err != nil {
+		return nil, err
 	}
-	for _, c := range cs {
-		if c.Code == "" || c.VMType == "" || c.Version == "" {
-			return nil, errors.Errorf("invalid project config")
-		}
-	}
-	return cs, nil
+	return c, nil
 }
