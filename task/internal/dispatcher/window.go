@@ -4,19 +4,17 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
 )
 
 type window struct {
-	cond                      *sync.Cond
-	front                     int
-	rear                      int
-	tasks                     []*dispatcherTask
-	persistence               Persistence
-	projectConfigManager      ProjectConfigManager
-	publisher                 Publisher
-	operatorPrivateKeyECDSA   string
-	operatorPrivateKeyED25519 string
+	cond    *sync.Cond
+	front   int
+	rear    int
+	tasks   []*dispatcherTask
+	publish Publish
+	handler *handler.TaskStateHandler
 }
 
 func (w *window) consume(s *types.TaskStateLog) {
@@ -39,7 +37,7 @@ func (w *window) produce(t *types.Task) {
 		w.cond.Wait()
 	}
 
-	dt := newDispatcherTask(t, w.persistence, w.projectConfigManager, w.publisher, w.operatorPrivateKeyECDSA, w.operatorPrivateKeyED25519)
+	dt := newDispatcherTask(t, w.publish, w.handler)
 	w.enQueue(dt)
 
 	w.cond.L.Unlock()
@@ -77,14 +75,11 @@ func (w *window) isFull() bool {
 	return (w.rear+1)%len(w.tasks) == w.front
 }
 
-func newWindow(size uint, persistence Persistence, projectConfigManager ProjectConfigManager, publisher Publisher, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *window {
+func newWindow(size uint, publish Publish, handler *handler.TaskStateHandler) *window {
 	return &window{
-		cond:                      sync.NewCond(&sync.Mutex{}),
-		tasks:                     make([]*dispatcherTask, size+1),
-		persistence:               persistence,
-		projectConfigManager:      projectConfigManager,
-		publisher:                 publisher,
-		operatorPrivateKeyECDSA:   operatorPrivateKeyECDSA,
-		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
+		cond:    sync.NewCond(&sync.Mutex{}),
+		tasks:   make([]*dispatcherTask, size+1),
+		publish: publish,
+		handler: handler,
 	}
 }
