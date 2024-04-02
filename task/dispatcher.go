@@ -29,7 +29,7 @@ type Datasource interface {
 }
 
 type ProjectConfigManager interface {
-	Get(projectID uint64, version string) (*project.Config, error)
+	Get(projectID uint64, version string) (*project.ConfigData, error)
 }
 
 type dispatcher struct {

@@ -11,7 +11,7 @@ import (
 
 type SaveTaskStateLog func(s *types.TaskStateLog, t *types.Task) error
 
-type GetProjectConfig func(projectID uint64, version string) (*project.Config, error)
+type GetProjectConfig func(projectID uint64, version string) (*project.ConfigData, error)
 
 type TaskStateHandler struct {
 	saveTaskStateLog          SaveTaskStateLog

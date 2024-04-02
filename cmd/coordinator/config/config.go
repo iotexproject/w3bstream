@@ -10,6 +10,7 @@ import (
 type Config struct {
 	ServiceEndpoint           string `env:"HTTP_SERVICE_ENDPOINT"`
 	ChainEndpoint             string `env:"CHAIN_ENDPOINT"`
+	ChainEndpointWS           string `env:"CHAIN_ENDPOINT_WS"`
 	DatabaseDSN               string `env:"DATABASE_DSN"`
 	DatasourceDSN             string `env:"DATASOURCE_DSN"`
 	BootNodeMultiAddr         string `env:"BOOTNODE_MULTIADDR"`
@@ -31,6 +32,7 @@ var (
 	defaultConfig = &Config{
 		ServiceEndpoint:        ":9001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
+		ChainEndpointWS:        "wss://babel-api.testnet.iotex.io/ws",
 		DatabaseDSN:            "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		DatasourceDSN:          "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
@@ -45,6 +47,7 @@ var (
 	defaultDebugConfig = &Config{
 		ServiceEndpoint:        ":9001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
+		ChainEndpointWS:        "wss://babel-api.testnet.iotex.io/ws",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
 		DatasourceDSN:          "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
@@ -60,6 +63,7 @@ var (
 	defaultTestConfig = &Config{
 		ServiceEndpoint:        ":19001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
+		ChainEndpointWS:        "wss://babel-api.testnet.iotex.io/ws",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		DatasourceDSN:          "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",

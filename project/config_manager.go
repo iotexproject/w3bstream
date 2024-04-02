@@ -15,31 +15,37 @@ import (
 type ConfigManager struct {
 	ipfsEndpoint string
 	instance     *contracts.Contracts
-	configs      sync.Map // projectID(uint64) -> []*Config
+	configs      sync.Map // projectID(uint64) -> *Config
 	cache        *cache   // optional
 }
 
-func (m *ConfigManager) Get(projectID uint64, version string) (*Config, error) {
-	var configs []*Config
-	var err error
-	configsValue, ok := m.configs.Load(projectID)
+// TODO update interfaces
+// task/dispatcher.go: ProjectConfigManager
+// task/internal/dispatcher.go: ProjectConfigManager
+
+// Get returns the assigned version config data or default config data
+func (m *ConfigManager) Get(projectID uint64, version string) (*ConfigData, error) {
+	var (
+		d   *ConfigData
+		err error
+	)
+
+	c, ok := m.configs.Load(projectID)
 	if !ok {
-		configs, err = m.load(projectID)
+		c, err = m.load(projectID)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		configs = configsValue.([]*Config)
 	}
-	for _, c := range configs {
-		if c.Version == version {
-			return c, nil
-		}
+
+	d = c.(*Config).GetConfigDataByVersion(version)
+	if d == nil {
+		d = c.(*Config).DefaultConfigData()
 	}
-	return nil, errors.Errorf("the version of the project config not exist, project_id %v, version %v", projectID, version)
+	return d, nil
 }
 
-func (m *ConfigManager) load(projectID uint64) ([]*Config, error) {
+func (m *ConfigManager) load(projectID uint64) (*Config, error) {
 	emptyHash := [32]byte{}
 	mp, err := m.instance.Projects(nil, projectID)
 	if err != nil {
