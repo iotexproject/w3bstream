@@ -42,11 +42,11 @@ func (i *Instance) Execute(ctx context.Context, task *types.Task) ([]byte, error
 		ds = append(ds, string(d))
 	}
 	req := &proto.ExecuteRequest{
-		ProjectID:     task.ProjectID,
-		TaskID:        task.ID,
-		ClientID:      task.ClientID,
-		SequencerSign: task.Signature,
-		Datas:         ds,
+		ProjectID:          task.ProjectID,
+		TaskID:             task.ID,
+		ClientID:           task.ClientID,
+		SequencerSignature: task.Signature,
+		Datas:              ds,
 	}
 	cli := proto.NewVmRuntimeClient(i.conn)
 	resp, err := cli.ExecuteOperator(ctx, req)
