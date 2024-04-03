@@ -99,3 +99,19 @@ func NewPoints(values ...any) Points {
 }
 
 type Points []*Point
+
+func (ps Points) Values() []any {
+	values := make([]any, 0, len(ps))
+	for _, p := range ps {
+		values = append(values, p.value)
+	}
+	return values
+}
+
+func (ps Points) Distances(point *Point) []*big.Int {
+	distances := make([]*big.Int, 0, len(ps))
+	for _, p := range ps {
+		distances = append(distances, p.Distance(point))
+	}
+	return distances
+}
