@@ -62,8 +62,8 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 func TestProcessor_HandleP2PData(t *testing.T) {
 	r := require.New(t)
 	processor := &Processor{
-		vmHandler:            &vm.Handler{},
-		projectConfigManager: &project.ConfigManager{},
+		vmHandler:      &vm.Handler{},
+		projectManager: &project.Manager{},
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {
@@ -93,18 +93,19 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		processor.HandleP2PData(data, nil)
 	})
 
-	conf := &project.Config{
-		Versions: []*project.ConfigData{{
+	conf := &project.Project{
+		DefaultVersion: "0.1",
+		Versions: []*project.Config{{
 			Code:         "code",
 			CodeExpParam: "codeExpParam",
 			VMType:       vm.Risc0,
 			Output:       output.Config{},
-			Aggregation:  project.AggregationConfig{},
-			Version:      "",
+			Version:      "0.1",
 		}},
 	}
 	r.NoError(conf.Validate())
-	confdata := conf.DefaultConfigData()
+	confdata, err := conf.GetDefaultConfig()
+	r.NoError(err)
 
 	t.Run("ProofFailed", func(t *testing.T) {
 		p := NewPatches()

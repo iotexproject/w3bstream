@@ -17,85 +17,66 @@ import (
 )
 
 var (
-	errEmptyConfigData    = errors.New("empty config data")
-	errInvalidProjectCode = errors.New("invalid project code")
-	errUnsupportedVMType  = errors.New("unsupported vm type")
+	errEmptyConfig       = errors.New("config is empty")
+	errEmptyCode         = errors.New("code is empty")
+	errUnsupportedVMType = errors.New("unsupported vm type")
 )
 
-type Config struct {
-	Datasource     string        `json:"datasource"`
-	DefaultVersion string        `json:"defaultVersion"`
-	Versions       []*ConfigData `json:"versions"`
-	defaultData    *ConfigData
-	versions       map[string]*ConfigData
+type Project struct {
+	DatasourceURI  string    `json:"datasourceURI"`
+	DefaultVersion string    `json:"defaultVersion"`
+	Versions       []*Config `json:"versions"`
 }
 
-func (c *Config) Validate() error {
-	if len(c.Versions) == 0 {
-		return errEmptyConfigData
-	}
+type Meta struct {
+	ProjectID uint64
+	Uri       string
+	Hash      [32]byte
+}
 
-	// remove invalid version data and set default
-	var firstVersionData *ConfigData
-	for i, v := range c.Versions {
-		if err := v.Validate(); err != nil {
-			c.Versions = append(c.Versions[:i], c.Versions[i+1:]...)
-			continue
+type Attribute struct {
+	Paused                bool
+	RequestedProverAmount uint64
+}
+
+type Config struct {
+	Version      string        `json:"version"`
+	VMType       vm.Type       `json:"vmType"`
+	Output       output.Config `json:"output"`
+	CodeExpParam string        `json:"codeExpParam,omitempty"`
+	Code         string        `json:"code"`
+}
+
+func (p *Project) GetConfig(version string) (*Config, error) {
+	for _, c := range p.Versions {
+		if c.Version == version {
+			return c, nil
 		}
-		if c.versions == nil {
-			c.versions = make(map[string]*ConfigData)
+	}
+	return nil, errors.New("project config not exist")
+}
+
+func (p *Project) GetDefaultConfig() (*Config, error) {
+	return p.GetConfig(p.DefaultVersion)
+}
+
+func (p *Project) Validate() error {
+	if len(p.Versions) == 0 {
+		return errEmptyConfig
+	}
+	for _, c := range p.Versions {
+		if err := c.Validate(); err != nil {
+			return err
 		}
-		if _, ok := c.versions[v.Version]; ok {
-			continue // to avoid overwrite exist version data
-		}
-		c.versions[v.Version] = v
-		if firstVersionData == nil {
-			firstVersionData = v
-		}
 	}
-
-	// ensure contains at least one valid version data
-	if firstVersionData == nil {
-		return errEmptyConfigData
-	}
-
-	c.defaultData = c.versions[c.DefaultVersion]
-	if c.defaultData == nil {
-		c.defaultData = firstVersionData
-	}
-
-	// inherit default values
-	if c.defaultData.DatasourceURI == "" {
-		c.defaultData.DatasourceURI = c.Datasource
-	}
-
 	return nil
 }
 
-func (c *Config) DefaultConfigData() *ConfigData {
-	return c.defaultData
-}
-
-func (c *Config) GetConfigDataByVersion(version string) *ConfigData {
-	return c.versions[version]
-}
-
-type ConfigData struct {
-	DatasourceURI   string            `json:"datasourceURI"`
-	VMType          vm.Type           `json:"vmType"`
-	Output          output.Config     `json:"output"`
-	Aggregation     AggregationConfig `json:"aggregation"`
-	ResourceRequest ResourceRequest   `json:"resourceRequest"`
-	Version         string            `json:"version"`
-	CodeExpParam    string            `json:"codeExpParam,omitempty"`
-	Code            string            `json:"code"`
-}
-
-func (d *ConfigData) Validate() error {
-	if len(d.Code) == 0 {
-		return errInvalidProjectCode
+func (c *Config) Validate() error {
+	if len(c.Code) == 0 {
+		return errEmptyCode
 	}
-	switch d.VMType {
+	switch c.VMType {
 	default:
 		return errUnsupportedVMType
 	case vm.Halo2, vm.Wasm, vm.Risc0, vm.ZKwasm:
@@ -103,28 +84,7 @@ func (d *ConfigData) Validate() error {
 	}
 }
 
-type AggregationConfig struct {
-	Amount uint `json:"amount,omitempty"`
-}
-
-type ResourceRequest struct {
-	ProverAmount uint `json:"proverAmount,omitempty"`
-}
-
-type Project struct {
-	Config  *Config
-	Provers []string
-}
-
-type ProjectMeta struct {
-	ProjectID    uint64
-	Uri          string
-	Hash         [32]byte
-	Paused       bool
-	ProverAmount uint // TODO change this after contract code updated
-}
-
-func (m *ProjectMeta) GetConfigData(ipfsEndpoint string) ([]byte, error) {
+func (m *Meta) GetProjectRawData(ipfsEndpoint string) ([]byte, error) {
 	u, err := url.Parse(m.Uri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse project uri %s", m.Uri)
@@ -135,7 +95,7 @@ func (m *ProjectMeta) GetConfigData(ipfsEndpoint string) ([]byte, error) {
 	case "http", "https":
 		resp, _err := http.Get(m.Uri)
 		if _err != nil {
-			return nil, errors.Wrapf(_err, "failed to fetch project config, project_id %d, uri %s", m.ProjectID, m.Uri)
+			return nil, errors.Wrapf(_err, "failed to fetch project, uri %s", m.Uri)
 		}
 		defer resp.Body.Close()
 		// TODO network error should try again
@@ -155,27 +115,27 @@ func (m *ProjectMeta) GetConfigData(ipfsEndpoint string) ([]byte, error) {
 	}
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read project config, project_id %d, uri %s", m.ProjectID, m.Uri)
+		return nil, errors.Wrapf(err, "failed to read project, uri %s", m.Uri)
 	}
 
 	h := sha256.New()
 	if _, err := h.Write(data); err != nil {
-		return nil, errors.Wrap(err, "failed to generate project config hash")
+		return nil, errors.Wrap(err, "failed to generate project hash")
 	}
 	if !bytes.Equal(h.Sum(nil), m.Hash[:]) {
-		return nil, errors.New("failed to validate project config hash")
+		return nil, errors.New("failed to validate project hash")
 	}
 
 	return data, nil
 }
 
-func convertConfigs(data []byte) (*Config, error) {
-	c := &Config{}
-	if err := json.Unmarshal(data, &c); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal project config")
+func convertProject(projectRawData []byte) (*Project, error) {
+	p := &Project{}
+	if err := json.Unmarshal(projectRawData, &p); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal project")
 	}
-	if err := c.Validate(); err != nil {
+	if err := p.Validate(); err != nil {
 		return nil, err
 	}
-	return c, nil
+	return p, nil
 }

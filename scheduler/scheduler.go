@@ -30,19 +30,16 @@ func (s *scheduler) schedule() {
 		if !ok {
 			continue
 		}
-		meta := metaValue.(*project.ProjectMeta)
+		meta := metaValue.(*project.Meta)
 		provers := s.getAllProver()
 
-		amount := meta.ProverAmount
-		if amount == 0 {
-			amount = 1
-		}
-		if amount > uint(len(provers)) {
+		amount := uint64(1) // TODO fetch amount from project attr
+		if amount > uint64(len(provers)) {
 			slog.Error("no enough resource for the project", "require prover amount", amount, "current prover", len(provers), "project_id", meta.ProjectID)
 			continue
 		}
 
-		projectProvers := distance.GetMinNLocation(provers, meta.ProjectID, uint64(amount))
+		projectProvers := distance.GetMinNLocation(provers, meta.ProjectID, amount)
 
 		isMy := false
 		for _, p := range projectProvers {

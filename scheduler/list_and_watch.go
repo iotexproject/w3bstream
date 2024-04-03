@@ -100,7 +100,7 @@ func listAndFillProject(projectOffsets *sync.Map, epoch uint64, chainEndpoint, p
 		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
 			return nil
 		}
-		setProjectOffsets(projectOffsets, epoch, &project.ProjectMeta{
+		setProjectOffsets(projectOffsets, epoch, &project.Meta{
 			ProjectID: projectID,
 			Uri:       mp.Uri,
 			Hash:      mp.Hash,
@@ -125,7 +125,7 @@ func watchProject(projectOffsets *sync.Map, epoch uint64, chainEndpoint, project
 			case err := <-sub.Err():
 				slog.Error("got an error when watching project upserted event", "error", err)
 			case e := <-events:
-				setProjectOffsets(projectOffsets, epoch, &project.ProjectMeta{
+				setProjectOffsets(projectOffsets, epoch, &project.Meta{
 					ProjectID: e.ProjectId,
 					Uri:       e.Uri,
 					Hash:      e.Hash,
@@ -136,7 +136,7 @@ func watchProject(projectOffsets *sync.Map, epoch uint64, chainEndpoint, project
 	return nil
 }
 
-func setProjectOffsets(projectOffsets *sync.Map, epoch uint64, meta *project.ProjectMeta) {
+func setProjectOffsets(projectOffsets *sync.Map, epoch uint64, meta *project.Meta) {
 	projectIDHash := hash.Sum256Uint64(meta.ProjectID)
 	offset := new(big.Int).SetBytes(projectIDHash[:]).Uint64() % epoch
 	projectOffsets.Store(offset, meta)

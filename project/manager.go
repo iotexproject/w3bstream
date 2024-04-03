@@ -12,81 +12,66 @@ import (
 	"github.com/machinefi/sprout/project/contracts"
 )
 
-type ConfigManager struct {
+type Manager struct {
 	ipfsEndpoint string
 	instance     *contracts.Contracts
-	configs      sync.Map // projectID(uint64) -> *Config
+	projects     sync.Map // projectID(uint64) -> *Project
 	cache        *cache   // optional
 }
 
-// TODO update interfaces
-// task/dispatcher.go: ProjectConfigManager
-// task/internal/dispatcher.go: ProjectConfigManager
-
-// Get returns the assigned version config data or default config data
-func (m *ConfigManager) Get(projectID uint64, version string) (*ConfigData, error) {
-	var (
-		d   *ConfigData
-		err error
-	)
-
-	c, ok := m.configs.Load(projectID)
+func (m *Manager) Get(projectID uint64) (*Project, error) {
+	var err error
+	p, ok := m.projects.Load(projectID)
 	if !ok {
-		c, err = m.load(projectID)
+		p, err = m.load(projectID)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	d = c.(*Config).GetConfigDataByVersion(version)
-	if d == nil {
-		d = c.(*Config).DefaultConfigData()
-	}
-	return d, nil
+	return p.(*Project), nil
 }
 
-func (m *ConfigManager) load(projectID uint64) (*Config, error) {
+func (m *Manager) load(projectID uint64) (*Project, error) {
 	emptyHash := [32]byte{}
-	mp, err := m.instance.Projects(nil, projectID)
+	c, err := m.instance.Projects(nil, projectID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get project meta from chain, project_id %v", projectID)
 	}
-	if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
+	if c.Uri == "" || bytes.Equal(c.Hash[:], emptyHash[:]) {
 		return nil, errors.Errorf("the project not exist, project_id %v", projectID)
 	}
 
-	pm := &ProjectMeta{
+	pm := &Meta{
 		ProjectID: projectID,
-		Uri:       mp.Uri,
-		Hash:      mp.Hash,
-		Paused:    mp.Paused,
+		Uri:       c.Uri,
+		Hash:      c.Hash,
 	}
 
 	var data []byte
 	cached := true
 	if m.cache != nil {
-		data = m.cache.get(projectID, mp.Hash[:])
+		data = m.cache.get(projectID, c.Hash[:])
 	}
 	if len(data) == 0 {
 		cached = false
-		data, err = pm.GetConfigData(m.ipfsEndpoint)
+		data, err = pm.GetProjectRawData(m.ipfsEndpoint)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get project config, project_id %v", projectID)
+			return nil, errors.Wrapf(err, "failed to get project raw data, project_id %v", projectID)
 		}
 	}
 	if !cached && m.cache != nil {
 		m.cache.set(projectID, data)
 	}
 
-	cs, err := convertConfigs(data)
+	p, err := convertProject(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to convert project config, project_id %v", projectID)
+		return nil, errors.Wrapf(err, "failed to convert project, project_id %v", projectID)
 	}
-	m.configs.Store(projectID, cs)
-	return cs, nil
+	m.projects.Store(projectID, p)
+	return p, nil
 }
 
-func (m *ConfigManager) watchProjectContract() error {
+func (m *Manager) watchProjectContract() error {
 	events := make(chan *contracts.ContractsProjectUpserted, 10)
 	sub, err := m.instance.WatchProjectUpserted(nil, events, nil)
 	if err != nil {
@@ -98,7 +83,7 @@ func (m *ConfigManager) watchProjectContract() error {
 			case err := <-sub.Err():
 				slog.Error("got an error when watching project upserted event", "error", err)
 			case e := <-events:
-				m.configs.Delete(e.ProjectId)
+				m.projects.Delete(e.ProjectId)
 			}
 		}
 	}()
@@ -106,7 +91,7 @@ func (m *ConfigManager) watchProjectContract() error {
 }
 
 // TODO support local project config
-func NewConfigManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint string) (*ConfigManager, error) {
+func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint string) (*Manager, error) {
 	var c *cache
 	var err error
 	if projectCacheDir != "" {
@@ -125,7 +110,7 @@ func NewConfigManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpo
 		return nil, errors.Wrapf(err, "failed to new contract instance, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
 
-	m := &ConfigManager{
+	m := &Manager{
 		ipfsEndpoint: ipfsEndpoint,
 		instance:     instance,
 		cache:        c,

@@ -28,8 +28,8 @@ type Datasource interface {
 	Retrieve(projectID, nextTaskID uint64) (*types.Task, error)
 }
 
-type ProjectConfigManager interface {
-	Get(projectID uint64, version string) (*project.ConfigData, error)
+type ProjectManager interface {
+	Get(projectID uint64) (*project.Project, error)
 }
 
 type dispatcher struct {
@@ -50,7 +50,7 @@ func (d *dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	pd.(*internaldispatcher.ProjectDispatcher).Handle(s)
 }
 
-func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource, getProjectConfig handler.GetProjectConfig, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519, chainEndpoint, projectContractAddress string, iotexChainID int) error {
+func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource, getProject handler.GetProject, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519, chainEndpoint, projectContractAddress string, iotexChainID int) error {
 	projectDispatchers := &sync.Map{}
 	d := &dispatcher{projectDispatchers: projectDispatchers}
 
@@ -59,7 +59,7 @@ func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.New
 		return err
 	}
 
-	taskStateHandler := handler.NewTaskStateHandler(persistence.Create, getProjectConfig, operatorPrivateKey, operatorPrivateKeyED25519)
+	taskStateHandler := handler.NewTaskStateHandler(persistence.Create, getProject, operatorPrivateKey, operatorPrivateKeyED25519)
 
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
@@ -79,23 +79,22 @@ func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.New
 		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
 			break
 		}
-		pm := &project.ProjectMeta{
+		pm := &project.Meta{
 			ProjectID: projectID,
 			Uri:       mp.Uri,
 			Hash:      mp.Hash,
-			Paused:    mp.Paused,
 		}
 		// TODO support project update & watch project upsert
 		_, ok := projectDispatchers.Load(projectID)
 		if ok {
 			continue
 		}
-		conf, err := getProjectConfig(projectID, "")
+		p, err := getProject(projectID)
 		if err != nil {
-			return errors.Wrapf(err, "failed to get project config from chain, project_id %v", projectID)
+			return errors.Wrapf(err, "failed to get project, project_id %v", projectID)
 		}
 		ps.Add(projectID)
-		pd, err := internaldispatcher.NewProjectDispatcher(persistence.FetchProjectProcessedTaskID, persistence.UpsertProjectProcessedTask, conf.DatasourceURI, newDatasource, pm, ps.Publish, taskStateHandler)
+		pd, err := internaldispatcher.NewProjectDispatcher(persistence.FetchProjectProcessedTaskID, persistence.UpsertProjectProcessedTask, p.DatasourceURI, newDatasource, pm, ps.Publish, taskStateHandler)
 		if err != nil {
 			return errors.Wrapf(err, "failed to new project dispatcher, project_id %v", projectID)
 		}

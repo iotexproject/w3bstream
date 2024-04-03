@@ -79,7 +79,7 @@ func (w *window) isFull() bool {
 	return (w.rear+1)%len(w.tasks) == w.front
 }
 
-func newWindow(size uint, publish Publish, handler *handler.TaskStateHandler, upsert UpsertProcessedTask) *window {
+func newWindow(size uint64, publish Publish, handler *handler.TaskStateHandler, upsert UpsertProcessedTask) *window {
 	return &window{
 		cond:    sync.NewCond(&sync.Mutex{}),
 		tasks:   make([]*dispatcherTask, size+1),

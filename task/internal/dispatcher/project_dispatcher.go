@@ -65,7 +65,7 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	return t.ID + 1, nil
 }
 
-func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask, datasourceURI string, newDatasource NewDatasource, projectMeta *project.ProjectMeta, publish Publish, handler *handler.TaskStateHandler) (*ProjectDispatcher, error) {
+func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask, datasourceURI string, newDatasource NewDatasource, projectMeta *project.Meta, publish Publish, handler *handler.TaskStateHandler) (*ProjectDispatcher, error) {
 	nextTaskID, err := fetch(projectMeta.ProjectID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", projectMeta.ProjectID)
@@ -74,10 +74,11 @@ func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new task retriever")
 	}
-	windowSize := projectMeta.ProverAmount
-	if windowSize == 0 {
-		windowSize = 1
-	}
+	// TODO get prover amount from project attr
+	//windowSize := projectMeta.ProverAmount
+	//if windowSize == 0 {
+	windowSize := uint64(1)
+	//}
 	window := newWindow(windowSize, publish, handler, upsert)
 	d := &ProjectDispatcher{
 		window:       window,
