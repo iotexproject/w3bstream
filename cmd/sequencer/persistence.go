@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"encoding/binary"
 	"encoding/json"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -36,10 +36,21 @@ type task struct {
 }
 
 func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientID string, messages ...[]byte) (string, error) {
-	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, projectID, clientID)))
-	for _, v := range messages {
-		buf.Write(v)
+	buf := bytes.NewBuffer(nil)
+
+	if err := binary.Write(buf, binary.BigEndian, t.ID); err != nil {
+		return "", err
 	}
+	if err := binary.Write(buf, binary.BigEndian, projectID); err != nil {
+		return "", err
+	}
+	if _, err := buf.WriteString(clientID); err != nil {
+		return "", err
+	}
+	if _, err := buf.Write(crypto.Keccak256Hash(messages...).Bytes()); err != nil {
+		return "", err
+	}
+
 	h := crypto.Keccak256Hash(buf.Bytes())
 	sig, err := crypto.Sign(h.Bytes(), sk)
 	if err != nil {

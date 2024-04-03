@@ -15,10 +15,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/tablelandnetwork/basin-cli/pkg/signing"
 	"github.com/tidwall/gjson"
+
+	"github.com/machinefi/sprout/types"
 )
 
 type textileDB struct {

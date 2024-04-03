@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"time"
 
@@ -25,11 +26,22 @@ func (t *Task) VerifySignature(pubkey []byte) error {
 		return errors.Wrap(err, "failed to decode task signature")
 	}
 
-	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientID)))
-	for _, v := range t.Data {
-		data.Write(v)
+	buf := bytes.NewBuffer(nil)
+
+	if err = binary.Write(buf, binary.BigEndian, t.ID); err != nil {
+		return err
 	}
-	h := crypto.Keccak256Hash(data.Bytes())
+	if err = binary.Write(buf, binary.BigEndian, t.ProjectID); err != nil {
+		return err
+	}
+	if _, err = buf.WriteString(t.ClientID); err != nil {
+		return err
+	}
+	if _, err = buf.Write(crypto.Keccak256Hash(t.Data...).Bytes()); err != nil {
+		return err
+	}
+
+	h := crypto.Keccak256Hash(buf.Bytes())
 	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
 	if err != nil {
 		return errors.Wrap(err, "failed to recover public key")

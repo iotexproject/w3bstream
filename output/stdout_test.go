@@ -3,8 +3,9 @@ package output
 import (
 	"testing"
 
-	"github.com/machinefi/sprout/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/types"
 )
 
 func Test_stdout_Output(t *testing.T) {
