@@ -12,9 +12,10 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
+
+	"github.com/machinefi/sprout/types"
 )
 
 var (
