@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -89,11 +89,23 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 }
 
 func (r *Processor) signProof(t *types.Task, res []byte) (string, error) {
-	buf := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", t.ID, t.ProjectID, t.ClientID)))
-	for _, v := range t.Data {
-		buf.Write(v)
+	buf := bytes.NewBuffer(nil)
+
+	if err := binary.Write(buf, binary.BigEndian, t.ID); err != nil {
+		return "", err
 	}
-	buf.Write(res)
+	if err := binary.Write(buf, binary.BigEndian, t.ProjectID); err != nil {
+		return "", err
+	}
+	if _, err := buf.WriteString(t.ClientID); err != nil {
+		return "", err
+	}
+	if _, err := buf.Write(crypto.Keccak256Hash(t.Data...).Bytes()); err != nil {
+		return "", err
+	}
+	if _, err := buf.Write(res); err != nil {
+		return "", err
+	}
 
 	h := crypto.Keccak256Hash(buf.Bytes())
 	sig, err := crypto.Sign(h.Bytes(), r.proverPrivateKey)
