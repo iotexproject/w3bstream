@@ -49,7 +49,7 @@ pub fn prove(project_id: u64, task_id: u64, client_id: &str, sequencer_sign: &st
     };
     // TODO public info
     let c = constant * private_a.square() * private_b.square();
-    let instances = vec![vec![c]];
+    let instances = vec![vec![c, Fr::from(project_id), Fr::from(task_id)]];
 
     let proof = gen_proof(&params, &pk, circuit.clone(), &instances);
 
