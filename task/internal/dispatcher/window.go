@@ -38,7 +38,7 @@ func (w *window) produce(t *types.Task) {
 		w.cond.Wait()
 	}
 
-	dt := newDispatcherTask(t, w.publish, w.handler)
+	dt := newDispatcherTask(t, w.consume, w.publish, w.handler)
 	w.enQueue(dt)
 
 	w.cond.L.Unlock()

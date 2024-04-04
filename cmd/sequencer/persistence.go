@@ -38,7 +38,7 @@ type task struct {
 func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientID string, messages ...[]byte) (string, error) {
 	buf := bytes.NewBuffer(nil)
 
-	if err := binary.Write(buf, binary.BigEndian, t.ID); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, uint64(t.ID)); err != nil {
 		return "", err
 	}
 	if err := binary.Write(buf, binary.BigEndian, projectID); err != nil {
@@ -79,7 +79,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *e
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Order("created_at").
 		Where(
-			"project_id = ? AND project_version = ? AND client_did = ? AND internal_task_id = ?",
+			"project_id = ? AND project_version = ? AND client_id = ? AND internal_task_id = ?",
 			m.ProjectID, m.ProjectVersion, m.ClientID, "",
 		).Limit(amount).Find(&messages).Error; err != nil {
 		return errors.Wrap(err, "failed to fetch unpacked messages")
@@ -122,8 +122,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *e
 		return errors.Wrap(err, "failed to sign task")
 	}
 
-	t.Signature = sig
-	if err := tx.Model(t).Update("sign", sig).Where("id = ?", t.ID).Error; err != nil {
+	if err := tx.Model(t).Update("signature", sig).Where("id = ?", t.ID).Error; err != nil {
 		return errors.Wrap(err, "failed to update task sign")
 	}
 
