@@ -6,9 +6,10 @@ import (
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/blocto/solana-go-sdk/client"
 	soltypes "github.com/blocto/solana-go-sdk/types"
-	"github.com/machinefi/sprout/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/types"
 )
 
 func patchSolanaProgramSendTX(p *Patches, txhash string, err error) *Patches {

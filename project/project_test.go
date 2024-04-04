@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/utils/ipfs"
-	"github.com/machinefi/sprout/vm"
 )
 
 func TestProjectMeta_GetConfigs_init(t *testing.T) {
@@ -35,14 +34,8 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	cs := []*Config{
-		{
-			Code:    "i am code",
-			VMType:  vm.Halo2,
-			Version: "0.1",
-		},
-	}
-	jc, err := json.Marshal(cs)
+	c := Config{}
+	jc, err := json.Marshal(c)
 	r.NoError(err)
 
 	h := sha256.New()

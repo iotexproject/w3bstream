@@ -2,6 +2,7 @@ package p2p
 
 import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+
 	"github.com/machinefi/sprout/types"
 )
 

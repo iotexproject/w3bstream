@@ -7,6 +7,7 @@ import (
 	. "github.com/agiledragon/gomonkey/v2"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/p2p"
@@ -59,6 +60,7 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 }
 
 func TestProcessor_HandleP2PData(t *testing.T) {
+	r := require.New(t)
 	processor := &Processor{
 		vmHandler:            &vm.Handler{},
 		projectConfigManager: &project.ConfigManager{},
@@ -92,18 +94,22 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	})
 
 	conf := &project.Config{
-		Code:         "code",
-		CodeExpParam: "codeExpParam",
-		VMType:       "vmType",
-		Output:       output.Config{},
-		Aggregation:  project.AggregationConfig{},
-		Version:      "",
+		Versions: []*project.ConfigData{{
+			Code:         "code",
+			CodeExpParam: "codeExpParam",
+			VMType:       vm.Risc0,
+			Output:       output.Config{},
+			Aggregation:  project.AggregationConfig{},
+			Version:      "",
+		}},
 	}
+	r.NoError(conf.Validate())
+	confdata := conf.DefaultConfigData()
 
 	t.Run("ProofFailed", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testproject.ProjectConfigManagerGet(p, conf, nil)
+		p = testproject.ProjectConfigManagerGet(p, confdata, nil)
 
 		p = processorReportSuccess(p)
 		p = vmHandlerHandle(p, nil, errors.New(t.Name()))
@@ -114,7 +120,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	t.Run("HandleSuccess", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testproject.ProjectConfigManagerGet(p, conf, nil)
+		p = testproject.ProjectConfigManagerGet(p, confdata, nil)
 		p = vmHandlerHandle(p, []byte("res"), nil)
 
 		p = processorReportSuccess(p)
