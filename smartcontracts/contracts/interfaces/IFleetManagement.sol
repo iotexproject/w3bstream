@@ -6,13 +6,19 @@ interface IFleetManagement {
     event Unstake(uint256 indexed proverId, uint256 amount);
     event Withdrawn(uint256 indexed proverId, address indexed account, uint256 amount);
     event Grant(uint256 indexed proverId, uint256 amount);
+    event CoordinatorSet(address indexed coordinator);
+    event ProverSet(address indexed prover);
+    event SlasherSet(address indexed slasher);
 
     function epoch() external view returns (uint256);
     function project() external view returns (address);
     function prover() external view returns (address);
+    function coordinator() external view returns (address);
+    function slasher() external view returns (address);
     function minStake() external view returns (uint256);
     function stakedAmount(uint256 _proverId) external view returns (uint256);
     function isActiveProver(uint256 _proverId) external view returns (bool);
+    function isActiveCoordinator(address _coordinator, uint256 _projectId) external view returns (bool);
 
     function stake(uint256 _proverId) external payable;
     function unstake(uint256 _proverId, uint256 _amount) external;

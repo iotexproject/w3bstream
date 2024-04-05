@@ -34,7 +34,8 @@ contract Router is IRouter, Initializable {
         address _dapp = dapp[_projectId];
         require(_dapp != address(0), "no dapp");
         IFleetManagement _fm = IFleetManagement(fleetManagement);
-        // TODO: add coordinator whitelist
+        require(_fm.isActiveCoordinator(msg.sender, _projectId), "invalid coordinator");
+        // TODO: validator prover signature
         // require(IProver(_fm.prover()).operator(_proverId) == msg.sender, "invalid prover operator");
         IProjectStore store = IProjectStore(projectStore);
         require(_projectId > 0 && _projectId <= store.count() && !store.isPaused(_projectId));

@@ -12,6 +12,8 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
     uint256 public override epoch;
     uint256 public override minStake;
     address public override prover;
+    address public override coordinator;
+    address public override slasher;
 
     struct PendingWithdraw {
         uint256 timestamp;
@@ -21,7 +23,7 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
     mapping(uint256 => uint256) public override stakedAmount;
     mapping(uint256 => PendingWithdraw) public pendingWithdraw;
 
-    function initialize(uint256 _minStake, address _prover) public initializer {
+    function initialize(uint256 _minStake) public initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
 
@@ -34,6 +36,25 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
         IProver ip = IProver(prover);
         require(_id > 0 && _id < ip.count(), "invalid id");
         return !ip.isPaused(_id) && stakedAmount[_id] >= minStake;
+    }
+
+    function isActiveCoordinator(address _coordinator, uint256 _projectId) external view returns (bool) {
+        return _coordinator == coordinator;
+    }
+
+    function setCoordinator(address _coordinator) external onlyOwner {
+        coordinator = _coordinator;
+        emit CoordinatorSet(_coordinator);
+    }
+
+    function setProver(address _prover) external onlyOwner {
+        prover = _prover;
+        emit ProverSet(_prover);
+    }
+
+    function setSlasher(address _slasher) external onlyOwner {
+        slasher = _slasher;
+        emit SlasherSet(_slasher);
     }
 
     function stake(uint256 _proverId) external payable override {
