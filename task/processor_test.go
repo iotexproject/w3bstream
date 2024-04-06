@@ -91,7 +91,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		processor.HandleP2PData(data, nil)
 	})
 
-	conf := &project.Project{
+	testProject := &project.Project{
 		DefaultVersion: "0.1",
 		Versions: []*project.Config{{
 			Code:         "code",
@@ -101,15 +101,13 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 			Version:      "0.1",
 		}},
 	}
-	r.NoError(conf.Validate())
-	confdata, err := conf.GetDefaultConfig()
-	r.NoError(err)
+	r.NoError(testProject.Validate())
 
 	t.Run("ProofFailed", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&project.Manager{}, "Get", confdata, nil)
+		p = p.ApplyMethodReturn(&project.Manager{}, "Get", testProject, nil)
 		p = processorReportSuccess(p)
 		p = p.ApplyMethodReturn(&vm.Handler{}, "Handle", nil, errors.New(t.Name()))
 		p = processorReportFail(p)
@@ -120,12 +118,11 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&project.Manager{}, "Get", confdata, nil)
+		p = p.ApplyMethodReturn(&project.Manager{}, "Get", testProject, nil)
 		p = p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
 		p = processorReportSuccess(p)
 		processor.HandleP2PData(data, nil)
 	})
-
 }
 
 func processorReportSuccess(p *Patches) *Patches {
