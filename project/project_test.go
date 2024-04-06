@@ -69,7 +69,7 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 		npm := *pm
 		npm.Hash = [32]byte{}
 		_, err := npm.GetProjectRawData("")
-		r.ErrorContains(err, "failed to validate project config hash")
+		r.ErrorContains(err, "failed to validate project hash")
 	})
 	t.Run("Success", func(t *testing.T) {
 		_, err := pm.GetProjectRawData("")
