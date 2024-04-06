@@ -35,15 +35,15 @@ func (t *dispatcherTask) runWatchdog(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("task finished", "task_id", t.task.ID, "project_id", t.task.ProjectID)
+			slog.Info("task finished", "project_id", t.task.ProjectID, "task_id", t.task.ID)
 			return
 		case <-retryChan:
-			slog.Info("retry task", "task_id", t.task.ID, "project_id", t.task.ProjectID, "wait_time", t.waitTime)
+			slog.Info("retry task", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", t.waitTime)
 			if err := t.publish(t.task.ProjectID, &p2p.Data{Task: t.task}); err != nil {
 				slog.Error("failed to publish p2p data", "project_id", t.task.ProjectID, "task_id", t.task.ID)
 			}
 		case <-timeoutChan:
-			slog.Info("task timeout", "task_id", t.task.ID, "project_id", t.task.ProjectID, "wait_time", 2*t.waitTime)
+			slog.Info("task timeout", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", 2*t.waitTime)
 			t.timeOut(&types.TaskStateLog{
 				TaskID:    t.task.ID,
 				State:     types.TaskStateFailed,

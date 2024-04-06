@@ -2,7 +2,6 @@ package project
 
 import (
 	"bytes"
-	"log/slog"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -10,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/project/contracts"
+	utilscontract "github.com/machinefi/sprout/utils/contract"
 )
 
 type Manager struct {
@@ -71,20 +71,15 @@ func (m *Manager) load(projectID uint64) (*Project, error) {
 	return p, nil
 }
 
-func (m *Manager) watchProjectContract() error {
-	events := make(chan *contracts.ContractsProjectUpserted, 10)
-	sub, err := m.instance.WatchProjectUpserted(nil, events, nil)
+func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) error {
+	projectCh, err := utilscontract.ListAndWatchProject(chainEndpoint, contractAddress)
 	if err != nil {
-		return errors.Wrapf(err, "failed to watch project upserted event")
+		return err
 	}
+
 	go func() {
-		for {
-			select {
-			case err := <-sub.Err():
-				slog.Error("got an error when watching project upserted event", "error", err)
-			case e := <-events:
-				m.projects.Delete(e.ProjectId)
-			}
+		for p := range projectCh {
+			m.projects.Delete(p.ID)
 		}
 	}()
 	return nil
@@ -115,7 +110,7 @@ func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint st
 		instance:     instance,
 		cache:        c,
 	}
-	if err := m.watchProjectContract(); err != nil {
+	if err := m.watchProjectContract(chainEndpoint, contractAddress); err != nil {
 		return nil, err
 	}
 	return m, nil

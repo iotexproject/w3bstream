@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
@@ -31,7 +32,7 @@ func init() {
 	flag.StringVar(&coordinatorAddress, "coordinatorAddress", "localhost:9001", "coordinator address")
 	flag.StringVar(&databaseDSN, "databaseDSN", "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable", "database dsn")
 	flag.StringVar(&didAuthServer, "didAuthServer", "localhost:9999", "did auth server endpoint")
-	flag.StringVar(&privateKey, "privateKey", "", "sequencer private key")
+	flag.StringVar(&privateKey, "privateKey", "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85", "sequencer private key")
 }
 
 func main() {
@@ -43,6 +44,8 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed parse private key"))
 	}
+
+	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
 
 	_ = clients.NewManager()
 

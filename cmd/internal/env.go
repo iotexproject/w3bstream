@@ -59,7 +59,7 @@ func Print(c any) {
 	rv := reflect.ValueOf(c).Elem()
 
 	if env, ok := c.(interface{ Env() string }); ok {
-		fmt.Println(color.RedString("ENV: %s", env.Env()))
+		fmt.Println(color.CyanString("ENV: %s", env.Env()))
 	}
 
 	for i := 0; i < rt.NumField(); i++ {

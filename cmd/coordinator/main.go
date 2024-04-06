@@ -30,7 +30,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new postgres persistence"))
 	}
 
-	projectConfigManager, err := project.NewManager(conf.ChainEndpointWS, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
+	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project config manager"))
 	}

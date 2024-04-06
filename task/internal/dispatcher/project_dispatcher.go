@@ -66,7 +66,7 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 }
 
 func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask, datasourceURI string, newDatasource NewDatasource, projectMeta *project.Meta, publish Publish, handler *handler.TaskStateHandler) (*ProjectDispatcher, error) {
-	nextTaskID, err := fetch(projectMeta.ProjectID)
+	processedTaskID, err := fetch(projectMeta.ProjectID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", projectMeta.ProjectID)
 	}
@@ -83,7 +83,7 @@ func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask
 	d := &ProjectDispatcher{
 		window:       window,
 		waitInterval: 3 * time.Second,
-		startTaskID:  nextTaskID,
+		startTaskID:  processedTaskID + 1,
 		datasource:   datasource,
 		projectID:    projectMeta.ProjectID,
 		publish:      publish,

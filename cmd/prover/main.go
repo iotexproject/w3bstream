@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/x509"
-	"encoding/hex"
 	"log"
 	"log/slog"
 	"os"
@@ -51,25 +49,23 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}
-	pubKeyBytes, err := x509.MarshalPKIXPublicKey(sk.PublicKey)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to marshal public key"))
-	}
-	pubKeyHex := hex.EncodeToString(pubKeyBytes)
+	proverID := crypto.PubkeyToAddress(sk.PublicKey).String()
+
+	slog.Info("my prover id", "prover_id", proverID)
 
 	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, sk, sequencerPubKey, pubKeyHex)
+	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, sk, sequencerPubKey, proverID)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, pubKeyHex, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
+	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, proverID, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
 		log.Fatal(err)
 	}
 
