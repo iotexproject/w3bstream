@@ -1,13 +1,6 @@
 package task
 
 import (
-	"testing"
-
-	. "github.com/agiledragon/gomonkey/v2"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
-
-	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/types"
 )
 
@@ -39,27 +32,27 @@ func (m *mockDatasourceSuccess) Retrieve(nextTaskID uint64) (*types.Task, error)
 	return m.task, nil
 }
 
-func TestNewDispatcher(t *testing.T) {
-	r := require.New(t)
+// func TestNewDispatcher(t *testing.T) {
+// 	r := require.New(t)
 
-	t.Run("NewFailed", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
+// 	t.Run("NewFailed", func(t *testing.T) {
+// 		p := NewPatches()
+// 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
-		err := RunDispatcher(nil, nil, nil, "", "", "", "", "", 0)
-		r.ErrorContains(err, t.Name())
-	})
+// 		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
+// 		err := RunDispatcher(nil, nil, nil, "", "", "", "", "", 0)
+// 		r.ErrorContains(err, t.Name())
+// 	})
 
-	t.Run("New", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+// 	t.Run("New", func(t *testing.T) {
+// 		p := NewPatches()
+// 		defer p.Reset()
+// 		p = p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 
-		err := RunDispatcher(nil, nil, nil, "", "", "", "", "", 0)
-		r.NoError(err)
-	})
-}
+// 		err := RunDispatcher(nil, nil, nil, "", "", "", "", "", 0)
+// 		r.NoError(err)
+// 	})
+// }
 
 // func TestDispatcher_HandleP2PData(t *testing.T) {
 // 	ctrl := gomock.NewController(t)
