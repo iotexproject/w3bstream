@@ -1,7 +1,6 @@
 package task
 
 import (
-	"reflect"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
@@ -13,7 +12,6 @@ import (
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil"
-	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
@@ -88,7 +86,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		defer p.Reset()
 
 		p = processorReportSuccess(p)
-		p = testproject.ProjectConfigManagerGet(p, nil, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&project.Manager{}, "Get", nil, errors.New(t.Name()))
 		p = processorReportFail(p)
 		processor.HandleP2PData(data, nil)
 	})
@@ -110,10 +108,10 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	t.Run("ProofFailed", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testproject.ProjectConfigManagerGet(p, confdata, nil)
 
+		p = p.ApplyMethodReturn(&project.Manager{}, "Get", confdata, nil)
 		p = processorReportSuccess(p)
-		p = vmHandlerHandle(p, nil, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&vm.Handler{}, "Handle", nil, errors.New(t.Name()))
 		p = processorReportFail(p)
 		processor.HandleP2PData(data, nil)
 	})
@@ -121,9 +119,9 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	t.Run("HandleSuccess", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testproject.ProjectConfigManagerGet(p, confdata, nil)
-		p = vmHandlerHandle(p, []byte("res"), nil)
 
+		p = p.ApplyMethodReturn(&project.Manager{}, "Get", confdata, nil)
+		p = p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
 		p = processorReportSuccess(p)
 		processor.HandleP2PData(data, nil)
 	})
@@ -138,15 +136,4 @@ func processorReportSuccess(p *Patches) *Patches {
 func processorReportFail(p *Patches) *Patches {
 	var pro *Processor
 	return p.ApplyPrivateMethod(pro, "reportFail", func(taskID string, err error, topic *pubsub.Topic) {})
-}
-
-func vmHandlerHandle(p *Patches, res []byte, err error) *Patches {
-	var handler *vm.Handler
-	return p.ApplyMethodFunc(
-		reflect.TypeOf(handler),
-		"Handle",
-		func(taskID, projectID uint64, clientDID, sign string, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error) {
-			return res, err
-		},
-	)
 }
