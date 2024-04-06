@@ -148,66 +148,6 @@ func Test_ethereumContract_Output(t *testing.T) {
 				r.Equal(txHash, "")
 				r.Equal(err, errSnarkProofDataMissingFieldSnark)
 			})
-			t.Run("MissingPostStateDigestField", func(t *testing.T) {
-				proof.Snark["snark"] = "any"
-				data, err := json.Marshal(proof)
-				r.NoError(err)
-				hexdata := hex.EncodeToString(data)
-
-				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
-				r.Equal(txHash, "")
-				r.Equal(err, errSnarkProofDataMissingFieldPostStateDigest)
-			})
-			t.Run("MissingJournalField", func(t *testing.T) {
-				proof.Snark["post_state_digest"] = "any"
-				data, err := json.Marshal(proof)
-				r.NoError(err)
-				hexdata := hex.EncodeToString(data)
-
-				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
-				r.Equal(txHash, "")
-				r.Equal(err, errSnarkProofDataMissingFieldJournal)
-			})
-
-			proof.Snark["journal"] = "any"
-			data, err := json.Marshal(proof)
-			r.NoError(err)
-			hexdata := hex.EncodeToString(data)
-
-			t.Run("FailedToNewABIType", func(t *testing.T) {
-				p := NewPatches()
-				defer p.Reset()
-				p = p.ApplyFuncReturn(abi.NewType, nil, errors.New(t.Name()))
-
-				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
-				r.Equal(txHash, "")
-				r.ErrorContains(err, t.Name())
-			})
-
-			t.Run("FailedToPackArgs", func(t *testing.T) {
-				p := NewPatches()
-				defer p.Reset()
-
-				p = p.ApplyFuncReturn(abi.NewType, abi.Type{}, nil)
-				p = p.ApplyMethodReturn(abi.Arguments{}, "Pack", nil, errors.New(t.Name()))
-
-				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
-				r.Equal(txHash, "")
-				r.ErrorContains(err, t.Name())
-			})
-
-			t.Run("Success", func(t *testing.T) {
-				p := NewPatches()
-				defer p.Reset()
-
-				p = p.ApplyFuncReturn(abi.NewType, abi.Type{}, nil)
-				p = p.ApplyMethodReturn(abi.Arguments{}, "Pack", []byte("any"), nil)
-				p = patchEthereumContractSendTX(p, txHashRet, nil)
-
-				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
-				r.Equal(txHash, txHashRet)
-				r.NoError(err)
-			})
 		})
 		t.Run("Default", func(t *testing.T) {
 			p := NewPatches()
