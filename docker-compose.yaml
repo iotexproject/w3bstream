@@ -40,7 +40,8 @@ services:
     restart: always
     environment:
       PROVER_ENV: PROD
-
+      PROVER_PRIVATE_KEY: ${PRIVATE_KEY:-}
+      PROVER_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
   halo2:
     image: wangweixiaohao2944/halo2server:v0.0.6
     container_name: halo2-service
