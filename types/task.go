@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -86,13 +85,25 @@ func (l *TaskStateLog) VerifySignature(pubkey string, task *Task) error {
 		return errors.Wrap(err, "failed to decode task signature")
 	}
 
-	data := bytes.NewBuffer([]byte(fmt.Sprintf("%d%d%s", task.ID, task.ProjectID, task.ClientID)))
-	for _, v := range task.Data {
-		data.Write(v)
-	}
-	data.Write(l.Result)
+	buf := bytes.NewBuffer(nil)
 
-	h := crypto.Keccak256Hash(data.Bytes())
+	if err = binary.Write(buf, binary.BigEndian, task.ID); err != nil {
+		return err
+	}
+	if err = binary.Write(buf, binary.BigEndian, task.ProjectID); err != nil {
+		return err
+	}
+	if _, err = buf.WriteString(task.ClientID); err != nil {
+		return err
+	}
+	if _, err = buf.Write(crypto.Keccak256Hash(task.Data...).Bytes()); err != nil {
+		return err
+	}
+	if _, err = buf.Write(l.Result); err != nil {
+		return err
+	}
+
+	h := crypto.Keccak256Hash(buf.Bytes())
 	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
 	if err != nil {
 		return errors.Wrap(err, "failed to recover public key")
