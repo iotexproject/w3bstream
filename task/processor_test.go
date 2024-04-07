@@ -1,7 +1,6 @@
 package task
 
 import (
-	"reflect"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
@@ -13,7 +12,6 @@ import (
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/testutil"
-	testproject "github.com/machinefi/sprout/testutil/project"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
@@ -62,8 +60,8 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 func TestProcessor_HandleP2PData(t *testing.T) {
 	r := require.New(t)
 	processor := &Processor{
-		vmHandler:            &vm.Handler{},
-		projectConfigManager: &project.ConfigManager{},
+		vmHandler:      &vm.Handler{},
+		projectManager: &project.Manager{},
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {
@@ -88,31 +86,30 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		defer p.Reset()
 
 		p = processorReportSuccess(p)
-		p = testproject.ProjectConfigManagerGet(p, nil, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&project.Manager{}, "Get", nil, errors.New(t.Name()))
 		p = processorReportFail(p)
 		processor.HandleP2PData(data, nil)
 	})
 
-	conf := &project.Config{
-		Versions: []*project.ConfigData{{
+	testProject := &project.Project{
+		DefaultVersion: "0.1",
+		Versions: []*project.Config{{
 			Code:         "code",
 			CodeExpParam: "codeExpParam",
 			VMType:       vm.Risc0,
 			Output:       output.Config{},
-			Aggregation:  project.AggregationConfig{},
-			Version:      "",
+			Version:      "0.1",
 		}},
 	}
-	r.NoError(conf.Validate())
-	confdata := conf.DefaultConfigData()
+	r.NoError(testProject.Validate())
 
 	t.Run("ProofFailed", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testproject.ProjectConfigManagerGet(p, confdata, nil)
 
+		p = p.ApplyMethodReturn(&project.Manager{}, "Get", testProject, nil)
 		p = processorReportSuccess(p)
-		p = vmHandlerHandle(p, nil, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&vm.Handler{}, "Handle", nil, errors.New(t.Name()))
 		p = processorReportFail(p)
 		processor.HandleP2PData(data, nil)
 	})
@@ -120,13 +117,12 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	t.Run("HandleSuccess", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = testproject.ProjectConfigManagerGet(p, confdata, nil)
-		p = vmHandlerHandle(p, []byte("res"), nil)
 
+		p = p.ApplyMethodReturn(&project.Manager{}, "Get", testProject, nil)
+		p = p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
 		p = processorReportSuccess(p)
 		processor.HandleP2PData(data, nil)
 	})
-
 }
 
 func processorReportSuccess(p *Patches) *Patches {
@@ -137,15 +133,4 @@ func processorReportSuccess(p *Patches) *Patches {
 func processorReportFail(p *Patches) *Patches {
 	var pro *Processor
 	return p.ApplyPrivateMethod(pro, "reportFail", func(taskID string, err error, topic *pubsub.Topic) {})
-}
-
-func vmHandlerHandle(p *Patches, res []byte, err error) *Patches {
-	var handler *vm.Handler
-	return p.ApplyMethodFunc(
-		reflect.TypeOf(handler),
-		"Handle",
-		func(taskID, projectID uint64, clientDID, sign string, vmtype vm.Type, code string, expParam string, data [][]byte) ([]byte, error) {
-			return res, err
-		},
-	)
 }

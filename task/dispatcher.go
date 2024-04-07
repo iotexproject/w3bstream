@@ -1,112 +1,105 @@
 package task
 
 import (
+	"bytes"
 	"log/slog"
-	"time"
+	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/project/contracts"
+	internaldispatcher "github.com/machinefi/sprout/task/internal/dispatcher"
+	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
 )
 
-type Datasource interface {
-	Retrieve(nextTaskID uint64) (*types.Task, error)
-}
-
 type Persistence interface {
-	Create(t *types.Task, tl *types.TaskStateLog) error
+	Create(tl *types.TaskStateLog, t *types.Task) error
+	FetchProjectProcessedTaskID(projectID uint64) (uint64, error)
+	UpsertProjectProcessedTask(projectID, taskID uint64) error
 }
 
-type ProjectConfigManager interface {
-	Get(projectID uint64, version string) (*project.ConfigData, error)
+type Datasource interface {
+	Retrieve(projectID, nextTaskID uint64) (*types.Task, error)
 }
 
-type Dispatcher struct {
-	datasource                Datasource
-	persistence               Persistence
-	projectConfigManager      ProjectConfigManager
-	pubSubs                   *p2p.PubSubs
-	operatorPrivateKeyECDSA   string
-	operatorPrivateKeyED25519 string
+type ProjectManager interface {
+	Get(projectID uint64) (*project.Project, error)
 }
 
-// will block caller
-func (d *Dispatcher) Dispatch(nextTaskID uint64, pubkey []byte) {
-	ticker := time.NewTicker(3 * time.Second)
-
-	for range ticker.C {
-		next, err := d.dispatchTask(nextTaskID, pubkey)
-		if err != nil {
-			slog.Error("failed to dispatch task", "error", err)
-			continue
-		}
-		nextTaskID = next
-	}
+type dispatcher struct {
+	projectDispatchers *sync.Map // projectID(uint64) -> *ProjectDispatcher
 }
 
-func (d *Dispatcher) dispatchTask(nextTaskID uint64, pubkey []byte) (uint64, error) {
-	t, err := d.datasource.Retrieve(nextTaskID)
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to retrieve task from data source")
-	}
-	if t == nil {
-		return nextTaskID, nil
-	}
-	if err := t.VerifySignature(pubkey); err != nil {
-		return 0, errors.Wrap(err, "failed to verify task sign")
-	}
-	if err := d.pubSubs.Add(t.ProjectID); err != nil {
-		return 0, errors.Wrapf(err, "failed to add project pubsub, project_id %v", t.ProjectID)
-	}
-	if err := d.pubSubs.Publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
-		return 0, errors.Wrapf(err, "failed to publish data, project_id %v", t.ProjectID)
-	}
-	slog.Debug("dispatched a task", "project_id", t.ProjectID, "task_id", t.ID)
-	return t.ID + 1, nil
-}
-
-func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
+func (d *dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	if data.TaskStateLog == nil {
 		return
 	}
-	l := data.TaskStateLog
+	s := data.TaskStateLog
 
-	if err := d.persistence.Create(nil /*TODO*/, l); err != nil {
-		slog.Error("failed to create task state log", "error", err, "task_id", l.TaskID)
+	pd, ok := d.projectDispatchers.Load(s.ProjectID)
+	if !ok {
+		slog.Error("the project dispatcher not exist", "project_id", s.ProjectID)
 		return
 	}
-	if l.State != types.TaskStateProved {
-		return
-	}
-
-	if err := l.VerifySignature("", nil /*prover pubkey*/); err != nil {
-		slog.Error("failed to verify proof sign", "error", err)
-		return
-	}
-
-	// p, err := d.projectConfigManager.Get(l.Task.ProjectID, l.Task.ProjectVersion)
-	// if err != nil {
-	// 	//slog.Error("failed to get project", "error", err, "project_id", l.Task.ProjectID, "project_version", l.Task.ProjectVersion)
-	// 	return
-	// }
+	pd.(*internaldispatcher.ProjectDispatcher).Handle(s)
 }
 
-func NewDispatcher(persistence Persistence, projectConfigManager ProjectConfigManager, datasource Datasource, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, iotexChainID int) (*Dispatcher, error) {
-	d := &Dispatcher{
-		datasource:                datasource,
-		persistence:               persistence,
-		projectConfigManager:      projectConfigManager,
-		operatorPrivateKeyECDSA:   operatorPrivateKey,
-		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
-	}
+func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource, getProject handler.GetProject, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519, chainEndpoint, projectContractAddress string, iotexChainID int) error {
+	projectDispatchers := &sync.Map{}
+	d := &dispatcher{projectDispatchers: projectDispatchers}
+
 	ps, err := p2p.NewPubSubs(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	d.pubSubs = ps
 
-	return d, nil
+	taskStateHandler := handler.NewTaskStateHandler(persistence.Create, getProject, operatorPrivateKey, operatorPrivateKeyED25519)
+
+	client, err := ethclient.Dial(chainEndpoint)
+	if err != nil {
+		return errors.Wrapf(err, "failed to dial chain endpoint %s", chainEndpoint)
+	}
+	instance, err := contracts.NewContracts(common.HexToAddress(projectContractAddress), client)
+	if err != nil {
+		return errors.Wrapf(err, "failed to new project contract instance")
+	}
+
+	emptyHash := [32]byte{}
+	for projectID := uint64(1); ; projectID++ {
+		mp, err := instance.Projects(nil, projectID)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get project meta from chain, project_id %v", projectID)
+		}
+		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
+			break
+		}
+		pm := &project.Meta{
+			ProjectID: projectID,
+			Uri:       mp.Uri,
+			Hash:      mp.Hash,
+		}
+		// TODO support project update & watch project upsert
+		_, ok := projectDispatchers.Load(projectID)
+		if ok {
+			continue
+		}
+		p, err := getProject(projectID)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get project, project_id %v", projectID)
+		}
+		ps.Add(projectID)
+		pd, err := internaldispatcher.NewProjectDispatcher(persistence.FetchProjectProcessedTaskID, persistence.UpsertProjectProcessedTask, p.DatasourceURI, newDatasource, pm, ps.Publish, taskStateHandler)
+		if err != nil {
+			return errors.Wrapf(err, "failed to new project dispatcher, project_id %v", projectID)
+		}
+		projectDispatchers.Store(projectID, pd)
+	}
+
+	return nil
 }

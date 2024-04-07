@@ -9,19 +9,20 @@ import (
 	"github.com/machinefi/sprout/types"
 )
 
-type SaveTaskStateLog func(s *types.TaskStateLog) error
+type SaveTaskStateLog func(s *types.TaskStateLog, t *types.Task) error
 
-type GetProjectConfig func(projectID uint64, version string) (*project.ConfigData, error)
+type GetProject func(projectID uint64) (*project.Project, error)
 
 type TaskStateHandler struct {
 	saveTaskStateLog          SaveTaskStateLog
-	getProjectConfig          GetProjectConfig
+	getProject                GetProject
 	operatorPrivateKeyECDSA   string
 	operatorPrivateKeyED25519 string
 }
 
 func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finished bool) {
-	if err := h.saveTaskStateLog(s); err != nil {
+	// TODO Verify TaskStateLog Signature
+	if err := h.saveTaskStateLog(s, t); err != nil {
 		slog.Error("failed to create task state log", "error", err, "task_id", s.TaskID)
 		return
 	}
@@ -32,13 +33,18 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	if s.State != types.TaskStateProved {
 		return
 	}
-	p, err := h.getProjectConfig(t.ProjectID, t.ProjectVersion)
+	p, err := h.getProject(t.ProjectID)
 	if err != nil {
-		slog.Error("failed to get project config", "error", err, "project_id", t.ProjectID, "project_version", t.ProjectVersion)
+		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
+		return
+	}
+	c, err := p.GetDefaultConfig()
+	if err != nil {
+		slog.Error("failed to get project config", "error", err, "project_id", t.ProjectID, "project_version", p.DefaultVersion)
 		return
 	}
 
-	output, err := output.New(&p.Output, h.operatorPrivateKeyECDSA, h.operatorPrivateKeyED25519)
+	output, err := output.New(&c.Output, h.operatorPrivateKeyECDSA, h.operatorPrivateKeyED25519)
 	if err != nil {
 		slog.Error("failed to init output", "error", err, "project_id", t.ProjectID)
 		if err := h.saveTaskStateLog(&types.TaskStateLog{
@@ -46,7 +52,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
-		}); err != nil {
+		}, t); err != nil {
 			slog.Error("failed to create failed task state", "error", err, "task_id", s.TaskID)
 			return
 		}
@@ -61,7 +67,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
-		}); err != nil {
+		}, t); err != nil {
 			slog.Error("failed to create failed task state", "error", err, "task_id", s.TaskID)
 			return
 		}
@@ -71,20 +77,20 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	if err := h.saveTaskStateLog(&types.TaskStateLog{
 		TaskID:    s.TaskID,
 		State:     types.TaskStateOutputted,
-		Comment:   "output type: " + string(p.Output.Type),
+		Comment:   "output type: " + string(c.Output.Type),
 		Result:    []byte(outRes),
 		CreatedAt: time.Now(),
-	}); err != nil {
+	}, t); err != nil {
 		slog.Error("failed to create outputted task state", "error", err, "task_id", s.TaskID)
 		return
 	}
 	return true
 }
 
-func NewTaskStateHandler(saveTaskStateLog SaveTaskStateLog, getProjectConfig GetProjectConfig, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *TaskStateHandler {
+func NewTaskStateHandler(saveTaskStateLog SaveTaskStateLog, getProject GetProject, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *TaskStateHandler {
 	return &TaskStateHandler{
 		saveTaskStateLog:          saveTaskStateLog,
-		getProjectConfig:          getProjectConfig,
+		getProject:                getProject,
 		operatorPrivateKeyECDSA:   operatorPrivateKeyECDSA,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
 	}

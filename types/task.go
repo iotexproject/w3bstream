@@ -66,6 +66,7 @@ const (
 
 type TaskStateLog struct {
 	TaskID    uint64
+	ProjectID uint64
 	State     TaskState
 	Comment   string
 	Result    []byte

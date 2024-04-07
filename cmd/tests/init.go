@@ -117,7 +117,7 @@ func runProver(conf *proverconfig.Config) {
 		},
 	)
 
-	projectConfigManager, err := project.NewConfigManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
+	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -160,30 +160,14 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 
 	_ = clients.NewManager()
 
-	projectConfigManager, err := project.NewConfigManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
+	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	datasource, err := datasource.NewPostgres(conf.DatasourceDSN)
-	if err != nil {
-		log.Fatal(err)
+	if err := task.RunDispatcher(pg, datasource.NewPostgres, projectConfigManager.Get, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.ChainEndpoint, conf.ProjectContractAddress, conf.IoTeXChainID); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}
-
-	nextTaskID, err := pg.FetchNextTaskID()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	dispatcher, err := task.NewDispatcher(pg, projectConfigManager, datasource, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID)
-	if err != nil {
-		log.Fatal(err)
-	}
-	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
-	}
-	go dispatcher.Dispatch(nextTaskID, sequencerPubKey)
 
 	go func() {
 		if err := api.NewHttpServer(pg, conf).Run(conf.ServiceEndpoint); err != nil {

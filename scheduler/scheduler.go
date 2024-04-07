@@ -1,48 +1,52 @@
 package scheduler
 
 import (
+	"context"
 	"log/slog"
+	"math/big"
 	"sync"
+	"time"
 
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/utils/contract"
 	"github.com/machinefi/sprout/utils/distance"
+	"github.com/machinefi/sprout/utils/hash"
 )
 
 type HandleProjectProvers func(projectID uint64, provers []string)
 
 type scheduler struct {
-	provers              *sync.Map // proverID(string) -> true(bool)
-	projectOffsets       *sync.Map // project offset in interval(uint64) -> projectMeta(*project.ProjectMeta)
+	provers              *sync.Map // proverID(string) -> Prover(*contract.Prover)
+	projectOffsets       *sync.Map // project offset in interval(uint64) -> Project(*contract.Project)
 	epoch                uint64
 	pubSubs              *p2p.PubSubs // TODO define interface
-	chainHead            chan *types.Header
+	chainHead            chan uint64
 	proverID             string
 	handleProjectProvers HandleProjectProvers
 }
 
 func (s *scheduler) schedule() {
 	for head := range s.chainHead {
-		offset := s.epoch - (head.Number.Uint64() % s.epoch)
-		metaValue, ok := s.projectOffsets.Load(offset)
+		offset := s.epoch - (head % s.epoch)
+		cp, ok := s.projectOffsets.Load(offset)
 		if !ok {
 			continue
 		}
-		meta := metaValue.(*project.ProjectMeta)
+		projectID := cp.(*contract.Project).ID
+		slog.Info("a new epoch has arrived", "head_number", head, "project_id", projectID)
+
 		provers := s.getAllProver()
 
-		amount := meta.ProverAmount
-		if amount == 0 {
-			amount = 1
-		}
-		if amount > uint(len(provers)) {
-			slog.Error("no enough resource for the project", "require prover amount", amount, "current prover", len(provers), "project_id", meta.ProjectID)
+		amount := uint64(1) // TODO fetch amount from project attr
+		if amount > uint64(len(provers)) {
+			slog.Error("no enough resource for the project", "require prover amount", amount, "current prover", len(provers), "project_id", projectID)
 			continue
 		}
 
-		projectProvers := distance.GetMinNLocation(provers, meta.ProjectID, uint64(amount))
+		projectProvers := distance.GetMinNLocation(provers, projectID, amount)
 
 		isMy := false
 		for _, p := range projectProvers {
@@ -51,13 +55,13 @@ func (s *scheduler) schedule() {
 			}
 		}
 		if !isMy {
-			slog.Info("the project not scheduld to this prover", "project_id", meta.ProjectID)
-			s.pubSubs.Delete(meta.ProjectID)
+			slog.Info("the project not scheduld to this prover", "project_id", projectID)
+			s.pubSubs.Delete(projectID)
 			continue
 		}
-		s.handleProjectProvers(meta.ProjectID, projectProvers)
-		s.pubSubs.Add(meta.ProjectID)
-		slog.Info("the project scheduld to this prover", "project_id", meta.ProjectID)
+		s.handleProjectProvers(projectID, projectProvers)
+		s.pubSubs.Add(projectID)
+		slog.Info("the project scheduld to this prover", "project_id", projectID)
 	}
 }
 
@@ -70,24 +74,71 @@ func (s *scheduler) getAllProver() []string {
 	return provers
 }
 
+func watchChainHead(head chan<- uint64, chainEndpoint string) error {
+	client, err := ethclient.Dial(chainEndpoint)
+	if err != nil {
+		return errors.Wrapf(err, "failed to dial chain endpoint %s", chainEndpoint)
+	}
+	currentHead := uint64(0)
+
+	ticker := time.NewTicker(1 * time.Second)
+	go func() {
+		for range ticker.C {
+			latestBlockNumber, err := client.BlockNumber(context.Background())
+			if err != nil {
+				slog.Error("failed to query the latest block number", "error", err)
+				continue
+			}
+			if latestBlockNumber > currentHead {
+				head <- latestBlockNumber
+				currentHead = latestBlockNumber
+			}
+		}
+	}()
+	return nil
+}
+
 func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers) error {
 	provers := &sync.Map{}
-	if err := watchProver(provers, chainEndpoint, proverContractAddress); err != nil {
+	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress)
+	if err != nil {
 		return err
 	}
-	if err := listAndFillProver(provers, chainEndpoint, proverContractAddress); err != nil {
-		return err
-	}
+	go func() {
+		for p := range proverCh {
+			slog.Info("get a new prover", "prover_id", p.ID)
+			e, ok := provers.Load(p.ID)
+			if ok {
+				if ep := e.(*contract.Prover); ep.BlockNumber > p.BlockNumber {
+					p = ep
+				}
+			}
+			provers.Store(p.ID, p)
+		}
+	}()
 
 	projectOffsets := &sync.Map{}
-	if err := watchProject(projectOffsets, epoch, chainEndpoint, projectContractAddress); err != nil {
+	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress)
+	if err != nil {
 		return err
 	}
-	if err := listAndFillProject(projectOffsets, epoch, chainEndpoint, projectContractAddress); err != nil {
-		return err
-	}
+	go func() {
+		for p := range projectCh {
+			slog.Info("get a new project", "project_id", p.ID)
+			projectIDHash := hash.Sum256Uint64(p.ID)
+			offset := new(big.Int).SetBytes(projectIDHash[:]).Uint64() % epoch
 
-	chainHead := make(chan *types.Header)
+			e, ok := projectOffsets.Load(offset)
+			if ok {
+				if ep := e.(*contract.Project); ep.BlockNumber > p.BlockNumber {
+					p = ep
+				}
+			}
+			projectOffsets.Store(offset, p) // TODO different project may have same offset
+		}
+	}()
+
+	chainHead := make(chan uint64)
 	if err := watchChainHead(chainHead, chainEndpoint); err != nil {
 		return err
 	}

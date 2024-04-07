@@ -4,26 +4,28 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/pkg/errors"
-
+	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
+	"github.com/pkg/errors"
 )
 
-type NewTaskRetriever func(datasourceURI string) (RetrieveTask, error)
-
-type RetrieveTask func(projectID, nextTaskID uint64) (*types.Task, error)
+type NewDatasource func(datasourceURI string) (datasource.Datasource, error)
 
 type Publish func(projectID uint64, data *p2p.Data) error
+
+type FetchProcessedTaskID func(projectID uint64) (uint64, error)
+
+type UpsertProcessedTask func(projectID, taskID uint64) error
 
 type ProjectDispatcher struct {
 	window       *window
 	waitInterval time.Duration
 	startTaskID  uint64
 	projectID    uint64
-	retrieveTask RetrieveTask
+	datasource   datasource.Datasource
 	publish      Publish
 }
 
@@ -47,7 +49,7 @@ func (d *ProjectDispatcher) run() {
 }
 
 func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
-	t, err := d.retrieveTask(d.projectID, nextTaskID)
+	t, err := d.datasource.Retrieve(d.projectID, nextTaskID)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to retrieve task from data source")
 	}
@@ -63,25 +65,26 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	return t.ID + 1, nil
 }
 
-func NewProjectDispatcher(startTaskID uint64, datasourceURI string, newTaskRetriever NewTaskRetriever, projectMeta *project.ProjectMeta, publish Publish, handler *handler.TaskStateHandler) (*ProjectDispatcher, error) {
-	// nextTaskID, err := persistence.FetchNextTaskID(projectMeta.ProjectID)
-	// if err != nil {
-	// 	return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", projectMeta.ProjectID)
-	// }
-	retrieveTask, err := newTaskRetriever(datasourceURI)
+func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask, datasourceURI string, newDatasource NewDatasource, projectMeta *project.Meta, publish Publish, handler *handler.TaskStateHandler) (*ProjectDispatcher, error) {
+	processedTaskID, err := fetch(projectMeta.ProjectID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", projectMeta.ProjectID)
+	}
+	datasource, err := newDatasource(datasourceURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new task retriever")
 	}
-	windowSize := projectMeta.ProverAmount
-	if windowSize == 0 {
-		windowSize = 1
-	}
-	window := newWindow(windowSize, publish, handler)
+	// TODO get prover amount from project attr
+	//windowSize := projectMeta.ProverAmount
+	//if windowSize == 0 {
+	windowSize := uint64(1)
+	//}
+	window := newWindow(windowSize, publish, handler, upsert)
 	d := &ProjectDispatcher{
 		window:       window,
 		waitInterval: 3 * time.Second,
-		startTaskID:  startTaskID,
-		retrieveTask: retrieveTask,
+		startTaskID:  processedTaskID + 1,
+		datasource:   datasource,
 		projectID:    projectMeta.ProjectID,
 		publish:      publish,
 	}

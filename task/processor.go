@@ -26,12 +26,12 @@ type VMHandler interface {
 }
 
 type Processor struct {
-	vmHandler            VMHandler
-	projectConfigManager ProjectConfigManager
-	proverPrivateKey     *ecdsa.PrivateKey
-	sequencerPubKey      []byte
-	proverID             string
-	projectProvers       sync.Map
+	vmHandler        VMHandler
+	projectManager   ProjectManager
+	proverPrivateKey *ecdsa.PrivateKey
+	sequencerPubKey  []byte
+	proverID         string
+	projectProvers   sync.Map
 }
 
 func (r *Processor) HandleProjectProvers(projectID uint64, provers []string) {
@@ -44,9 +44,15 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	}
 	t := d.Task
 
-	p, err := r.projectConfigManager.Get(t.ProjectID, t.ProjectVersion)
+	p, err := r.projectManager.Get(t.ProjectID)
 	if err != nil {
-		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID, "project_version", t.ProjectVersion)
+		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
+		r.reportFail(t, err, topic)
+		return
+	}
+	c, err := p.GetDefaultConfig()
+	if err != nil {
+		slog.Error("failed to get project config", "error", err, "project_id", t.ProjectID, "project_version", p.DefaultVersion)
 		r.reportFail(t, err, topic)
 		return
 	}
@@ -72,7 +78,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	slog.Debug("get a new task", "task_id", t.ID)
 	r.reportSuccess(t, types.TaskStateDispatched, nil, "", topic)
 
-	res, err := r.vmHandler.Handle(t, p.VMType, p.Code, p.CodeExpParam)
+	res, err := r.vmHandler.Handle(t, c.VMType, c.Code, c.CodeExpParam)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)
@@ -119,6 +125,7 @@ func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
 	d, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
 			TaskID:    t.ID,
+			ProjectID: t.ProjectID,
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
@@ -137,6 +144,7 @@ func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result [
 	d, err := json.Marshal(&p2p.Data{
 		TaskStateLog: &types.TaskStateLog{
 			TaskID:    t.ID,
+			ProjectID: t.ProjectID,
 			State:     state,
 			Result:    result,
 			Signature: signature,
@@ -153,12 +161,12 @@ func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result [
 	}
 }
 
-func NewProcessor(vmHandler VMHandler, projectConfigManager ProjectConfigManager, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID string) *Processor {
+func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID string) *Processor {
 	return &Processor{
-		vmHandler:            vmHandler,
-		projectConfigManager: projectConfigManager,
-		proverPrivateKey:     proverPrivateKey,
-		sequencerPubKey:      seqPubkey,
-		proverID:             proverID,
+		vmHandler:        vmHandler,
+		projectManager:   projectManager,
+		proverPrivateKey: proverPrivateKey,
+		sequencerPubKey:  seqPubkey,
+		proverID:         proverID,
 	}
 }

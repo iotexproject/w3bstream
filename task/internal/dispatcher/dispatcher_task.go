@@ -14,6 +14,7 @@ import (
 
 type dispatcherTask struct {
 	finished atomic.Bool
+	timeOut  func(s *types.TaskStateLog)
 	cancel   context.CancelFunc
 	waitTime time.Duration
 	task     *types.Task
@@ -34,14 +35,16 @@ func (t *dispatcherTask) runWatchdog(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("task finished", "task_id", t.task.ID, "project_id", t.task.ProjectID)
+			slog.Info("task finished", "project_id", t.task.ProjectID, "task_id", t.task.ID)
 			return
 		case <-retryChan:
+			slog.Info("retry task", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", t.waitTime)
 			if err := t.publish(t.task.ProjectID, &p2p.Data{Task: t.task}); err != nil {
 				slog.Error("failed to publish p2p data", "project_id", t.task.ProjectID, "task_id", t.task.ID)
 			}
 		case <-timeoutChan:
-			t.handleState(&types.TaskStateLog{
+			slog.Info("task timeout", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", 2*t.waitTime)
+			t.timeOut(&types.TaskStateLog{
 				TaskID:    t.task.ID,
 				State:     types.TaskStateFailed,
 				Comment:   fmt.Sprintf("task timeout, number of retries %v, total waiting time %v", 1, 2*t.waitTime),
@@ -51,10 +54,11 @@ func (t *dispatcherTask) runWatchdog(ctx context.Context) {
 	}
 }
 
-func newDispatcherTask(task *types.Task, publish Publish, handler *handler.TaskStateHandler) *dispatcherTask {
+func newDispatcherTask(task *types.Task, timeOut func(s *types.TaskStateLog), publish Publish, handler *handler.TaskStateHandler) *dispatcherTask {
 	ctx, cancel := context.WithCancel(context.Background())
 	t := &dispatcherTask{
 		finished: atomic.Bool{},
+		timeOut:  timeOut,
 		cancel:   cancel,
 		waitTime: 5 * time.Minute, // TODO define wait time config
 		task:     task,
