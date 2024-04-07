@@ -28,5 +28,9 @@ pub enum Subcommands {
         proof: String,
         #[clap(long, value_name = "public-input")]
         public: u64,
+        #[clap(long, value_name = "project-input")]
+        project: u64,
+        #[clap(long, value_name = "task-input")]
+        task: u64,
     },
 }

@@ -58,7 +58,7 @@ fn main() {
             fs::write(file, sol_code).expect("write verifier solidity error");
         }
 
-        Subcommands::Verfiy { proof, public } => {
+        Subcommands::Verfiy { proof, public, project, task } => {
             let proof_raw = fs::read(proof).expect("read proof file error");
             let proof_raw = String::from_utf8(proof_raw).unwrap();
             let proof: Proof = serde_json::from_str(&proof_raw).unwrap();
@@ -67,7 +67,7 @@ fn main() {
 
             let pk = gen_pk(&params, &empty_circuit);
 
-            let instances = vec![vec![Fr::from(public)]];
+            let instances = vec![vec![Fr::from(public), Fr::from(project), Fr::from(task)]];
             let accept = {
                 let instances = instances
                     .iter()
