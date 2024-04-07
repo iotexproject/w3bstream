@@ -1,6 +1,15 @@
 # Changelog
 
 ---
+## [0.9.0] - 2024-04-07
+
+### Added
+- Support task window
+- Support task timeout
+- Support task retry
+- Support retrive task within project
+
+---
 ## [0.8.0] - 2024-03-25
 
 ### Added
