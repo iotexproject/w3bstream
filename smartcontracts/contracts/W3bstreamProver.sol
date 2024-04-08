@@ -1,67 +1,81 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./interfaces/IProver.sol";
-
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract Prover is IProver, OwnableUpgradeable, ERC721Upgradeable {
+contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
+    event OperatorSet(uint256 indexed id, address indexed operator);
+    event NodeTypeUpdated(uint256 indexed id, uint256 typ);
+    event ProverPaused(uint256 indexed id);
+    event ProverResumed(uint256 indexed id);
+    event MinterSet(address minter);
+
     uint256 nextId;
+    address minter;
 
     mapping(uint256 => uint256) _nodeTypes;
     mapping(uint256 => address) _operators;
     mapping(uint256 => bool) _paused;
     mapping(address => uint256) operatorToProver;
-    address minter;
 
     modifier onlyProverOwner(uint256 _id) {
         require(ownerOf(_id) == msg.sender, "not owner");
         _;
     }
 
-    function initialize(string memory _name, string memory _symbol) public initializer {
+    function initialize(string memory _name, string memory _symbol, address _minter) public initializer {
         __Ownable_init();
         __ERC721_init(_name, _symbol);
+        setMinter(_minter);
     }
 
-    function count() external view override returns (uint256) {
+    function count() external view returns (uint256) {
         return nextId + 1;
     }
 
-    function nodeType(uint256 _id) external view override returns (uint256) {
+    function nodeType(uint256 _id) external view returns (uint256) {
         _requireMinted(_id);
         return _nodeTypes[_id];
     }
 
-    function operator(uint256 _id) external view override returns (address) {
+    function operator(uint256 _id) external view returns (address) {
         _requireMinted(_id);
         return _operators[_id];
     }
 
-    function ownerOfOperator(address _operator) external view override returns (uint256, address) {
+    function prover(uint256 _id) external view returns (address) {
+        _requireMinted(_id);
+        return ownerOf(_id);
+    }
+
+    function ownerOfOperator(address _operator) external view returns (uint256, address) {
         uint256 id = operatorToProver[_operator];
         require(id != 0, "invalid operator");
         return (id, ownerOf(id));
     }
 
-    function isPaused(uint256 _id) external view override returns (bool) {
+    function isPaused(uint256 _id) external view returns (bool) {
         _requireMinted(_id);
         return _paused[_id];
     }
 
-    function register(Type _type, address _operator) public override returns (uint256 _id) {
+    function mint(uint256 _type, address _account) public returns (uint256 id_) {
         require(msg.sender == minter, "not minter");
-        _id = ++nextId;
-        _mint(_operator, _id);
+        id_ = ++nextId;
+        _mint(_account, id_);
 
-        _paused[_id] = true;
-        updateNodeTypeInternal(_id, _type);
-        updateOperatorInternal(_id, _operator);
+        _paused[id_] = true;
+        updateNodeTypeInternal(id_, _type);
+        updateOperatorInternal(id_, _account);
     }
 
     function updateOperatorInternal(uint256 _id, address _operator) internal {
-        require(operatorToProver[_operator] != _id, "duplicate operator");
+        uint256 proverId = operatorToProver[_operator];
+        require(proverId != 0, "invalid operator");
+        address oldOperator = _operators[_id];
+        _operators[_id] = _operator;
+        delete operatorToProver[oldOperator];
         operatorToProver[_operator] = _id;
         emit OperatorSet(_id, _operator);
     }
@@ -71,36 +85,32 @@ contract Prover is IProver, OwnableUpgradeable, ERC721Upgradeable {
         emit NodeTypeUpdated(_id, _type);
     }
 
-    function updateNodeType(uint256 _id, uint256 _type) external override onlyProverOwner(_id) {
+    function updateNodeType(uint256 _id, uint256 _type) external onlyProverOwner(_id) {
         updateNodeTypeInternal(_id, _type);
     }
 
-    function changeOperator(uint256 _id, address _operator) external override onlyProverOwner(_id) {
+    function changeOperator(uint256 _id, address _operator) external onlyProverOwner(_id) {
         require(_operator != address(0), "zero address");
-        PendingOperator memory pending = _pendingOperators[_id];
-        if (pending.timestamp > 0 && pending.timestamp >= block.timestamp) {
-            _operators[_id] = pending.operator;
-        }
         updateOperatorInternal(_id, _operator);
     }
 
-    function pause(uint256 _id) external override onlyProverOwner(_id) {
+    function pause(uint256 _id) external onlyProverOwner(_id) {
         require(!_paused[_id], "already paused");
 
         _paused[_id] = true;
         emit ProverPaused(_id);
     }
 
-    function resume(uint256 _id) external override onlyProverOwner(_id) {
+    function resume(uint256 _id) external onlyProverOwner(_id) {
         require(_paused[_id], "already actived");
 
         _paused[_id] = false;
         emit ProverResumed(_id);
     }
 
-    function changeMinter(address _minter) external onlyOwner {
+    function setMinter(address _minter) public onlyOwner {
         minter = _minter;
 
-        emit MinterChanged(_minter);
+        emit MinterSet(_minter);
     }
 }

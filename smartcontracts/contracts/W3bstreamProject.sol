@@ -1,17 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./interfaces/IProjectStore.sol";
-
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract ProjectStore is IProjectStore, OwnableUpgradeable, ERC721Upgradeable {
-    event MinterChanged(address indexed minter);
+contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
+    struct ProjectConfig {
+        string uri;
+        bytes32 hash;
+    }
 
-    mapping(uint256 => Project) projects;
+    event AttributeSet(uint256 indexed projectId, bytes32 indexed key, bytes value);
+    event ProjectPaused(uint256 indexed projectId);
+    event ProjectResumed(uint256 indexed projectId);
+    event ProjectConfigUpdated(uint256 indexed projectId, string uri, bytes32 hash);
+    event MinterSet(address indexed minter);
+
+    mapping(uint256 => ProjectConfig) projectConfigs;
     mapping(uint256 => bool) paused;
-    mapping(uint256 => mapping(bytes32 => bytes)) public override attributes;
+    mapping(uint256 => mapping(bytes32 => bytes)) public attributes;
 
     address public minter;
     uint256 nextProjectId;
@@ -24,46 +31,43 @@ contract ProjectStore is IProjectStore, OwnableUpgradeable, ERC721Upgradeable {
     function initialize(address _minter, string calldata _name, string calldata _symbol) public initializer {
         __Ownable_init();
         __ERC721_init(_name, _symbol);
-        minter = _minter;
-        emit MinterChanged(_minter);
+        setMinter(_minter);
     }
 
-    function isPaused(uint256 _projectId) external view override returns (bool) {
+    function isPaused(uint256 _projectId) external view returns (bool) {
         _requireMinted(_projectId);
         return paused[_projectId];
     }
 
-    function project(uint256 _projectId) external view override returns (Project memory) {
+    function config(uint256 _projectId) external view returns (ProjectConfig memory) {
         _requireMinted(_projectId);
-        Project memory project = projects[_projectId];
-        return (project.uri, project.hash);
+        return projectConfigs[_projectId];
     }
 
-    function attribute(uint256 _projectId, bytes32 _name) external view returns (bytes calldata) {
+    function attribute(uint256 _projectId, bytes32 _name) external view returns (bytes memory) {
         return attributes[_projectId][_name];
     }
 
     function attributesOf(
         uint256 _projectId,
         bytes32[] memory _keys
-    ) external view override returns (bytes[] memory values_) {
+    ) external view returns (bytes[] memory values_) {
         _requireMinted(_projectId);
 
         values_ = new bytes[](_keys.length);
-        mapping(bytes32 => bytes) storage project = attributes[_projectId];
+        mapping(bytes32 => bytes) storage attrs = attributes[_projectId];
         for (uint i = 0; i < _keys.length; i++) {
-            values_[i] = project[_keys[i]];
+            values_[i] = attrs[_keys[i]];
         }
     }
 
-    function mint(address _owner, string calldata _uri, bytes32 _hash) external override returns (uint256 _projectId) {
+    function mint(address _owner) external returns (uint256 projectId_) {
         require(msg.sender == minter, "not minter");
 
-        projectId = ++nextProjectId;
+        projectId_ = ++nextProjectId;
 
-        _mint(_owner, projectId);
-        paused[projectId] = true;
-        updateProjectInternal(projectId, _uri, _hash);
+        _mint(_owner, projectId_);
+        paused[projectId_] = true;
     }
 
     function setAttributes(
@@ -83,44 +87,37 @@ contract ProjectStore is IProjectStore, OwnableUpgradeable, ERC721Upgradeable {
     function count() external view returns (uint256) {
         return nextProjectId + 1;
     }
-    function updateProjectInternal(
+
+    function updateConfig(
         uint256 _projectId,
         string memory _uri,
         bytes32 _hash
-    ) internal {
+    ) external onlyProjectOwner(_projectId) {
         require(bytes(_uri).length != 0, "empty uri");
-        Project storage project = projects[_projectId];
-        project.uri = _uri;
-        project.hash = _hash;
+        ProjectConfig storage c = projectConfigs[_projectId];
+        c.uri = _uri;
+        c.hash = _hash;
 
-        emit ProjectUpdated(_projectId, _uri, _hash);
+        emit ProjectConfigUpdated(_projectId, _uri, _hash);
     }
 
-    function updateProject(
-        uint256 _projectId,
-        string memory _uri,
-        bytes32 _hash
-    ) external override onlyProjectOwner(_projectId) {
-        updateProjectInternal(_projectId, _uri, _hash);
-    }
-
-    function pause(uint256 _projectId) external override onlyProjectOwner(_projectId) {
+    function pause(uint256 _projectId) external onlyProjectOwner(_projectId) {
         require(!paused[_projectId], "project already paused");
         paused[_projectId] = true;
 
         emit ProjectPaused(_projectId);
     }
 
-    function resume(uint256 _projectId) external override onlyProjectOwner(_projectId) {
+    function resume(uint256 _projectId) external onlyProjectOwner(_projectId) {
         require(paused[_projectId], "project already actived");
         paused[_projectId] = false;
 
         emit ProjectResumed(_projectId);
     }
 
-    function changeMinter(address _minter) external onlyOwner {
+    function setMinter(address _minter) public onlyOwner {
         minter = _minter;
 
-        emit MinterChanged(_minter);
+        emit MinterSet(_minter);
     }
 }

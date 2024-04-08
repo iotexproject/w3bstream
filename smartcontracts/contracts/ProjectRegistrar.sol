@@ -1,32 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./interfaces/IProjectRegistrar.sol";
-import "./interfaces/IProjectStore.sol";
-
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ProjectRegistrar is IProjectRegistrar, Ownable {
-    uint256 public override registrationFee;
+interface IProjectStore {
+    function mint(address _owner) external returns (uint256 projectId_);
+}
+
+contract ProjectRegistrar is Ownable {
+    event ProjectRegistered(uint256 indexed projectId);
+    event RegistrationFeeSet(uint256 fee);
+    event FeeWithdrawn(address indexed account, uint256 amount);
+
+    uint256 public registrationFee;
     IProjectStore public immutable projectStore;
 
-    constructor(address _projectStore, uint256 _registrationFee) {
+    constructor(address _projectStore) {
         projectStore = IProjectStore(_projectStore);
-        registrationFee = _registrationFee;
-        emit RegistrationFeeSet(_registrationFee);
     }
 
-    function register(string calldata _uri, bytes32 _hash) external payable override returns (uint256 _projectId) {
+    function setRegistrationFee(uint256 _fee) public onlyOwner {
+        registrationFee = _fee;
+        emit RegistrationFeeSet(_fee);
+    }
+
+    function register() external payable returns (uint256) {
         require(msg.value >= registrationFee, "insufficient fee");
-        _projectId = projectStore.mint(msg.sender, _uri, _hash);
-
-        emit ProjectRegister(_projectId);
+        return projectStore.mint(msg.sender);
     }
 
-    function withdrawFee(address _account, uint256 _amount) external onlyOwner {
-        (bool success, ) = payable(_account).call{value: _amount}("");
+    function withdrawFee(address payable _account, uint256 _amount) external onlyOwner {
+        (bool success, ) = _account.call{value: _amount}("");
         require(success, "withdraw fee fail");
 
-        emit WithdrawnFee(_account, _amount);
+        emit FeeWithdrawn(_account, _amount);
     }
 }
