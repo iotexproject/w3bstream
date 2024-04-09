@@ -117,7 +117,7 @@ func runProver(conf *proverconfig.Config) {
 		},
 	)
 
-	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
+	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProjectFileDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 
 	_ = clients.NewManager()
 
-	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
+	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProjectFileDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}

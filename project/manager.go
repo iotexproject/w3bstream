@@ -2,6 +2,10 @@ package project
 
 import (
 	"bytes"
+	"log/slog"
+	"os"
+	"path"
+	"strconv"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -71,6 +75,39 @@ func (m *Manager) load(projectID uint64) (*Project, error) {
 	return p, nil
 }
 
+func (m *Manager) loadFromLocal(projectFileDir string) error {
+	files, err := os.ReadDir(projectFileDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return errors.Wrapf(err, "failed to read project directory %s", projectFileDir)
+		}
+	}
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(path.Join(projectFileDir, f.Name()))
+		if err != nil {
+			slog.Error("failed to read project config", "filename", f.Name(), "error", err)
+			continue
+		}
+
+		projectID, err := strconv.ParseUint(f.Name(), 10, 64)
+		if err != nil {
+			slog.Error("failed to parse filename", "filename", f.Name())
+			continue
+		}
+
+		p, err := convertProject(data)
+		if err != nil {
+			slog.Error("failed to convert project", "project_id", projectID, "error", err)
+			continue
+		}
+		m.projects.Store(projectID, p)
+	}
+	return nil
+}
+
 func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) error {
 	projectCh, err := utilscontract.ListAndWatchProject(chainEndpoint, contractAddress)
 	if err != nil {
@@ -86,13 +123,24 @@ func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) er
 }
 
 // TODO support local project config
-func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint string) (*Manager, error) {
+func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint, projectFileDirectory string) (*Manager, error) {
 	var c *cache
 	var err error
 	if projectCacheDir != "" {
 		c, err = newCache(projectCacheDir)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to new cache")
+		}
+	}
+
+	m := &Manager{
+		ipfsEndpoint: ipfsEndpoint,
+		cache:        c,
+	}
+
+	if projectFileDirectory != "" {
+		if err := m.loadFromLocal(projectFileDirectory); err != nil {
+			return nil, err
 		}
 	}
 
@@ -104,12 +152,8 @@ func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint st
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to new contract instance, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
+	m.instance = instance
 
-	m := &Manager{
-		ipfsEndpoint: ipfsEndpoint,
-		instance:     instance,
-		cache:        c,
-	}
 	if err := m.watchProjectContract(chainEndpoint, contractAddress); err != nil {
 		return nil, err
 	}

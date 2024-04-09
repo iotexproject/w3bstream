@@ -20,7 +20,7 @@ func TestNewManager(t *testing.T) {
 	t.Run("FailedToDialChain", func(t *testing.T) {
 		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "", "")
+		_, err := NewManager("", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 	p = p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
@@ -28,7 +28,7 @@ func TestNewManager(t *testing.T) {
 	t.Run("FailedToNewContracts", func(t *testing.T) {
 		p = p.ApplyFuncReturn(contracts.NewContracts, nil, errors.New(t.Name()))
 
-		_, err := NewManager("", "", "", "")
+		_, err := NewManager("", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
 	p = p.ApplyFuncReturn(contracts.NewContracts, nil, nil)
@@ -36,7 +36,7 @@ func TestNewManager(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		p = p.ApplyPrivateMethod(&Manager{}, "watchProjectContract", func() error { return nil })
 
-		_, err := NewManager("", "", "", "")
+		_, err := NewManager("", "", "", "", "")
 		r.NoError(err)
 	})
 }

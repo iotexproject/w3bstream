@@ -40,7 +40,8 @@ func main() {
 		},
 	)
 
-	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint)
+	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress,
+		conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProjectFileDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}
