@@ -5,6 +5,7 @@ import (
 	"context"
 	"log/slog"
 	"math/big"
+	"sort"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -43,6 +44,7 @@ type Project struct {
 }
 
 type Prover struct {
+	ID              uint64
 	OperatorAddress string
 	BlockNumber     uint64
 	Paused          *bool
@@ -127,6 +129,16 @@ func watchProject(ch chan<- *Project, client *ethclient.Client, instance *projec
 		}},
 	}
 	ticker := time.NewTicker(interval)
+
+	attributeSetMap := make(map[uint64]map[uint64]map[uint]*project.ProjectAttributeSet) // projectID -> (blockID -> (txIndex -> *project.ProjectAttributeSet))
+
+	projectPausedMap := make(map[uint64]map[uint64]*project.ProjectProjectPaused) // projectID -> (blockID -> *project.ProjectProjectPaused)
+	projectPausedIndex := uint(0)
+	projectResumedMap := make(map[uint64]map[uint64]*project.ProjectProjectResumed) // projectID -> (blockID -> *project.ProjectProjectResumed)
+	projectResumedIndex := uint(0)
+	projectConfigUpdatedMap := make(map[uint64]map[uint64]*project.ProjectProjectConfigUpdated) // projectID -> (blockID -> *project.ProjectProjectConfigUpdated)
+	projectConfigUpdatedIndex := uint(0)
+
 	go func() {
 		for range ticker.C {
 			from := queriedBlockNumber + 1
@@ -159,10 +171,8 @@ func watchProject(ch chan<- *Project, client *ethclient.Client, instance *projec
 						slog.Error("failed to parse project attribute set event", "error", err)
 						continue
 					}
-					ch <- &Project{
-						ID:          ev.ProjectId.Uint64(),
-						BlockNumber: evLog.BlockNumber,
-						Attributes:  map[[32]byte][]byte{ev.Key: ev.Value},
+					attributeSetMap[ev.ProjectId.Uint64()] = map[uint64]map[uint]*project.ProjectAttributeSet{
+						evLog.BlockNumber: {evLog.TxIndex: ev},
 					}
 				case crypto.Keccak256Hash([]byte(projectPausedTopic)).Hex():
 					ev, err := instance.ParseProjectPaused(evLog)
@@ -170,11 +180,9 @@ func watchProject(ch chan<- *Project, client *ethclient.Client, instance *projec
 						slog.Error("failed to parse project paused event", "error", err)
 						continue
 					}
-					flag := true
-					ch <- &Project{
-						ID:          ev.ProjectId.Uint64(),
-						BlockNumber: evLog.BlockNumber,
-						Paused:      &flag,
+					if evLog.TxIndex >= projectPausedIndex {
+						projectPausedIndex = evLog.TxIndex
+						projectPausedMap[ev.ProjectId.Uint64()] = map[uint64]*project.ProjectProjectPaused{evLog.BlockNumber: ev}
 					}
 				case crypto.Keccak256Hash([]byte(projectResumedTopic)).Hex():
 					ev, err := instance.ParseProjectResumed(evLog)
@@ -182,11 +190,9 @@ func watchProject(ch chan<- *Project, client *ethclient.Client, instance *projec
 						slog.Error("failed to parse project resumed event", "error", err)
 						continue
 					}
-					flag := false
-					ch <- &Project{
-						ID:          ev.ProjectId.Uint64(),
-						BlockNumber: evLog.BlockNumber,
-						Paused:      &flag,
+					if evLog.TxIndex >= projectResumedIndex {
+						projectResumedIndex = evLog.TxIndex
+						projectResumedMap[ev.ProjectId.Uint64()] = map[uint64]*project.ProjectProjectResumed{evLog.BlockNumber: ev}
 					}
 				case crypto.Keccak256Hash([]byte(projectConfigUpdatedTopic)).Hex():
 					ev, err := instance.ParseProjectConfigUpdated(evLog)
@@ -194,16 +200,83 @@ func watchProject(ch chan<- *Project, client *ethclient.Client, instance *projec
 						slog.Error("failed to parse project config updated event", "error", err)
 						continue
 					}
-					flag := true
-					ch <- &Project{
-						ID:          ev.ProjectId.Uint64(),
-						BlockNumber: evLog.BlockNumber,
-						Paused:      &flag,
-						Uri:         ev.Uri,
-						Hash:        ev.Hash,
+					if evLog.TxIndex >= projectConfigUpdatedIndex {
+						projectConfigUpdatedIndex = evLog.TxIndex
+						projectConfigUpdatedMap[ev.ProjectId.Uint64()] = map[uint64]*project.ProjectProjectConfigUpdated{evLog.BlockNumber: ev}
 					}
 				default:
 					slog.Error("not support parse event", "event", eventSignature)
+				}
+			}
+			for projectId, blockMap := range attributeSetMap {
+				blockIds := make([]uint64, 0, len(blockMap))
+				for k := range blockMap {
+					blockIds = append(blockIds, k)
+				}
+				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
+				for _, blockId := range blockIds {
+					txIndexMap := blockMap[blockId]
+					txIndexs := make([]uint, 0, len(txIndexMap))
+					for k := range txIndexMap {
+						txIndexs = append(txIndexs, k)
+					}
+					sort.Slice(txIndexs, func(i, j int) bool { return txIndexs[i] < txIndexs[j] })
+					attributes := make(map[[32]byte][]byte)
+					for _, txIndex := range txIndexs {
+						attributes[txIndexMap[txIndex].Key] = txIndexMap[txIndex].Value
+					}
+					ch <- &Project{
+						ID:          projectId,
+						BlockNumber: blockId,
+						Attributes:  attributes,
+					}
+				}
+			}
+			for _, blockMap := range projectPausedMap {
+				blockIds := make([]uint64, 0, len(blockMap))
+				for k := range blockMap {
+					blockIds = append(blockIds, k)
+				}
+				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
+				for _, blockId := range blockIds {
+					flag := true
+					ch <- &Project{
+						ID:          blockMap[blockId].ProjectId.Uint64(),
+						BlockNumber: blockId,
+						Paused:      &flag,
+					}
+				}
+			}
+			for _, blockMap := range projectResumedMap {
+				blockIds := make([]uint64, 0, len(blockMap))
+				for k := range blockMap {
+					blockIds = append(blockIds, k)
+				}
+				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
+				for _, blockId := range blockIds {
+					flag := false
+					ch <- &Project{
+						ID:          blockMap[blockId].ProjectId.Uint64(),
+						BlockNumber: blockId,
+						Paused:      &flag,
+					}
+				}
+			}
+			for _, blockMap := range projectConfigUpdatedMap {
+				blockIds := make([]uint64, 0, len(blockMap))
+				for k := range blockMap {
+					blockIds = append(blockIds, k)
+				}
+				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
+				for _, blockId := range blockIds {
+					flag := true
+					ch <- &Project{
+						ID:          blockMap[blockId].ProjectId.Uint64(),
+						BlockNumber: blockId,
+						Paused:      &flag,
+						Uri:         blockMap[blockId].Uri,
+						Hash:        blockMap[blockId].Hash,
+					}
 				}
 			}
 			queriedBlockNumber = to
@@ -255,6 +328,7 @@ func listProver(ch chan<- *Prover, instance *prover.Prover, targetBlockNumber ui
 		}
 
 		ch <- &Prover{
+			ID:              id,
 			OperatorAddress: mp.String(),
 			BlockNumber:     targetBlockNumber,
 			Paused:          &isPaused,
@@ -276,6 +350,16 @@ func watchProver(ch chan<- *Prover, client *ethclient.Client, instance *prover.P
 		}},
 	}
 	ticker := time.NewTicker(interval)
+
+	operatorSetMap := make(map[uint64]map[uint64]*prover.ProverOperatorSet) // proverID -> (blockID -> *prover.ProverOperatorSet)
+	operatorSetIndex := uint(0)
+	nodeTypeUpdatedMap := make(map[uint64]map[uint64]*prover.ProverNodeTypeUpdated) // proverID -> (blockID -> *prover.ProverOperatorSet)
+	nodeTypeUpdatedIndex := uint(0)
+	proverPausedMap := make(map[uint64]map[uint64]*prover.ProverProverPaused) // proverID -> (blockID -> *prover.ProverOperatorSet)
+	proverPausedIndex := uint(0)
+	proverResumedMap := make(map[uint64]map[uint64]*prover.ProverProverResumed) // proverID -> (blockID -> *prover.ProverProverResumed)
+	proverResumedIndex := uint(0)
+
 	go func() {
 		for range ticker.C {
 			from := queriedBlockNumber + 1
@@ -308,12 +392,9 @@ func watchProver(ch chan<- *Prover, client *ethclient.Client, instance *prover.P
 						slog.Error("failed to parse prover operator set event", "error", err)
 						continue
 					}
-					flag := true
-					ch <- &Prover{
-						OperatorAddress: ev.Operator.String(),
-						BlockNumber:     logs[i].BlockNumber,
-						Paused:          &flag,
-						NodeTypes:       0,
+					if evLog.TxIndex >= operatorSetIndex {
+						operatorSetIndex = evLog.TxIndex
+						operatorSetMap[ev.Id.Uint64()] = map[uint64]*prover.ProverOperatorSet{evLog.BlockNumber: ev}
 					}
 				case crypto.Keccak256Hash([]byte(nodeTypeUpdatedTopic)).Hex():
 					ev, err := instance.ParseNodeTypeUpdated(logs[i])
@@ -321,10 +402,9 @@ func watchProver(ch chan<- *Prover, client *ethclient.Client, instance *prover.P
 						slog.Error("failed to parse prover nodeType updated event", "error", err)
 						continue
 					}
-					ch <- &Prover{
-						OperatorAddress: ev.Id.String(),
-						BlockNumber:     logs[i].BlockNumber,
-						NodeTypes:       ev.Typ.Uint64(),
+					if evLog.TxIndex >= nodeTypeUpdatedIndex {
+						nodeTypeUpdatedIndex = evLog.TxIndex
+						nodeTypeUpdatedMap[ev.Id.Uint64()] = map[uint64]*prover.ProverNodeTypeUpdated{evLog.BlockNumber: ev}
 					}
 				case crypto.Keccak256Hash([]byte(proverPausedTopic)).Hex():
 					ev, err := instance.ParseProverPaused(logs[i])
@@ -332,11 +412,9 @@ func watchProver(ch chan<- *Prover, client *ethclient.Client, instance *prover.P
 						slog.Error("failed to parse prover paused event", "error", err)
 						continue
 					}
-					flag := true
-					ch <- &Prover{
-						OperatorAddress: ev.Id.String(),
-						BlockNumber:     logs[i].BlockNumber,
-						Paused:          &flag,
+					if evLog.TxIndex >= proverPausedIndex {
+						proverPausedIndex = evLog.TxIndex
+						proverPausedMap[ev.Id.Uint64()] = map[uint64]*prover.ProverProverPaused{evLog.BlockNumber: ev}
 					}
 				case crypto.Keccak256Hash([]byte(proverResumedTopic)).Hex():
 					ev, err := instance.ParseProverResumed(logs[i])
@@ -344,15 +422,73 @@ func watchProver(ch chan<- *Prover, client *ethclient.Client, instance *prover.P
 						slog.Error("failed to parse prover resumed event", "error", err)
 						continue
 					}
-					flag := false
-					ch <- &Prover{
-						OperatorAddress: ev.Id.String(),
-						BlockNumber:     logs[i].BlockNumber,
-						Paused:          &flag,
+					if evLog.TxIndex >= proverResumedIndex {
+						proverResumedIndex = evLog.TxIndex
+						proverResumedMap[ev.Id.Uint64()] = map[uint64]*prover.ProverProverResumed{evLog.BlockNumber: ev}
 					}
-
 				default:
 					slog.Error("not support parse event", "event", eventSignature)
+				}
+			}
+			for _, blockMap := range operatorSetMap {
+				blockIds := make([]uint64, 0, len(blockMap))
+				for k := range blockMap {
+					blockIds = append(blockIds, k)
+				}
+				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
+				for _, blockId := range blockIds {
+					flag := true
+					ch <- &Prover{
+						ID:              blockMap[blockId].Id.Uint64(),
+						OperatorAddress: blockMap[blockId].Operator.String(),
+						BlockNumber:     blockId,
+						Paused:          &flag,
+						NodeTypes:       0,
+					}
+				}
+			}
+			for _, blockMap := range nodeTypeUpdatedMap {
+				blockIds := make([]uint64, 0, len(blockMap))
+				for k := range blockMap {
+					blockIds = append(blockIds, k)
+				}
+				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
+				for _, blockId := range blockIds {
+					ch <- &Prover{
+						ID:          blockMap[blockId].Id.Uint64(),
+						BlockNumber: blockId,
+						NodeTypes:   blockMap[blockId].Typ.Uint64(),
+					}
+				}
+			}
+			for _, blockMap := range proverPausedMap {
+				blockIds := make([]uint64, 0, len(blockMap))
+				for k := range blockMap {
+					blockIds = append(blockIds, k)
+				}
+				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
+				for _, blockId := range blockIds {
+					flag := true
+					ch <- &Prover{
+						ID:          blockMap[blockId].Id.Uint64(),
+						BlockNumber: blockId,
+						Paused:      &flag,
+					}
+				}
+			}
+			for _, blockMap := range proverResumedMap {
+				blockIds := make([]uint64, 0, len(blockMap))
+				for k := range blockMap {
+					blockIds = append(blockIds, k)
+				}
+				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
+				for _, blockId := range blockIds {
+					flag := false
+					ch <- &Prover{
+						ID:          blockMap[blockId].Id.Uint64(),
+						BlockNumber: blockId,
+						Paused:      &flag,
+					}
 				}
 			}
 			queriedBlockNumber = to
