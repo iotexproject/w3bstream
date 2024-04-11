@@ -59,9 +59,11 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 
 func TestProcessor_HandleP2PData(t *testing.T) {
 	r := require.New(t)
+
+	m := &project.Manager{}
 	processor := &Processor{
-		vmHandler:      &vm.Handler{},
-		projectManager: &project.Manager{},
+		vmHandler:  &vm.Handler{},
+		getProject: m.Get,
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {

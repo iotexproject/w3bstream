@@ -28,9 +28,7 @@ type Datasource interface {
 	Retrieve(projectID, nextTaskID uint64) (*types.Task, error)
 }
 
-type ProjectManager interface {
-	Get(projectID uint64) (*project.Project, error)
-}
+type GetCachedProjectIDs func() []uint64
 
 type dispatcher struct {
 	projectDispatchers *sync.Map // projectID(uint64) -> *ProjectDispatcher
@@ -51,7 +49,7 @@ func (d *dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 }
 
 func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource,
-	getProjectIDs handler.GetCacheProjectIDs, getProject handler.GetProject,
+	getProjectIDs GetCachedProjectIDs, getProject handler.GetProject,
 	bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519, chainEndpoint, projectContractAddress, projectFileDirectory string,
 	iotexChainID int) error {
 	projectDispatchers := &sync.Map{}
@@ -79,7 +77,7 @@ func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.New
 }
 
 func dummyDispatch(persistence Persistence, newDatasource internaldispatcher.NewDatasource,
-	getProjectIDs handler.GetCacheProjectIDs, getProject handler.GetProject,
+	getProjectIDs GetCachedProjectIDs, getProject handler.GetProject,
 	projectDispatchers *sync.Map, ps *p2p.PubSubs, handler *handler.TaskStateHandler) error {
 	projectIDs := getProjectIDs()
 	for _, id := range projectIDs {
