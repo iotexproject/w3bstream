@@ -13,8 +13,6 @@ type SaveTaskStateLog func(s *types.TaskStateLog, t *types.Task) error
 
 type GetProject func(projectID uint64) (*project.Project, error)
 
-type GetCacheProjectIDs func() []uint64
-
 type TaskStateHandler struct {
 	saveTaskStateLog          SaveTaskStateLog
 	getProject                GetProject
