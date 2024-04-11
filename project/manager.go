@@ -23,6 +23,15 @@ type Manager struct {
 	cache        *cache   // optional
 }
 
+func (m *Manager) GetAllCacheProjectIDs() []uint64 {
+	var ids []uint64
+	m.projects.Range(func(key, value any) bool {
+		ids = append(ids, key.(uint64))
+		return true
+	})
+	return ids
+}
+
 func (m *Manager) Get(projectID uint64) (*Project, error) {
 	var err error
 	p, ok := m.projects.Load(projectID)
@@ -88,7 +97,7 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 		}
 		data, err := os.ReadFile(path.Join(projectFileDir, f.Name()))
 		if err != nil {
-			slog.Error("failed to read project config", "filename", f.Name(), "error", err)
+			slog.Error("failed to read project file", "filename", f.Name(), "error", err)
 			continue
 		}
 
@@ -142,6 +151,7 @@ func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint, p
 		if err := m.loadFromLocal(projectFileDirectory); err != nil {
 			return nil, err
 		}
+		return m, nil
 	}
 
 	client, err := ethclient.Dial(chainEndpoint)

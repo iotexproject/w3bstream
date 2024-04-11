@@ -48,6 +48,7 @@ var (
 		IoTeXChainID:           2,
 		ProjectContractAddress: "0x2339644f65c371Ca36b335A7eC3EB8AD8CBd5F51",
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
+		ProjectFileDirectory:   "../../test/project",
 		DIDAuthServerEndpoint:  "localhost:9999",
 		ProjectCacheDirectory:  "./project_cache",
 		SequencerPubKey:        "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",

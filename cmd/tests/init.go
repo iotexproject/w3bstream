@@ -1,8 +1,6 @@
 package tests
 
 import (
-	"crypto/x509"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"log/slog"
@@ -126,26 +124,22 @@ func runProver(conf *proverconfig.Config) {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed parse prover private key"))
 	}
-	pubKeyBytes, err := x509.MarshalPKIXPublicKey(sk.PublicKey)
-	if err != nil {
-		fmt.Println("Error marshaling public key:", err)
-		return
-	}
-	pubKeyHex := hex.EncodeToString(pubKeyBytes)
+	proverID := crypto.PubkeyToAddress(sk.PublicKey).String()
 
 	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, sk, sequencerPubKey, pubKeyHex)
+	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, sk, sequencerPubKey, proverID)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, pubKeyHex, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
+	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress,
+		conf.ProjectFileDirectory, proverID, pubSubs, taskProcessor.HandleProjectProvers, projectConfigManager.GetAllCacheProjectIDs); err != nil {
 		log.Fatal(err)
 	}
 
@@ -165,7 +159,9 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 		log.Fatal(err)
 	}
 
-	if err := task.RunDispatcher(pg, datasource.NewPostgres, projectConfigManager.Get, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.ChainEndpoint, conf.ProjectContractAddress, conf.IoTeXChainID); err != nil {
+	if err := task.RunDispatcher(pg, datasource.NewPostgres, projectConfigManager.GetAllCacheProjectIDs,
+		projectConfigManager.Get, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519,
+		conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IoTeXChainID); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}
 
