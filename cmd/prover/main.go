@@ -66,7 +66,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress, proverID, pubSubs, taskProcessor.HandleProjectProvers); err != nil {
+	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress,
+		conf.ProjectContractAddress, conf.ProjectFileDirectory, proverID, pubSubs, taskProcessor.HandleProjectProvers,
+		projectConfigManager.GetAllCacheProjectIDs); err != nil {
 		log.Fatal(err)
 	}
 

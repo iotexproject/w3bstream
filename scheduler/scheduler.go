@@ -18,6 +18,8 @@ import (
 
 type HandleProjectProvers func(projectID uint64, provers []string)
 
+type GetCacheProjectIDs func() []uint64
+
 type scheduler struct {
 	provers              *sync.Map // proverID(string) -> Prover(*contract.Prover)
 	projectOffsets       *sync.Map // project offset in interval(uint64) -> Project(*contract.Project)
@@ -55,13 +57,13 @@ func (s *scheduler) schedule() {
 			}
 		}
 		if !isMy {
-			slog.Info("the project not scheduld to this prover", "project_id", projectID)
+			slog.Info("the project not scheduled to this prover", "project_id", projectID)
 			s.pubSubs.Delete(projectID)
 			continue
 		}
 		s.handleProjectProvers(projectID, projectProvers)
 		s.pubSubs.Add(projectID)
-		slog.Info("the project scheduld to this prover", "project_id", projectID)
+		slog.Info("the project scheduled to this prover", "project_id", projectID)
 	}
 }
 
@@ -98,7 +100,14 @@ func watchChainHead(head chan<- uint64, chainEndpoint string) error {
 	return nil
 }
 
-func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers) error {
+func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, projectFileDirectory, proverID string,
+	pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCacheProjectIDs) error {
+
+	if projectFileDirectory != "" {
+		dummySchedule(proverID, pubSubs, handleProjectProvers, getProjectIDs)
+		return nil
+	}
+
 	provers := &sync.Map{}
 	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress)
 	if err != nil {
@@ -154,4 +163,18 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	}
 	go s.schedule()
 	return nil
+}
+
+func dummySchedule(proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCacheProjectIDs) {
+	s := &scheduler{
+		pubSubs:              pubSubs,
+		handleProjectProvers: handleProjectProvers,
+	}
+
+	projectIDs := getProjectIDs()
+	for _, id := range projectIDs {
+		s.handleProjectProvers(id, []string{proverID})
+		s.pubSubs.Add(id)
+		slog.Info("the project scheduled to this prover", "project_id", id)
+	}
 }
