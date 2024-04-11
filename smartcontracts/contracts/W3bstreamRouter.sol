@@ -20,10 +20,7 @@ contract W3bstreamRouter is IRouter, Initializable {
     mapping(uint256 => address) public override dapp;
 
     modifier onlyProjectOwner(uint256 _projectId) {
-        require(
-            IERC721(projectStore).ownerOf(_projectId) == msg.sender,
-            "not project owner"
-        );
+        require(IERC721(projectStore).ownerOf(_projectId) == msg.sender, "not project owner");
         _;
     }
 

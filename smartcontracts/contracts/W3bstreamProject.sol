@@ -48,10 +48,7 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
         return attributes[_projectId][_name];
     }
 
-    function attributesOf(
-        uint256 _projectId,
-        bytes32[] memory _keys
-    ) external view returns (bytes[] memory values_) {
+    function attributesOf(uint256 _projectId, bytes32[] memory _keys) external view returns (bytes[] memory values_) {
         _requireMinted(_projectId);
 
         values_ = new bytes[](_keys.length);
@@ -88,11 +85,7 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
         return nextProjectId + 1;
     }
 
-    function updateConfig(
-        uint256 _projectId,
-        string memory _uri,
-        bytes32 _hash
-    ) external onlyProjectOwner(_projectId) {
+    function updateConfig(uint256 _projectId, string memory _uri, bytes32 _hash) external onlyProjectOwner(_projectId) {
         require(bytes(_uri).length != 0, "empty uri");
         ProjectConfig storage c = projectConfigs[_projectId];
         c.uri = _uri;

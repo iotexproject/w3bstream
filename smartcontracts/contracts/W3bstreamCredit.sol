@@ -22,5 +22,4 @@ contract W3bstreamCredit is OwnableUpgradeable, ERC20Upgradeable {
         require(msg.sender == minter, "not minter");
         _mint(_prover, _amount);
     }
-
 }

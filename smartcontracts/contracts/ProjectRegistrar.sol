@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 interface IProjectStore {
     function mint(address _owner) external returns (uint256 projectId_);
 }
 
-contract ProjectRegistrar is Ownable {
+contract ProjectRegistrar is OwnableUpgradeable {
     event ProjectRegistered(uint256 indexed projectId);
     event RegistrationFeeSet(uint256 fee);
     event FeeWithdrawn(address indexed account, uint256 amount);
 
     uint256 public registrationFee;
-    IProjectStore public immutable projectStore;
+    IProjectStore public projectStore;
 
-    constructor(address _projectStore) {
+    function initialize(address _projectStore) public initializer {
         projectStore = IProjectStore(_projectStore);
     }
 

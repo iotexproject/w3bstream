@@ -72,19 +72,19 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
         emit FeeWithdrawn(_account, _amount);
     }
 
-    function register() external nonReentrant payable returns (uint256) {
+    function register() external payable nonReentrant returns (uint256) {
         require(msg.value >= registrationFee, "insufficient fee");
         return IProverStore(proverStore).mint(msg.sender);
     }
 
-    function grant(uint256 _proverId, uint256 _amount) external nonReentrant override {
+    function grant(uint256 _proverId, uint256 _amount) external override nonReentrant {
         address prover = IProverStore(proverStore).prover(_proverId);
         require(prover != address(0), "prover not exist");
 
         ICreditCenter(creditCenter).grant(prover, _amount);
     }
 
-    function ownerOfProver(uint256 _proverId) external override view returns (address) {
+    function ownerOfProver(uint256 _proverId) external view override returns (address) {
         return IProverStore(proverStore).prover(_proverId);
     }
 
@@ -96,5 +96,4 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
     function isActiveCoordinator(address _coordinator, uint256 _projectId) external view returns (bool) {
         return _coordinator == coordinator;
     }
-
 }
