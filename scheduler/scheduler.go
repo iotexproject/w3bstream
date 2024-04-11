@@ -18,7 +18,7 @@ import (
 
 type HandleProjectProvers func(projectID uint64, provers []string)
 
-type GetCacheProjectIDs func() []uint64
+type GetCachedProjectIDs func() []uint64
 
 type scheduler struct {
 	provers              *sync.Map // proverID(string) -> Prover(*contract.Prover)
@@ -101,7 +101,7 @@ func watchChainHead(head chan<- uint64, chainEndpoint string) error {
 }
 
 func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, projectFileDirectory, proverID string,
-	pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCacheProjectIDs) error {
+	pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCachedProjectIDs) error {
 
 	if projectFileDirectory != "" {
 		dummySchedule(proverID, pubSubs, handleProjectProvers, getProjectIDs)
@@ -115,14 +115,14 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	}
 	go func() {
 		for p := range proverCh {
-			slog.Info("get a new prover", "prover_id", p.ID)
-			e, ok := provers.Load(p.ID)
+			slog.Info("get a new prover", "prover_operator", p.OperatorAddress)
+			e, ok := provers.Load(p.OperatorAddress)
 			if ok {
 				if ep := e.(*contract.Prover); ep.BlockNumber > p.BlockNumber {
 					p = ep
 				}
 			}
-			provers.Store(p.ID, p)
+			provers.Store(p.OperatorAddress, p)
 		}
 	}()
 
@@ -165,7 +165,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	return nil
 }
 
-func dummySchedule(proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCacheProjectIDs) {
+func dummySchedule(proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCachedProjectIDs) {
 	s := &scheduler{
 		pubSubs:              pubSubs,
 		handleProjectProvers: handleProjectProvers,

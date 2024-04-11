@@ -8,7 +8,6 @@ require (
 	github.com/ethereum/go-ethereum v1.13.4
 	github.com/fatih/color v1.14.1
 	github.com/gin-gonic/gin v1.9.1
-	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.5.0
 	github.com/ipfs/go-ipfs-api v0.7.0
 	github.com/jmoiron/sqlx v1.3.5
@@ -22,6 +21,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/tablelandnetwork/basin-cli v0.0.11
 	github.com/tidwall/gjson v1.17.0
+	go.uber.org/mock v0.4.0
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.32.0
 	gorm.io/datatypes v1.2.0
@@ -172,7 +172,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	go.uber.org/dig v1.17.1 // indirect
 	go.uber.org/fx v1.20.1 // indirect
-	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/arch v0.7.0 // indirect

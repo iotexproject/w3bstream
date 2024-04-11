@@ -40,7 +40,7 @@ func main() {
 		},
 	)
 
-	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress,
+	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress,
 		conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProjectFileDirectory)
 	if err != nil {
 		log.Fatal(err)
@@ -59,7 +59,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectConfigManager, sk, sequencerPubKey, proverID)
+	taskProcessor := task.NewProcessor(vmHandler, projectManager.Get, sk, sequencerPubKey, proverID)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
@@ -68,7 +68,7 @@ func main() {
 
 	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress,
 		conf.ProjectContractAddress, conf.ProjectFileDirectory, proverID, pubSubs, taskProcessor.HandleProjectProvers,
-		projectConfigManager.GetAllCacheProjectIDs); err != nil {
+		projectManager.GetCachedProjectIDs); err != nil {
 		log.Fatal(err)
 	}
 

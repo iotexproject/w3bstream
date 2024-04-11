@@ -23,7 +23,7 @@ type Manager struct {
 	cache        *cache   // optional
 }
 
-func (m *Manager) GetAllCacheProjectIDs() []uint64 {
+func (m *Manager) GetCachedProjectIDs() []uint64 {
 	var ids []uint64
 	m.projects.Range(func(key, value any) bool {
 		ids = append(ids, key.(uint64))

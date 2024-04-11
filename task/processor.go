@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/utils/distance"
 	"github.com/machinefi/sprout/vm"
@@ -25,9 +26,11 @@ type VMHandler interface {
 	Handle(task *types.Task, vmtype vm.Type, code string, expParam string) ([]byte, error)
 }
 
+type GetProject func(projectID uint64) (*project.Project, error)
+
 type Processor struct {
 	vmHandler        VMHandler
-	projectManager   ProjectManager
+	getProject       GetProject
 	proverPrivateKey *ecdsa.PrivateKey
 	sequencerPubKey  []byte
 	proverID         string
@@ -44,7 +47,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	}
 	t := d.Task
 
-	p, err := r.projectManager.Get(t.ProjectID)
+	p, err := r.getProject(t.ProjectID)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
 		r.reportFail(t, err, topic)
@@ -161,10 +164,10 @@ func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result [
 	}
 }
 
-func NewProcessor(vmHandler VMHandler, projectManager ProjectManager, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID string) *Processor {
+func NewProcessor(vmHandler VMHandler, getProject GetProject, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID string) *Processor {
 	return &Processor{
 		vmHandler:        vmHandler,
-		projectManager:   projectManager,
+		getProject:       getProject,
 		proverPrivateKey: proverPrivateKey,
 		sequencerPubKey:  seqPubkey,
 		proverID:         proverID,
