@@ -34,6 +34,10 @@ const (
 	proverResumedTopic   = "ProverResumed(uint256)"
 )
 
+var (
+	emptyHash = [32]byte{}
+)
+
 type Project struct {
 	ID          uint64
 	BlockNumber uint64
@@ -43,12 +47,53 @@ type Project struct {
 	Attributes  map[[32]byte][]byte
 }
 
+func (p *Project) Merge(diff *Project) {
+	if diff.ID != 0 {
+		p.ID = diff.ID
+	}
+	if diff.BlockNumber != 0 {
+		p.BlockNumber = diff.BlockNumber
+	}
+	if diff.Paused != nil {
+		paused := *diff.Paused
+		p.Paused = &paused
+	}
+	if diff.Uri != "" {
+		p.Uri = diff.Uri
+	}
+	if !bytes.Equal(diff.Hash[:], emptyHash[:]) {
+		copy(p.Hash[:], diff.Hash[:])
+	}
+	for h, d := range diff.Attributes {
+		p.Attributes[h] = d
+	}
+}
+
 type Prover struct {
 	ID              uint64
 	OperatorAddress string
 	BlockNumber     uint64
 	Paused          *bool
 	NodeTypes       uint64
+}
+
+func (p *Prover) Merge(diff *Prover) {
+	if diff.ID != 0 {
+		p.ID = diff.ID
+	}
+	if diff.OperatorAddress != "" {
+		p.OperatorAddress = diff.OperatorAddress
+	}
+	if diff.BlockNumber != 0 {
+		p.BlockNumber = diff.BlockNumber
+	}
+	if diff.Paused != nil {
+		paused := *diff.Paused
+		p.Paused = &paused
+	}
+	if diff.NodeTypes != 0 {
+		p.NodeTypes = diff.NodeTypes
+	}
 }
 
 func ListAndWatchProject(chainEndpoint, contractAddress string) (<-chan *Project, error) {
