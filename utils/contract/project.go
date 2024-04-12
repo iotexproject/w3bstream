@@ -27,7 +27,7 @@ var (
 	projectResumedTopicHash       = crypto.Keccak256Hash([]byte("ProjectResumed(uint256)"))
 	projectConfigUpdatedTopicHash = crypto.Keccak256Hash([]byte("ProjectConfigUpdated(uint256,string,bytes32)"))
 
-	emptyHash = [32]byte{}
+	emptyHash = common.Hash{}
 )
 
 type Projects struct {
@@ -42,6 +42,21 @@ type Project struct {
 	Uri         string
 	Hash        common.Hash
 	Attributes  map[common.Hash][]byte
+}
+
+func (ps *Projects) Merge(diff *Projects) {
+	ps.BlockNumber = diff.BlockNumber
+	for id, p := range ps.Projects {
+		diffP, ok := diff.Projects[id]
+		if ok {
+			p.Merge(diffP)
+		}
+	}
+	for id, p := range diff.Projects {
+		if _, ok := ps.Projects[id]; !ok {
+			ps.Projects[id] = p
+		}
+	}
 }
 
 func (p *Project) Merge(diff *Project) {

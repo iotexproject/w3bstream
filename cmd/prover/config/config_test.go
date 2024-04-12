@@ -16,20 +16,20 @@ func TestConfig_Init(t *testing.T) {
 	t.Run("UseEnvConfig", func(t *testing.T) {
 		os.Clearenv()
 		expected := config.Config{
-			Risc0ServerEndpoint:    "risc0:1111",
-			Halo2ServerEndpoint:    "halo2:2222",
-			ZKWasmServerEndpoint:   "zkwasm:3333",
-			WasmServerEndpoint:     "wasm:4444",
-			ChainEndpoint:          "http://abc.def.com",
-			ProjectContractAddress: "0x123",
-			DatabaseDSN:            "postgres://root@localhost/abc?ext=666",
-			BootNodeMultiAddr:      "/dsn4/abc/123",
-			ProverContractAddress:  "0x456",
-			IoTeXChainID:           5,
-			SchedulerEpoch:         720,
-			IPFSEndpoint:           "abc.ipfs.net",
-			ProverPrivateKey:       "private key",
-			ProjectFileDirectory:   "/path/to/project/configs",
+			Risc0ServerEndpoint:      "risc0:1111",
+			Halo2ServerEndpoint:      "halo2:2222",
+			ZKWasmServerEndpoint:     "zkwasm:3333",
+			WasmServerEndpoint:       "wasm:4444",
+			ChainEndpoint:            "http://abc.def.com",
+			ProjectContractAddress:   "0x123",
+			DatabaseDSN:              "postgres://root@localhost/abc?ext=666",
+			BootNodeMultiAddr:        "/dsn4/abc/123",
+			ProverContractAddress:    "0x456",
+			IoTeXChainID:             5,
+			SchedulerEpoch:           720,
+			IPFSEndpoint:             "abc.ipfs.net",
+			ProverOperatorPrivateKey: "private key",
+			ProjectFileDirectory:     "/path/to/project/configs",
 		}
 
 		_ = os.Setenv("RISC0_SERVER_ENDPOINT", expected.Risc0ServerEndpoint)
@@ -44,7 +44,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddress)
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
-		_ = os.Setenv("PROVER_PRIVATE_KEY", expected.ProverPrivateKey)
+		_ = os.Setenv("PROVER_PRIVATE_KEY", expected.ProverOperatorPrivateKey)
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDirectory)
 
 		c := &config.Config{}

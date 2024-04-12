@@ -33,12 +33,12 @@ type Processor struct {
 	getProject       GetProject
 	proverPrivateKey *ecdsa.PrivateKey
 	sequencerPubKey  []byte
-	proverID         string
+	proverID         uint64
 	projectProvers   sync.Map
 }
 
-func (r *Processor) HandleProjectProvers(projectID uint64, provers []string) {
-	r.projectProvers.Store(projectID, provers)
+func (r *Processor) HandleProjectProvers(projectID uint64, proverIDs []uint64) {
+	r.projectProvers.Store(projectID, proverIDs)
 }
 
 func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
@@ -60,10 +60,10 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 
-	var provers []string
+	var provers []uint64
 	proversValue, ok := r.projectProvers.Load(t.ProjectID)
 	if ok {
-		provers = proversValue.([]string)
+		provers = proversValue.([]uint64)
 	}
 	if len(provers) > 1 {
 		workProver := distance.GetMinNLocation(provers, t.ID, 1)
@@ -164,7 +164,7 @@ func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result [
 	}
 }
 
-func NewProcessor(vmHandler VMHandler, getProject GetProject, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID string) *Processor {
+func NewProcessor(vmHandler VMHandler, getProject GetProject, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID uint64) *Processor {
 	return &Processor{
 		vmHandler:        vmHandler,
 		getProject:       getProject,

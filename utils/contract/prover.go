@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"bytes"
 	"context"
 	"log/slog"
 	"math/big"
@@ -8,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -23,6 +23,8 @@ var (
 	nodeTypeUpdatedTopicHash = crypto.Keccak256Hash([]byte("NodeTypeUpdated(uint256,uint256)"))
 	proverPausedTopicHash    = crypto.Keccak256Hash([]byte("ProverPaused(uint256)"))
 	proverResumedTopicHash   = crypto.Keccak256Hash([]byte("ProverResumed(uint256)"))
+
+	emptyAddress = common.Address{}
 )
 
 type Provers struct {
@@ -38,12 +40,27 @@ type Prover struct {
 	NodeTypes       uint64
 }
 
+func (ps *Provers) Merge(diff *Provers) {
+	ps.BlockNumber = diff.BlockNumber
+	for id, p := range ps.Provers {
+		diffP, ok := diff.Provers[id]
+		if ok {
+			p.Merge(diffP)
+		}
+	}
+	for id, p := range diff.Provers {
+		if _, ok := ps.Provers[id]; !ok {
+			ps.Provers[id] = p
+		}
+	}
+}
+
 func (p *Prover) Merge(diff *Prover) {
 	if diff.ID != 0 {
 		p.ID = diff.ID
 	}
-	if diff.OperatorAddress != "" {
-		p.OperatorAddress = diff.OperatorAddress
+	if !bytes.Equal(diff.OperatorAddress[:], emptyAddress[:]) {
+		copy(p.OperatorAddress[:], diff.OperatorAddress[:])
 	}
 	if diff.BlockNumber != 0 {
 		p.BlockNumber = diff.BlockNumber
@@ -57,7 +74,7 @@ func (p *Prover) Merge(diff *Prover) {
 	}
 }
 
-func ListAndWatchProver(chainEndpoint, contractAddress string) (<-chan *Prover, error) {
+func ListAndWatchProver(chainEndpoint, contractAddress string) (<-chan *Provers, error) {
 	ch := make(chan *Provers, 10)
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
@@ -86,7 +103,7 @@ func ListAndWatchProver(chainEndpoint, contractAddress string) (<-chan *Prover, 
 func listProver(ch chan<- *Provers, instance *prover.Prover, targetBlockNumber uint64) error {
 	provers := map[uint64]*Prover{}
 	for id := uint64(1); ; id++ {
-		mp, err := instance.Operator(&bind.CallOpts{}, new(big.Int).SetUint64(id))
+		mp, err := instance.Operator(nil, new(big.Int).SetUint64(id))
 		if err != nil {
 			return errors.Wrapf(err, "failed to get operator from chain, prover_id %v", id)
 		}
@@ -94,18 +111,18 @@ func listProver(ch chan<- *Provers, instance *prover.Prover, targetBlockNumber u
 			break
 		}
 
-		isPaused, err := instance.IsPaused(&bind.CallOpts{}, new(big.Int).SetUint64(id))
+		isPaused, err := instance.IsPaused(nil, new(big.Int).SetUint64(id))
 		if err != nil {
 			return errors.Wrapf(err, "failed to get prover pause status from chain, prover_id %v", id)
 		}
-		nodeTypes, err := instance.NodeType(&bind.CallOpts{}, new(big.Int).SetUint64(id))
+		nodeTypes, err := instance.NodeType(nil, new(big.Int).SetUint64(id))
 		if err != nil {
 			return errors.Wrapf(err, "failed to get prover nodeTypes from chain, prover_id %v", id)
 		}
 
 		provers[id] = &Prover{
 			ID:              id,
-			OperatorAddress: mp.String(),
+			OperatorAddress: mp,
 			BlockNumber:     targetBlockNumber,
 			Paused:          &isPaused,
 			NodeTypes:       nodeTypes.Uint64(),

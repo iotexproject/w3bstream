@@ -120,18 +120,17 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(err)
 	}
 
-	sk, err := crypto.HexToECDSA(conf.ProverPrivateKey)
+	sk, err := crypto.HexToECDSA(conf.ProverOperatorPrivateKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed parse prover private key"))
 	}
-	proverID := crypto.PubkeyToAddress(sk.PublicKey).String()
 
 	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectManager.Get, sk, sequencerPubKey, proverID)
+	taskProcessor := task.NewProcessor(vmHandler, projectManager.Get, sk, sequencerPubKey, 1)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
@@ -139,7 +138,7 @@ func runProver(conf *proverconfig.Config) {
 	}
 
 	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress,
-		conf.ProjectFileDirectory, proverID, pubSubs, taskProcessor.HandleProjectProvers, projectManager.GetCachedProjectIDs); err != nil {
+		conf.ProjectFileDirectory, 1, pubSubs, taskProcessor.HandleProjectProvers, projectManager.GetCachedProjectIDs); err != nil {
 		log.Fatal(err)
 	}
 

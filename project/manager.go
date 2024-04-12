@@ -125,7 +125,9 @@ func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) er
 
 	go func() {
 		for p := range projectCh {
-			m.projects.Delete(p.ID)
+			for id := range p.Projects {
+				m.projects.Delete(id)
+			}
 		}
 	}()
 	return nil

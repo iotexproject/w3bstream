@@ -16,6 +16,7 @@ import (
 	internaldispatcher "github.com/machinefi/sprout/task/internal/dispatcher"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/utils/contract"
 )
 
 type Persistence interface {
@@ -113,6 +114,43 @@ func dispatch(persistence Persistence, newDatasource internaldispatcher.NewDatas
 	if err != nil {
 		return errors.Wrapf(err, "failed to new project contract instance")
 	}
+
+	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress)
+	if err != nil {
+		return err
+	}
+	go func() {
+		for p := range projectCh {
+			slog.Info("get a new projects", "block_number", p.BlockNumber)
+
+			for _, p := range p.Projects {
+				if p.Uri != "" {
+					_, ok := projectDispatchers.Load(p.ID)
+					if ok {
+						continue
+					}
+					pf, err := getProject(p.ID)
+					if err != nil {
+						slog.Error("failed to get project", "project_id", p.ID, "error", err)
+						continue
+					}
+					ps.Add(p.ID)
+					pm := &project.Meta{
+						ProjectID: p.ID,
+						Uri:       p.Uri,
+						Hash:      p.Hash,
+					}
+					pd, err := internaldispatcher.NewProjectDispatcher(persistence.FetchProjectProcessedTaskID,
+						persistence.UpsertProjectProcessedTask, pf.DatasourceURI, newDatasource, pm, ps.Publish, handler)
+					if err != nil {
+						slog.Error("failed to new project dispatcher", "project_id", p.ID, "error", err)
+						continue
+					}
+					projectDispatchers.Store(p.ID, pd)
+				}
+			}
+		}
+	}()
 
 	emptyHash := [32]byte{}
 	for projectID := uint64(1); ; projectID++ {
