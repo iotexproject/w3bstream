@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
@@ -24,9 +25,14 @@ var (
 	proverResumedTopicHash   = crypto.Keccak256Hash([]byte("ProverResumed(uint256)"))
 )
 
+type Provers struct {
+	BlockNumber uint64
+	Provers     map[uint64]*Prover
+}
+
 type Prover struct {
 	ID              uint64
-	OperatorAddress string
+	OperatorAddress common.Address
 	BlockNumber     uint64
 	Paused          *bool
 	NodeTypes       uint64
@@ -52,7 +58,7 @@ func (p *Prover) Merge(diff *Prover) {
 }
 
 func ListAndWatchProver(chainEndpoint, contractAddress string) (<-chan *Prover, error) {
-	ch := make(chan *Prover, 10)
+	ch := make(chan *Provers, 10)
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial chain endpoint")
@@ -67,22 +73,25 @@ func ListAndWatchProver(chainEndpoint, contractAddress string) (<-chan *Prover, 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query the latest block number")
 	}
-	watchProver(ch, client, instance, 3*time.Second, contractAddress,
-		[]common.Hash{operatorSetTopicHash, nodeTypeUpdatedTopicHash, proverResumedTopicHash}, 1000, latestBlockNumber)
 	if err := listProver(ch, instance, latestBlockNumber); err != nil {
 		return nil, err
 	}
+
+	topics := []common.Hash{operatorSetTopicHash, nodeTypeUpdatedTopicHash, proverResumedTopicHash}
+	watchProver(ch, client, instance, 3*time.Second, contractAddress, topics, 1000, latestBlockNumber)
+
 	return ch, nil
 }
 
-func listProver(ch chan<- *Prover, instance *prover.Prover, targetBlockNumber uint64) error {
+func listProver(ch chan<- *Provers, instance *prover.Prover, targetBlockNumber uint64) error {
+	provers := map[uint64]*Prover{}
 	for id := uint64(1); ; id++ {
 		mp, err := instance.Operator(&bind.CallOpts{}, new(big.Int).SetUint64(id))
 		if err != nil {
 			return errors.Wrapf(err, "failed to get operator from chain, prover_id %v", id)
 		}
 		if mp.String() == "" {
-			return nil
+			break
 		}
 
 		isPaused, err := instance.IsPaused(&bind.CallOpts{}, new(big.Int).SetUint64(id))
@@ -94,7 +103,7 @@ func listProver(ch chan<- *Prover, instance *prover.Prover, targetBlockNumber ui
 			return errors.Wrapf(err, "failed to get prover nodeTypes from chain, prover_id %v", id)
 		}
 
-		ch <- &Prover{
+		provers[id] = &Prover{
 			ID:              id,
 			OperatorAddress: mp.String(),
 			BlockNumber:     targetBlockNumber,
@@ -102,9 +111,14 @@ func listProver(ch chan<- *Prover, instance *prover.Prover, targetBlockNumber ui
 			NodeTypes:       nodeTypes.Uint64(),
 		}
 	}
+	ch <- &Provers{
+		BlockNumber: targetBlockNumber,
+		Provers:     provers,
+	}
+	return nil
 }
 
-func watchProver(ch chan<- *Prover, client *ethclient.Client, instance *prover.Prover, interval time.Duration,
+func watchProver(ch chan<- *Provers, client *ethclient.Client, instance *prover.Prover, interval time.Duration,
 	contractAddress string, topics []common.Hash, step, startBlockNumber uint64) {
 	queriedBlockNumber := startBlockNumber
 	query := ethereum.FilterQuery{
@@ -117,15 +131,6 @@ func watchProver(ch chan<- *Prover, client *ethclient.Client, instance *prover.P
 		}},
 	}
 	ticker := time.NewTicker(interval)
-
-	operatorSetMap := make(map[uint64]map[uint64]*prover.ProverOperatorSet) // proverID -> (blockID -> *prover.ProverOperatorSet)
-	operatorSetIndex := uint(0)
-	nodeTypeUpdatedMap := make(map[uint64]map[uint64]*prover.ProverNodeTypeUpdated) // proverID -> (blockID -> *prover.ProverOperatorSet)
-	nodeTypeUpdatedIndex := uint(0)
-	proverPausedMap := make(map[uint64]map[uint64]*prover.ProverProverPaused) // proverID -> (blockID -> *prover.ProverOperatorSet)
-	proverPausedIndex := uint(0)
-	proverResumedMap := make(map[uint64]map[uint64]*prover.ProverProverResumed) // proverID -> (blockID -> *prover.ProverProverResumed)
-	proverResumedIndex := uint(0)
 
 	go func() {
 		for range ticker.C {
@@ -150,115 +155,105 @@ func watchProver(ch chan<- *Prover, client *ethclient.Client, instance *prover.P
 				slog.Error("failed to filter contract logs", "error", err)
 				continue
 			}
-			for i, evLog := range logs {
-				eventSignature := evLog.Topics[0].Hex()
-				switch eventSignature {
-				case operatorSetTopicHash.Hex():
-					ev, err := instance.ParseOperatorSet(logs[i])
-					if err != nil {
-						slog.Error("failed to parse prover operator set event", "error", err)
-						continue
-					}
-					if evLog.TxIndex >= operatorSetIndex {
-						operatorSetIndex = evLog.TxIndex
-						operatorSetMap[ev.Id.Uint64()] = map[uint64]*prover.ProverOperatorSet{evLog.BlockNumber: ev}
-					}
-				case nodeTypeUpdatedTopicHash.Hex():
-					ev, err := instance.ParseNodeTypeUpdated(logs[i])
-					if err != nil {
-						slog.Error("failed to parse prover nodeType updated event", "error", err)
-						continue
-					}
-					if evLog.TxIndex >= nodeTypeUpdatedIndex {
-						nodeTypeUpdatedIndex = evLog.TxIndex
-						nodeTypeUpdatedMap[ev.Id.Uint64()] = map[uint64]*prover.ProverNodeTypeUpdated{evLog.BlockNumber: ev}
-					}
-				case proverPausedTopicHash.Hex():
-					ev, err := instance.ParseProverPaused(logs[i])
-					if err != nil {
-						slog.Error("failed to parse prover paused event", "error", err)
-						continue
-					}
-					if evLog.TxIndex >= proverPausedIndex {
-						proverPausedIndex = evLog.TxIndex
-						proverPausedMap[ev.Id.Uint64()] = map[uint64]*prover.ProverProverPaused{evLog.BlockNumber: ev}
-					}
-				case proverResumedTopicHash.Hex():
-					ev, err := instance.ParseProverResumed(logs[i])
-					if err != nil {
-						slog.Error("failed to parse prover resumed event", "error", err)
-						continue
-					}
-					if evLog.TxIndex >= proverResumedIndex {
-						proverResumedIndex = evLog.TxIndex
-						proverResumedMap[ev.Id.Uint64()] = map[uint64]*prover.ProverProverResumed{evLog.BlockNumber: ev}
-					}
-				default:
-					slog.Error("not support parse event", "event", eventSignature)
-				}
+			if processProverLogs(ch, logs, instance) {
+				queriedBlockNumber = to
 			}
-			for _, blockMap := range operatorSetMap {
-				blockIds := make([]uint64, 0, len(blockMap))
-				for k := range blockMap {
-					blockIds = append(blockIds, k)
-				}
-				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
-				for _, blockId := range blockIds {
-					flag := true
-					ch <- &Prover{
-						ID:              blockMap[blockId].Id.Uint64(),
-						OperatorAddress: blockMap[blockId].Operator.String(),
-						BlockNumber:     blockId,
-						Paused:          &flag,
-						NodeTypes:       0,
-					}
-				}
-			}
-			for _, blockMap := range nodeTypeUpdatedMap {
-				blockIds := make([]uint64, 0, len(blockMap))
-				for k := range blockMap {
-					blockIds = append(blockIds, k)
-				}
-				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
-				for _, blockId := range blockIds {
-					ch <- &Prover{
-						ID:          blockMap[blockId].Id.Uint64(),
-						BlockNumber: blockId,
-						NodeTypes:   blockMap[blockId].Typ.Uint64(),
-					}
-				}
-			}
-			for _, blockMap := range proverPausedMap {
-				blockIds := make([]uint64, 0, len(blockMap))
-				for k := range blockMap {
-					blockIds = append(blockIds, k)
-				}
-				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
-				for _, blockId := range blockIds {
-					flag := true
-					ch <- &Prover{
-						ID:          blockMap[blockId].Id.Uint64(),
-						BlockNumber: blockId,
-						Paused:      &flag,
-					}
-				}
-			}
-			for _, blockMap := range proverResumedMap {
-				blockIds := make([]uint64, 0, len(blockMap))
-				for k := range blockMap {
-					blockIds = append(blockIds, k)
-				}
-				sort.Slice(blockIds, func(i, j int) bool { return blockIds[i] < blockIds[j] })
-				for _, blockId := range blockIds {
-					flag := false
-					ch <- &Prover{
-						ID:          blockMap[blockId].Id.Uint64(),
-						BlockNumber: blockId,
-						Paused:      &flag,
-					}
-				}
-			}
-			queriedBlockNumber = to
 		}
 	}()
+}
+
+func processProverLogs(ch chan<- *Provers, logs []types.Log, instance *prover.Prover) bool {
+	if len(logs) == 0 {
+		return true
+	}
+	sort.Slice(logs, func(i, j int) bool {
+		if logs[i].BlockNumber != logs[j].BlockNumber {
+			return logs[i].BlockNumber < logs[j].BlockNumber
+		}
+		return logs[i].TxIndex < logs[j].TxIndex
+	})
+	psMap := map[uint64]*Provers{}
+
+	for _, l := range logs {
+		ps, ok := psMap[l.BlockNumber]
+		if !ok {
+			ps = &Provers{
+				BlockNumber: l.BlockNumber,
+				Provers:     map[uint64]*Prover{},
+			}
+		}
+		switch l.Topics[0] {
+		case operatorSetTopicHash:
+			e, err := instance.ParseOperatorSet(l)
+			if err != nil {
+				slog.Error("failed to parse project attribute set event", "error", err)
+				return false
+			}
+
+			p, ok := ps.Provers[e.Id.Uint64()]
+			if !ok {
+				p = &Prover{}
+			}
+			p.OperatorAddress = e.Operator
+			ps.Provers[e.Id.Uint64()] = p
+
+		case nodeTypeUpdatedTopicHash:
+			e, err := instance.ParseNodeTypeUpdated(l)
+			if err != nil {
+				slog.Error("failed to parse project paused event", "error", err)
+				return false
+			}
+
+			p, ok := ps.Provers[e.Id.Uint64()]
+			if !ok {
+				p = &Prover{}
+			}
+			p.NodeTypes = e.Typ.Uint64()
+			ps.Provers[e.Id.Uint64()] = p
+
+		case proverPausedTopicHash:
+			e, err := instance.ParseProverPaused(l)
+			if err != nil {
+				slog.Error("failed to parse project resumed event", "error", err)
+				return false
+			}
+
+			p, ok := ps.Provers[e.Id.Uint64()]
+			if !ok {
+				p = &Prover{}
+			}
+			paused := true
+			p.Paused = &paused
+			ps.Provers[e.Id.Uint64()] = p
+
+		case proverResumedTopicHash:
+			e, err := instance.ParseProverResumed(l)
+			if err != nil {
+				slog.Error("failed to parse project config updated event", "error", err)
+				return false
+			}
+
+			p, ok := ps.Provers[e.Id.Uint64()]
+			if !ok {
+				p = &Prover{}
+			}
+			paused := false
+			p.Paused = &paused
+			ps.Provers[e.Id.Uint64()] = p
+		}
+		psMap[l.BlockNumber] = ps
+	}
+
+	psSlice := []*Provers{}
+	for _, p := range psMap {
+		psSlice = append(psSlice, p)
+	}
+	sort.Slice(psSlice, func(i, j int) bool {
+		return psSlice[i].BlockNumber < psSlice[j].BlockNumber
+	})
+
+	for _, p := range psSlice {
+		ch <- p
+	}
+	return true
 }
