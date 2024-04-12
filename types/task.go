@@ -71,7 +71,7 @@ type TaskStateLog struct {
 	Comment   string
 	Result    []byte
 	Signature string
-	ProverID  string
+	ProverID  uint64
 	CreatedAt time.Time
 }
 

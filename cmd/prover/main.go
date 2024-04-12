@@ -7,14 +7,17 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/cmd/prover/config"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/scheduler"
+	"github.com/machinefi/sprout/smartcontracts/go/prover"
 	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/vm"
 )
@@ -46,20 +49,34 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sk, err := crypto.HexToECDSA(conf.ProverPrivateKey)
+	sk, err := crypto.HexToECDSA(conf.ProverOperatorPrivateKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}
-	proverID := crypto.PubkeyToAddress(sk.PublicKey).String()
-
-	slog.Info("my prover id", "prover_id", proverID)
+	proverOperatorAddress := crypto.PubkeyToAddress(sk.PublicKey)
 
 	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectManager.Get, sk, sequencerPubKey, proverID)
+	// TODO move to utils contract
+	client, err := ethclient.Dial(conf.ChainEndpoint)
+	if err != nil {
+		log.Fatal(err, "failed to dial chain endpoint")
+	}
+	instance, err := prover.NewProver(common.HexToAddress(conf.ProverContractAddress), client)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new prover contract instance"))
+	}
+	proverID, _, err := instance.OwnerOfOperator(nil, proverOperatorAddress)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to query operator's prover id"))
+	}
+
+	slog.Info("my prover id", "prover_id", proverID.Uint64())
+
+	taskProcessor := task.NewProcessor(vmHandler, projectManager.Get, sk, sequencerPubKey, proverID.Uint64())
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
@@ -67,7 +84,7 @@ func main() {
 	}
 
 	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress,
-		conf.ProjectContractAddress, conf.ProjectFileDirectory, proverID, pubSubs, taskProcessor.HandleProjectProvers,
+		conf.ProjectContractAddress, conf.ProjectFileDirectory, proverID.Uint64(), pubSubs, taskProcessor.HandleProjectProvers,
 		projectManager.GetCachedProjectIDs); err != nil {
 		log.Fatal(err)
 	}

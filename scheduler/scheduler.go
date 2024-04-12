@@ -1,10 +1,12 @@
 package scheduler
 
 import (
+	"container/list"
 	"context"
 	"log/slog"
 	"math/big"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -16,64 +18,78 @@ import (
 	"github.com/machinefi/sprout/utils/hash"
 )
 
-type HandleProjectProvers func(projectID uint64, provers []string)
+type HandleProjectProvers func(projectID uint64, proverIDs []uint64)
 
 type GetCachedProjectIDs func() []uint64
 
+type projectOffset struct {
+	scheduledBlockNumber atomic.Uint64
+	projectIDs           sync.Map // projectID(uint64)->true
+}
+
 type scheduler struct {
-	provers              *sync.Map // proverID(string) -> Prover(*contract.Prover)
-	projectOffsets       *sync.Map // project offset in interval(uint64) -> Project(*contract.Project)
+	contractProvers      *contractProvers
+	contractProjects     *contractProjects
+	projectOffsets       *sync.Map // project offset in epoch offset(uint64) -> *projectOffset
 	epoch                uint64
 	pubSubs              *p2p.PubSubs // TODO define interface
 	chainHead            chan uint64
-	proverID             string
+	proverID             uint64
 	handleProjectProvers HandleProjectProvers
 }
 
 func (s *scheduler) schedule() {
 	for head := range s.chainHead {
-		offset := s.epoch - (head % s.epoch)
-		cp, ok := s.projectOffsets.Load(offset)
-		if !ok {
-			continue
-		}
-		projectID := cp.(*contract.Project).ID
-		slog.Info("a new epoch has arrived", "head_number", head, "project_id", projectID)
+		for blockNumber := head - s.epoch + 1; blockNumber <= head; blockNumber++ {
+			offset := blockNumber % s.epoch
+			projects, ok := s.projectOffsets.Load(offset)
+			if !ok {
+				continue
+			}
+			if projects.(*projectOffset).scheduledBlockNumber.Load() == blockNumber {
+				continue
+			}
 
-		provers := s.getAllProver()
+			proverIDs := []uint64{}
+			for id := range s.contractProvers.get(blockNumber).Provers {
+				proverIDs = append(proverIDs, id)
+			}
+			scheduled := true
 
-		amount := uint64(1) // TODO fetch amount from project attr
-		if amount > uint64(len(provers)) {
-			slog.Error("no enough resource for the project", "require prover amount", amount, "current prover", len(provers), "project_id", projectID)
-			continue
-		}
+			projects.(*projectOffset).projectIDs.Range(func(key, value any) bool {
+				projectID := key.(uint64)
+				slog.Info("a new epoch has arrived", "block_number", blockNumber, "project_id", projectID)
 
-		projectProvers := distance.GetMinNLocation(provers, projectID, amount)
+				amount := uint64(1) // TODO fetch amount from project attr
+				if amount > uint64(len(proverIDs)) {
+					slog.Error("no enough resource for the project", "required_prover_amount", amount, "current_prover_amount", len(proverIDs), "project_id", projectID)
+					scheduled = false
+					return false
+				}
 
-		isMy := false
-		for _, p := range projectProvers {
-			if p == s.proverID {
-				isMy = true
+				projectProverIDs := distance.GetMinNLocation(proverIDs, projectID, amount)
+
+				isMy := false
+				for _, p := range projectProverIDs {
+					if p == s.proverID {
+						isMy = true
+					}
+				}
+				if !isMy {
+					slog.Info("the project not scheduled to this prover", "project_id", projectID)
+					s.pubSubs.Delete(projectID)
+					return true
+				}
+				s.handleProjectProvers(projectID, projectProverIDs)
+				s.pubSubs.Add(projectID)
+				slog.Info("the project scheduled to this prover", "project_id", projectID)
+				return true
+			})
+			if scheduled {
+				projects.(*projectOffset).scheduledBlockNumber.Store(blockNumber)
 			}
 		}
-		if !isMy {
-			slog.Info("the project not scheduled to this prover", "project_id", projectID)
-			s.pubSubs.Delete(projectID)
-			continue
-		}
-		s.handleProjectProvers(projectID, projectProvers)
-		s.pubSubs.Add(projectID)
-		slog.Info("the project scheduled to this prover", "project_id", projectID)
 	}
-}
-
-func (s *scheduler) getAllProver() []string {
-	provers := []string{}
-	s.provers.Range(func(key, value any) bool {
-		provers = append(provers, key.(string))
-		return true
-	})
-	return provers
 }
 
 func watchChainHead(head chan<- uint64, chainEndpoint string) error {
@@ -100,50 +116,51 @@ func watchChainHead(head chan<- uint64, chainEndpoint string) error {
 	return nil
 }
 
-func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, projectFileDirectory, proverID string,
+func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, projectFileDirectory string, proverID uint64,
 	pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCachedProjectIDs) error {
 
 	if projectFileDirectory != "" {
-		dummySchedule(proverID, pubSubs, handleProjectProvers, getProjectIDs)
+		dummySchedule(pubSubs, handleProjectProvers, getProjectIDs)
 		return nil
 	}
 
-	provers := &sync.Map{}
-	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress)
+	contractProvers := &contractProvers{
+		epoch: epoch,
+		datas: list.New(),
+	}
+
+	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress, epoch)
 	if err != nil {
 		return err
 	}
 	go func() {
 		for p := range proverCh {
-			slog.Info("get a new prover", "prover_operator", p.OperatorAddress)
-			e, ok := provers.Load(p.OperatorAddress)
-			if ok {
-				if ep := e.(*contract.Prover); ep.BlockNumber > p.BlockNumber {
-					p = ep
-				}
-			}
-			provers.Store(p.OperatorAddress, p)
+			slog.Info("get new prover contract events", "block_number", p.BlockNumber)
+			contractProvers.set(p)
 		}
 	}()
 
 	projectOffsets := &sync.Map{}
-	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress)
+	contractProjects := &contractProjects{
+		epoch: epoch,
+		datas: list.New(),
+	}
+	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress, epoch)
 	if err != nil {
 		return err
 	}
 	go func() {
 		for p := range projectCh {
-			slog.Info("get a new project", "project_id", p.ID)
-			projectIDHash := hash.Sum256Uint64(p.ID)
-			offset := new(big.Int).SetBytes(projectIDHash[:]).Uint64() % epoch
+			slog.Info("get new project contract events", "block_number", p.BlockNumber)
+			contractProjects.set(p)
 
-			e, ok := projectOffsets.Load(offset)
-			if ok {
-				if ep := e.(*contract.Project); ep.BlockNumber > p.BlockNumber {
-					p = ep
-				}
+			for projectID := range p.Projects {
+				projectIDHash := hash.Sum256Uint64(projectID)
+				offset := new(big.Int).SetBytes(projectIDHash[:]).Uint64() % epoch
+
+				projects, _ := projectOffsets.LoadOrStore(offset, &projectOffset{})
+				projects.(*projectOffset).projectIDs.Store(projectID, true)
 			}
-			projectOffsets.Store(offset, p) // TODO different project may have same offset
 		}
 	}()
 
@@ -153,7 +170,8 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	}
 
 	s := &scheduler{
-		provers:              provers,
+		contractProvers:      contractProvers,
+		contractProjects:     contractProjects,
 		projectOffsets:       projectOffsets,
 		epoch:                epoch,
 		pubSubs:              pubSubs,
@@ -165,7 +183,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	return nil
 }
 
-func dummySchedule(proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCachedProjectIDs) {
+func dummySchedule(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCachedProjectIDs) {
 	s := &scheduler{
 		pubSubs:              pubSubs,
 		handleProjectProvers: handleProjectProvers,
@@ -173,7 +191,7 @@ func dummySchedule(proverID string, pubSubs *p2p.PubSubs, handleProjectProvers H
 
 	projectIDs := getProjectIDs()
 	for _, id := range projectIDs {
-		s.handleProjectProvers(id, []string{proverID})
+		s.handleProjectProvers(id, []uint64{})
 		s.pubSubs.Add(id)
 		slog.Info("the project scheduled to this prover", "project_id", id)
 	}

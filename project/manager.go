@@ -3,6 +3,7 @@ package project
 import (
 	"bytes"
 	"log/slog"
+	"math/big"
 	"os"
 	"path"
 	"strconv"
@@ -12,13 +13,13 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/project/contracts"
+	"github.com/machinefi/sprout/smartcontracts/go/project"
 	utilscontract "github.com/machinefi/sprout/utils/contract"
 )
 
 type Manager struct {
 	ipfsEndpoint string
-	instance     *contracts.Contracts
+	instance     *project.Project
 	projects     sync.Map // projectID(uint64) -> *Project
 	cache        *cache   // optional
 }
@@ -46,7 +47,7 @@ func (m *Manager) Get(projectID uint64) (*Project, error) {
 
 func (m *Manager) load(projectID uint64) (*Project, error) {
 	emptyHash := [32]byte{}
-	c, err := m.instance.Projects(nil, projectID)
+	c, err := m.instance.Config(nil, new(big.Int).SetUint64(projectID))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get project meta from chain, project_id %v", projectID)
 	}
@@ -118,14 +119,16 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 }
 
 func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) error {
-	projectCh, err := utilscontract.ListAndWatchProject(chainEndpoint, contractAddress)
+	projectCh, err := utilscontract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
 	if err != nil {
 		return err
 	}
 
 	go func() {
 		for p := range projectCh {
-			m.projects.Delete(p.ID)
+			for id := range p.Projects {
+				m.projects.Delete(id)
+			}
 		}
 	}()
 	return nil
@@ -158,7 +161,7 @@ func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint, p
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to dial chain, endpoint %s", chainEndpoint)
 	}
-	instance, err := contracts.NewContracts(common.HexToAddress(contractAddress), client)
+	instance, err := project.NewProject(common.HexToAddress(contractAddress), client)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to new contract instance, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
 	}
