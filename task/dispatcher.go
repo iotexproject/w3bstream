@@ -1,18 +1,14 @@
 package task
 
 import (
-	"bytes"
 	"log/slog"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/project/contracts"
 	internaldispatcher "github.com/machinefi/sprout/task/internal/dispatcher"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
@@ -106,15 +102,6 @@ func dummyDispatch(persistence Persistence, newDatasource internaldispatcher.New
 
 func dispatch(persistence Persistence, newDatasource internaldispatcher.NewDatasource, getProject handler.GetProject,
 	projectDispatchers *sync.Map, ps *p2p.PubSubs, handler *handler.TaskStateHandler, chainEndpoint, projectContractAddress string) error {
-	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return errors.Wrapf(err, "failed to dial chain endpoint %s", chainEndpoint)
-	}
-	instance, err := contracts.NewContracts(common.HexToAddress(projectContractAddress), client)
-	if err != nil {
-		return errors.Wrapf(err, "failed to new project contract instance")
-	}
-
 	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress)
 	if err != nil {
 		return err
@@ -151,38 +138,5 @@ func dispatch(persistence Persistence, newDatasource internaldispatcher.NewDatas
 			}
 		}
 	}()
-
-	emptyHash := [32]byte{}
-	for projectID := uint64(1); ; projectID++ {
-		mp, err := instance.Projects(nil, projectID)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get project meta from chain, project_id %v", projectID)
-		}
-		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
-			break
-		}
-		pm := &project.Meta{
-			ProjectID: projectID,
-			Uri:       mp.Uri,
-			Hash:      mp.Hash,
-		}
-		// TODO support project update & watch project upsert
-		_, ok := projectDispatchers.Load(projectID)
-		if ok {
-			continue
-		}
-		p, err := getProject(projectID)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get project, project_id %v", projectID)
-		}
-		ps.Add(projectID)
-		pd, err := internaldispatcher.NewProjectDispatcher(persistence.FetchProjectProcessedTaskID,
-			persistence.UpsertProjectProcessedTask, p.DatasourceURI, newDatasource, pm, ps.Publish, handler)
-		if err != nil {
-			return errors.Wrapf(err, "failed to new project dispatcher, project_id %v", projectID)
-		}
-		projectDispatchers.Store(projectID, pd)
-	}
-
 	return nil
 }
