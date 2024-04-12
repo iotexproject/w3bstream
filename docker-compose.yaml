@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   sequencer:
-    image: huangzhiran/sequencer:v0.9.0
+    image: huangzhiran/sequencer:v0.10.0
     depends_on:
       - "postgres"
       - "coordinator"
@@ -14,7 +14,7 @@ services:
     command: [ "-coordinatorAddress", "coordinator:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
 
   coordinator:
-    image: huangzhiran/coordinator:v0.9.0
+    image: huangzhiran/coordinator:v0.10.0
     depends_on:
       - "postgres"
     container_name: w3bstream-coordinator
@@ -24,11 +24,14 @@ services:
       - "9001:9001"
     environment:
       COORDINATOR_ENV: PROD
+      PROJECT_FILE_DIRECTORY: "/data"
       OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
       OPERATOR_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
+    volumes:
+      - ./test/container_model:/data
 
   prover:
-    image: huangzhiran/prover:v0.9.0
+    image: huangzhiran/prover:v0.10.0
     depends_on:
       - "risc0"
       - "halo2"
@@ -40,6 +43,9 @@ services:
     restart: always
     environment:
       PROVER_ENV: PROD
+      PROJECT_FILE_DIRECTORY: "/data"
+    volumes:
+      - ./test/container_model:/data
 
   halo2:
     image: wangweixiaohao2944/halo2server:v0.0.6

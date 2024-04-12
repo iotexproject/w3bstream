@@ -1,6 +1,18 @@
 # Changelog
 
 ---
+## [0.10.0] - 2024-04-12
+
+### Changed
+- Support new project & prover manager contract
+- Support cache project & prover snapshot
+- When prover restart, will rebuild schedule status when start
+- Now scheduler more robust
+
+### Added
+- Support load local project file
+
+---
 ## [0.9.0] - 2024-04-07
 
 ### Added
