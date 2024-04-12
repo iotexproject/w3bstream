@@ -44,7 +44,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddress)
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
-		_ = os.Setenv("PROVER_PRIVATE_KEY", expected.ProverOperatorPrivateKey)
+		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPrivateKey)
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDirectory)
 
 		c := &config.Config{}
