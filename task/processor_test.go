@@ -63,7 +63,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	m := &project.Manager{}
 	processor := &Processor{
 		vmHandler:  &vm.Handler{},
-		getProject: m.Get,
+		getProject: m.ProjectByID,
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {

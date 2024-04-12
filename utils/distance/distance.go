@@ -16,7 +16,7 @@ type hashDistance struct {
 	hash     [sha256.Size]byte
 }
 
-func GetMinNLocation(locations []string, myLocation, n uint64) []string {
+func Sort(locations []string, myLocation uint64) []string {
 	locationMap := map[[sha256.Size]byte]string{}
 	for _, l := range locations {
 		locationMap[sha256.Sum256([]byte(l))] = l
@@ -37,7 +37,6 @@ func GetMinNLocation(locations []string, myLocation, n uint64) []string {
 	})
 
 	result := []string{}
-	ds = ds[:n]
 	for _, d := range ds {
 		result = append(result, locationMap[d.hash])
 	}

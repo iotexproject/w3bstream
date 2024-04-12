@@ -97,7 +97,7 @@ func (e *solanaProgram) packInstructions(proof []byte) []soltypes.Instruction {
 	}
 }
 
-func newSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) (Output, error) {
+func newSolanaProgram(endpoint, programID, secretKey, stateAccountPK string) (*solanaProgram, error) {
 	if secretKey == "" {
 		return nil, errors.New("secret key is empty")
 	}

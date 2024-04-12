@@ -36,7 +36,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new project config manager"))
 	}
 
-	if err := task.RunDispatcher(persistence, datasource.NewPostgres, projectManager.GetCachedProjectIDs, projectManager.Get, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IoTeXChainID); err != nil {
+	if err := task.RunDispatcher(persistence, datasource.NewPostgres, projectManager.ProjectIDs, projectManager.ProjectByID, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IoTeXChainID); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}
 

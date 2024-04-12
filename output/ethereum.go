@@ -2,7 +2,7 @@ package output
 
 import (
 	"context"
-	"log/slog"
+	"crypto/ecdsa"
 	"math/big"
 	"strings"
 
@@ -26,17 +26,16 @@ var (
 )
 
 type ethereumContract struct {
-	chainEndpoint   string
-	contractAddress string
+	client          *ethclient.Client
+	contractAddress common.Address
 	receiverAddress string
-	secretKey       string
+	secretKey       *ecdsa.PrivateKey
+	signer          ethtypes.Signer
 	contractABI     abi.ABI
 	contractMethod  abi.Method
 }
 
 func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error) {
-	slog.Debug("outputing to ethereum contract", "chain endpoint", e.chainEndpoint)
-
 	params := []interface{}{}
 	for _, a := range e.contractMethod.Inputs {
 		switch a.Name {
@@ -115,37 +114,25 @@ func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error
 }
 
 func (e *ethereumContract) sendTX(ctx context.Context, data []byte) (string, error) {
-	cli, err := ethclient.Dial(e.chainEndpoint)
-	if err != nil {
-		return "", errors.Wrapf(err, "dial eth endpoint %s failed", e.chainEndpoint)
-	}
+	sender := crypto.PubkeyToAddress(e.secretKey.PublicKey)
 
-	pk := crypto.ToECDSAUnsafe(common.FromHex(e.secretKey))
-	sender := crypto.PubkeyToAddress(pk.PublicKey)
-	to := common.HexToAddress(e.contractAddress)
-
-	gasPrice, err := cli.SuggestGasPrice(ctx)
+	gasPrice, err := e.client.SuggestGasPrice(ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "get suggest gas price failed")
 	}
 
-	chainid, err := cli.ChainID(ctx)
-	if err != nil {
-		return "", errors.Wrap(err, "get chain id failed")
-	}
-
-	nonce, err := cli.PendingNonceAt(ctx, sender)
+	nonce, err := e.client.PendingNonceAt(ctx, sender)
 	if err != nil {
 		return "", errors.Wrap(err, "get pending nonce failed")
 	}
 
 	msg := ethereum.CallMsg{
 		From:     sender,
-		To:       &to,
+		To:       &e.contractAddress,
 		GasPrice: gasPrice,
 		Data:     data,
 	}
-	gasLimit, err := cli.EstimateGas(ctx, msg)
+	gasLimit, err := e.client.EstimateGas(ctx, msg)
 	if err != nil {
 		return "", errors.Wrap(err, "estimate gas failed")
 	}
@@ -155,39 +142,49 @@ func (e *ethereumContract) sendTX(ctx context.Context, data []byte) (string, err
 			Nonce:    nonce,
 			GasPrice: gasPrice,
 			Gas:      gasLimit,
-			To:       &to,
+			To:       &e.contractAddress,
 			Data:     data,
 		})
 
-	signedTx, err := ethtypes.SignTx(tx, ethtypes.NewLondonSigner(chainid), pk)
+	signedTx, err := ethtypes.SignTx(tx, e.signer, e.secretKey)
 	if err != nil {
 		return "", errors.Wrap(err, "sign tx failed")
 	}
 
-	if err = cli.SendTransaction(ctx, signedTx); err != nil {
+	if err := e.client.SendTransaction(ctx, signedTx); err != nil {
 		return "", errors.Wrap(err, "send transaction failed")
 	}
 
 	return signedTx.Hash().Hex(), nil
 }
 
-func newEthereum(chainEndpoint, secretKey, contractAddress, receiverAddress, contractAbiJSON, contractMethod string) (Output, error) {
-	if secretKey == "" {
+func newEthereum(cfg EthereumConfig, secretKey string) (*ethereumContract, error) {
+	if cfg.ContractAddress == "" {
 		return nil, errors.New("secret key is empty")
 	}
-	contractABI, err := abi.JSON(strings.NewReader(contractAbiJSON))
+	contractABI, err := abi.JSON(strings.NewReader(cfg.ContractAbiJSON))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode contract abi")
 	}
-	method, ok := contractABI.Methods[contractMethod]
+	method, ok := contractABI.Methods[cfg.ContractMethod]
 	if !ok {
 		return nil, errors.New("the contract method not exist in abi")
 	}
+	cli, err := ethclient.Dial(cfg.ChainEndpoint)
+	if err != nil {
+		return nil, errors.Wrapf(err, "dial eth endpoint %s failed", cfg.ChainEndpoint)
+	}
+	chainid, err := cli.ChainID(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "get chain id failed")
+	}
+
 	return &ethereumContract{
-		chainEndpoint:   chainEndpoint,
-		secretKey:       secretKey,
-		contractAddress: contractAddress,
-		receiverAddress: receiverAddress,
+		client:          cli,
+		secretKey:       crypto.ToECDSAUnsafe(common.FromHex(secretKey)),
+		signer:          ethtypes.NewLondonSigner(chainid),
+		contractAddress: common.HexToAddress(cfg.ContractAddress),
+		receiverAddress: cfg.ReceiverAddress,
 		contractABI:     contractABI,
 		contractMethod:  method,
 	}, nil

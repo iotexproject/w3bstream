@@ -20,15 +20,15 @@ import (
 
 type Persistence interface {
 	Create(tl *types.TaskStateLog, t *types.Task) error
-	FetchProjectProcessedTaskID(projectID uint64) (uint64, error)
-	UpsertProjectProcessedTask(projectID, taskID uint64) error
+	ProcessedTaskID(projectID uint64) (uint64, error)
+	UpsertProcessedTask(projectID, taskID uint64) error
 }
 
 type Datasource interface {
 	Retrieve(projectID, nextTaskID uint64) (*types.Task, error)
 }
 
-type GetCachedProjectIDs func() []uint64
+type ProjectIDs func() []uint64
 
 type dispatcher struct {
 	projectDispatchers *sync.Map // projectID(uint64) -> *ProjectDispatcher
@@ -48,10 +48,15 @@ func (d *dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	pd.(*internaldispatcher.ProjectDispatcher).Handle(s)
 }
 
-func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource,
-	getProjectIDs GetCachedProjectIDs, getProject handler.GetProject,
+// TODO: refactor function
+func RunDispatcher(
+	persistence Persistence,
+	newDatasource internaldispatcher.NewDatasource,
+	getProjectIDs ProjectIDs,
+	getProject handler.GetProject,
 	bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519, chainEndpoint, projectContractAddress, projectFileDirectory string,
-	iotexChainID int) error {
+	iotexChainID int,
+) error {
 	projectDispatchers := &sync.Map{}
 	d := &dispatcher{projectDispatchers: projectDispatchers}
 
@@ -63,22 +68,21 @@ func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.New
 	taskStateHandler := handler.NewTaskStateHandler(persistence.Create, getProject, operatorPrivateKey, operatorPrivateKeyED25519)
 
 	if projectFileDirectory != "" {
-		if err := dummyDispatch(persistence, newDatasource, getProjectIDs, getProject, projectDispatchers, ps, taskStateHandler); err != nil {
-			return err
-		}
-		return nil
+		return dummyDispatch(persistence, newDatasource, getProjectIDs, getProject, projectDispatchers, ps, taskStateHandler)
 	}
 
-	if err := dispatch(persistence, newDatasource, getProject, projectDispatchers, ps, taskStateHandler,
-		chainEndpoint, projectContractAddress); err != nil {
-		return err
-	}
-	return nil
+	return dispatch(persistence, newDatasource, getProject, projectDispatchers, ps, taskStateHandler, chainEndpoint, projectContractAddress)
 }
 
-func dummyDispatch(persistence Persistence, newDatasource internaldispatcher.NewDatasource,
-	getProjectIDs GetCachedProjectIDs, getProject handler.GetProject,
-	projectDispatchers *sync.Map, ps *p2p.PubSubs, handler *handler.TaskStateHandler) error {
+func dummyDispatch(
+	persistence Persistence,
+	newDatasource internaldispatcher.NewDatasource,
+	getProjectIDs ProjectIDs,
+	getProject handler.GetProject,
+	projectDispatchers *sync.Map,
+	ps *p2p.PubSubs,
+	handler *handler.TaskStateHandler,
+) error {
 	projectIDs := getProjectIDs()
 	for _, id := range projectIDs {
 		pm := &project.Meta{
@@ -93,8 +97,8 @@ func dummyDispatch(persistence Persistence, newDatasource internaldispatcher.New
 			return errors.Wrapf(err, "failed to get project, project_id %v", id)
 		}
 		ps.Add(id)
-		pd, err := internaldispatcher.NewProjectDispatcher(persistence.FetchProjectProcessedTaskID,
-			persistence.UpsertProjectProcessedTask, p.DatasourceURI, newDatasource, pm, ps.Publish, handler)
+		pd, err := internaldispatcher.NewProjectDispatcher(persistence.ProcessedTaskID,
+			persistence.UpsertProcessedTask, p.DatasourceURI, newDatasource, pm, ps.Publish, handler)
 		if err != nil {
 			return errors.Wrapf(err, "failed to new project dispatcher, project_id %v", id)
 		}
@@ -138,8 +142,8 @@ func dispatch(persistence Persistence, newDatasource internaldispatcher.NewDatas
 			return errors.Wrapf(err, "failed to get project, project_id %v", projectID)
 		}
 		ps.Add(projectID)
-		pd, err := internaldispatcher.NewProjectDispatcher(persistence.FetchProjectProcessedTaskID,
-			persistence.UpsertProjectProcessedTask, p.DatasourceURI, newDatasource, pm, ps.Publish, handler)
+		pd, err := internaldispatcher.NewProjectDispatcher(persistence.ProcessedTaskID,
+			persistence.UpsertProcessedTask, p.DatasourceURI, newDatasource, pm, ps.Publish, handler)
 		if err != nil {
 			return errors.Wrapf(err, "failed to new project dispatcher, project_id %v", projectID)
 		}

@@ -123,7 +123,7 @@ func writeTextileEvent(url string, fileData []byte) error {
 }
 
 // TODO: refactor textile with a KV database adapter
-func newTextileDBAdapter(vaultID string, secretKey string) (Output, error) {
+func newTextileDBAdapter(vaultID string, secretKey string) (*textileDB, error) {
 	if secretKey == "" {
 		return nil, errors.New("secret key is empty")
 	}

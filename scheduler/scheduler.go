@@ -18,7 +18,7 @@ import (
 
 type HandleProjectProvers func(projectID uint64, provers []string)
 
-type GetCachedProjectIDs func() []uint64
+type ProjectIDs func() []uint64
 
 type scheduler struct {
 	provers              *sync.Map // proverID(string) -> Prover(*contract.Prover)
@@ -42,18 +42,18 @@ func (s *scheduler) schedule() {
 
 		provers := s.getAllProver()
 
-		amount := uint64(1) // TODO fetch amount from project attr
-		if amount > uint64(len(provers)) {
+		amount := 1 // TODO fetch amount from project attr
+		if amount > len(provers) {
 			slog.Error("no enough resource for the project", "require prover amount", amount, "current prover", len(provers), "project_id", projectID)
 			continue
 		}
 
-		projectProvers := distance.GetMinNLocation(provers, projectID, amount)
-
+		projectProvers := distance.Sort(provers, projectID)
 		isMy := false
-		for _, p := range projectProvers {
-			if p == s.proverID {
+		for i := 0; i < amount && i < len(projectProvers); i++ {
+			if projectProvers[i] == s.proverID {
 				isMy = true
+				break
 			}
 		}
 		if !isMy {
@@ -100,8 +100,14 @@ func watchChainHead(head chan<- uint64, chainEndpoint string) error {
 	return nil
 }
 
-func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, projectFileDirectory, proverID string,
-	pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCachedProjectIDs) error {
+// TODO: refactor function
+func Run(
+	epoch uint64,
+	chainEndpoint, proverContractAddress, projectContractAddress, projectFileDirectory, proverID string,
+	pubSubs *p2p.PubSubs,
+	handleProjectProvers HandleProjectProvers,
+	getProjectIDs ProjectIDs,
+) error {
 
 	if projectFileDirectory != "" {
 		dummySchedule(proverID, pubSubs, handleProjectProvers, getProjectIDs)
@@ -165,7 +171,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	return nil
 }
 
-func dummySchedule(proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs GetCachedProjectIDs) {
+func dummySchedule(proverID string, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs ProjectIDs) {
 	s := &scheduler{
 		pubSubs:              pubSubs,
 		handleProjectProvers: handleProjectProvers,

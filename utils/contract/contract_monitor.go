@@ -19,6 +19,7 @@ import (
 	"github.com/machinefi/sprout/smartcontracts/go/prover"
 )
 
+// TODO: contract monitor shouldn't be placed under `utils`
 const (
 	RequiredProverAmount = "RequiredProverAmount"
 	VmType               = "VmType"

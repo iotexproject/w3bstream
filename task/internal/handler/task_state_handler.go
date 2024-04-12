@@ -38,7 +38,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
 		return
 	}
-	c, err := p.GetDefaultConfig()
+	c, err := p.DefaultConfig()
 	if err != nil {
 		slog.Error("failed to get project config", "error", err, "project_id", t.ProjectID, "project_version", p.DefaultVersion)
 		return
