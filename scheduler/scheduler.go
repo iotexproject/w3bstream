@@ -129,13 +129,13 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 		datas: list.New(),
 	}
 
-	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress)
+	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress, epoch)
 	if err != nil {
 		return err
 	}
 	go func() {
 		for p := range proverCh {
-			slog.Info("get a new provers", "block_number", p.BlockNumber)
+			slog.Info("get new prover contract events", "block_number", p.BlockNumber)
 			contractProvers.set(p)
 		}
 	}()
@@ -145,13 +145,13 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 		epoch: epoch,
 		datas: list.New(),
 	}
-	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress)
+	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress, epoch)
 	if err != nil {
 		return err
 	}
 	go func() {
 		for p := range projectCh {
-			slog.Info("get a new projects", "block_number", p.BlockNumber)
+			slog.Info("get new project contract events", "block_number", p.BlockNumber)
 			contractProjects.set(p)
 
 			for projectID := range p.Projects {

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math/big"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -74,7 +75,7 @@ func (p *Prover) Merge(diff *Prover) {
 	}
 }
 
-func ListAndWatchProver(chainEndpoint, contractAddress string) (<-chan *Provers, error) {
+func ListAndWatchProver(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *Provers, error) {
 	ch := make(chan *Provers, 10)
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
@@ -90,12 +91,13 @@ func ListAndWatchProver(chainEndpoint, contractAddress string) (<-chan *Provers,
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query the latest block number")
 	}
-	if err := listProver(ch, instance, latestBlockNumber); err != nil {
+	targetBlockNumber := latestBlockNumber - tracebackLength
+	if err := listProver(ch, instance, targetBlockNumber); err != nil {
 		return nil, err
 	}
 
 	topics := []common.Hash{operatorSetTopicHash, nodeTypeUpdatedTopicHash, proverResumedTopicHash}
-	watchProver(ch, client, instance, 3*time.Second, contractAddress, topics, 1000, latestBlockNumber)
+	watchProver(ch, client, instance, 3*time.Second, contractAddress, topics, 1000, targetBlockNumber)
 
 	return ch, nil
 }
@@ -105,10 +107,10 @@ func listProver(ch chan<- *Provers, instance *prover.Prover, targetBlockNumber u
 	for id := uint64(1); ; id++ {
 		mp, err := instance.Operator(nil, new(big.Int).SetUint64(id))
 		if err != nil {
+			if strings.Contains(err.Error(), "execution reverted: ERC721: invalid token ID") {
+				break
+			}
 			return errors.Wrapf(err, "failed to get operator from chain, prover_id %v", id)
-		}
-		if mp.String() == "" {
-			break
 		}
 
 		isPaused, err := instance.IsPaused(nil, new(big.Int).SetUint64(id))
@@ -144,7 +146,6 @@ func watchProver(ch chan<- *Provers, client *ethclient.Client, instance *prover.
 			(topics[0]),
 			(topics[1]),
 			(topics[2]),
-			(topics[3]),
 		}},
 	}
 	ticker := time.NewTicker(interval)
@@ -209,7 +210,7 @@ func processProverLogs(ch chan<- *Provers, logs []types.Log, instance *prover.Pr
 
 			p, ok := ps.Provers[e.Id.Uint64()]
 			if !ok {
-				p = &Prover{}
+				p = &Prover{ID: e.Id.Uint64()}
 			}
 			p.OperatorAddress = e.Operator
 			ps.Provers[e.Id.Uint64()] = p
@@ -223,7 +224,7 @@ func processProverLogs(ch chan<- *Provers, logs []types.Log, instance *prover.Pr
 
 			p, ok := ps.Provers[e.Id.Uint64()]
 			if !ok {
-				p = &Prover{}
+				p = &Prover{ID: e.Id.Uint64()}
 			}
 			p.NodeTypes = e.Typ.Uint64()
 			ps.Provers[e.Id.Uint64()] = p
@@ -237,7 +238,7 @@ func processProverLogs(ch chan<- *Provers, logs []types.Log, instance *prover.Pr
 
 			p, ok := ps.Provers[e.Id.Uint64()]
 			if !ok {
-				p = &Prover{}
+				p = &Prover{ID: e.Id.Uint64()}
 			}
 			paused := true
 			p.Paused = &paused
@@ -252,7 +253,7 @@ func processProverLogs(ch chan<- *Provers, logs []types.Log, instance *prover.Pr
 
 			p, ok := ps.Provers[e.Id.Uint64()]
 			if !ok {
-				p = &Prover{}
+				p = &Prover{ID: e.Id.Uint64()}
 			}
 			paused := false
 			p.Paused = &paused

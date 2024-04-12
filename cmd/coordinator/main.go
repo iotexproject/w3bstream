@@ -33,7 +33,7 @@ func main() {
 	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress,
 		conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProjectFileDirectory)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new project config manager"))
+		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}
 
 	if err := task.RunDispatcher(persistence, datasource.NewPostgres, projectManager.GetCachedProjectIDs, projectManager.Get, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IoTeXChainID); err != nil {

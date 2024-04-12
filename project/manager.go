@@ -119,7 +119,7 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 }
 
 func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) error {
-	projectCh, err := utilscontract.ListAndWatchProject(chainEndpoint, contractAddress)
+	projectCh, err := utilscontract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math/big"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -81,7 +82,7 @@ func (p *Project) Merge(diff *Project) {
 	}
 }
 
-func ListAndWatchProject(chainEndpoint, contractAddress string) (<-chan *Projects, error) {
+func ListAndWatchProject(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *Projects, error) {
 	ch := make(chan *Projects, 10)
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
@@ -97,28 +98,27 @@ func ListAndWatchProject(chainEndpoint, contractAddress string) (<-chan *Project
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query the latest block number")
 	}
-	if err := listProject(ch, instance, latestBlockNumber); err != nil {
+	targetBlockNumber := latestBlockNumber - tracebackLength
+	if err := listProject(ch, instance, targetBlockNumber); err != nil {
 		return nil, err
 	}
 
 	topics := []common.Hash{attributeSetTopicHash, projectPausedTopicHash, projectResumedTopicHash, projectConfigUpdatedTopicHash}
-	watchProject(ch, client, instance, 3*time.Second, contractAddress, topics, 1000, latestBlockNumber)
+	watchProject(ch, client, instance, 3*time.Second, contractAddress, topics, 1000, targetBlockNumber)
 
 	return ch, nil
 }
 
 // TOD list determinate block number
 func listProject(ch chan<- *Projects, instance *project.Project, targetBlockNumber uint64) error {
-	ps := &Projects{
-		Projects: map[uint64]*Project{},
-	}
+	projects := map[uint64]*Project{}
 	for projectID := uint64(1); ; projectID++ {
 		mp, err := instance.Config(nil, new(big.Int).SetUint64(projectID))
 		if err != nil {
+			if strings.Contains(err.Error(), "execution reverted: ERC721: invalid token ID") {
+				break
+			}
 			return errors.Wrapf(err, "failed to get project meta from chain, project_id %v", projectID)
-		}
-		if mp.Uri == "" || bytes.Equal(mp.Hash[:], emptyHash[:]) {
-			break
 		}
 
 		isPaused, err := instance.IsPaused(nil, new(big.Int).SetUint64(projectID))
@@ -138,7 +138,7 @@ func listProject(ch chan<- *Projects, instance *project.Project, targetBlockNumb
 		attributes[RequiredProverAmountHash] = proverAmt
 		attributes[VmTypeHash] = vmType
 
-		ps.Projects[projectID] = &Project{
+		projects[projectID] = &Project{
 			ID:          projectID,
 			BlockNumber: targetBlockNumber,
 			Paused:      &isPaused,
@@ -147,7 +147,10 @@ func listProject(ch chan<- *Projects, instance *project.Project, targetBlockNumb
 			Attributes:  attributes,
 		}
 	}
-	ch <- ps
+	ch <- &Projects{
+		BlockNumber: targetBlockNumber,
+		Projects:    projects,
+	}
 	return nil
 }
 
@@ -224,7 +227,10 @@ func processProjectLogs(ch chan<- *Projects, logs []types.Log, instance *project
 
 			p, ok := ps.Projects[e.ProjectId.Uint64()]
 			if !ok {
-				p = &Project{Attributes: map[common.Hash][]byte{}}
+				p = &Project{
+					ID:         e.ProjectId.Uint64(),
+					Attributes: map[common.Hash][]byte{},
+				}
 			}
 			p.Attributes[e.Key] = e.Value
 			ps.Projects[e.ProjectId.Uint64()] = p
@@ -238,7 +244,10 @@ func processProjectLogs(ch chan<- *Projects, logs []types.Log, instance *project
 
 			p, ok := ps.Projects[e.ProjectId.Uint64()]
 			if !ok {
-				p = &Project{Attributes: map[common.Hash][]byte{}}
+				p = &Project{
+					ID:         e.ProjectId.Uint64(),
+					Attributes: map[common.Hash][]byte{},
+				}
 			}
 			paused := true
 			p.Paused = &paused
@@ -253,7 +262,10 @@ func processProjectLogs(ch chan<- *Projects, logs []types.Log, instance *project
 
 			p, ok := ps.Projects[e.ProjectId.Uint64()]
 			if !ok {
-				p = &Project{Attributes: map[common.Hash][]byte{}}
+				p = &Project{
+					ID:         e.ProjectId.Uint64(),
+					Attributes: map[common.Hash][]byte{},
+				}
 			}
 			paused := false
 			p.Paused = &paused
@@ -268,7 +280,10 @@ func processProjectLogs(ch chan<- *Projects, logs []types.Log, instance *project
 
 			p, ok := ps.Projects[e.ProjectId.Uint64()]
 			if !ok {
-				p = &Project{Attributes: map[common.Hash][]byte{}}
+				p = &Project{
+					ID:         e.ProjectId.Uint64(),
+					Attributes: map[common.Hash][]byte{},
+				}
 			}
 			p.Uri = e.Uri
 			p.Hash = e.Hash

@@ -23,17 +23,17 @@ func (c *cache) get(projectID uint64, hash []byte) []byte {
 	data, err := os.ReadFile(c.getPath(projectID))
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			slog.Error("failed to read project cache file", "error", err, "project_id", projectID)
+			slog.Info("failed to read cached project file", "error", err, "project_id", projectID)
 		}
 		return nil
 	}
 	h := sha256.New()
 	if _, err := h.Write(data); err != nil {
-		slog.Error("failed to generate cache project file hash", "error", err)
+		slog.Info("failed to generate cached project file hash", "error", err)
 		return nil
 	}
 	if !bytes.Equal(h.Sum(nil), hash) {
-		slog.Error("failed to validate cache project file hash")
+		slog.Info("failed to validate cached project file hash")
 		return nil
 	}
 	return data
@@ -41,7 +41,7 @@ func (c *cache) get(projectID uint64, hash []byte) []byte {
 
 func (c *cache) set(projectID uint64, data []byte) {
 	if err := os.WriteFile(c.getPath(projectID), data, 0666); err != nil {
-		slog.Error("failed to write cache project file", "error", err)
+		slog.Info("failed to write cached project file", "error", err)
 	}
 }
 

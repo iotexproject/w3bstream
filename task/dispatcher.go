@@ -102,13 +102,13 @@ func dummyDispatch(persistence Persistence, newDatasource internaldispatcher.New
 
 func dispatch(persistence Persistence, newDatasource internaldispatcher.NewDatasource, getProject handler.GetProject,
 	projectDispatchers *sync.Map, ps *p2p.PubSubs, handler *handler.TaskStateHandler, chainEndpoint, projectContractAddress string) error {
-	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress)
+	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress, 0)
 	if err != nil {
 		return err
 	}
 	go func() {
 		for p := range projectCh {
-			slog.Info("get a new projects", "block_number", p.BlockNumber)
+			slog.Info("get new project contract events", "block_number", p.BlockNumber)
 
 			for _, p := range p.Projects {
 				if p.Uri != "" {
@@ -134,6 +134,7 @@ func dispatch(persistence Persistence, newDatasource internaldispatcher.NewDatas
 						continue
 					}
 					projectDispatchers.Store(p.ID, pd)
+					slog.Info("a new project dispatcher started", "project_id", p.ID)
 				}
 			}
 		}
