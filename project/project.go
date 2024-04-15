@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/utils/ipfs"
+	"github.com/machinefi/sprout/util/ipfs"
 	"github.com/machinefi/sprout/vm"
 )
 

@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/smartcontracts/go/project"
-	utilscontract "github.com/machinefi/sprout/utils/contract"
+	utilscontract "github.com/machinefi/sprout/util/contract"
 )
 
 type Manager struct {

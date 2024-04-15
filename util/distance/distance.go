@@ -8,7 +8,7 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/machinefi/sprout/utils/hash"
+	"github.com/machinefi/sprout/util/hash"
 )
 
 type hashDistance struct {
