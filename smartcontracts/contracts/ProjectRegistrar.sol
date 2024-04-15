@@ -16,6 +16,7 @@ contract ProjectRegistrar is OwnableUpgradeable {
     IProjectStore public projectStore;
 
     function initialize(address _projectStore) public initializer {
+        __Ownable_init();
         projectStore = IProjectStore(_projectStore);
     }
 

@@ -10,7 +10,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 interface IProverStore {
     function isPaused(uint256 _id) external view returns (bool);
     function prover(uint256 _id) external view returns (address);
-    function mint(address _owner) external view returns (uint256);
+    function mint(address _owner) external returns (uint256);
 }
 
 interface ICreditCenter {

@@ -11,8 +11,8 @@ contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
     event ProverResumed(uint256 indexed id);
     event MinterSet(address minter);
 
-    uint256 nextId;
-    address minter;
+    address public minter;
+    uint256 nextProverId;
 
     mapping(uint256 => uint256) _nodeTypes;
     mapping(uint256 => address) _operators;
@@ -24,14 +24,14 @@ contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
         _;
     }
 
-    function initialize(string memory _name, string memory _symbol, address _minter) public initializer {
+    function initialize(string memory _name, string memory _symbol) public initializer {
         __Ownable_init();
         __ERC721_init(_name, _symbol);
-        setMinter(_minter);
+        setMinter(msg.sender);
     }
 
     function count() external view returns (uint256) {
-        return nextId + 1;
+        return nextProverId;
     }
 
     function nodeType(uint256 _id) external view returns (uint256) {
@@ -60,19 +60,19 @@ contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
         return _paused[_id];
     }
 
-    function mint(uint256 _type, address _account) public returns (uint256 id_) {
+    function mint(address _account) external returns (uint256 id_) {
         require(msg.sender == minter, "not minter");
-        id_ = ++nextId;
+        id_ = 1;
+        ++nextProverId;
         _mint(_account, id_);
 
         _paused[id_] = true;
-        updateNodeTypeInternal(id_, _type);
         updateOperatorInternal(id_, _account);
     }
 
     function updateOperatorInternal(uint256 _id, address _operator) internal {
         uint256 proverId = operatorToProver[_operator];
-        require(proverId != 0, "invalid operator");
+        require(proverId == 0, "invalid operator");
         address oldOperator = _operators[_id];
         _operators[_id] = _operator;
         delete operatorToProver[oldOperator];
@@ -80,13 +80,9 @@ contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
         emit OperatorSet(_id, _operator);
     }
 
-    function updateNodeTypeInternal(uint256 _id, uint256 _type) internal {
+    function updateNodeType(uint256 _id, uint256 _type) external onlyProverOwner(_id) {
         _nodeTypes[_id] = _type;
         emit NodeTypeUpdated(_id, _type);
-    }
-
-    function updateNodeType(uint256 _id, uint256 _type) external onlyProverOwner(_id) {
-        updateNodeTypeInternal(_id, _type);
     }
 
     function changeOperator(uint256 _id, address _operator) external onlyProverOwner(_id) {

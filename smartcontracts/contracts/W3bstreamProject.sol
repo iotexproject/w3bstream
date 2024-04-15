@@ -28,10 +28,10 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
         _;
     }
 
-    function initialize(address _minter, string calldata _name, string calldata _symbol) public initializer {
+    function initialize(string calldata _name, string calldata _symbol) public initializer {
         __Ownable_init();
         __ERC721_init(_name, _symbol);
-        setMinter(_minter);
+        setMinter(msg.sender);
     }
 
     function isPaused(uint256 _projectId) external view returns (bool) {
@@ -82,7 +82,7 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
     }
 
     function count() external view returns (uint256) {
-        return nextProjectId + 1;
+        return nextProjectId;
     }
 
     function updateConfig(uint256 _projectId, string memory _uri, bytes32 _hash) external onlyProjectOwner(_projectId) {

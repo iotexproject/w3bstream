@@ -15,7 +15,6 @@ interface IProjectCenter {
 contract W3bstreamRouter is IRouter, Initializable {
     address public fleetManagement;
     address public projectStore;
-    address public creditCenter;
 
     mapping(uint256 => address) public override dapp;
 
@@ -37,7 +36,7 @@ contract W3bstreamRouter is IRouter, Initializable {
         // TODO: 1. epoch based
         // TODO: 2. validate operator (of prover) signature
         require(_fm.isActiveProver(_proverId), "invalid prover");
-        require(!IProjectCenter(projectStore).isPaused(_projectId), "invalid project");
+        /*require(!IProjectCenter(projectStore).isPaused(_projectId), "invalid project");
 
         try IDapp(_dapp).process(_data) {
             _fm.grant(_proverId, 1);
@@ -45,6 +44,7 @@ contract W3bstreamRouter is IRouter, Initializable {
         } catch Error(string memory revertReason) {
             emit DataProcessed(_projectId, _proverId, msg.sender, false, revertReason);
         }
+        */
     }
 
     function bindDapp(uint256 _projectId, address _dapp) external override onlyProjectOwner(_projectId) {
