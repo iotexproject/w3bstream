@@ -18,7 +18,7 @@ import (
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
-	"github.com/machinefi/sprout/utils/distance"
+	"github.com/machinefi/sprout/util/distance"
 	"github.com/machinefi/sprout/vm"
 )
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/utils/ipfs"
+	"github.com/machinefi/sprout/util/ipfs"
 )
 
 func TestIPFS(t *testing.T) {

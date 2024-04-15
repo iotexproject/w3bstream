@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/utils/ipfs"
+	"github.com/machinefi/sprout/util/ipfs"
 )
 
 func TestProjectMeta_GetConfigs_init(t *testing.T) {

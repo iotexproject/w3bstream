@@ -13,9 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/utils/contract"
-	"github.com/machinefi/sprout/utils/distance"
-	"github.com/machinefi/sprout/utils/hash"
+	"github.com/machinefi/sprout/util/contract"
+	"github.com/machinefi/sprout/util/distance"
+	"github.com/machinefi/sprout/util/hash"
 )
 
 type HandleProjectProvers func(projectID uint64, proverIDs []uint64)

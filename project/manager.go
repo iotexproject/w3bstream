@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/smartcontracts/go/project"
-	utilscontract "github.com/machinefi/sprout/utils/contract"
+	utilcontract "github.com/machinefi/sprout/util/contract"
 )
 
 type Manager struct {
@@ -119,7 +119,7 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 }
 
 func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) error {
-	projectCh, err := utilscontract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
+	projectCh, err := utilcontract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
 	if err != nil {
 		return err
 	}

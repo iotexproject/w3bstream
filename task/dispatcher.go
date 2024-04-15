@@ -12,7 +12,7 @@ import (
 	internaldispatcher "github.com/machinefi/sprout/task/internal/dispatcher"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
-	"github.com/machinefi/sprout/utils/contract"
+	"github.com/machinefi/sprout/util/contract"
 )
 
 type Persistence interface {
