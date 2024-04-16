@@ -20,7 +20,7 @@ import (
 	proverconfig "github.com/machinefi/sprout/cmd/prover/config"
 	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/persistence/postgres"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/scheduler"
 	"github.com/machinefi/sprout/task"
@@ -146,7 +146,7 @@ func runProver(conf *proverconfig.Config) {
 }
 
 func runCoordinator(conf *coordinatorconfig.Config) {
-	pg, err := persistence.NewPostgres(conf.DatabaseDSN)
+	pg, err := postgres.NewPostgres(conf.DatabaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}

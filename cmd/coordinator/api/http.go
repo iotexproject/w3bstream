@@ -12,17 +12,17 @@ import (
 
 	"github.com/machinefi/sprout/apitypes"
 	"github.com/machinefi/sprout/cmd/coordinator/config"
-	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/persistence/postgres"
 )
 
 type HttpServer struct {
 	engine          *gin.Engine
-	persistence     *persistence.Postgres
+	persistence     *postgres.Postgres
 	conf            *config.Config
 	coordinatorConf *apitypes.CoordinatorConfigRsp
 }
 
-func NewHttpServer(persistence *persistence.Postgres, conf *config.Config) *HttpServer {
+func NewHttpServer(persistence *postgres.Postgres, conf *config.Config) *HttpServer {
 	s := &HttpServer{
 		engine:      gin.Default(),
 		persistence: persistence,

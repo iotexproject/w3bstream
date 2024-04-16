@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/smartcontracts/go/project"
-	utilcontract "github.com/machinefi/sprout/util/contract"
 )
 
 type Manager struct {
@@ -119,7 +119,7 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 }
 
 func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) error {
-	projectCh, err := utilcontract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
+	projectCh, err := contract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
 	if err != nil {
 		return err
 	}
