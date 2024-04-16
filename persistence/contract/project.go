@@ -31,7 +31,7 @@ var (
 	emptyHash = common.Hash{}
 )
 
-type Projects struct {
+type BlockProject struct {
 	BlockNumber uint64
 	Projects    map[uint64]*Project
 }
@@ -45,7 +45,7 @@ type Project struct {
 	Attributes  map[common.Hash][]byte
 }
 
-func (ps *Projects) Merge(diff *Projects) {
+func (ps *BlockProject) Merge(diff *BlockProject) {
 	ps.BlockNumber = diff.BlockNumber
 	for id, p := range ps.Projects {
 		diffP, ok := diff.Projects[id]
@@ -55,7 +55,9 @@ func (ps *Projects) Merge(diff *Projects) {
 	}
 	for id, p := range diff.Projects {
 		if _, ok := ps.Projects[id]; !ok {
-			ps.Projects[id] = p
+			np := &Project{Attributes: map[common.Hash][]byte{}}
+			np.Merge(p)
+			ps.Projects[id] = np
 		}
 	}
 }
@@ -68,22 +70,21 @@ func (p *Project) Merge(diff *Project) {
 		p.BlockNumber = diff.BlockNumber
 	}
 	if diff.Paused != nil {
-		paused := *diff.Paused
-		p.Paused = &paused
+		p.Paused = diff.Paused
 	}
 	if diff.Uri != "" {
 		p.Uri = diff.Uri
 	}
 	if !bytes.Equal(diff.Hash[:], emptyHash[:]) {
-		copy(p.Hash[:], diff.Hash[:])
+		p.Hash = diff.Hash
 	}
 	for h, d := range diff.Attributes {
 		p.Attributes[h] = d
 	}
 }
 
-func ListAndWatchProject(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *Projects, error) {
-	ch := make(chan *Projects, 10)
+func ListAndWatchProject(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *BlockProject, error) {
+	ch := make(chan *BlockProject, 10)
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial chain endpoint")
@@ -110,7 +111,7 @@ func ListAndWatchProject(chainEndpoint, contractAddress string, tracebackLength 
 }
 
 // TOD list determinate block number
-func listProject(ch chan<- *Projects, instance *project.Project, targetBlockNumber uint64) error {
+func listProject(ch chan<- *BlockProject, instance *project.Project, targetBlockNumber uint64) error {
 	projects := map[uint64]*Project{}
 	for projectID := uint64(1); ; projectID++ {
 		mp, err := instance.Config(nil, new(big.Int).SetUint64(projectID))
@@ -147,14 +148,14 @@ func listProject(ch chan<- *Projects, instance *project.Project, targetBlockNumb
 			Attributes:  attributes,
 		}
 	}
-	ch <- &Projects{
+	ch <- &BlockProject{
 		BlockNumber: targetBlockNumber,
 		Projects:    projects,
 	}
 	return nil
 }
 
-func watchProject(ch chan<- *Projects, client *ethclient.Client, instance *project.Project, interval time.Duration, contractAddress string, topics []common.Hash, step, startBlockNumber uint64) {
+func watchProject(ch chan<- *BlockProject, client *ethclient.Client, instance *project.Project, interval time.Duration, contractAddress string, topics []common.Hash, step, startBlockNumber uint64) {
 	queriedBlockNumber := startBlockNumber
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{common.HexToAddress(contractAddress)},
@@ -197,7 +198,7 @@ func watchProject(ch chan<- *Projects, client *ethclient.Client, instance *proje
 	}()
 }
 
-func processProjectLogs(ch chan<- *Projects, logs []types.Log, instance *project.Project) bool {
+func processProjectLogs(ch chan<- *BlockProject, logs []types.Log, instance *project.Project) bool {
 	if len(logs) == 0 {
 		return true
 	}
@@ -207,12 +208,12 @@ func processProjectLogs(ch chan<- *Projects, logs []types.Log, instance *project
 		}
 		return logs[i].TxIndex < logs[j].TxIndex
 	})
-	psMap := map[uint64]*Projects{}
+	psMap := map[uint64]*BlockProject{}
 
 	for _, l := range logs {
 		ps, ok := psMap[l.BlockNumber]
 		if !ok {
-			ps = &Projects{
+			ps = &BlockProject{
 				BlockNumber: l.BlockNumber,
 				Projects:    map[uint64]*Project{},
 			}
@@ -292,7 +293,7 @@ func processProjectLogs(ch chan<- *Projects, logs []types.Log, instance *project
 		psMap[l.BlockNumber] = ps
 	}
 
-	psSlice := []*Projects{}
+	psSlice := []*BlockProject{}
 	for _, p := range psMap {
 		psSlice = append(psSlice, p)
 	}

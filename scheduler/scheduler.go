@@ -28,8 +28,8 @@ type projectOffset struct {
 }
 
 type scheduler struct {
-	contractProvers      *contractProvers
-	contractProjects     *contractProjects
+	contractProver       *contractProver
+	contractProject      *contractProject
 	projectOffsets       *sync.Map // project offset in epoch offset(uint64) -> *projectOffset
 	epoch                uint64
 	pubSubs              *p2p.PubSubs // TODO define interface
@@ -51,7 +51,7 @@ func (s *scheduler) schedule() {
 			}
 
 			proverIDs := []uint64{}
-			for id := range s.contractProvers.get(blockNumber).Provers {
+			for id := range s.contractProver.get(blockNumber).Provers {
 				proverIDs = append(proverIDs, id)
 			}
 			scheduled := true
@@ -124,9 +124,9 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 		return nil
 	}
 
-	contractProvers := &contractProvers{
-		epoch: epoch,
-		datas: list.New(),
+	contractProver := &contractProver{
+		epoch:  epoch,
+		blocks: list.New(),
 	}
 
 	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress, epoch)
@@ -136,14 +136,14 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	go func() {
 		for p := range proverCh {
 			slog.Info("get new prover contract events", "block_number", p.BlockNumber)
-			contractProvers.set(p)
+			contractProver.set(p)
 		}
 	}()
 
 	projectOffsets := &sync.Map{}
-	contractProjects := &contractProjects{
-		epoch: epoch,
-		datas: list.New(),
+	contractProject := &contractProject{
+		epoch:  epoch,
+		blocks: list.New(),
 	}
 	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress, epoch)
 	if err != nil {
@@ -152,7 +152,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	go func() {
 		for p := range projectCh {
 			slog.Info("get new project contract events", "block_number", p.BlockNumber)
-			contractProjects.set(p)
+			contractProject.set(p)
 
 			for projectID := range p.Projects {
 				projectIDHash := hash.Sum256Uint64(projectID)
@@ -170,8 +170,8 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	}
 
 	s := &scheduler{
-		contractProvers:      contractProvers,
-		contractProjects:     contractProjects,
+		contractProver:       contractProver,
+		contractProject:      contractProject,
 		projectOffsets:       projectOffsets,
 		epoch:                epoch,
 		pubSubs:              pubSubs,
