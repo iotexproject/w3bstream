@@ -10,20 +10,20 @@ import (
 	"github.com/machinefi/sprout/persistence/contract"
 )
 
-type contractProjects struct {
-	mu    sync.Mutex
-	epoch uint64
-	datas *list.List
+type contractProject struct {
+	mu     sync.Mutex
+	epoch  uint64
+	blocks *list.List
 }
 
-func (c *contractProjects) get(projectID, expectedBlockNumber uint64) (*contract.Project, error) {
+func (c *contractProject) get(projectID, expectedBlockNumber uint64) (*contract.Project, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	np := &contract.Project{Attributes: map[common.Hash][]byte{}}
 
-	for e := c.datas.Front(); e != nil; e = e.Next() {
-		ep := e.Value.(*contract.Projects)
+	for e := c.blocks.Front(); e != nil; e = e.Next() {
+		ep := e.Value.(*contract.BlockProject)
 		if expectedBlockNumber < ep.BlockNumber {
 			break
 		}
@@ -38,33 +38,37 @@ func (c *contractProjects) get(projectID, expectedBlockNumber uint64) (*contract
 	return np, nil
 }
 
-func (c *contractProjects) set(diff *contract.Projects) {
+func (c *contractProject) set(diff *contract.BlockProject) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.datas.PushBack(diff)
+	c.blocks.PushBack(diff)
 
-	if c.datas.Len() > int(c.epoch) {
-		h := c.datas.Front()
-		h.Value.(*contract.Projects).Merge(h.Next().Value.(*contract.Projects))
-		c.datas.Remove(h.Next())
+	if c.blocks.Len() > int(c.epoch) {
+		h := c.blocks.Front()
+		np := &contract.BlockProject{Projects: map[uint64]*contract.Project{}}
+		np.Merge(h.Value.(*contract.BlockProject))
+		np.Merge(h.Next().Value.(*contract.BlockProject))
+		c.blocks.Remove(h)
+		c.blocks.Remove(h.Next())
+		c.blocks.PushFront(np)
 	}
 }
 
 type contractProvers struct {
-	mu    sync.Mutex
-	epoch uint64
-	datas *list.List
+	mu     sync.Mutex
+	epoch  uint64
+	blocks *list.List
 }
 
-func (c *contractProvers) get(expectedBlockNumber uint64) *contract.Provers {
+func (c *contractProvers) get(expectedBlockNumber uint64) *contract.BlockProver {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	np := &contract.Provers{Provers: map[uint64]*contract.Prover{}}
+	np := &contract.BlockProver{Provers: map[uint64]*contract.Prover{}}
 
-	for e := c.datas.Front(); e != nil; e = e.Next() {
-		ep := e.Value.(*contract.Provers)
+	for e := c.blocks.Front(); e != nil; e = e.Next() {
+		ep := e.Value.(*contract.BlockProver)
 		if expectedBlockNumber < ep.BlockNumber {
 			break
 		}
@@ -73,14 +77,19 @@ func (c *contractProvers) get(expectedBlockNumber uint64) *contract.Provers {
 	return np
 }
 
-func (c *contractProvers) set(diff *contract.Provers) {
+func (c *contractProvers) set(diff *contract.BlockProver) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.datas.PushBack(diff)
-	if c.datas.Len() > int(c.epoch) {
-		h := c.datas.Front()
-		h.Value.(*contract.Provers).Merge(h.Next().Value.(*contract.Provers))
-		c.datas.Remove(h.Next())
+	c.blocks.PushBack(diff)
+
+	if c.blocks.Len() > int(c.epoch) {
+		h := c.blocks.Front()
+		np := &contract.BlockProver{Provers: map[uint64]*contract.Prover{}}
+		np.Merge(h.Value.(*contract.BlockProver))
+		np.Merge(h.Next().Value.(*contract.BlockProver))
+		c.blocks.Remove(h)
+		c.blocks.Remove(h.Next())
+		c.blocks.PushFront(np)
 	}
 }

@@ -29,7 +29,7 @@ type projectOffset struct {
 
 type scheduler struct {
 	contractProvers      *contractProvers
-	contractProjects     *contractProjects
+	contractProjects     *contractProject
 	projectOffsets       *sync.Map // project offset in epoch offset(uint64) -> *projectOffset
 	epoch                uint64
 	pubSubs              *p2p.PubSubs // TODO define interface
@@ -125,8 +125,8 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	}
 
 	contractProvers := &contractProvers{
-		epoch: epoch,
-		datas: list.New(),
+		epoch:  epoch,
+		blocks: list.New(),
 	}
 
 	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress, epoch)
@@ -141,9 +141,9 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	}()
 
 	projectOffsets := &sync.Map{}
-	contractProjects := &contractProjects{
-		epoch: epoch,
-		datas: list.New(),
+	contractProjects := &contractProject{
+		epoch:  epoch,
+		blocks: list.New(),
 	}
 	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress, epoch)
 	if err != nil {
