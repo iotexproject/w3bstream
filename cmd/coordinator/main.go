@@ -12,7 +12,7 @@ import (
 	"github.com/machinefi/sprout/cmd/coordinator/api"
 	"github.com/machinefi/sprout/cmd/coordinator/config"
 	"github.com/machinefi/sprout/datasource"
-	"github.com/machinefi/sprout/persistence"
+	"github.com/machinefi/sprout/persistence/postgres"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task"
 )
@@ -25,7 +25,7 @@ func main() {
 	conf.Print()
 	slog.Info("coordinator config loaded")
 
-	persistence, err := persistence.NewPostgres(conf.DatabaseDSN)
+	persistence, err := postgres.NewPostgres(conf.DatabaseDSN)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new postgres persistence"))
 	}

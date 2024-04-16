@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/util/contract"
+	"github.com/machinefi/sprout/persistence/contract"
 )
 
 type contractProjects struct {

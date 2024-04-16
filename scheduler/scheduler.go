@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/util/contract"
+	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/util/distance"
 	"github.com/machinefi/sprout/util/hash"
 )

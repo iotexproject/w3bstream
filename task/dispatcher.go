@@ -8,11 +8,11 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
 	internaldispatcher "github.com/machinefi/sprout/task/internal/dispatcher"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
-	"github.com/machinefi/sprout/util/contract"
 )
 
 type Persistence interface {
