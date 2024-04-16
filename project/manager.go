@@ -88,9 +88,7 @@ func (m *Manager) load(projectID uint64) (*Project, error) {
 func (m *Manager) loadFromLocal(projectFileDir string) error {
 	files, err := os.ReadDir(projectFileDir)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			return errors.Wrapf(err, "failed to read project directory %s", projectFileDir)
-		}
+		return errors.Wrapf(err, "failed to read project directory %s", projectFileDir)
 	}
 	for _, f := range files {
 		if f.IsDir() {
@@ -134,10 +132,12 @@ func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) er
 	return nil
 }
 
-// TODO support local project config
 func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint, projectFileDirectory string) (*Manager, error) {
-	var c *cache
-	var err error
+	var (
+		c   *cache
+		err error
+	)
+
 	if projectCacheDir != "" {
 		c, err = newCache(projectCacheDir)
 		if err != nil {
