@@ -9,7 +9,7 @@ import (
 var sessions sync.Map
 
 func CreateSession(vctoken string, clientdid string) error {
-	client, ok := manager.GetByClientDID(clientdid)
+	client, ok := manager.ClientByDID(clientdid)
 	if !ok {
 		return errors.Errorf("client did not exists: %s", clientdid)
 	}

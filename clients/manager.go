@@ -51,7 +51,7 @@ type Manager struct {
 	pool map[string]*Client
 }
 
-func (mgr *Manager) GetByClientDID(clientdid string) (*Client, bool) {
+func (mgr *Manager) ClientByDID(clientdid string) (*Client, bool) {
 	mgr.mux.Lock()
 	defer mgr.mux.Unlock()
 	c, ok := mgr.pool[clientdid]

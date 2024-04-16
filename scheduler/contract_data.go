@@ -16,7 +16,7 @@ type contractProject struct {
 	blocks *list.List
 }
 
-func (c *contractProject) project(projectID, expectedBlockNumber uint64) (*contract.Project, error) {
+func (c *contractProject) project(projectID, blockNumber uint64) (*contract.Project, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -24,7 +24,7 @@ func (c *contractProject) project(projectID, expectedBlockNumber uint64) (*contr
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
 		ep := e.Value.(*contract.BlockProject)
-		if expectedBlockNumber < ep.BlockNumber {
+		if blockNumber < ep.BlockNumber {
 			break
 		}
 		p, ok := ep.Projects[projectID]
@@ -33,7 +33,7 @@ func (c *contractProject) project(projectID, expectedBlockNumber uint64) (*contr
 		}
 	}
 	if np.ID == 0 {
-		return nil, errors.Errorf("failed to find project contract data at the block number, project_id %v, expected_block_number %v", projectID, expectedBlockNumber)
+		return nil, errors.Errorf("failed to find project contract data at the block number, project_id %v, expected_block_number %v", projectID, blockNumber)
 	}
 	return np, nil
 }

@@ -123,12 +123,12 @@ func writeTextileEvent(url string, fileData []byte) error {
 }
 
 // TODO: refactor textile with a KV database adapter
-func newTextileDBAdapter(vaultID string, secretKey string) (Output, error) {
+func newTextileDBAdapter(conf TextileConfig, secretKey string) (*textileDB, error) {
 	if secretKey == "" {
 		return nil, errors.New("secret key is empty")
 	}
 	return &textileDB{
-		endpoint:  fmt.Sprintf("https://basin.tableland.xyz/vaults/%s/events", vaultID),
+		endpoint:  fmt.Sprintf("https://basin.tableland.xyz/vaults/%s/events", conf.VaultID),
 		secretKey: crypto.ToECDSAUnsafe(common.FromHex(secretKey)),
 	}, nil
 }

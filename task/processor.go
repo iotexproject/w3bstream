@@ -26,11 +26,11 @@ type VMHandler interface {
 	Handle(task *types.Task, vmtype vm.Type, code string, expParam string) ([]byte, error)
 }
 
-type GetProject func(projectID uint64) (*project.Project, error)
+type Project func(projectID uint64) (*project.Project, error)
 
 type Processor struct {
 	vmHandler        VMHandler
-	getProject       GetProject
+	project          Project
 	proverPrivateKey *ecdsa.PrivateKey
 	sequencerPubKey  []byte
 	proverID         uint64
@@ -47,13 +47,13 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	}
 	t := d.Task
 
-	p, err := r.getProject(t.ProjectID)
+	p, err := r.project(t.ProjectID)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
 		r.reportFail(t, err, topic)
 		return
 	}
-	c, err := p.GetDefaultConfig()
+	c, err := p.DefaultConfig()
 	if err != nil {
 		slog.Error("failed to get project config", "error", err, "project_id", t.ProjectID, "project_version", p.DefaultVersion)
 		r.reportFail(t, err, topic)
@@ -66,8 +66,8 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		provers = proversValue.([]uint64)
 	}
 	if len(provers) > 1 {
-		workProver := distance.GetMinNLocation(provers, t.ID, 1)
-		if workProver[0] != r.proverID {
+		workProvers := distance.Sort(provers, t.ID)
+		if workProvers[0] != r.proverID {
 			slog.Info("the task not scheduld to this prover", "project_id", t.ProjectID, "task_id", t.ID)
 			return
 		}
@@ -98,6 +98,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 }
 
 func (r *Processor) signProof(t *types.Task, res []byte) (string, error) {
+	// TODO: use protobuf or json to encode
 	buf := bytes.NewBuffer(nil)
 
 	if err := binary.Write(buf, binary.BigEndian, t.ID); err != nil {
@@ -164,10 +165,10 @@ func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result [
 	}
 }
 
-func NewProcessor(vmHandler VMHandler, getProject GetProject, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID uint64) *Processor {
+func NewProcessor(vmHandler VMHandler, project Project, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID uint64) *Processor {
 	return &Processor{
 		vmHandler:        vmHandler,
-		getProject:       getProject,
+		project:          project,
 		proverPrivateKey: proverPrivateKey,
 		sequencerPubKey:  seqPubkey,
 		proverID:         proverID,

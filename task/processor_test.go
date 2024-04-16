@@ -6,7 +6,6 @@ import (
 	. "github.com/agiledragon/gomonkey/v2"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/p2p"
@@ -58,12 +57,10 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 }
 
 func TestProcessor_HandleP2PData(t *testing.T) {
-	r := require.New(t)
-
 	m := &project.Manager{}
 	processor := &Processor{
-		vmHandler:  &vm.Handler{},
-		getProject: m.Get,
+		vmHandler: &vm.Handler{},
+		project:   m.Project,
 	}
 
 	t.Run("TaskNil", func(t *testing.T) {
@@ -103,7 +100,6 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 			Version:      "0.1",
 		}},
 	}
-	r.NoError(testProject.Validate())
 
 	t.Run("ProofFailed", func(t *testing.T) {
 		p := NewPatches()

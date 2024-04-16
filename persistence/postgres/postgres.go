@@ -30,7 +30,7 @@ type Postgres struct {
 	db *gorm.DB
 }
 
-func (p *Postgres) FetchProjectProcessedTaskID(projectID uint64) (uint64, error) {
+func (p *Postgres) ProcessedTaskID(projectID uint64) (uint64, error) {
 	t := projectProcessedTask{}
 	if err := p.db.Where("project_id = ?", projectID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -41,7 +41,7 @@ func (p *Postgres) FetchProjectProcessedTaskID(projectID uint64) (uint64, error)
 	return t.TaskID, nil
 }
 
-func (p *Postgres) UpsertProjectProcessedTask(projectID, taskID uint64) error {
+func (p *Postgres) UpsertProcessedTask(projectID, taskID uint64) error {
 	t := projectProcessedTask{
 		ProjectID: projectID,
 		TaskID:    taskID,
