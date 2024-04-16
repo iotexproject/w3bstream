@@ -55,13 +55,13 @@ func (c *contractProject) set(diff *contract.BlockProject) {
 	}
 }
 
-type contractProvers struct {
+type contractProver struct {
 	mu     sync.Mutex
 	epoch  uint64
 	blocks *list.List
 }
 
-func (c *contractProvers) get(expectedBlockNumber uint64) *contract.BlockProver {
+func (c *contractProver) get(expectedBlockNumber uint64) *contract.BlockProver {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -77,7 +77,7 @@ func (c *contractProvers) get(expectedBlockNumber uint64) *contract.BlockProver 
 	return np
 }
 
-func (c *contractProvers) set(diff *contract.BlockProver) {
+func (c *contractProver) set(diff *contract.BlockProver) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
