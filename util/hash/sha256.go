@@ -1,12 +1,14 @@
 package hash
 
 import (
-	"crypto/sha256"
 	"encoding/binary"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func Sum256Uint64(number uint64) [sha256.Size]byte {
+func Keccak256Uint64(number uint64) common.Hash {
 	numberBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(numberBytes, number)
-	return sha256.Sum256(numberBytes)
+	return crypto.Keccak256Hash(numberBytes)
 }

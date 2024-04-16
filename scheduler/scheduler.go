@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"context"
 	"log/slog"
-	"math/big"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -156,8 +155,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 			contractProject.add(p)
 
 			for projectID := range p.Projects {
-				projectIDHash := hash.Sum256Uint64(projectID)
-				offset := new(big.Int).SetBytes(projectIDHash[:]).Uint64() % epoch
+				offset := hash.Keccak256Uint64(projectID).Big().Uint64() % epoch
 
 				projects, _ := projectOffsets.LoadOrStore(offset, &projectOffset{})
 				projects.(*projectOffset).projectIDs.Store(projectID, true)

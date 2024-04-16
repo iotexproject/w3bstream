@@ -68,13 +68,13 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	if len(provers) > 1 {
 		workProvers := distance.Sort(provers, t.ID)
 		if workProvers[0] != r.proverID {
-			slog.Info("the task not scheduld to this prover", "project_id", t.ProjectID, "task_id", t.ID)
+			slog.Info("the task not scheduled to this prover", "project_id", t.ProjectID, "task_id", t.ID)
 			return
 		}
 	}
 
 	if err := t.VerifySignature(r.sequencerPubKey); err != nil {
-		slog.Error("failed to verify task sign", "error", err)
+		slog.Error("failed to verify task signature", "error", err)
 		return
 	}
 
