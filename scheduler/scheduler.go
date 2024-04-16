@@ -51,7 +51,7 @@ func (s *scheduler) schedule() {
 			}
 
 			proverIDs := []uint64{}
-			for id := range s.contractProver.get(blockNumber).Provers {
+			for id := range s.contractProver.blockProver(blockNumber).Provers {
 				proverIDs = append(proverIDs, id)
 			}
 			scheduled := true
@@ -136,7 +136,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	go func() {
 		for p := range proverCh {
 			slog.Info("get new prover contract events", "block_number", p.BlockNumber)
-			contractProver.set(p)
+			contractProver.add(p)
 		}
 	}()
 
@@ -152,7 +152,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	go func() {
 		for p := range projectCh {
 			slog.Info("get new project contract events", "block_number", p.BlockNumber)
-			contractProject.set(p)
+			contractProject.add(p)
 
 			for projectID := range p.Projects {
 				projectIDHash := hash.Sum256Uint64(projectID)
