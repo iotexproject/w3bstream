@@ -3,6 +3,8 @@ package output
 import (
 	"testing"
 
+	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,6 +28,12 @@ func TestNew(t *testing.T) {
 		r.True(ok)
 	})
 	t.Run("Ethereum", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
+
 		c := &Config{
 			Type: EthereumContract,
 			Ethereum: EthereumConfig{

@@ -62,7 +62,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 		t.Run("Proof", func(t *testing.T) {
 			p := NewPatches()
 			defer p.Reset()
-			p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+			patchEthereumContractSendTX(p, txHashRet, nil)
+			p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 
 			conf.Ethereum.ContractAbiJSON = testABIProofInputOnlyMethod
 			o, err := New(conf, "1", "")
@@ -78,7 +81,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 		t.Run("ProjectID", func(t *testing.T) {
 			p := NewPatches()
 			defer p.Reset()
-			p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+			patchEthereumContractSendTX(p, txHashRet, nil)
+			p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 
 			conf.Ethereum.ContractAbiJSON = testABIProjectInputOnlyMethod
 			o, err := New(conf, "1", "")
@@ -95,7 +101,9 @@ func Test_ethereumContract_Output(t *testing.T) {
 			p := NewPatches()
 			defer p.Reset()
 
-			p = patchEthereumContractSendTX(p, txHashRet, nil)
+			patchEthereumContractSendTX(p, txHashRet, nil)
+			p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 
 			conf.Ethereum.ContractAbiJSON = testABIReceiverInputOnlyMethod
 			o, err := New(conf, "1", "")
@@ -123,6 +131,13 @@ func Test_ethereumContract_Output(t *testing.T) {
 		})
 
 		t.Run("DataSnark", func(t *testing.T) {
+			p := NewPatches()
+			defer p.Reset()
+
+			patchEthereumContractSendTX(p, txHashRet, nil)
+			p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
+
 			conf.Ethereum.ContractAbiJSON = testABIDataSnarkInputOnlyMethod
 			o, err := New(conf, "1", "")
 			r.NoError(err)
@@ -152,7 +167,10 @@ func Test_ethereumContract_Output(t *testing.T) {
 		t.Run("Default", func(t *testing.T) {
 			p := NewPatches()
 			defer p.Reset()
-			p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+			patchEthereumContractSendTX(p, txHashRet, nil)
+			p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 
 			t.Run("MissingMethodNameParam", func(t *testing.T) {
 				conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod
@@ -215,20 +233,19 @@ func Test_ethereumContract_Output(t *testing.T) {
 			})
 		})
 	})
-
-	// empty input to skip build parameters
-	conf.Ethereum.ContractAbiJSON = `[{"inputs":[], "outputs":[], "name":"testMethod", "type": "function"}]`
-	o, err := New(conf, "1", "")
-	r.NoError(err)
-	_, ok := o.(*ethereumContract)
-	r.True(ok)
-
 	t.Run("PackTxData", func(t *testing.T) {
 		t.Run("FailedToPack", func(t *testing.T) {
 			p := NewPatches()
 			defer p.Reset()
 
-			p = p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, errors.New(t.Name()))
+			patchEthereumContractSendTX(p, txHashRet, nil)
+			p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
+			p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, errors.New(t.Name()))
+
+			conf.Ethereum.ContractAbiJSON = testABIProofInputOnlyMethod
+			o, err := New(conf, "1", "")
+			r.NoError(err)
 
 			txHash, err := o.Output(&types.Task{
 				ProjectID: 1,
@@ -244,7 +261,14 @@ func Test_ethereumContract_Output(t *testing.T) {
 		t.Run("FailedToSendTx", func(t *testing.T) {
 			p := NewPatches()
 			defer p.Reset()
-			p = patchEthereumContractSendTX(p, "", errors.New(t.Name()))
+
+			patchEthereumContractSendTX(p, "", errors.New(t.Name()))
+			p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
+			p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, errors.New(t.Name()))
+
+			o, err := New(conf, "1", "")
+			r.NoError(err)
 
 			txHash, err := o.Output(&types.Task{
 				ProjectID: 1,
@@ -259,15 +283,21 @@ func Test_ethereumContract_Output(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
-		p = patchEthereumContractSendTX(p, txHashRet, nil)
+
+		patchEthereumContractSendTX(p, txHashRet, nil)
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
+		p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, nil)
+
+		o, err := New(conf, "1", "")
+		r.NoError(err)
 
 		txHash, err := o.Output(&types.Task{
 			ProjectID: 1,
 			Data:      [][]byte{[]byte(`{"other":""}`)},
 		}, nil)
-
-		r.Equal(txHash, txHashRet)
 		r.NoError(err)
+		r.Equal(txHash, txHashRet)
 	})
 }
 
@@ -275,48 +305,24 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 	r := require.New(t)
 
 	conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod
-	o, err := New(conf, "1", "")
-	r.NoError(err)
-	contract, ok := o.(*ethereumContract)
-	r.True(ok)
-
 	ctx := context.Background()
-
-	t.Run("DialEthFailed", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
-
-		_, err := contract.sendTX(ctx, nil)
-		r.ErrorContains(err, t.Name())
-	})
 
 	t.Run("SuggestGasFailed", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-		p = p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
-		p = p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
-		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
+		p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
+		p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
+		p.ApplyFuncReturn(common.HexToAddress, common.Address{})
+		p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", nil, errors.New(t.Name()))
 
-		_, err := contract.sendTX(ctx, nil)
-		r.ErrorContains(err, t.Name())
-	})
-
-	t.Run("GetChainIdFailed", func(t *testing.T) {
-		p := NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-		p = p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
-		p = p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
-		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, nil)
+		o, err := New(conf, "1", "")
+		r.NoError(err)
+		contract, ok := o.(*ethereumContract)
+		r.True(ok)
+		_, err = contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -324,14 +330,20 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-		p = p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
-		p = p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
-		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", nil, errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, nil)
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
+		p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
+		p.ApplyFuncReturn(common.HexToAddress, common.Address{})
+		p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", nil, errors.New(t.Name()))
+
+		o, err := New(conf, "1", "")
+		r.NoError(err)
+		contract, ok := o.(*ethereumContract)
+		r.True(ok)
+		_, err = contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -339,15 +351,20 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-		p = p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
-		p = p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
-		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", nil, errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, nil)
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
+		p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
+		p.ApplyFuncReturn(common.HexToAddress, common.Address{})
+		p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", nil, errors.New(t.Name()))
+
+		o, err := New(conf, "1", "")
+		r.NoError(err)
+		contract, ok := o.(*ethereumContract)
+		r.True(ok)
+		_, err = contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -355,16 +372,21 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-		p = p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
-		p = p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
-		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
-		p = p.ApplyFuncReturn(ethtypes.SignTx, nil, errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, nil)
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
+		p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
+		p.ApplyFuncReturn(common.HexToAddress, common.Address{})
+		p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
+		p.ApplyFuncReturn(ethtypes.SignTx, nil, errors.New(t.Name()))
+
+		o, err := New(conf, "1", "")
+		r.NoError(err)
+		contract, ok := o.(*ethereumContract)
+		r.True(ok)
+		_, err = contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -372,17 +394,22 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-		p = p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
-		p = p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
-		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
-		p = p.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", errors.New(t.Name()))
-		_, err := contract.sendTX(ctx, nil)
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
+		p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
+		p.ApplyFuncReturn(common.HexToAddress, common.Address{})
+		p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
+		p.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", errors.New(t.Name()))
+
+		o, err := New(conf, "1", "")
+		r.NoError(err)
+		contract, ok := o.(*ethereumContract)
+		r.True(ok)
+		_, err = contract.sendTX(ctx, nil)
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -390,17 +417,22 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-		p = p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
-		p = p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
-		p = p.ApplyFuncReturn(common.HexToAddress, common.Address{})
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
-		p = p.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
-		p = p.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", nil)
-		p = p.ApplyMethodReturn(&ethtypes.Transaction{}, "Hash", common.Hash{})
+		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
+		p.ApplyFuncReturn(crypto.ToECDSAUnsafe, &ecdsa.PrivateKey{})
+		p.ApplyFuncReturn(crypto.PubkeyToAddress, common.Address{})
+		p.ApplyFuncReturn(common.HexToAddress, common.Address{})
+		p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", big.NewInt(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
+		p.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
+		p.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", nil)
+		p.ApplyMethodReturn(&ethtypes.Transaction{}, "Hash", common.Hash{})
+
+		o, err := New(conf, "1", "")
+		r.NoError(err)
+		contract, ok := o.(*ethereumContract)
+		r.True(ok)
 		tx, err := contract.sendTX(ctx, nil)
 		r.NoError(err)
 		r.Equal(tx, "0x0000000000000000000000000000000000000000000000000000000000000000")

@@ -130,7 +130,7 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectManager.Get, sk, sequencerPubKey, 1)
+	taskProcessor := task.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, 1)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
@@ -138,7 +138,7 @@ func runProver(conf *proverconfig.Config) {
 	}
 
 	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress,
-		conf.ProjectFileDirectory, 1, pubSubs, taskProcessor.HandleProjectProvers, projectManager.GetCachedProjectIDs); err != nil {
+		conf.ProjectFileDirectory, 1, pubSubs, taskProcessor.HandleProjectProvers, projectManager.ProjectIDs); err != nil {
 		log.Fatal(err)
 	}
 
@@ -158,8 +158,8 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 		log.Fatal(err)
 	}
 
-	if err := task.RunDispatcher(pg, datasource.NewPostgres, projectConfigManager.GetCachedProjectIDs,
-		projectConfigManager.Get, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519,
+	if err := task.RunDispatcher(pg, datasource.NewPostgres, projectConfigManager.ProjectIDs,
+		projectConfigManager.Project, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519,
 		conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IoTeXChainID); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}

@@ -43,14 +43,11 @@ type Output interface {
 func New(conf *Config, privateKeyECDSA, privateKeyED25519 string) (Output, error) {
 	switch conf.Type {
 	case EthereumContract:
-		ethConf := conf.Ethereum
-		return newEthereum(ethConf.ChainEndpoint, privateKeyECDSA, ethConf.ContractAddress, ethConf.ReceiverAddress, ethConf.ContractAbiJSON, ethConf.ContractMethod)
+		return newEthereum(conf.Ethereum, privateKeyECDSA)
 	case SolanaProgram:
-		solConf := conf.Solana
-		return newSolanaProgram(solConf.ChainEndpoint, solConf.ProgramID, privateKeyED25519, solConf.StateAccountPK)
+		return newSolanaProgram(conf.Solana, privateKeyED25519)
 	case Textile:
-		textileConf := conf.Textile
-		return newTextileDBAdapter(textileConf.VaultID, privateKeyECDSA)
+		return newTextileDBAdapter(conf.Textile, privateKeyECDSA)
 	default:
 		return newStdout(), nil
 	}

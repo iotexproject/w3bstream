@@ -39,10 +39,10 @@ func TestClientManager(t *testing.T) {
 	})
 
 	t.Run("AddAndGetClient", func(t *testing.T) {
-		c, ok := m.GetByClientDID("did:ethr:0x9d9250fb4e08ba7a858fe7196a6ba946c6083ff0")
+		c, ok := m.ClientByDID("did:ethr:0x9d9250fb4e08ba7a858fe7196a6ba946c6083ff0")
 		r.NotNil(c)
 		r.True(ok)
-		c, ok = m.GetByClientDID("not_exists")
+		c, ok = m.ClientByDID("not_exists")
 		r.Nil(c)
 		r.False(ok)
 
@@ -50,7 +50,7 @@ func TestClientManager(t *testing.T) {
 			ClientDID: "unit_test_added",
 			Projects:  []uint64{1, 2, 3},
 		})
-		c, ok = m.GetByClientDID("unit_test_added")
+		c, ok = m.ClientByDID("unit_test_added")
 		r.NotNil(c)
 		r.True(ok)
 		r.NotNil(c.Metadata)

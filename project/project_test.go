@@ -24,7 +24,7 @@ func TestProjectMeta_GetConfigs_init(t *testing.T) {
 	t.Run("InvalidUri", func(t *testing.T) {
 		p = p.ApplyFuncReturn(url.Parse, nil, errors.New(t.Name()))
 
-		_, err := (&Meta{}).GetProjectRawData("")
+		_, err := (&Meta{}).FetchProjectRawData("")
 		r.ErrorContains(err, t.Name())
 	})
 }
@@ -51,7 +51,7 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 	t.Run("FailedToGetHTTP", func(t *testing.T) {
 		p = p.ApplyFuncReturn(http.Get, nil, errors.New(t.Name()))
 
-		_, err := pm.GetProjectRawData("")
+		_, err := pm.FetchProjectRawData("")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToIOReadAll", func(t *testing.T) {
@@ -60,7 +60,7 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 		}, nil)
 		p = p.ApplyFuncReturn(io.ReadAll, nil, errors.New(t.Name()))
 
-		_, err := pm.GetProjectRawData("")
+		_, err := pm.FetchProjectRawData("")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("HashMismatch", func(t *testing.T) {
@@ -68,11 +68,11 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 
 		npm := *pm
 		npm.Hash = [32]byte{}
-		_, err := npm.GetProjectRawData("")
+		_, err := npm.FetchProjectRawData("")
 		r.ErrorContains(err, "failed to validate project hash")
 	})
 	t.Run("Success", func(t *testing.T) {
-		_, err := pm.GetProjectRawData("")
+		_, err := pm.FetchProjectRawData("")
 		r.NoError(err)
 	})
 }
@@ -88,7 +88,7 @@ func TestProjectMeta_GetConfigs_ipfs(t *testing.T) {
 	t.Run("FailedToGetIPFS", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 
-		_, err := pm.GetProjectRawData("")
+		_, err := pm.FetchProjectRawData("")
 		r.ErrorContains(err, t.Name())
 	})
 }
@@ -105,7 +105,7 @@ func TestProjectMeta_GetConfigs_default(t *testing.T) {
 	t.Run("FailedToGetIPFS", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 
-		_, err := pm.GetProjectRawData("")
+		_, err := pm.FetchProjectRawData("")
 		r.ErrorContains(err, t.Name())
 	})
 }

@@ -16,7 +16,7 @@ type contractProject struct {
 	blocks *list.List
 }
 
-func (c *contractProject) get(projectID, expectedBlockNumber uint64) (*contract.Project, error) {
+func (c *contractProject) project(projectID, blockNumber uint64) (*contract.Project, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -24,7 +24,7 @@ func (c *contractProject) get(projectID, expectedBlockNumber uint64) (*contract.
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
 		ep := e.Value.(*contract.BlockProject)
-		if expectedBlockNumber < ep.BlockNumber {
+		if blockNumber < ep.BlockNumber {
 			break
 		}
 		p, ok := ep.Projects[projectID]
@@ -33,12 +33,12 @@ func (c *contractProject) get(projectID, expectedBlockNumber uint64) (*contract.
 		}
 	}
 	if np.ID == 0 {
-		return nil, errors.Errorf("failed to find project contract data at the block number, project_id %v, expected_block_number %v", projectID, expectedBlockNumber)
+		return nil, errors.Errorf("failed to find project contract data at the block number, project_id %v, expected_block_number %v", projectID, blockNumber)
 	}
 	return np, nil
 }
 
-func (c *contractProject) set(diff *contract.BlockProject) {
+func (c *contractProject) add(diff *contract.BlockProject) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -61,7 +61,7 @@ type contractProver struct {
 	blocks *list.List
 }
 
-func (c *contractProver) get(expectedBlockNumber uint64) *contract.BlockProver {
+func (c *contractProver) blockProver(blockNumber uint64) *contract.BlockProver {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -69,7 +69,7 @@ func (c *contractProver) get(expectedBlockNumber uint64) *contract.BlockProver {
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
 		ep := e.Value.(*contract.BlockProver)
-		if expectedBlockNumber < ep.BlockNumber {
+		if blockNumber < ep.BlockNumber {
 			break
 		}
 		np.Merge(ep)
@@ -77,7 +77,7 @@ func (c *contractProver) get(expectedBlockNumber uint64) *contract.BlockProver {
 	return np
 }
 
-func (c *contractProver) set(diff *contract.BlockProver) {
+func (c *contractProver) add(diff *contract.BlockProver) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
