@@ -133,39 +133,6 @@ func TestProject_GetConfig(t *testing.T) {
 	})
 }
 
-//func TestProject_Validate(t *testing.T) {
-//	r := require.New(t)
-//
-//	project := &Project{}
-//
-//	t.Run("EmptyConfig", func(t *testing.T) {
-//		err := project.Validate()
-//		r.EqualError(err, errEmptyConfig.Error())
-//	})
-//
-//	t.Run("FailedToValidate", func(t *testing.T) {
-//		p := gomonkey.NewPatches()
-//		defer p.Reset()
-//
-//		project.Versions = []*Config{&Config{}}
-//		p = p.ApplyMethodReturn(&Config{}, "Validate", errors.New(t.Name()))
-//
-//		err := project.Validate()
-//		r.ErrorContains(err, t.Name())
-//	})
-//
-//	t.Run("Success", func(t *testing.T) {
-//		p := gomonkey.NewPatches()
-//		defer p.Reset()
-//
-//		project.Versions = []*Config{&Config{}}
-//		p = p.ApplyMethodReturn(&Config{}, "Validate", nil)
-//
-//		err := project.Validate()
-//		r.NoError(err)
-//	})
-//}
-
 func TestConfig_Validate(t *testing.T) {
 	r := require.New(t)
 

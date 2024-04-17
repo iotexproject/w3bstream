@@ -1,7 +1,6 @@
 package project
 
 import (
-	"github.com/machinefi/sprout/persistence/contract"
 	"os"
 	"testing"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
+	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/smartcontracts/go/project"
 )
 

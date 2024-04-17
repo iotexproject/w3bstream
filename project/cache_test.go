@@ -3,11 +3,11 @@ package project
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/pkg/errors"
 	"os"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
