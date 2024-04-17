@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
-	"github.com/machinefi/sprout/testutil"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
+
+	"github.com/machinefi/sprout/testutil"
 )
 
 func TestNewPostgres(t *testing.T) {
