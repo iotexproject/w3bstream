@@ -14,9 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/util/ipfs"
+	"github.com/machinefi/sprout/vm"
 )
 
-func TestProjectMeta_GetConfigs_init(t *testing.T) {
+func TestProjectMeta_FetchProjectRawData_init(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -29,7 +30,7 @@ func TestProjectMeta_GetConfigs_init(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_GetConfigs_http(t *testing.T) {
+func TestProjectMeta_FetchProjectRawData_http(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -77,7 +78,7 @@ func TestProjectMeta_GetConfigs_http(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_GetConfigs_ipfs(t *testing.T) {
+func TestProjectMeta_FetchProjectRawData_ipfs(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -93,7 +94,7 @@ func TestProjectMeta_GetConfigs_ipfs(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_GetConfigs_default(t *testing.T) {
+func TestProjectMeta_FetchProjectRawData_default(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -107,5 +108,77 @@ func TestProjectMeta_GetConfigs_default(t *testing.T) {
 
 		_, err := pm.FetchProjectRawData("")
 		r.ErrorContains(err, t.Name())
+	})
+}
+
+func TestProject_GetConfig(t *testing.T) {
+	r := require.New(t)
+
+	conf := &Config{
+		Version: "0.1",
+	}
+	project := &Project{
+		Versions: []*Config{conf},
+	}
+
+	t.Run("Success", func(t *testing.T) {
+		c, err := project.Config("0.1")
+		r.NoError(err)
+		r.Equal(conf, c)
+	})
+
+	t.Run("NotExist", func(t *testing.T) {
+		_, err := project.Config("0.3")
+		r.ErrorContains(err, "project config not exist")
+	})
+}
+
+func TestConfig_Validate(t *testing.T) {
+	r := require.New(t)
+
+	config := &Config{
+		VMType: vm.Halo2,
+		Code:   "testCode",
+	}
+
+	t.Run("EmptyCode", func(t *testing.T) {
+		c := *config
+		c.Code = ""
+		err := c.validate()
+		r.EqualError(err, errEmptyCode.Error())
+	})
+
+	t.Run("UnsupportedVMType", func(t *testing.T) {
+		c := *config
+		c.VMType = "test"
+		err := c.validate()
+		r.EqualError(err, errUnsupportedVMType.Error())
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		err := config.validate()
+		r.NoError(err)
+	})
+}
+
+func TestConvertProject(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("FailedToUnmarshal", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p = p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+		_, err := convertProject(nil)
+		r.ErrorContains(err, t.Name())
+	})
+
+	t.Run("EmptyConfig", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p = p.ApplyFuncReturn(json.Unmarshal, nil)
+		_, err := convertProject(nil)
+		r.ErrorContains(err, errEmptyConfig.Error())
 	})
 }
