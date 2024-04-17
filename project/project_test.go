@@ -17,7 +17,7 @@ import (
 	"github.com/machinefi/sprout/vm"
 )
 
-func TestProjectMeta_GetProjectRawData_init(t *testing.T) {
+func TestProjectMeta_FetchProjectRawData_init(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -30,7 +30,7 @@ func TestProjectMeta_GetProjectRawData_init(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_GetProjectRawData_http(t *testing.T) {
+func TestProjectMeta_FetchProjectRawData_http(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -78,7 +78,7 @@ func TestProjectMeta_GetProjectRawData_http(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_GetProjectRawData_ipfs(t *testing.T) {
+func TestProjectMeta_FetchProjectRawData_ipfs(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -94,7 +94,7 @@ func TestProjectMeta_GetProjectRawData_ipfs(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_GetProjectRawData_default(t *testing.T) {
+func TestProjectMeta_FetchProjectRawData_default(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
