@@ -122,49 +122,49 @@ func TestProject_GetConfig(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		c, err := project.GetConfig("0.1")
+		c, err := project.Config("0.1")
 		r.NoError(err)
 		r.Equal(conf, c)
 	})
 
 	t.Run("NotExist", func(t *testing.T) {
-		_, err := project.GetConfig("0.3")
+		_, err := project.Config("0.3")
 		r.ErrorContains(err, "project config not exist")
 	})
 }
 
-func TestProject_Validate(t *testing.T) {
-	r := require.New(t)
-
-	project := &Project{}
-
-	t.Run("EmptyConfig", func(t *testing.T) {
-		err := project.Validate()
-		r.EqualError(err, errEmptyConfig.Error())
-	})
-
-	t.Run("FailedToValidate", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		project.Versions = []*Config{&Config{}}
-		p = p.ApplyMethodReturn(&Config{}, "Validate", errors.New(t.Name()))
-
-		err := project.Validate()
-		r.ErrorContains(err, t.Name())
-	})
-
-	t.Run("Success", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		project.Versions = []*Config{&Config{}}
-		p = p.ApplyMethodReturn(&Config{}, "Validate", nil)
-
-		err := project.Validate()
-		r.NoError(err)
-	})
-}
+//func TestProject_Validate(t *testing.T) {
+//	r := require.New(t)
+//
+//	project := &Project{}
+//
+//	t.Run("EmptyConfig", func(t *testing.T) {
+//		err := project.Validate()
+//		r.EqualError(err, errEmptyConfig.Error())
+//	})
+//
+//	t.Run("FailedToValidate", func(t *testing.T) {
+//		p := gomonkey.NewPatches()
+//		defer p.Reset()
+//
+//		project.Versions = []*Config{&Config{}}
+//		p = p.ApplyMethodReturn(&Config{}, "Validate", errors.New(t.Name()))
+//
+//		err := project.Validate()
+//		r.ErrorContains(err, t.Name())
+//	})
+//
+//	t.Run("Success", func(t *testing.T) {
+//		p := gomonkey.NewPatches()
+//		defer p.Reset()
+//
+//		project.Versions = []*Config{&Config{}}
+//		p = p.ApplyMethodReturn(&Config{}, "Validate", nil)
+//
+//		err := project.Validate()
+//		r.NoError(err)
+//	})
+//}
 
 func TestConfig_Validate(t *testing.T) {
 	r := require.New(t)
@@ -177,19 +177,19 @@ func TestConfig_Validate(t *testing.T) {
 	t.Run("EmptyCode", func(t *testing.T) {
 		c := *config
 		c.Code = ""
-		err := c.Validate()
+		err := c.validate()
 		r.EqualError(err, errEmptyCode.Error())
 	})
 
 	t.Run("UnsupportedVMType", func(t *testing.T) {
 		c := *config
 		c.VMType = "test"
-		err := c.Validate()
+		err := c.validate()
 		r.EqualError(err, errUnsupportedVMType.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		err := config.Validate()
+		err := config.validate()
 		r.NoError(err)
 	})
 }
@@ -206,24 +206,12 @@ func TestConvertProject(t *testing.T) {
 		r.ErrorContains(err, t.Name())
 	})
 
-	t.Run("FailedToValidate", func(t *testing.T) {
+	t.Run("EmptyConfig", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p = p.ApplyFuncReturn(json.Unmarshal, nil)
-		p = p.ApplyMethodReturn(&Project{}, "Validate", errors.New(t.Name()))
 		_, err := convertProject(nil)
-		r.ErrorContains(err, t.Name())
-	})
-
-	t.Run("Success", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p = p.ApplyFuncReturn(json.Unmarshal, nil)
-		p = p.ApplyMethodReturn(&Project{}, "Validate", nil)
-		project, err := convertProject(nil)
-		r.NoError(err)
-		r.Empty(project)
+		r.ErrorContains(err, errEmptyConfig.Error())
 	})
 }

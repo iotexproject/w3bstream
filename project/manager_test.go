@@ -1,6 +1,7 @@
 package project
 
 import (
+	"github.com/machinefi/sprout/persistence/contract"
 	"os"
 	"testing"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/smartcontracts/go/project"
-	utilcontract "github.com/machinefi/sprout/util/contract"
 )
 
 func TestNewManager(t *testing.T) {
@@ -72,13 +72,13 @@ func TestManager_Get(t *testing.T) {
 		defer p.Reset()
 
 		p = p.ApplyPrivateMethod(&Manager{}, "load", func() (*Project, error) { return nil, errors.New(t.Name()) })
-		_, err := m.Get(uint64(0))
+		_, err := m.Project(uint64(0))
 		r.ErrorContains(err, t.Name())
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		m.projects.Store(uint64(0), &Project{})
-		project, err := m.Get(uint64(0))
+		project, err := m.Project(uint64(0))
 		r.NoError(err)
 		r.Empty(project)
 	})
@@ -121,7 +121,7 @@ func TestManager_load(t *testing.T) {
 			nil,
 		)
 		p = p.ApplyPrivateMethod(&cache{}, "get", func(projectID uint64, hash []byte) []byte { return []byte("") })
-		p = p.ApplyMethodReturn(&Meta{}, "GetProjectRawData", nil, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", nil, errors.New(t.Name()))
 
 		_, err := m.load(uint64(0))
 		r.ErrorContains(err, t.Name())
@@ -187,7 +187,7 @@ func TestManager_watchProjectContract(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(utilcontract.ListAndWatchProject, nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(contract.ListAndWatchProject, nil, errors.New(t.Name()))
 
 		err := m.watchProjectContract("", "")
 		r.ErrorContains(err, t.Name())
