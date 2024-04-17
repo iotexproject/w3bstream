@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-interface IMSP {
+interface IStakingHub {
     // event Stake(uint256 indexed proverId, uint256 amount);
     // event Unstake(uint256 indexed proverId, uint256 amount);
     // event Withdrawn(uint256 indexed proverId, address indexed account, uint256 amount);

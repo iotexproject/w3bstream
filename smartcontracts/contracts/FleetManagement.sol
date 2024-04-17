@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./interfaces/IMSP.sol";
+import "./interfaces/IStakingHub.sol";
 import "./interfaces/IFleetManagement.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -25,7 +25,7 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
     address public coordinator;
     address public creditCenter;
     address public slasher;
-    address public msp;
+    address public stakingHub;
 
     function initialize(uint256 _minStake) public initializer {
         __Ownable_init();
@@ -55,9 +55,9 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
         emit SlasherSet(_slasher);
     }
 
-    function setMSP(address _msp) external onlyOwner {
-        msp = _msp;
-        emit MSPSet(_msp);
+    function setStakingHub(address _hub) external onlyOwner {
+        stakingHub = _hub;
+        emit StakingHubSet(_hub);
     }
 
     function setRegistrationFee(uint256 _fee) public onlyOwner {
@@ -90,7 +90,7 @@ contract FleetManagement is IFleetManagement, ReentrancyGuardUpgradeable, Ownabl
 
     function isActiveProver(uint256 _id) external view returns (bool) {
         IProverStore ps = IProverStore(proverStore);
-        return !ps.isPaused(_id) && IMSP(msp).stakedAmount(ps.prover(_id)) >= minStake;
+        return !ps.isPaused(_id) && IStakingHub(stakingHub).stakedAmount(ps.prover(_id)) >= minStake;
     }
 
     function isActiveCoordinator(address _coordinator, uint256 _projectId) external view returns (bool) {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 interface IFleetManagement {
-    event MSPSet(address indexed msp);
+    event StakingHubSet(address indexed msp);
     event CreditCenterSet(address indexed creditCenter);
     event CoordinatorSet(address indexed coordinator);
     event ProverStoreSet(address indexed prover);

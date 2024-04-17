@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-contract DummyMSP {
+contract MockStakingHub {
     uint256 amount;
     constructor() {}
 
