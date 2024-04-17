@@ -11,11 +11,11 @@ import (
 
 type SaveTaskStateLog func(s *types.TaskStateLog, t *types.Task) error
 
-type GetProject func(projectID uint64) (*project.Project, error)
+type Project func(projectID uint64) (*project.Project, error)
 
 type TaskStateHandler struct {
 	saveTaskStateLog          SaveTaskStateLog
-	getProject                GetProject
+	project                   Project
 	operatorPrivateKeyECDSA   string
 	operatorPrivateKeyED25519 string
 }
@@ -33,12 +33,12 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	if s.State != types.TaskStateProved {
 		return
 	}
-	p, err := h.getProject(t.ProjectID)
+	p, err := h.project(t.ProjectID)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
 		return
 	}
-	c, err := p.GetDefaultConfig()
+	c, err := p.DefaultConfig()
 	if err != nil {
 		slog.Error("failed to get project config", "error", err, "project_id", t.ProjectID, "project_version", p.DefaultVersion)
 		return
@@ -87,10 +87,10 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	return true
 }
 
-func NewTaskStateHandler(saveTaskStateLog SaveTaskStateLog, getProject GetProject, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *TaskStateHandler {
+func NewTaskStateHandler(saveTaskStateLog SaveTaskStateLog, project Project, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *TaskStateHandler {
 	return &TaskStateHandler{
 		saveTaskStateLog:          saveTaskStateLog,
-		getProject:                getProject,
+		project:                   project,
 		operatorPrivateKeyECDSA:   operatorPrivateKeyECDSA,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
 	}

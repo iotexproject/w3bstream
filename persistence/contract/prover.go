@@ -28,7 +28,7 @@ var (
 	emptyAddress = common.Address{}
 )
 
-type Provers struct {
+type BlockProver struct {
 	BlockNumber uint64
 	Provers     map[uint64]*Prover
 }
@@ -41,7 +41,7 @@ type Prover struct {
 	NodeTypes       uint64
 }
 
-func (ps *Provers) Merge(diff *Provers) {
+func (ps *BlockProver) Merge(diff *BlockProver) {
 	ps.BlockNumber = diff.BlockNumber
 	for id, p := range ps.Provers {
 		diffP, ok := diff.Provers[id]
@@ -51,7 +51,9 @@ func (ps *Provers) Merge(diff *Provers) {
 	}
 	for id, p := range diff.Provers {
 		if _, ok := ps.Provers[id]; !ok {
-			ps.Provers[id] = p
+			np := &Prover{}
+			np.Merge(p)
+			ps.Provers[id] = np
 		}
 	}
 }
@@ -61,22 +63,21 @@ func (p *Prover) Merge(diff *Prover) {
 		p.ID = diff.ID
 	}
 	if !bytes.Equal(diff.OperatorAddress[:], emptyAddress[:]) {
-		copy(p.OperatorAddress[:], diff.OperatorAddress[:])
+		p.OperatorAddress = diff.OperatorAddress
 	}
 	if diff.BlockNumber != 0 {
 		p.BlockNumber = diff.BlockNumber
 	}
 	if diff.Paused != nil {
-		paused := *diff.Paused
-		p.Paused = &paused
+		p.Paused = diff.Paused
 	}
 	if diff.NodeTypes != 0 {
 		p.NodeTypes = diff.NodeTypes
 	}
 }
 
-func ListAndWatchProver(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *Provers, error) {
-	ch := make(chan *Provers, 10)
+func ListAndWatchProver(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *BlockProver, error) {
+	ch := make(chan *BlockProver, 10)
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial chain endpoint")
@@ -102,7 +103,7 @@ func ListAndWatchProver(chainEndpoint, contractAddress string, tracebackLength u
 	return ch, nil
 }
 
-func listProver(ch chan<- *Provers, instance *prover.Prover, targetBlockNumber uint64) error {
+func listProver(ch chan<- *BlockProver, instance *prover.Prover, targetBlockNumber uint64) error {
 	provers := map[uint64]*Prover{}
 	for id := uint64(1); ; id++ {
 		mp, err := instance.Operator(nil, new(big.Int).SetUint64(id))
@@ -130,14 +131,14 @@ func listProver(ch chan<- *Provers, instance *prover.Prover, targetBlockNumber u
 			NodeTypes:       nodeTypes.Uint64(),
 		}
 	}
-	ch <- &Provers{
+	ch <- &BlockProver{
 		BlockNumber: targetBlockNumber,
 		Provers:     provers,
 	}
 	return nil
 }
 
-func watchProver(ch chan<- *Provers, client *ethclient.Client, instance *prover.Prover, interval time.Duration,
+func watchProver(ch chan<- *BlockProver, client *ethclient.Client, instance *prover.Prover, interval time.Duration,
 	contractAddress string, topics []common.Hash, step, startBlockNumber uint64) {
 	queriedBlockNumber := startBlockNumber
 	query := ethereum.FilterQuery{
@@ -180,7 +181,7 @@ func watchProver(ch chan<- *Provers, client *ethclient.Client, instance *prover.
 	}()
 }
 
-func processProverLogs(ch chan<- *Provers, logs []types.Log, instance *prover.Prover) bool {
+func processProverLogs(ch chan<- *BlockProver, logs []types.Log, instance *prover.Prover) bool {
 	if len(logs) == 0 {
 		return true
 	}
@@ -190,12 +191,12 @@ func processProverLogs(ch chan<- *Provers, logs []types.Log, instance *prover.Pr
 		}
 		return logs[i].TxIndex < logs[j].TxIndex
 	})
-	psMap := map[uint64]*Provers{}
+	psMap := map[uint64]*BlockProver{}
 
 	for _, l := range logs {
 		ps, ok := psMap[l.BlockNumber]
 		if !ok {
-			ps = &Provers{
+			ps = &BlockProver{
 				BlockNumber: l.BlockNumber,
 				Provers:     map[uint64]*Prover{},
 			}
@@ -262,7 +263,7 @@ func processProverLogs(ch chan<- *Provers, logs []types.Log, instance *prover.Pr
 		psMap[l.BlockNumber] = ps
 	}
 
-	psSlice := []*Provers{}
+	psSlice := []*BlockProver{}
 	for _, p := range psMap {
 		psSlice = append(psSlice, p)
 	}

@@ -13,6 +13,6 @@ func (r *stdout) Output(task *types.Task, proof []byte) (string, error) {
 	return "", nil
 }
 
-func newStdout() Output {
+func newStdout() *stdout {
 	return &stdout{}
 }

@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/smartcontracts/go/project"
-	utilcontract "github.com/machinefi/sprout/util/contract"
 )
 
 type Manager struct {
@@ -24,7 +24,7 @@ type Manager struct {
 	cache        *cache   // optional
 }
 
-func (m *Manager) GetCachedProjectIDs() []uint64 {
+func (m *Manager) ProjectIDs() []uint64 {
 	var ids []uint64
 	m.projects.Range(func(key, value any) bool {
 		ids = append(ids, key.(uint64))
@@ -33,7 +33,7 @@ func (m *Manager) GetCachedProjectIDs() []uint64 {
 	return ids
 }
 
-func (m *Manager) Get(projectID uint64) (*Project, error) {
+func (m *Manager) Project(projectID uint64) (*Project, error) {
 	var err error
 	p, ok := m.projects.Load(projectID)
 	if !ok {
@@ -68,7 +68,7 @@ func (m *Manager) load(projectID uint64) (*Project, error) {
 	}
 	if len(data) == 0 {
 		cached = false
-		data, err = pm.GetProjectRawData(m.ipfsEndpoint)
+		data, err = pm.FetchProjectRawData(m.ipfsEndpoint)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get project raw data, project_id %v", projectID)
 		}
@@ -117,7 +117,7 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 }
 
 func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) error {
-	projectCh, err := utilcontract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
+	projectCh, err := contract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
 	if err != nil {
 		return err
 	}

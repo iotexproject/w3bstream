@@ -47,7 +47,7 @@ type Config struct {
 	Code         string        `json:"code"`
 }
 
-func (p *Project) GetConfig(version string) (*Config, error) {
+func (p *Project) Config(version string) (*Config, error) {
 	for _, c := range p.Versions {
 		if c.Version == version {
 			return c, nil
@@ -56,23 +56,11 @@ func (p *Project) GetConfig(version string) (*Config, error) {
 	return nil, errors.New("project config not exist")
 }
 
-func (p *Project) GetDefaultConfig() (*Config, error) {
-	return p.GetConfig(p.DefaultVersion)
+func (p *Project) DefaultConfig() (*Config, error) {
+	return p.Config(p.DefaultVersion)
 }
 
-func (p *Project) Validate() error {
-	if len(p.Versions) == 0 {
-		return errEmptyConfig
-	}
-	for _, c := range p.Versions {
-		if err := c.Validate(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Config) Validate() error {
+func (c *Config) validate() error {
 	if len(c.Code) == 0 {
 		return errEmptyCode
 	}
@@ -84,7 +72,7 @@ func (c *Config) Validate() error {
 	}
 }
 
-func (m *Meta) GetProjectRawData(ipfsEndpoint string) ([]byte, error) {
+func (m *Meta) FetchProjectRawData(ipfsEndpoint string) ([]byte, error) {
 	u, err := url.Parse(m.Uri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse project uri %s", m.Uri)
@@ -134,8 +122,14 @@ func convertProject(projectRawData []byte) (*Project, error) {
 	if err := json.Unmarshal(projectRawData, &p); err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal project")
 	}
-	if err := p.Validate(); err != nil {
-		return nil, err
+
+	if len(p.Versions) == 0 {
+		return nil, errEmptyConfig
+	}
+	for _, c := range p.Versions {
+		if err := c.validate(); err != nil {
+			return nil, err
+		}
 	}
 	return p, nil
 }

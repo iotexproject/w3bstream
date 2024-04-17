@@ -76,7 +76,7 @@ func main() {
 
 	slog.Info("my prover id", "prover_id", proverID.Uint64())
 
-	taskProcessor := task.NewProcessor(vmHandler, projectManager.Get, sk, sequencerPubKey, proverID.Uint64())
+	taskProcessor := task.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, proverID.Uint64())
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
@@ -85,7 +85,7 @@ func main() {
 
 	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress,
 		conf.ProjectContractAddress, conf.ProjectFileDirectory, proverID.Uint64(), pubSubs, taskProcessor.HandleProjectProvers,
-		projectManager.GetCachedProjectIDs); err != nil {
+		projectManager.ProjectIDs); err != nil {
 		log.Fatal(err)
 	}
 
