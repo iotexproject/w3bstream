@@ -85,7 +85,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		defer p.Reset()
 
 		p = processorReportSuccess(p)
-		p = p.ApplyMethodReturn(&project.Manager{}, "Get", nil, errors.New(t.Name()))
+		p = p.ApplyMethodReturn(&project.Manager{}, "Project", nil, errors.New(t.Name()))
 		p = processorReportFail(p)
 		processor.HandleP2PData(data, nil)
 	})
@@ -105,7 +105,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&project.Manager{}, "Get", testProject, nil)
+		p = p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
 		p = processorReportSuccess(p)
 		p = p.ApplyMethodReturn(&vm.Handler{}, "Handle", nil, errors.New(t.Name()))
 		p = processorReportFail(p)
@@ -116,7 +116,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&project.Manager{}, "Get", testProject, nil)
+		p = p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
 		p = p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
 		p = processorReportSuccess(p)
 		processor.HandleP2PData(data, nil)
