@@ -30,6 +30,11 @@ func (c *Client) init() {
 	}
 }
 
+func (c *Client) HasProjectPermission(projectID uint64) bool {
+	_, ok := c.projects[projectID]
+	return ok
+}
+
 var manager *Manager
 
 func NewManager() *Manager {
