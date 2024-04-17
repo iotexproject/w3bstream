@@ -44,13 +44,13 @@ func (c *contractProject) add(diff *contract.BlockProject) {
 
 	c.blocks.PushBack(diff)
 
-	if c.blocks.Len() > int(c.epoch) {
+	if uint64(c.blocks.Len()) > c.epoch {
 		h := c.blocks.Front()
 		np := &contract.BlockProject{Projects: map[uint64]*contract.Project{}}
 		np.Merge(h.Value.(*contract.BlockProject))
 		np.Merge(h.Next().Value.(*contract.BlockProject))
-		c.blocks.Remove(h)
 		c.blocks.Remove(h.Next())
+		c.blocks.Remove(h)
 		c.blocks.PushFront(np)
 	}
 }
@@ -83,13 +83,13 @@ func (c *contractProver) add(diff *contract.BlockProver) {
 
 	c.blocks.PushBack(diff)
 
-	if c.blocks.Len() > int(c.epoch) {
+	if uint64(c.blocks.Len()) > c.epoch {
 		h := c.blocks.Front()
 		np := &contract.BlockProver{Provers: map[uint64]*contract.Prover{}}
 		np.Merge(h.Value.(*contract.BlockProver))
 		np.Merge(h.Next().Value.(*contract.BlockProver))
-		c.blocks.Remove(h)
 		c.blocks.Remove(h.Next())
+		c.blocks.Remove(h)
 		c.blocks.PushFront(np)
 	}
 }
