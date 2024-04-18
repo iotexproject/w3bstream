@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
 	"io"
 	"net/http"
 	"testing"
@@ -14,6 +13,7 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/machinefi/sprout/apitypes"
+	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
 	"github.com/machinefi/sprout/types"
 )
 
