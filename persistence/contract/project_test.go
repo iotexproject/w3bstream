@@ -9,10 +9,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/machinefi/sprout/smartcontracts/go/project"
-	"github.com/machinefi/sprout/util/hash"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/smartcontracts/go/project"
+	"github.com/machinefi/sprout/util/hash"
 )
 
 func TestProject_Merge(t *testing.T) {
@@ -118,37 +119,41 @@ func TestListProject(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&project.ProjectCaller{}, "Config", nil, errors.New(t.Name()))
+		caller := &project.ProjectCaller{}
+		p.ApplyMethodReturn(caller, "Config", nil, errors.New(t.Name()))
 
-		err := listProject(nil, &project.Project{ProjectCaller: project.ProjectCaller{}}, 0)
+		err := listProject(nil, &project.Project{ProjectCaller: *caller}, 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToGetPaused", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&project.ProjectCaller{}, "Config", project.W3bstreamProjectProjectConfig{}, nil)
-		p.ApplyMethodReturn(&project.ProjectCaller{}, "IsPaused", false, errors.New(t.Name()))
+		caller := &project.ProjectCaller{}
+		p.ApplyMethodReturn(caller, "Config", project.W3bstreamProjectProjectConfig{}, nil)
+		p.ApplyMethodReturn(caller, "IsPaused", false, errors.New(t.Name()))
 
-		err := listProject(nil, &project.Project{ProjectCaller: project.ProjectCaller{}}, 0)
+		err := listProject(nil, &project.Project{ProjectCaller: *caller}, 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToGetAttributes", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&project.ProjectCaller{}, "Config", project.W3bstreamProjectProjectConfig{}, nil)
-		p.ApplyMethodReturn(&project.ProjectCaller{}, "IsPaused", false, nil)
-		p.ApplyMethodReturn(&project.ProjectCaller{}, "Attributes", []byte{}, errors.New(t.Name()))
+		caller := &project.ProjectCaller{}
+		p.ApplyMethodReturn(caller, "Config", project.W3bstreamProjectProjectConfig{}, nil)
+		p.ApplyMethodReturn(caller, "IsPaused", false, nil)
+		p.ApplyMethodReturn(caller, "Attributes", []byte{}, errors.New(t.Name()))
 
-		err := listProject(nil, &project.Project{ProjectCaller: project.ProjectCaller{}}, 0)
+		err := listProject(nil, &project.Project{ProjectCaller: *caller}, 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodSeq(&project.ProjectCaller{}, "Config", []gomonkey.OutputCell{
+		caller := &project.ProjectCaller{}
+		p.ApplyMethodSeq(caller, "Config", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{project.W3bstreamProjectProjectConfig{}, nil},
 			},
@@ -156,11 +161,11 @@ func TestListProject(t *testing.T) {
 				Values: gomonkey.Params{nil, errors.New("execution reverted: ERC721: invalid token ID")},
 			},
 		})
-		p.ApplyMethodReturn(&project.ProjectCaller{}, "IsPaused", false, nil)
-		p.ApplyMethodReturn(&project.ProjectCaller{}, "Attributes", []byte{}, nil)
+		p.ApplyMethodReturn(caller, "IsPaused", false, nil)
+		p.ApplyMethodReturn(caller, "Attributes", []byte{}, nil)
 
 		ch := make(chan *BlockProject, 10)
-		err := listProject(ch, &project.Project{ProjectCaller: project.ProjectCaller{}}, 0)
+		err := listProject(ch, &project.Project{ProjectCaller: *caller}, 0)
 		r.NoError(err)
 		res := <-ch
 		r.Equal(res.BlockNumber, uint64(0))
