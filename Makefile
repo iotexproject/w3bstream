@@ -38,14 +38,14 @@ risc0_test:
   -e BONSAI_URL: https://api.bonsai.xyz} \
   -e BONSAI_KEY= xxx \
   -p 14001:4001 \
-  -d wangweixiaohao2944/risc0server:v1.0.0.rc2
+  -d wangweixiaohao2944/risc0server:v1.0.0.rc4
 
 .PHONY: halo2_test
 halo2_test:
 	docker run --name halo2_test \
   --platform linux/x86_64 \
   -p 14002:4002 \
-  -d iotexdev/halo2-server:0.0.5
+  -d wangweixiaohao2944/halo2server:v0.0.6
 
 .PHONY: zkwasm_test
 zkwasm_test:

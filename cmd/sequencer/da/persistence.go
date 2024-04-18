@@ -1,4 +1,4 @@
-package main
+package da
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-type message struct {
+type Message struct {
 	gorm.Model
 	MessageID      string `gorm:"index:message_id,not null"`
 	ClientID       string `gorm:"index:message_fetch,not null,default:''"`
@@ -59,19 +59,19 @@ func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientID string, mes
 	return hexutil.Encode(sig), nil
 }
 
-type persistence struct {
+type Persistence struct {
 	db *gorm.DB
 }
 
-func (p *persistence) createMessageTx(tx *gorm.DB, m *message) error {
+func (p *Persistence) createMessageTx(tx *gorm.DB, m *Message) error {
 	if err := tx.Create(m).Error; err != nil {
 		return errors.Wrap(err, "failed to create message")
 	}
 	return nil
 }
 
-func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *ecdsa.PrivateKey) error {
-	messages := make([]*message, 0)
+func (p *Persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *Message, sk *ecdsa.PrivateKey) error {
+	messages := make([]*Message, 0)
 	if amount == 0 {
 		amount = 1
 	}
@@ -95,7 +95,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *e
 	for _, v := range messages {
 		messageIDs = append(messageIDs, v.MessageID)
 	}
-	if err := tx.Model(&message{}).Where("message_id IN ?", messageIDs).Update("internal_task_id", taskID).Error; err != nil {
+	if err := tx.Model(&Message{}).Where("message_id IN ?", messageIDs).Update("internal_task_id", taskID).Error; err != nil {
 		return errors.Wrap(err, "failed to update message internal task id")
 	}
 	messageIDsJson, err := json.Marshal(messageIDs)
@@ -129,7 +129,7 @@ func (p *persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *message, sk *e
 	return nil
 }
 
-func (p *persistence) save(msg *message, aggregationAmount uint, sk *ecdsa.PrivateKey) error {
+func (p *Persistence) Save(msg *Message, aggregationAmount uint, sk *ecdsa.PrivateKey) error {
 	return p.db.Transaction(func(tx *gorm.DB) error {
 		if err := p.createMessageTx(tx, msg); err != nil {
 			return err
@@ -141,8 +141,8 @@ func (p *persistence) save(msg *message, aggregationAmount uint, sk *ecdsa.Priva
 	})
 }
 
-func (p *persistence) fetchMessage(messageID string) ([]*message, error) {
-	ms := []*message{}
+func (p *Persistence) FetchMessage(messageID string) ([]*Message, error) {
+	ms := []*Message{}
 	if err := p.db.Where("message_id = ?", messageID).Find(&ms).Error; err != nil {
 		return nil, errors.Wrapf(err, "query message by messageID failed, messageID %s", messageID)
 	}
@@ -150,7 +150,7 @@ func (p *persistence) fetchMessage(messageID string) ([]*message, error) {
 	return ms, nil
 }
 
-func (p *persistence) fetchTask(internalTaskID string) ([]*task, error) {
+func (p *Persistence) FetchTask(internalTaskID string) ([]*task, error) {
 	ts := []*task{}
 	if err := p.db.Where("internal_task_id = ?", internalTaskID).Find(&ts).Error; err != nil {
 		return nil, errors.Wrapf(err, "query task by internal task id failed, internal_task_id %s", internalTaskID)
@@ -159,15 +159,15 @@ func (p *persistence) fetchTask(internalTaskID string) ([]*task, error) {
 	return ts, nil
 }
 
-func newPersistence(pgEndpoint string) (*persistence, error) {
+func NewPersistence(pgEndpoint string) (*Persistence, error) {
 	db, err := gorm.Open(postgres.Open(pgEndpoint), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&message{}, &task{}); err != nil {
+	if err := db.AutoMigrate(&Message{}, &task{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
-	return &persistence{db}, nil
+	return &Persistence{db}, nil
 }
