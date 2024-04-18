@@ -179,8 +179,9 @@ func TestWatchProject(t *testing.T) {
 	p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", []types.Log{}, nil)
 	p.ApplyFuncReturn(processProjectLogs, true)
 
-	c <- time.Now()
 	watchProject(nil, &ethclient.Client{}, &project.Project{}, time.Second, "", []common.Hash{{}, {}, {}, {}}, 0, 0)
+	c <- time.Now()
+	time.Sleep(20 * time.Millisecond)
 	close(c)
 }
 
