@@ -176,7 +176,7 @@ func TestWatchProject(t *testing.T) {
 	c := make(chan time.Time, 10)
 	p.ApplyFuncReturn(time.NewTicker, &time.Ticker{C: c})
 	p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(100), nil)
-	p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", nil, nil)
+	p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", []types.Log{}, nil)
 	p.ApplyFuncReturn(processProjectLogs, true)
 
 	c <- time.Now()
