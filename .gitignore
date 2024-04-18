@@ -37,3 +37,5 @@ examples/*/pkg/
 bin
 
 project_cache
+smartcontracts/contracts/artifacts/
+smartcontracts/contracts/interfaces/artifacts/
