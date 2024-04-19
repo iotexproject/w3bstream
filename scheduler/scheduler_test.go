@@ -45,7 +45,7 @@ func TestScheduler_schedule(t *testing.T) {
 		},
 	}
 
-	s.chainHead <- 100
+	s.chainHead <- 101
 	s.contractProver.add(&contract.BlockProver{
 		BlockNumber: 100,
 		Provers: map[uint64]*contract.Prover{
@@ -59,6 +59,7 @@ func TestScheduler_schedule(t *testing.T) {
 	pf.projectIDs.Store(projectID, true)
 	s.projectOffsets.Store(hash.Keccak256Uint64(projectID).Big().Uint64()%s.epoch, pf)
 	go s.schedule()
+	s.chainHead <- 100
 	for scheduledProverID.Load() == 0 {
 	}
 	close(s.chainHead)
