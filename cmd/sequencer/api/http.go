@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"crypto/ecdsa"
@@ -15,19 +15,20 @@ import (
 	"github.com/machinefi/sprout/apitypes"
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
+	"github.com/machinefi/sprout/cmd/sequencer/persistence"
 	"github.com/machinefi/sprout/types"
 )
 
 type httpServer struct {
 	engine                *gin.Engine
-	p                     *persistence
+	p                     *persistence.Persistence
 	coordinatorAddress    string
 	aggregationAmount     uint
 	didAuthServerEndpoint string
 	privateKey            *ecdsa.PrivateKey
 }
 
-func newHttpServer(p *persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey) *httpServer {
+func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey) *httpServer {
 	s := &httpServer{
 		engine:                gin.Default(),
 		p:                     p,
@@ -44,7 +45,7 @@ func newHttpServer(p *persistence, aggregationAmount uint, coordinatorAddress, d
 }
 
 // this func will block caller
-func (s *httpServer) run(address string) error {
+func (s *httpServer) Run(address string) error {
 	if err := s.engine.Run(address); err != nil {
 		return errors.Wrap(err, "failed to start http server")
 	}
@@ -78,7 +79,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	}
 
 	id := uuid.NewString()
-	if err := s.p.save(&message{
+	if err := s.p.Save(&persistence.Message{
 		MessageID:      id,
 		ClientID:       clientID,
 		ProjectID:      req.ProjectID,
@@ -95,7 +96,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 func (s *httpServer) queryStateLogByID(c *gin.Context) {
 	messageID := c.Param("id")
 
-	ms, err := s.p.fetchMessage(messageID)
+	ms, err := s.p.FetchMessage(messageID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
 		return
@@ -136,7 +137,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 	}
 
 	if m.InternalTaskID != "" {
-		ts, err := s.p.fetchTask(m.InternalTaskID)
+		ts, err := s.p.FetchTask(m.InternalTaskID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
 			return

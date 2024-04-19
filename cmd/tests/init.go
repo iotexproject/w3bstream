@@ -18,6 +18,8 @@ import (
 	"github.com/machinefi/sprout/cmd/coordinator/api"
 	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
 	proverconfig "github.com/machinefi/sprout/cmd/prover/config"
+	seqapi "github.com/machinefi/sprout/cmd/sequencer/api"
+	"github.com/machinefi/sprout/cmd/sequencer/persistence"
 	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/postgres"
@@ -30,6 +32,24 @@ import (
 var (
 	env = "INTEGRATION_TEST"
 )
+
+type sequencerConf struct {
+	endpoint          string
+	privateKey        string
+	databaseDSN       string
+	coordinatorAddr   string
+	didAuthServerAddr string
+}
+
+func seqConf(coordinatorEndpoint, didAuthServerAddr string) *sequencerConf {
+	return &sequencerConf{
+		endpoint:          ":19000",
+		privateKey:        "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
+		databaseDSN:       "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
+		coordinatorAddr:   fmt.Sprintf("localhost%s", coordinatorEndpoint),
+		didAuthServerAddr: didAuthServerAddr,
+	}
+}
 
 func init() {
 	_ = os.Setenv("PROVER_ENV", env)
@@ -44,6 +64,8 @@ func init() {
 		os.Exit(-1)
 	}
 
+	conf := seqConf(coordinatorConf.ServiceEndpoint, coordinatorConf.DIDAuthServerEndpoint)
+	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddr, conf.didAuthServerAddr, conf.endpoint)
 	go runProver(proverConf)
 	go runCoordinator(coordinatorConf)
 
@@ -81,9 +103,12 @@ func migrateDatabase(dsn string) error {
 	  
 	  CREATE TABLE IF NOT EXISTS proofs (
 		id SERIAL PRIMARY KEY,
+		project_id VARCHAR NOT NULL,
+		task_id VARCHAR NOT NULL,
+		client_id VARCHAR NOT NULL,
+		sequencer_sign VARCHAR NOT NULL,
 		image_id VARCHAR NOT NULL,
-		private_input VARCHAR NOT NULL,
-		public_input VARCHAR NOT NULL,
+		datas_input VARCHAR NOT NULL,
 		receipt_type VARCHAR NOT NULL,
 		receipt TEXT,
 		status VARCHAR NOT NULL,
@@ -171,4 +196,30 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 	}()
 
 	slog.Info("coordinator started")
+}
+
+func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address string) {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(int(slog.LevelDebug))})))
+
+	sk, err := crypto.HexToECDSA(privateKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed parse private key"))
+	}
+
+	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
+
+	_ = clients.NewManager()
+
+	p, err := persistence.NewPersistence(databaseDSN)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk).Run(address); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	slog.Info("sequencer started")
 }
