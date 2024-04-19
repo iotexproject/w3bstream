@@ -26,7 +26,6 @@ func TestNewManager(t *testing.T) {
 		_, err := NewManager("", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("FailedToNewContracts", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -37,7 +36,6 @@ func TestNewManager(t *testing.T) {
 		_, err := NewManager("", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("FailedToWatch", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -49,16 +47,27 @@ func TestNewManager(t *testing.T) {
 		_, err := NewManager("", "", "", "", "")
 		r.ErrorContains(err, t.Name())
 	})
+	t.Run("FailedToNewCache", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
+		p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
+		p.ApplyFuncReturn(project.NewProject, nil, nil)
+		p.ApplyFuncReturn(newCache, nil, errors.New(t.Name()))
+
+		_, err := NewManager("", "", "/cache", "", "")
+		r.ErrorContains(err, t.Name())
+	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
 		p.ApplyFuncReturn(project.NewProject, nil, nil)
+		p.ApplyFuncReturn(newCache, nil, nil)
 		p.ApplyPrivateMethod(&Manager{}, "watchProjectContract", func() error { return nil })
 
-		_, err := NewManager("", "", "", "", "")
+		_, err := NewManager("", "", "/cache", "", "")
 		r.NoError(err)
 	})
 }
