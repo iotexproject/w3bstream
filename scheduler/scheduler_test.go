@@ -14,6 +14,7 @@ import (
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
+	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/util/hash"
 )
 
@@ -105,4 +106,19 @@ func TestRun(t *testing.T) {
 
 	err := Run(1, "", "", "", "", 1, nil, nil, nil)
 	r.NoError(err)
+}
+
+func TestDummySchedule(t *testing.T) {
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	ps := &p2p.PubSubs{}
+	f := func(uint64, []uint64) {
+	}
+	pm := &project.Manager{}
+
+	p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1})
+	p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
+
+	dummySchedule(ps, f, pm.ProjectIDs)
 }
