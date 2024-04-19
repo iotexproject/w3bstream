@@ -19,7 +19,7 @@ import (
 	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
 	proverconfig "github.com/machinefi/sprout/cmd/prover/config"
 	seqapi "github.com/machinefi/sprout/cmd/sequencer/api"
-	"github.com/machinefi/sprout/cmd/sequencer/da"
+	"github.com/machinefi/sprout/cmd/sequencer/persistence"
 	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/postgres"
@@ -210,7 +210,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 
 	_ = clients.NewManager()
 
-	p, err := da.NewPersistence(databaseDSN)
+	p, err := persistence.NewPersistence(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}

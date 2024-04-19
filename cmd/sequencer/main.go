@@ -14,7 +14,7 @@ import (
 
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/sequencer/api"
-	"github.com/machinefi/sprout/cmd/sequencer/da"
+	"github.com/machinefi/sprout/cmd/sequencer/persistence"
 )
 
 var (
@@ -51,7 +51,7 @@ func main() {
 
 	_ = clients.NewManager()
 
-	p, err := da.NewPersistence(databaseDSN)
+	p, err := persistence.NewPersistence(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}

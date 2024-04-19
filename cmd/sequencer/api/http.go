@@ -15,20 +15,20 @@ import (
 	"github.com/machinefi/sprout/apitypes"
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
-	"github.com/machinefi/sprout/cmd/sequencer/da"
+	"github.com/machinefi/sprout/cmd/sequencer/persistence"
 	"github.com/machinefi/sprout/types"
 )
 
 type httpServer struct {
 	engine                *gin.Engine
-	p                     *da.Persistence
+	p                     *persistence.Persistence
 	coordinatorAddress    string
 	aggregationAmount     uint
 	didAuthServerEndpoint string
 	privateKey            *ecdsa.PrivateKey
 }
 
-func NewHttpServer(p *da.Persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey) *httpServer {
+func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey) *httpServer {
 	s := &httpServer{
 		engine:                gin.Default(),
 		p:                     p,
@@ -79,7 +79,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	}
 
 	id := uuid.NewString()
-	if err := s.p.Save(&da.Message{
+	if err := s.p.Save(&persistence.Message{
 		MessageID:      id,
 		ClientID:       clientID,
 		ProjectID:      req.ProjectID,
