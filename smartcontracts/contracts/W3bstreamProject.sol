@@ -68,7 +68,7 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
     }
 
     function setAttributes(
-        uint64 _projectId,
+        uint256 _projectId,
         bytes32[] memory _keys,
         bytes[] memory _values
     ) external onlyProjectOwner(_projectId) {
