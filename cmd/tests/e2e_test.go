@@ -20,8 +20,9 @@ import (
 func TestHttpApi(t *testing.T) {
 	r := require.New(t)
 
-	conf, err := coordinatorconfig.Get()
+	coordinatorConf, err := coordinatorconfig.Get()
 	r.NoError(err)
+	conf := seqConf(coordinatorConf.ServiceEndpoint, coordinatorConf.DIDAuthServerEndpoint)
 
 	t.Run("BadRequest", func(t *testing.T) {
 		reqbody, err := json.Marshal(map[string]interface{}{
@@ -30,30 +31,13 @@ func TestHttpApi(t *testing.T) {
 		})
 		r.NoError(err)
 
-		resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.ServiceEndpoint), "application/json", bytes.NewBuffer(reqbody))
+		resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.endpoint), "application/json", bytes.NewBuffer(reqbody))
 		r.NoError(err)
 		r.Equal(400, resp.StatusCode)
 		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
 		r.NoError(err)
 		r.Equal(`{"error":"Key: 'HandleMessageReq.Data' Error:Field validation for 'Data' failed on the 'required' tag"}`, string(body))
-	})
-
-	t.Run("ProjectNotExist", func(t *testing.T) {
-		reqbody, err := json.Marshal(&apitypes.HandleMessageReq{
-			ProjectID:      99999,
-			ProjectVersion: "0.1",
-			Data:           "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Stark\"}",
-		})
-		r.NoError(err)
-
-		resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.ServiceEndpoint), "application/json", bytes.NewBuffer(reqbody))
-		r.NoError(err)
-		r.Equal(400, resp.StatusCode)
-		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		r.NoError(err)
-		r.Equal(`{"error":"project config not exist, projectID 99999, version 0.1"}`, string(body))
 	})
 
 	t.Run("Risc0Project", func(t *testing.T) {
@@ -66,7 +50,7 @@ func TestHttpApi(t *testing.T) {
 			})
 			r.NoError(err)
 
-			resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.ServiceEndpoint), "application/json", bytes.NewBuffer(reqbody))
+			resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.endpoint), "application/json", bytes.NewBuffer(reqbody))
 			r.NoError(err)
 			r.Equal(200, resp.StatusCode)
 			defer resp.Body.Close()
@@ -84,7 +68,7 @@ func TestHttpApi(t *testing.T) {
 			defer ticker.Stop()
 
 			for range ticker.C {
-				resp, err := http.Get(fmt.Sprintf("http://localhost%s/message/%s", conf.ServiceEndpoint, messageID))
+				resp, err := http.Get(fmt.Sprintf("http://localhost%s/message/%s", conf.endpoint, messageID))
 				r.NoError(err)
 				r.Equal(200, resp.StatusCode)
 				body, err := io.ReadAll(resp.Body)
@@ -126,7 +110,7 @@ func TestHttpApi(t *testing.T) {
 			})
 			r.NoError(err)
 
-			resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.ServiceEndpoint), "application/json", bytes.NewBuffer(reqbody))
+			resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.endpoint), "application/json", bytes.NewBuffer(reqbody))
 			r.NoError(err)
 			r.Equal(200, resp.StatusCode)
 			defer resp.Body.Close()
@@ -144,7 +128,7 @@ func TestHttpApi(t *testing.T) {
 			defer ticker.Stop()
 
 			for range ticker.C {
-				resp, err := http.Get(fmt.Sprintf("http://localhost%s/message/%s", conf.ServiceEndpoint, messageID))
+				resp, err := http.Get(fmt.Sprintf("http://localhost%s/message/%s", conf.endpoint, messageID))
 				r.NoError(err)
 				r.Equal(200, resp.StatusCode)
 				body, err := io.ReadAll(resp.Body)

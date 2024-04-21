@@ -76,7 +76,7 @@ var (
 		DatabaseDSN:              "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		BootNodeMultiAddr:        "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		ProverContractAddress:    "",
-		ProverOperatorPrivateKey: "",
+		ProverOperatorPrivateKey: "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
 		IoTeXChainID:             2,
 		SchedulerEpoch:           20,
 		IPFSEndpoint:             "ipfs.mainnet.iotex.io",
