@@ -1,0 +1,69 @@
+version: "3.6"
+
+services:
+  halo2:
+    image: wangweixiaohao2944/halo2server:v0.0.6
+    container_name: halo2-service
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - 14002:4001
+
+  zkwasm:
+    image: iotexdev/zkwasmserver:v0.0.3
+    container_name: zkwasm-service
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - 14003:4001
+
+  risc0:
+    image: wangweixiaohao2944/risc0server:v1.0.0.rc4
+    depends_on:
+      - "postgres"
+    container_name: risc0-service
+    platform: linux/x86_64
+    restart: always
+    environment:
+      DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+      BONSAI_URL: https://api.bonsai.xyz
+      BONSAI_KEY: "${BONSAI_KEY:-}"
+    ports:
+     - "14001:4001"
+
+  wasm:
+    image: wangweixiaohao2944/wasmserver:v0.0.1.rc0
+    container_name: wasm-service
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - "14004:4001"
+
+  postgres:
+    image: postgres:14
+    container_name: w3bstream-sprout-postgres
+    restart: always
+    command:
+      [
+        "postgres",
+        "-cshared_preload_libraries=pg_stat_statements"
+      ]
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_passwd
+      POSTGRES_DB: test
+#    volumes:
+#      - ./postgres:/var/lib/postgresql/data
+    ports:
+     - "15432:5432"
+
+  didkit:
+    image: ghcr.io/spruceid/didkit-http:latest
+    platform: linux/amd64
+    container_name: didkit-http
+    restart: always
+    environment:
+      DIDKIT_HTTP_HTTP_PORT: 19999
+      DIDKIT_HTTP_HTTP_ADDRESS: '[0,0,0,0]'
+      DIDKIT_HTTP_HTTP_BODYSIZELIMIT: 2097152
+      DIDKIT_HTTP_ISSUER_KEYS: '[{"kty":"OKP","crv":"Ed25519","x":"THRnf4Zj7gh93XTnII8G0tQIoYb4IbkoTqcy5TNKJlg","d":"es8N8nmdU9o5wWdCEMc2xKCigN1LKc6xro1efDy7Y7M"}, {"kty":"OKP","crv":"Ed25519","x":"STSryIxBN3pyC5YQ5GnjlMmILUWcb5M0_sHpqxxmsog","d":"BiKwVOhhI-fcMMjfcxo2AdB3ygamMmgcMzjaOUl7O6s"}]'
