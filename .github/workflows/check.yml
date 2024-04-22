@@ -33,6 +33,9 @@ jobs:
         run: go test -p 1 -gcflags="all=-N -l" `go list ./... | grep -v github.com/machinefi/sprout/cmd/tests` -covermode=atomic -coverprofile cover.out
         #run: go test -gcflags="all=-N -l" ./... -coverprofile cover.out -covermode=atomic
 
+      - name: Run E2E tests.
+        run: make integration_test
+
       - name: Upload Coverage report to CodeCov
         uses: codecov/codecov-action@v1.0.0
         with:
