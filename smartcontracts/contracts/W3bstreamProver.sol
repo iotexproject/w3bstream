@@ -62,8 +62,8 @@ contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
 
     function mint(address _account) external returns (uint256 id_) {
         require(msg.sender == minter, "not minter");
-        id_ = 1;
-        ++nextProverId;
+        
+         id_ = ++nextProverId;
         _mint(_account, id_);
 
         _paused[id_] = true;
