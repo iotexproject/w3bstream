@@ -55,7 +55,16 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 		testutil.TopicPublish(p, errors.New(t.Name()))
 		processor.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, "", nil)
 	})
+}
 
+func TestProcessor_HandleProjectProvers(t *testing.T) {
+	r := require.New(t)
+	p := &Processor{}
+	p.HandleProjectProvers(1, []uint64{1})
+
+	v, ok := p.projectProvers.Load(uint64(1))
+	r.True(ok)
+	r.Equal(v.([]uint64), []uint64{1})
 }
 
 func TestProcessor_HandleP2PData(t *testing.T) {
@@ -64,6 +73,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		vmHandler: &vm.Handler{},
 		project:   m.Project,
 	}
+	projectID := uint64(1)
 
 	t.Run("TaskNil", func(t *testing.T) {
 		processor.HandleP2PData(&p2p.Data{
@@ -114,6 +124,17 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 
 		processor.HandleP2PData(data, nil)
 	})
+	t.Run("FailedToGetProjectDefaultConfig", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		processor.projectProvers.Store(projectID, []uint64{1, 2, 3})
+		defer processor.projectProvers.Delete(projectID)
+
+		p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
+
+		processor.HandleP2PData(data, nil)
+	})
 	t.Run("FailedToProof", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
@@ -135,14 +156,39 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 
 		processor.HandleP2PData(data, nil)
 	})
+	t.Run("FailedToCallVMHandle", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
+		p.ApplyMethodReturn(&types.Task{}, "VerifySignature", nil)
+		p.ApplyMethodReturn(&vm.Handler{}, "Handle", nil, errors.New(t.Name()))
+		processorReportFail(p)
+		processorReportSuccess(p)
+
+		processor.HandleP2PData(data, nil)
+	})
+	t.Run("FailedToSignProof", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
+		p.ApplyMethodReturn(&types.Task{}, "VerifySignature", nil)
+		p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
+		p.ApplyPrivateMethod(processor, "signProof", func(*types.Task, []byte) (string, error) { return "", errors.New(t.Name()) })
+		processorReportFail(p)
+		processorReportSuccess(p)
+
+		processor.HandleP2PData(data, nil)
+	})
 	t.Run("Success", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
 		p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
-		p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
 		p.ApplyMethodReturn(&types.Task{}, "VerifySignature", nil)
-		p.ApplyPrivateMethod(processor, "signProof", func(t *types.Task, res []byte) (string, error) { return "", nil })
+		p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
+		p.ApplyPrivateMethod(processor, "signProof", func(*types.Task, []byte) (string, error) { return "", nil })
 		processorReportSuccess(p)
 
 		processor.HandleP2PData(data, nil)

@@ -18,16 +18,15 @@ func Test_newCache(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(os.MkdirAll, errors.New(t.Name()))
+		p.ApplyFuncReturn(os.MkdirAll, errors.New(t.Name()))
 		_, err := newCache("")
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(os.MkdirAll, nil)
+		p.ApplyFuncReturn(os.MkdirAll, nil)
 		_, err := newCache("")
 		r.NoError(err)
 	})
@@ -41,26 +40,24 @@ func TestCache_get(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(os.ReadFile, nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(os.ReadFile, nil, errors.New(t.Name()))
 		d := c.get(uint64(0), nil)
 		r.Empty(d)
 	})
-
 	t.Run("FailedToValidate", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(os.ReadFile, []byte("data"), nil)
+		p.ApplyFuncReturn(os.ReadFile, []byte("data"), nil)
 
 		d := c.get(uint64(0), []byte("data"))
 		r.Empty(d)
 	})
-
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(os.ReadFile, []byte("data"), nil)
+		p.ApplyFuncReturn(os.ReadFile, []byte("data"), nil)
 
 		data := []byte("data")
 		h := sha256.New()
@@ -79,4 +76,16 @@ func TestCache_getPath(t *testing.T) {
 	}
 	path := c.getPath(uint64(0))
 	r.Equal(fmt.Sprintf("%s/%d", c.dir, 0), path)
+}
+
+func TestCache_set(t *testing.T) {
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	p.ApplyFuncReturn(os.WriteFile, nil)
+
+	c := &cache{
+		dir: "test",
+	}
+	c.set(1, []byte{})
 }
