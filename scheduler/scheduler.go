@@ -81,7 +81,11 @@ func (s *scheduler) schedule() {
 					return true
 				}
 				s.handleProjectProvers(projectID, projectProverIDs)
-				s.pubSubs.Add(projectID)
+				if err := s.pubSubs.Add(projectID); err != nil {
+					slog.Error("failed to add pubsubs", "project_id", projectID, "error", err)
+					scheduled = false
+					return false
+				}
 				slog.Info("the project scheduled to this prover", "project_id", projectID)
 				return true
 			})
@@ -191,7 +195,10 @@ func dummySchedule(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProve
 	ids := projectIDs()
 	for _, id := range ids {
 		s.handleProjectProvers(id, []uint64{})
-		s.pubSubs.Add(id)
+		if err := s.pubSubs.Add(id); err != nil {
+			slog.Error("failed to add pubsubs", "project_id", id, "error", err)
+			continue
+		}
 		slog.Info("the project scheduled to this prover", "project_id", id)
 	}
 }
