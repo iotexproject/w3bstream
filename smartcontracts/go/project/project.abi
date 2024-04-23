@@ -370,11 +370,6 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "_minter",
-				"type": "address"
-			},
-			{
 				"internalType": "string",
 				"name": "_name",
 				"type": "string"
@@ -615,9 +610,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint64",
+				"internalType": "uint256",
 				"name": "_projectId",
-				"type": "uint64"
+				"type": "uint256"
 			},
 			{
 				"internalType": "bytes32[]",

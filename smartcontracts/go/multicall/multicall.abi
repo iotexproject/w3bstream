@@ -1,0 +1,26 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "_targets",
+				"type": "address[]"
+			},
+			{
+				"internalType": "bytes[]",
+				"name": "_data",
+				"type": "bytes[]"
+			}
+		],
+		"name": "multiCall",
+		"outputs": [
+			{
+				"internalType": "bytes[]",
+				"name": "results_",
+				"type": "bytes[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

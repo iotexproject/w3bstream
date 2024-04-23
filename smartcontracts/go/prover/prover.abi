@@ -281,11 +281,6 @@
 				"internalType": "string",
 				"name": "_symbol",
 				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "_minter",
-				"type": "address"
 			}
 		],
 		"name": "initialize",
@@ -339,11 +334,6 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "_type",
-				"type": "uint256"
-			},
-			{
 				"internalType": "address",
 				"name": "_account",
 				"type": "address"
@@ -358,6 +348,19 @@
 			}
 		],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "minter",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
