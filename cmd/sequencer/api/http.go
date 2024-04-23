@@ -124,6 +124,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 			return
 		}
 		c.Data(http.StatusOK, "application/octet-stream", cipher)
+		return
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -204,6 +205,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 			return
 		}
 		c.Data(http.StatusOK, "application/octet-stream", cipher)
+		return
 	}
 
 	c.JSON(http.StatusOK, response)
