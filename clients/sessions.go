@@ -28,3 +28,11 @@ func VerifySessionAndProjectPermission(vctoken string, projectID uint64) (string
 	}
 	return v.(*Client).ClientDID, nil
 }
+
+func VerifyProjectPermissionByClientDID(clientID string, projectID uint64) error {
+	client, _ := manager.ClientByDID(clientID)
+	if client != nil && client.HasProjectPermission(projectID) {
+		return nil
+	}
+	return errors.Errorf("no project permission %s %d", clientID, projectID)
+}

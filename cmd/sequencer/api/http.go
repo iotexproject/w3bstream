@@ -9,10 +9,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/apitypes"
+	"github.com/machinefi/sprout/auth/didcomm"
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/sequencer/persistence"
@@ -38,8 +40,8 @@ func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinat
 		privateKey:            sk,
 	}
 
-	s.engine.POST("/message", s.handleMessage)
-	s.engine.GET("/message/:id", s.queryStateLogByID)
+	s.engine.POST("/message", s.verifyToken, s.handleMessage)
+	s.engine.GET("/message/:id", s.verifyToken, s.queryStateLogByID)
 
 	return s
 }
@@ -52,32 +54,55 @@ func (s *httpServer) Run(address string) error {
 	return nil
 }
 
-func (s *httpServer) handleMessage(c *gin.Context) {
-	req := &apitypes.HandleMessageReq{}
-	if err := c.ShouldBindJSON(req); err != nil {
-		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
-		return
-	}
-
+// verifyToken make sure the client token is issued by sequencer
+func (s *httpServer) verifyToken(c *gin.Context) {
 	tok := c.GetHeader("Authorization")
 	if tok == "" {
 		tok = c.Query("authorization")
 	}
 	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
+	clientID, err := didvc.VerifyJWTCredential(s.didAuthServerEndpoint, tok)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrap(err, "invalid credential token")))
+	}
+	ctx := didvc.WithClientID(c.Request.Context(), clientID)
+	c.Request = c.Request.WithContext(ctx)
+}
 
-	clientID := ""
-	if tok != "" {
-		err := didvc.VerifyJWTCredential(s.didAuthServerEndpoint, tok)
+func (s *httpServer) handleMessage(c *gin.Context) {
+	req := &apitypes.HandleMessageReq{}
+
+	payload, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(errors.Wrap(err, "failed to read request body")))
+	}
+	defer c.Request.Body.Close()
+
+	// decrypt did comm message
+	clientID, ok := didvc.ClientIDFrom(c.Request.Context())
+	if ok {
+		payload, err = didcomm.DecryptByClientID(clientID, payload)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
-			return
+			c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(errors.Wrap(err, "failed to decrypt didcomm cipher data")))
 		}
-		if clientID, err = clients.VerifySessionAndProjectPermission(tok, req.ProjectID); err != nil {
+	}
+
+	// binding request
+	if err := binding.JSON.BindBody(payload, req); err != nil {
+		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
+		return
+	}
+
+	// validate project permission
+	if clientID != "" {
+		// TODO consider if project has public attribute
+		if err = clients.VerifyProjectPermissionByClientDID(clientID, req.ProjectID); err != nil {
 			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
 			return
 		}
 	}
 
+	// execute task committing
 	id := uuid.NewString()
 	if err := s.p.Save(&persistence.Message{
 		MessageID:      id,
@@ -90,7 +115,19 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, &apitypes.HandleMessageRsp{MessageID: id})
+	// encrypt response and respond
+	response := &apitypes.HandleMessageRsp{MessageID: id}
+	if clientID != "" {
+		cipher, err := didcomm.EncryptJSON(response)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(errors.Wrap(err, "failed to encrypt response when commit task")))
+			return
+		}
+		c.Data(http.StatusOK, "application/octet-stream", cipher)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (s *httpServer) queryStateLogByID(c *gin.Context) {
@@ -107,19 +144,10 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 	}
 	m := ms[0]
 
-	tok := c.GetHeader("Authorization")
-	if tok == "" {
-		tok = c.Query("authorization")
-	}
-	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
-
-	if tok != "" {
-		if err = didvc.VerifyJWTCredential(s.didAuthServerEndpoint, tok); err != nil {
-			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
-			return
-		}
-		clientID := ""
-		if clientID, err = clients.VerifySessionAndProjectPermission(tok, m.ProjectID); err != nil {
+	clientID, ok := didvc.ClientIDFrom(c.Request.Context())
+	if ok {
+		// TODO consider if project has public attribute
+		if err = clients.VerifyProjectPermissionByClientDID(clientID, m.ProjectID); err != nil {
 			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(err))
 			return
 		}
@@ -169,7 +197,18 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 		ss = append(ss, taskStateLog.States...)
 	}
 
-	c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID, States: ss})
+	response := &apitypes.QueryMessageStateLogRsp{MessageID: messageID, States: ss}
+	if clientID != "" {
+		cipher, err := didcomm.EncryptJSON(response)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(errors.Wrap(err, "failed to encrypt response when query task")))
+			return
+		}
+		c.Data(http.StatusOK, "application/octet-stream", cipher)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (s *httpServer) issueJWTCredential(c *gin.Context) {
