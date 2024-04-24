@@ -104,7 +104,7 @@ func (c *Contract) list() (uint64, error) {
 	}
 
 	if len(logs) == 0 {
-		logs = []types.Log{types.Log{
+		logs = []types.Log{{
 			Topics:      []common.Hash{emptyHash},
 			BlockNumber: maxBlockNumber,
 		}}
@@ -217,7 +217,7 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 			}
 
 			if len(logs) == 0 {
-				logs = []types.Log{types.Log{
+				logs = []types.Log{{
 					Topics:      []common.Hash{emptyHash},
 					BlockNumber: target,
 				}}
