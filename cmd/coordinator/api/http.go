@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/machinefi/sprout/apitypes"
 	"github.com/machinefi/sprout/cmd/coordinator/config"
@@ -50,6 +51,7 @@ func NewHttpServer(persistence *postgres.Postgres, conf *config.Config) *HttpSer
 	s.engine.GET("/live", s.liveness)
 	s.engine.GET("/task/:project_id/:task_id", s.getTaskStateLog)
 	s.engine.GET("/coordinator_config", s.getCoordinatorConfigInfo)
+	s.engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	return s
 }

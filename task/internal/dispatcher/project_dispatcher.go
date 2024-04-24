@@ -2,14 +2,17 @@ package dispatcher
 
 import (
 	"log/slog"
+	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/datasource"
+	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
 )
 
 type NewDatasource func(datasourceURI string) (datasource.Datasource, error)
@@ -57,6 +60,9 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 		return nextTaskID, nil
 	}
 	d.window.produce(t)
+
+	metrics.DispatchedTaskNumMtc(strconv.FormatUint(d.projectID, 10), t.ProjectVersion)
+	metrics.TaskStartTimeMtc(strconv.FormatUint(d.projectID, 10), t.ProjectVersion, strconv.FormatUint(t.ID, 10))
 
 	if err := d.publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
 		return 0, errors.Wrapf(err, "failed to publish data, project_id %v, task_id %v", t.ProjectID, t.ID)

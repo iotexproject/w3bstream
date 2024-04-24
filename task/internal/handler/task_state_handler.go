@@ -2,8 +2,10 @@ package handler
 
 import (
 	"log/slog"
+	"strconv"
 	"time"
 
+	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
@@ -47,6 +49,10 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	output, err := output.New(&c.Output, h.operatorPrivateKeyECDSA, h.operatorPrivateKeyED25519)
 	if err != nil {
 		slog.Error("failed to init output", "error", err, "project_id", t.ProjectID)
+		metrics.FailedTaskNumMtc(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion)
+		metrics.TaskFinalStateMtc(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion,
+			strconv.FormatUint(t.ID, 10), types.TaskStateFailed.String())
+
 		if err := h.saveTaskStateLog(&types.TaskStateLog{
 			TaskID:    s.TaskID,
 			State:     types.TaskStateFailed,
@@ -62,6 +68,10 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	outRes, err := output.Output(t, s.Result)
 	if err != nil {
 		slog.Error("failed to output", "error", err, "task_id", s.TaskID)
+		metrics.FailedTaskNumMtc(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion)
+		metrics.TaskFinalStateMtc(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion,
+			strconv.FormatUint(t.ID, 10), types.TaskStateFailed.String())
+
 		if err := h.saveTaskStateLog(&types.TaskStateLog{
 			TaskID:    s.TaskID,
 			State:     types.TaskStateFailed,
@@ -73,6 +83,11 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 		}
 		return true
 	}
+
+	metrics.TaskEndTimeMtc(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion, strconv.FormatUint(t.ID, 10))
+	metrics.SucceedTaskNumMtc(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion)
+	metrics.TaskFinalStateMtc(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion,
+		strconv.FormatUint(t.ID, 10), types.TaskStateOutputted.String())
 
 	if err := h.saveTaskStateLog(&types.TaskStateLog{
 		TaskID:    s.TaskID,
