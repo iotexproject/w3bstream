@@ -50,10 +50,18 @@ func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinat
 		}
 		s.didJWK = didJWK
 
-		slog.Info("server did:io:        %s", s.didJWK.DID("io"))
-		slog.Info("server did:io#key:    %s", s.didJWK.KID("io"))
-		slog.Info("server ka did:io:     %s", s.didJWK.KeyAgreementDID("io"))
-		slog.Info("server ka did:io#key: %s", s.didJWK.KeyAgreementKID("io"))
+		slog.Info("server did:io:        " + s.didJWK.DID("io"))
+		slog.Info("server did:io#key:    " + s.didJWK.KID("io"))
+		slog.Info("server ka did:io:     " + s.didJWK.KeyAgreementDID("io"))
+		slog.Info("server ka did:io#key: " + s.didJWK.KeyAgreementKID("io"))
+
+		// generate client did doc
+		didDoc, err := s.didJWK.DIDDoc("io")
+		if err != nil {
+			log.Fatal(err)
+		}
+		docContent, _ := json.MarshalIndent(didDoc, "", "  ")
+		slog.Info(string(docContent))
 	}
 
 	s.engine.POST("/message", s.verifyToken, s.handleMessage)
@@ -103,7 +111,8 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 
 	// decrypt did comm message
 	clientID, ok := didvc.ClientIDFrom(c.Request.Context())
-	if ok {
+	// TODO change ok
+	if ok || s.didJWK != nil {
 		//payload, err = didcomm.DecryptByClientID(clientID, payload)
 		payload, err = s.didJWK.DecryptBySenderDID("io", payload, clientID)
 		if err != nil {
