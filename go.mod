@@ -17,10 +17,9 @@ require (
 	github.com/libp2p/go-libp2p v0.32.2
 	github.com/libp2p/go-libp2p-kad-dht v0.25.2
 	github.com/libp2p/go-libp2p-pubsub v0.10.0
-	github.com/machinefi/ioconnect-go v0.0.0-20240424041923-9dc8377a2923
+	github.com/machinefi/ioconnect-go v0.0.0-20240424145430-bb074f562c29
 	github.com/multiformats/go-multiaddr v0.12.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.18.0
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tablelandnetwork/basin-cli v0.0.11
@@ -143,6 +142,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polydawn/refmt v0.89.0 // indirect
+	github.com/prometheus/client_golang v1.18.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
