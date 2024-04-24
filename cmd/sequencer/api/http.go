@@ -66,7 +66,7 @@ func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinat
 
 	s.engine.POST("/message", s.verifyToken, s.handleMessage)
 	s.engine.GET("/message/:id", s.verifyToken, s.queryStateLogByID)
-	s.engine.GET("/didDoc/", s.didDoc)
+	s.engine.GET("/didDoc", s.didDoc)
 
 	return s
 }
