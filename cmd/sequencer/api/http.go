@@ -55,7 +55,7 @@ func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinat
 		slog.Info("server ka did:io:     " + s.didJWK.KeyAgreementDID("io"))
 		slog.Info("server ka did:io#key: " + s.didJWK.KeyAgreementKID("io"))
 
-		// generate client did doc
+		// generate did doc
 		didDoc, err := s.didJWK.DIDDoc("io")
 		if err != nil {
 			log.Fatal(err)
@@ -66,6 +66,7 @@ func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinat
 
 	s.engine.POST("/message", s.verifyToken, s.handleMessage)
 	s.engine.GET("/message/:id", s.verifyToken, s.queryStateLogByID)
+	s.engine.GET("/didDoc/", s.didDoc)
 
 	return s
 }
@@ -247,6 +248,17 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 	//}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func (s *httpServer) didDoc(c *gin.Context) {
+	didDoc, err := s.didJWK.DIDDoc("io")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+		return
+	}
+	docContent, _ := json.MarshalIndent(didDoc, "", "  ")
+	slog.Info(string(docContent))
+	c.JSON(http.StatusOK, string(docContent))
 }
 
 func (s *httpServer) issueJWTCredential(c *gin.Context) {
