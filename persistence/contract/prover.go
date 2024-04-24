@@ -2,20 +2,26 @@ package contract
 
 import (
 	"bytes"
+	"container/list"
 	"context"
 	"log/slog"
+	"math"
 	"math/big"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/smartcontracts/go/blocknumber"
+	"github.com/machinefi/sprout/smartcontracts/go/multicall"
 	"github.com/machinefi/sprout/smartcontracts/go/prover"
 )
 
@@ -76,6 +82,45 @@ func (p *Prover) Merge(diff *Prover) {
 	}
 }
 
+type blockProvers struct {
+	mu       sync.Mutex
+	capacity uint64
+	blocks   *list.List
+}
+
+func (c *blockProvers) provers(blockNumber uint64) *BlockProver {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	np := &BlockProver{Provers: map[uint64]*Prover{}}
+
+	for e := c.blocks.Front(); e != nil; e = e.Next() {
+		ep := e.Value.(*BlockProver)
+		if blockNumber > ep.BlockNumber {
+			break
+		}
+		np.Merge(ep)
+	}
+	return np
+}
+
+func (c *blockProvers) add(diff *BlockProver) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.blocks.PushBack(diff)
+
+	if uint64(c.blocks.Len()) > c.capacity {
+		h := c.blocks.Front()
+		np := &BlockProver{Provers: map[uint64]*Prover{}}
+		np.Merge(h.Value.(*BlockProver))
+		np.Merge(h.Next().Value.(*BlockProver))
+		c.blocks.Remove(h.Next())
+		c.blocks.Remove(h)
+		c.blocks.PushFront(np)
+	}
+}
+
 func ListAndWatchProver(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *BlockProver, error) {
 	ch := make(chan *BlockProver, 10)
 	client, err := ethclient.Dial(chainEndpoint)
@@ -93,9 +138,10 @@ func ListAndWatchProver(chainEndpoint, contractAddress string, tracebackLength u
 		return nil, errors.Wrap(err, "failed to query the latest block number")
 	}
 	targetBlockNumber := latestBlockNumber - tracebackLength
-	if err := listProver(ch, instance, targetBlockNumber); err != nil {
-		return nil, err
-	}
+	// TODO delete
+	// if err := listProver(ch, instance, targetBlockNumber); err != nil {
+	// 	return nil, err
+	// }
 
 	topics := []common.Hash{operatorSetTopicHash, nodeTypeUpdatedTopicHash, proverResumedTopicHash}
 	watchProver(ch, client, instance, 3*time.Second, contractAddress, topics, 1000, targetBlockNumber)
@@ -103,7 +149,103 @@ func ListAndWatchProver(chainEndpoint, contractAddress string, tracebackLength u
 	return ch, nil
 }
 
-func listProver(ch chan<- *BlockProver, instance *prover.Prover, targetBlockNumber uint64) error {
+func listProver(client *ethclient.Client, proverContractAddress, blockNumberContractAddress, multiCallContractAddress common.Address) ([]*Prover, uint64, uint64, error) {
+	multiCallInstance, err := multicall.NewMulticall(multiCallContractAddress, client)
+	if err != nil {
+		return nil, 0, 0, errors.Wrap(err, "failed to new multi call contract instance")
+	}
+	blockNumberABI, err := abi.JSON(strings.NewReader(blocknumber.BlocknumberMetaData.ABI))
+	if err != nil {
+		return nil, 0, 0, errors.Wrap(err, "failed to decode block number contract abi")
+	}
+	proverABI, err := abi.JSON(strings.NewReader(prover.ProverMetaData.ABI))
+	if err != nil {
+		return nil, 0, 0, errors.Wrap(err, "failed to decode prover contract abi")
+	}
+	blockNumberCallData, err := blockNumberABI.Pack("blockNumber")
+	if err != nil {
+		return nil, 0, 0, errors.Wrap(err, "failed to pack block number call data")
+	}
+	ps := []*Prover{}
+	minBlockNumber := uint64(math.MaxUint64)
+	maxBlockNumber := uint64(0)
+	for proverID := uint64(1); ; proverID++ {
+		operatorCallData, err := proverABI.Pack("operator", new(big.Int).SetUint64(proverID))
+		if err != nil {
+			return nil, 0, 0, errors.Wrap(err, "failed to pack prover operator call data")
+		}
+		isPausedCallData, err := proverABI.Pack("isPaused", new(big.Int).SetUint64(proverID))
+		if err != nil {
+			return nil, 0, 0, errors.Wrap(err, "failed to pack prover is paused call data")
+		}
+		nodeTypeCallData, err := proverABI.Pack("nodeType", new(big.Int).SetUint64(proverID))
+		if err != nil {
+			return nil, 0, 0, errors.Wrap(err, "failed to pack prover node type call data")
+		}
+
+		result, err := multiCallInstance.MultiCall(
+			nil,
+			[]common.Address{
+				blockNumberContractAddress,
+				proverContractAddress,
+				proverContractAddress,
+				proverContractAddress,
+			},
+			[][]byte{
+				blockNumberCallData,
+				operatorCallData,
+				isPausedCallData,
+				nodeTypeCallData,
+			},
+		)
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to multi call, prover_id %v", proverID)
+		}
+
+		out, err := blockNumberABI.Unpack("blockNumber", result[0])
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to unpack block number result, prover_id %v", proverID)
+		}
+		preBlockNumber := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+		blockNumber := preBlockNumber.Uint64() - 1
+
+		minBlockNumber = min(minBlockNumber, blockNumber)
+		maxBlockNumber = max(maxBlockNumber, blockNumber)
+
+		if len(result[1]) == 0 || len(result[2]) == 0 || len(result[3]) == 0 {
+			break
+		}
+
+		out, err = proverABI.Unpack("operator", result[1])
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to unpack prover operator result, prover_id %v", proverID)
+		}
+		operator := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+		out, err = proverABI.Unpack("isPaused", result[2])
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to unpack prover is paused result, prover_id %v", proverID)
+		}
+		isPaused := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+		out, err = proverABI.Unpack("nodeType", result[3])
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to unpack prover node type result, prover_id %v", proverID)
+		}
+		nodeType := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+		ps = append(ps, &Prover{
+			ID:              proverID,
+			BlockNumber:     blockNumber,
+			Paused:          &isPaused,
+			OperatorAddress: operator,
+			NodeTypes:       nodeType.Uint64(),
+		})
+	}
+	return ps, minBlockNumber, maxBlockNumber, nil
+}
+
+func listProver1(ch chan<- *BlockProver, instance *prover.Prover, targetBlockNumber uint64) error {
 	provers := map[uint64]*Prover{}
 	for id := uint64(1); ; id++ {
 		mp, err := instance.Operator(nil, new(big.Int).SetUint64(id))
@@ -174,17 +316,13 @@ func watchProver(ch chan<- *BlockProver, client *ethclient.Client, instance *pro
 				slog.Error("failed to filter contract logs", "error", err)
 				continue
 			}
-			if processProverLogs(ch, logs, instance) {
-				queriedBlockNumber = to
-			}
+			// TODO delete
+			processProverLogs(nil, logs, instance)
 		}
 	}()
 }
 
-func processProverLogs(ch chan<- *BlockProver, logs []types.Log, instance *prover.Prover) bool {
-	if len(logs) == 0 {
-		return true
-	}
+func processProverLogs(add func(*BlockProver), logs []types.Log, instance *prover.Prover) error {
 	sort.Slice(logs, func(i, j int) bool {
 		if logs[i].BlockNumber != logs[j].BlockNumber {
 			return logs[i].BlockNumber < logs[j].BlockNumber
@@ -205,8 +343,7 @@ func processProverLogs(ch chan<- *BlockProver, logs []types.Log, instance *prove
 		case operatorSetTopicHash:
 			e, err := instance.ParseOperatorSet(l)
 			if err != nil {
-				slog.Error("failed to parse project attribute set event", "error", err)
-				return false
+				return errors.Wrap(err, "failed to parse prover operator set event")
 			}
 
 			p, ok := ps.Provers[e.Id.Uint64()]
@@ -219,8 +356,7 @@ func processProverLogs(ch chan<- *BlockProver, logs []types.Log, instance *prove
 		case nodeTypeUpdatedTopicHash:
 			e, err := instance.ParseNodeTypeUpdated(l)
 			if err != nil {
-				slog.Error("failed to parse project paused event", "error", err)
-				return false
+				return errors.Wrap(err, "failed to parse prover node type updated event")
 			}
 
 			p, ok := ps.Provers[e.Id.Uint64()]
@@ -233,8 +369,7 @@ func processProverLogs(ch chan<- *BlockProver, logs []types.Log, instance *prove
 		case proverPausedTopicHash:
 			e, err := instance.ParseProverPaused(l)
 			if err != nil {
-				slog.Error("failed to parse project resumed event", "error", err)
-				return false
+				return errors.Wrap(err, "failed to parse prover paused event")
 			}
 
 			p, ok := ps.Provers[e.Id.Uint64()]
@@ -248,8 +383,7 @@ func processProverLogs(ch chan<- *BlockProver, logs []types.Log, instance *prove
 		case proverResumedTopicHash:
 			e, err := instance.ParseProverResumed(l)
 			if err != nil {
-				slog.Error("failed to parse project config updated event", "error", err)
-				return false
+				return errors.Wrap(err, "failed to parse prover resumed event")
 			}
 
 			p, ok := ps.Provers[e.Id.Uint64()]
@@ -272,7 +406,7 @@ func processProverLogs(ch chan<- *BlockProver, logs []types.Log, instance *prove
 	})
 
 	for _, p := range psSlice {
-		ch <- p
+		add(p)
 	}
-	return true
+	return nil
 }
