@@ -256,9 +256,7 @@ func (s *httpServer) didDoc(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
 		return
 	}
-	docContent, _ := json.MarshalIndent(didDoc, "", "  ")
-	slog.Info(string(docContent))
-	c.JSON(http.StatusOK, string(docContent))
+	c.JSON(http.StatusOK, didDoc)
 }
 
 func (s *httpServer) issueJWTCredential(c *gin.Context) {
