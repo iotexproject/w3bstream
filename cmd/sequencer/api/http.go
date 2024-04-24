@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	"github.com/machinefi/ioconnect-go/cmd/srv-did-vc/apis"
 	"io"
 	"log"
 	"log/slog"
@@ -260,13 +261,13 @@ func (s *httpServer) didDoc(c *gin.Context) {
 }
 
 func (s *httpServer) issueJWTCredential(c *gin.Context) {
-	req := new(didvc.IssueCredentialReq)
+	req := new(apis.IssueTokenReq)
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
 		return
 	}
 
-	rsp, err := didvc.IssueCredential(s.didAuthServerEndpoint, req, true)
+	rsp, err := didvc.IssueCredential(s.didAuthServerEndpoint, req.ClientID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
