@@ -76,9 +76,8 @@ func TestBlockProjects(t *testing.T) {
 		},
 	})
 	p := cp.project(1, 99)
-	r.True(p.IsEmpty())
+	r.Nil(p)
 	p = cp.project(1, 100)
-	r.False(p.IsEmpty())
 	r.Equal(p.ID, uint64(1))
 
 	cp.add(&BlockProject{
@@ -125,7 +124,7 @@ func TestBlockProjects(t *testing.T) {
 	r.Equal(p.Uri, "uri1")
 
 	p = cp.project(1, 100)
-	r.True(p.IsEmpty())
+	r.Nil(p)
 
 	cp.add(&BlockProject{
 		BlockNumber: 105,

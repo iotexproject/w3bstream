@@ -85,7 +85,7 @@ func (p *Project) Merge(diff *Project) {
 	}
 }
 
-func (p *Project) IsEmpty() bool {
+func (p *Project) isEmpty() bool {
 	return p.ID == 0
 }
 
@@ -113,6 +113,22 @@ func (c *blockProjects) project(projectID, blockNumber uint64) *Project {
 		if ok {
 			np.Merge(p)
 		}
+	}
+	if np.isEmpty() {
+		return nil
+	}
+	return np
+}
+
+func (c *blockProjects) projects() *BlockProject {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	np := &BlockProject{Projects: map[uint64]*Project{}}
+
+	for e := c.blocks.Front(); e != nil; e = e.Next() {
+		ep := e.Value.(*BlockProject)
+		np.Merge(ep)
 	}
 	return np
 }

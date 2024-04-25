@@ -44,7 +44,7 @@ func (m *Manager) Project(projectID uint64) (*Project, error) {
 
 func (m *Manager) load(projectID uint64) (*Project, error) {
 	cp := m.contractProject(projectID)
-	if cp.IsEmpty() {
+	if cp == nil {
 		return nil, errors.Errorf("the project not exist, project_id %v", projectID)
 	}
 
