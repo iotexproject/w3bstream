@@ -2,7 +2,6 @@ package dispatcher
 
 import (
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -61,8 +60,8 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	}
 	d.window.produce(t)
 
-	metrics.DispatchedTaskNumMtc(strconv.FormatUint(d.projectID, 10), t.ProjectVersion)
-	metrics.TaskStartTimeMtc(strconv.FormatUint(d.projectID, 10), t.ProjectVersion, strconv.FormatUint(t.ID, 10))
+	metrics.DispatchedTaskNumMtc(d.projectID, t.ProjectVersion)
+	metrics.TaskStartTimeMtc(d.projectID, t.ID, t.ProjectVersion)
 
 	if err := d.publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
 		return 0, errors.Wrapf(err, "failed to publish data, project_id %v, task_id %v", t.ProjectID, t.ID)

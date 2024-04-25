@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"strconv"
 )
 
 var (
@@ -55,34 +56,34 @@ func init() {
 	prometheus.MustRegister(taskFinalStateMtc)
 }
 
-func TaskStartTimeMtc(projectID, projectVersion, taskID string) {
-	taskStartTimeMtc.WithLabelValues(projectID, projectVersion, taskID).SetToCurrentTime()
+func TaskStartTimeMtc(projectID, taskID uint64, projectVersion string) {
+	taskStartTimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10)).SetToCurrentTime()
 }
 
-func DispatchedTaskNumMtc(projectID, projectVersion string) {
-	dispatchedTaskNumMtc.WithLabelValues(projectID, projectVersion).Inc()
+func DispatchedTaskNumMtc(projectID uint64, projectVersion string) {
+	dispatchedTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
 }
 
-func RetryTaskNumMtc(projectID, projectVersion, taskID string) {
-	retryTaskNumMtc.WithLabelValues(projectID, projectVersion, taskID).Inc()
+func RetryTaskNumMtc(projectID, taskID uint64, projectVersion string) {
+	retryTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10)).Inc()
 }
 
-func TimeoutTaskNumMtc(projectID, projectVersion, taskID string) {
-	timeoutTaskNumMtc.WithLabelValues(projectID, projectVersion, taskID).Inc()
+func TimeoutTaskNumMtc(projectID, taskID uint64, projectVersion string) {
+	timeoutTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10)).Inc()
 }
 
-func TaskEndTimeMtc(projectID, projectVersion, taskID string) {
-	taskEndTimeMtc.WithLabelValues(projectID, projectVersion, taskID).SetToCurrentTime()
+func TaskEndTimeMtc(projectID, taskID uint64, projectVersion string) {
+	taskEndTimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10)).SetToCurrentTime()
 }
 
-func FailedTaskNumMtc(projectID, projectVersion string) {
-	failedTaskNumMtc.WithLabelValues(projectID, projectVersion).Inc()
+func FailedTaskNumMtc(projectID uint64, projectVersion string) {
+	failedTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
 }
 
-func SucceedTaskNumMtc(projectID, projectVersion string) {
-	succeedTaskNumMtc.WithLabelValues(projectID, projectVersion).Inc()
+func SucceedTaskNumMtc(projectID uint64, projectVersion string) {
+	succeedTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
 }
 
-func TaskFinalStateMtc(projectID, projectVersion, taskID, state string) {
-	taskFinalStateMtc.WithLabelValues(projectID, projectVersion, taskID, state).SetToCurrentTime()
+func TaskFinalStateMtc(projectID, taskID uint64, projectVersion, state string) {
+	taskFinalStateMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10), state).SetToCurrentTime()
 }

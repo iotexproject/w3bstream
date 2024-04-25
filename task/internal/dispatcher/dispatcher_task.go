@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -41,14 +40,14 @@ func (t *dispatcherTask) runWatchdog(ctx context.Context) {
 			return
 		case <-retryChan:
 			slog.Info("retry task", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", t.waitTime)
-			metrics.RetryTaskNumMtc(strconv.FormatUint(t.task.ProjectID, 10), t.task.ProjectVersion, strconv.FormatUint(t.task.ID, 10))
+			metrics.RetryTaskNumMtc(t.task.ProjectID, t.task.ID, t.task.ProjectVersion)
 
 			if err := t.publish(t.task.ProjectID, &p2p.Data{Task: t.task}); err != nil {
 				slog.Error("failed to publish p2p data", "project_id", t.task.ProjectID, "task_id", t.task.ID)
 			}
 		case <-timeoutChan:
 			slog.Info("task timeout", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", 2*t.waitTime)
-			metrics.TimeoutTaskNumMtc(strconv.FormatUint(t.task.ProjectID, 10), t.task.ProjectVersion, strconv.FormatUint(t.task.ID, 10))
+			metrics.TimeoutTaskNumMtc(t.task.ProjectID, t.task.ID, t.task.ProjectVersion)
 
 			t.timeOut(&types.TaskStateLog{
 				TaskID:    t.task.ID,
