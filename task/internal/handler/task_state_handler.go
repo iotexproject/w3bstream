@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
@@ -69,6 +70,9 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	output, err := output.New(&c.Output, h.operatorPrivateKeyECDSA, h.operatorPrivateKeyED25519)
 	if err != nil {
 		slog.Error("failed to init output", "error", err, "project_id", t.ProjectID)
+		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
+		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
+
 		if err := h.saveTaskStateLog(&types.TaskStateLog{
 			TaskID:    s.TaskID,
 			State:     types.TaskStateFailed,
@@ -84,6 +88,9 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	outRes, err := output.Output(t, s.Result)
 	if err != nil {
 		slog.Error("failed to output", "error", err, "task_id", s.TaskID)
+		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
+		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
+
 		if err := h.saveTaskStateLog(&types.TaskStateLog{
 			TaskID:    s.TaskID,
 			State:     types.TaskStateFailed,
@@ -95,6 +102,10 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 		}
 		return true
 	}
+
+	metrics.TaskEndTimeMtc(t.ProjectID, t.ID, t.ProjectVersion)
+	metrics.SucceedTaskNumMtc(t.ProjectID, t.ProjectVersion)
+	metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateOutputted.String())
 
 	if err := h.saveTaskStateLog(&types.TaskStateLog{
 		TaskID:    s.TaskID,
