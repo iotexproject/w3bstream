@@ -33,11 +33,6 @@ var (
 	emptyHash = common.Hash{}
 )
 
-type BlockProject struct {
-	BlockNumber uint64
-	Projects    map[uint64]*Project
-}
-
 type Project struct {
 	ID          uint64
 	BlockNumber uint64
@@ -47,21 +42,9 @@ type Project struct {
 	Attributes  map[common.Hash][]byte
 }
 
-func (ps *BlockProject) Merge(diff *BlockProject) {
-	ps.BlockNumber = diff.BlockNumber
-	for id, p := range ps.Projects {
-		diffP, ok := diff.Projects[id]
-		if ok {
-			p.Merge(diffP)
-		}
-	}
-	for id, p := range diff.Projects {
-		if _, ok := ps.Projects[id]; !ok {
-			np := &Project{Attributes: map[common.Hash][]byte{}}
-			np.Merge(p)
-			ps.Projects[id] = np
-		}
-	}
+type blockProject struct {
+	BlockNumber uint64
+	Projects    map[uint64]*Project
 }
 
 func (p *Project) Merge(diff *Project) {
@@ -89,6 +72,23 @@ func (p *Project) isEmpty() bool {
 	return p.ID == 0
 }
 
+func (ps *blockProject) Merge(diff *blockProject) {
+	ps.BlockNumber = diff.BlockNumber
+	for id, p := range ps.Projects {
+		diffP, ok := diff.Projects[id]
+		if ok {
+			p.Merge(diffP)
+		}
+	}
+	for id, p := range diff.Projects {
+		if _, ok := ps.Projects[id]; !ok {
+			np := &Project{Attributes: map[common.Hash][]byte{}}
+			np.Merge(p)
+			ps.Projects[id] = np
+		}
+	}
+}
+
 type blockProjects struct {
 	mu       sync.Mutex
 	capacity uint64
@@ -100,12 +100,12 @@ func (c *blockProjects) project(projectID, blockNumber uint64) *Project {
 	defer c.mu.Unlock()
 
 	if blockNumber == 0 {
-		blockNumber = c.blocks.Back().Value.(*BlockProject).BlockNumber
+		blockNumber = c.blocks.Back().Value.(*blockProject).BlockNumber
 	}
 	np := &Project{Attributes: map[common.Hash][]byte{}}
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
-		ep := e.Value.(*BlockProject)
+		ep := e.Value.(*blockProject)
 		if blockNumber > ep.BlockNumber {
 			break
 		}
@@ -120,20 +120,20 @@ func (c *blockProjects) project(projectID, blockNumber uint64) *Project {
 	return np
 }
 
-func (c *blockProjects) projects() *BlockProject {
+func (c *blockProjects) projects() *blockProject {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	np := &BlockProject{Projects: map[uint64]*Project{}}
+	np := &blockProject{Projects: map[uint64]*Project{}}
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
-		ep := e.Value.(*BlockProject)
+		ep := e.Value.(*blockProject)
 		np.Merge(ep)
 	}
 	return np
 }
 
-func (c *blockProjects) add(diff *BlockProject) {
+func (c *blockProjects) add(diff *blockProject) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -141,9 +141,9 @@ func (c *blockProjects) add(diff *BlockProject) {
 
 	if uint64(c.blocks.Len()) > c.capacity {
 		h := c.blocks.Front()
-		np := &BlockProject{Projects: map[uint64]*Project{}}
-		np.Merge(h.Value.(*BlockProject))
-		np.Merge(h.Next().Value.(*BlockProject))
+		np := &blockProject{Projects: map[uint64]*Project{}}
+		np.Merge(h.Value.(*blockProject))
+		np.Merge(h.Next().Value.(*blockProject))
 		c.blocks.Remove(h.Next())
 		c.blocks.Remove(h)
 		c.blocks.PushFront(np)
@@ -263,19 +263,19 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 	return ps, minBlockNumber, maxBlockNumber, nil
 }
 
-func processProjectLogs(add func(*BlockProject), logs []types.Log, instance *project.Project) error {
+func processProjectLogs(add func(*blockProject), logs []types.Log, instance *project.Project) error {
 	sort.Slice(logs, func(i, j int) bool {
 		if logs[i].BlockNumber != logs[j].BlockNumber {
 			return logs[i].BlockNumber < logs[j].BlockNumber
 		}
 		return logs[i].TxIndex < logs[j].TxIndex
 	})
-	psMap := map[uint64]*BlockProject{}
+	psMap := map[uint64]*blockProject{}
 
 	for _, l := range logs {
 		ps, ok := psMap[l.BlockNumber]
 		if !ok {
-			ps = &BlockProject{
+			ps = &blockProject{
 				BlockNumber: l.BlockNumber,
 				Projects:    map[uint64]*Project{},
 			}
@@ -351,7 +351,7 @@ func processProjectLogs(add func(*BlockProject), logs []types.Log, instance *pro
 		psMap[l.BlockNumber] = ps
 	}
 
-	psSlice := []*BlockProject{}
+	psSlice := []*blockProject{}
 	for _, p := range psMap {
 		psSlice = append(psSlice, p)
 	}
