@@ -8,21 +8,25 @@ import (
 )
 
 type Config struct {
-	ServiceEndpoint           string `env:"HTTP_SERVICE_ENDPOINT"`
-	ChainEndpoint             string `env:"CHAIN_ENDPOINT"`
-	DatabaseDSN               string `env:"DATABASE_DSN"`
-	BootNodeMultiAddr         string `env:"BOOTNODE_MULTIADDR"`
-	IoTeXChainID              int    `env:"IOTEX_CHAINID"`
-	ProjectContractAddress    string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
-	IPFSEndpoint              string `env:"IPFS_ENDPOINT"`
-	DIDAuthServerEndpoint     string `env:"DIDAUTH_SERVER_ENDPOINT"`
-	OperatorPrivateKey        string `env:"OPERATOR_PRIVATE_KEY,optional"`
-	OperatorPrivateKeyED25519 string `env:"OPERATOR_PRIVATE_KEY_ED25519,optional"`
-	ProjectFileDirectory      string `env:"PROJECT_FILE_DIRECTORY,optional"`
-	ProjectCacheDirectory     string `env:"PROJECT_CACHE_DIRECTORY,optional"`
-	LogLevel                  int    `env:"LOG_LEVEL,optional"`
-	SequencerPubKey           string `env:"SEQUENCER_PUBKEY,optional"`
-	env                       string `env:"-"`
+	ServiceEndpoint            string `env:"HTTP_SERVICE_ENDPOINT"`
+	ChainEndpoint              string `env:"CHAIN_ENDPOINT"`
+	DatabaseDSN                string `env:"DATABASE_DSN"`
+	BootNodeMultiAddr          string `env:"BOOTNODE_MULTIADDR"`
+	IoTeXChainID               int    `env:"IOTEX_CHAINID"`
+	ProjectContractAddress     string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
+	ProverContractAddress      string `env:"PROVER_CONTRACT_ADDRESS,optional"`
+	BlockNumberContractAddress string `env:"BLOCK_NUMBER_CONTRACT_ADDRESS,optional"`
+	MultiCallContractAddress   string `env:"MULTICALL_CONTRACT_ADDRESS,optional"`
+	IPFSEndpoint               string `env:"IPFS_ENDPOINT"`
+	DIDAuthServerEndpoint      string `env:"DIDAUTH_SERVER_ENDPOINT"`
+	OperatorPrivateKey         string `env:"OPERATOR_PRIVATE_KEY,optional"`
+	OperatorPrivateKeyED25519  string `env:"OPERATOR_PRIVATE_KEY_ED25519,optional"`
+	ProjectFileDirectory       string `env:"PROJECT_FILE_DIRECTORY,optional"`
+	ProjectCacheDirectory      string `env:"PROJECT_CACHE_DIRECTORY,optional"`
+	SchedulerEpoch             uint64 `env:"SCHEDULER_EPOCH"`
+	LogLevel                   int    `env:"LOG_LEVEL,optional"`
+	SequencerPubKey            string `env:"SEQUENCER_PUBKEY,optional"`
+	env                        string `env:"-"`
 }
 
 var (

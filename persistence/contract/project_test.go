@@ -1,17 +1,12 @@
 package contract
 
 import (
+	"container/list"
 	"testing"
-	"time"
 
-	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/smartcontracts/go/project"
 	"github.com/machinefi/sprout/util/hash"
 )
 
@@ -63,52 +58,85 @@ func TestBlockProject_Merge(t *testing.T) {
 	r.Equal(np, diff)
 }
 
-func TestListAndWatchProject(t *testing.T) {
+func TestBlockProjects(t *testing.T) {
 	r := require.New(t)
 
-	t.Run("FailedToDialChain", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
+	cp := &blockProjects{
+		capacity: 2,
+		blocks:   list.New(),
+	}
 
-		p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
-
-		_, err := ListAndWatchProject("", "", 0)
-		r.ErrorContains(err, t.Name())
+	cp.add(&BlockProject{
+		BlockNumber: 100,
+		Projects: map[uint64]*Project{
+			1: {
+				ID:  1,
+				Uri: "uri",
+			},
+		},
 	})
-	t.Run("FailedToNewProjectContractInstance", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
+	p := cp.project(1, 99)
+	r.True(p.IsEmpty())
+	p = cp.project(1, 100)
+	r.False(p.IsEmpty())
+	r.Equal(p.ID, uint64(1))
 
-		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
-		p.ApplyFuncReturn(project.NewProject, nil, errors.New(t.Name()))
-
-		_, err := ListAndWatchProject("", "", 0)
-		r.ErrorContains(err, t.Name())
+	cp.add(&BlockProject{
+		BlockNumber: 101,
+		Projects: map[uint64]*Project{
+			1: {
+				ID:  1,
+				Uri: "uri1",
+			},
+		},
 	})
-	t.Run("FailedToQueryChainHead", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
+	p = cp.project(1, 101)
+	r.Equal(p.ID, uint64(1))
+	r.Equal(p.Uri, "uri1")
 
-		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
-		p.ApplyFuncReturn(project.NewProject, &project.Project{}, nil)
-		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(1), errors.New(t.Name()))
+	p = cp.project(1, 100)
+	r.Equal(p.ID, uint64(1))
+	r.Equal(p.Uri, "uri")
 
-		_, err := ListAndWatchProject("", "", 0)
-		r.ErrorContains(err, t.Name())
+	cp.add(&BlockProject{
+		BlockNumber: 102,
+		Projects: map[uint64]*Project{
+			2: {
+				ID:  2,
+				Uri: "uri2",
+			},
+			1: {
+				ID:  1,
+				Uri: "uri2",
+			},
+		},
 	})
-	t.Run("Success", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
+	p = cp.project(2, 102)
+	r.Equal(p.ID, uint64(2))
+	r.Equal(p.Uri, "uri2")
+	r.Equal(uint64(cp.blocks.Len()), cp.capacity)
 
-		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
-		p.ApplyFuncReturn(project.NewProject, &project.Project{}, nil)
-		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(1), nil)
-		p.ApplyFuncReturn(listProject, nil)
-		p.ApplyFuncReturn(watchProject)
+	p = cp.project(1, 102)
+	r.Equal(p.ID, uint64(1))
+	r.Equal(p.Uri, "uri2")
 
-		_, err := ListAndWatchProject("", "", 0)
-		r.NoError(err)
+	p = cp.project(1, 101)
+	r.Equal(p.ID, uint64(1))
+	r.Equal(p.Uri, "uri1")
+
+	p = cp.project(1, 100)
+	r.True(p.IsEmpty())
+
+	cp.add(&BlockProject{
+		BlockNumber: 105,
+		Projects: map[uint64]*Project{
+			1: {
+				ID:  1,
+				Uri: "uri1",
+			},
+		},
 	})
+	r.Equal(uint64(cp.blocks.Len()), cp.capacity)
 }
 
 // func TestListProject(t *testing.T) {
@@ -172,22 +200,6 @@ func TestListAndWatchProject(t *testing.T) {
 // 		r.Equal(*res.Projects[1].Paused, false)
 // 	})
 // }
-
-func TestWatchProject(t *testing.T) {
-	p := gomonkey.NewPatches()
-	defer p.Reset()
-
-	c := make(chan time.Time, 10)
-	p.ApplyFuncReturn(time.NewTicker, &time.Ticker{C: c})
-	p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(100), nil)
-	p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", []types.Log{}, nil)
-	p.ApplyFuncReturn(processProjectLogs, true)
-
-	watchProject(nil, &ethclient.Client{}, &project.Project{}, time.Second, "", []common.Hash{{}, {}, {}, {}}, 0, 0)
-	c <- time.Now()
-	time.Sleep(20 * time.Millisecond)
-	close(c)
-}
 
 // func TestProcessProjectLogs(t *testing.T) {
 // 	r := require.New(t)

@@ -3,16 +3,12 @@ package contract
 import (
 	"bytes"
 	"container/list"
-	"context"
-	"log/slog"
 	"math"
 	"math/big"
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -92,6 +88,9 @@ func (c *blockProvers) provers(blockNumber uint64) *BlockProver {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if blockNumber == 0 {
+		blockNumber = c.blocks.Back().Value.(*BlockProver).BlockNumber
+	}
 	np := &BlockProver{Provers: map[uint64]*Prover{}}
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
@@ -119,34 +118,6 @@ func (c *blockProvers) add(diff *BlockProver) {
 		c.blocks.Remove(h)
 		c.blocks.PushFront(np)
 	}
-}
-
-func ListAndWatchProver(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *BlockProver, error) {
-	ch := make(chan *BlockProver, 10)
-	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to dial chain endpoint")
-	}
-
-	instance, err := prover.NewProver(common.HexToAddress(contractAddress), client)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to new prover contract instance")
-	}
-
-	latestBlockNumber, err := client.BlockNumber(context.Background())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to query the latest block number")
-	}
-	targetBlockNumber := latestBlockNumber - tracebackLength
-	// TODO delete
-	// if err := listProver(ch, instance, targetBlockNumber); err != nil {
-	// 	return nil, err
-	// }
-
-	topics := []common.Hash{operatorSetTopicHash, nodeTypeUpdatedTopicHash, proverResumedTopicHash}
-	watchProver(ch, client, instance, 3*time.Second, contractAddress, topics, 1000, targetBlockNumber)
-
-	return ch, nil
 }
 
 func listProver(client *ethclient.Client, proverContractAddress, blockNumberContractAddress, multiCallContractAddress common.Address) ([]*Prover, uint64, uint64, error) {
@@ -243,83 +214,6 @@ func listProver(client *ethclient.Client, proverContractAddress, blockNumberCont
 		})
 	}
 	return ps, minBlockNumber, maxBlockNumber, nil
-}
-
-func listProver1(ch chan<- *BlockProver, instance *prover.Prover, targetBlockNumber uint64) error {
-	provers := map[uint64]*Prover{}
-	for id := uint64(1); ; id++ {
-		mp, err := instance.Operator(nil, new(big.Int).SetUint64(id))
-		if err != nil {
-			if strings.Contains(err.Error(), "execution reverted: ERC721: invalid token ID") {
-				break
-			}
-			return errors.Wrapf(err, "failed to get operator from chain, prover_id %v", id)
-		}
-
-		isPaused, err := instance.IsPaused(nil, new(big.Int).SetUint64(id))
-		if err != nil {
-			return errors.Wrapf(err, "failed to get prover pause status from chain, prover_id %v", id)
-		}
-		nodeTypes, err := instance.NodeType(nil, new(big.Int).SetUint64(id))
-		if err != nil {
-			return errors.Wrapf(err, "failed to get prover nodeTypes from chain, prover_id %v", id)
-		}
-
-		provers[id] = &Prover{
-			ID:              id,
-			OperatorAddress: mp,
-			BlockNumber:     targetBlockNumber,
-			Paused:          &isPaused,
-			NodeTypes:       nodeTypes.Uint64(),
-		}
-	}
-	ch <- &BlockProver{
-		BlockNumber: targetBlockNumber,
-		Provers:     provers,
-	}
-	return nil
-}
-
-func watchProver(ch chan<- *BlockProver, client *ethclient.Client, instance *prover.Prover, interval time.Duration,
-	contractAddress string, topics []common.Hash, step, startBlockNumber uint64) {
-	queriedBlockNumber := startBlockNumber
-	query := ethereum.FilterQuery{
-		Addresses: []common.Address{common.HexToAddress(contractAddress)},
-		Topics: [][]common.Hash{{
-			(topics[0]),
-			(topics[1]),
-			(topics[2]),
-		}},
-	}
-	ticker := time.NewTicker(interval)
-
-	go func() {
-		for range ticker.C {
-			from := queriedBlockNumber + 1
-			to := from + step
-
-			latestBlockNumber, err := client.BlockNumber(context.Background())
-			if err != nil {
-				slog.Error("failed to query the latest block number", "error", err)
-				continue
-			}
-			if to > latestBlockNumber {
-				to = latestBlockNumber
-			}
-			if from > to {
-				continue
-			}
-			query.FromBlock = new(big.Int).SetUint64(from)
-			query.ToBlock = new(big.Int).SetUint64(to)
-			logs, err := client.FilterLogs(context.Background(), query)
-			if err != nil {
-				slog.Error("failed to filter contract logs", "error", err)
-				continue
-			}
-			// TODO delete
-			processProverLogs(nil, logs, instance)
-		}
-	}()
 }
 
 func processProverLogs(add func(*BlockProver), logs []types.Log, instance *prover.Prover) error {

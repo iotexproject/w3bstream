@@ -37,7 +37,7 @@ type Contract struct {
 	projectContractAddress     common.Address
 	blockNumberContractAddress common.Address
 	multiCallContractAddress   common.Address
-	blockHeadNotifications     []chan<- uint64
+	chainHeadNotifications     []chan<- uint64
 	projectNotifications       []chan<- *Project
 	blockProjects              *blockProjects
 	blockProvers               *blockProvers
@@ -51,8 +51,30 @@ func (c *Contract) Project(projectID, blockNumber uint64) *Project {
 	return c.blockProjects.project(projectID, blockNumber)
 }
 
+func (c *Contract) LatestProject(projectID uint64) *Project {
+	return c.blockProjects.project(projectID, 0)
+}
+
+func (c *Contract) LatestProjects() []*Project {
+	bp := c.blockProjects.projects()
+	ps := make([]*Project, 0, len(bp.Projects))
+	for _, p := range bp.Projects {
+		ps = append(ps, p)
+	}
+	return ps
+}
+
 func (c *Contract) Provers(blockNumber uint64) []*Prover {
 	bp := c.blockProvers.provers(blockNumber)
+	ps := make([]*Prover, 0, len(bp.Provers))
+	for _, p := range bp.Provers {
+		ps = append(ps, p)
+	}
+	return ps
+}
+
+func (c *Contract) LatestProvers() []*Prover {
+	bp := c.blockProvers.provers(0)
 	ps := make([]*Prover, 0, len(bp.Provers))
 	for _, p := range bp.Provers {
 		ps = append(ps, p)
@@ -68,9 +90,9 @@ func (c *Contract) notifyProject(bp *BlockProject) {
 	}
 }
 
-func (c *Contract) notifyBlockHead(blockHead uint64) {
-	for _, n := range c.blockHeadNotifications {
-		n <- blockHead
+func (c *Contract) notifyChainHead(chainHead uint64) {
+	for _, n := range c.chainHeadNotifications {
+		n <- chainHead
 	}
 }
 
@@ -232,14 +254,14 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 				continue
 			}
 
-			c.notifyBlockHead(target)
+			c.notifyChainHead(target)
 
 			queriedBlockNumber = target
 		}
 	}()
 }
 
-func New(epoch uint64, chainEndpoint string, proverContractAddress, projectContractAddress, blockNumberContractAddress, multiCallContractAddress common.Address, blockHeadNotifications []chan<- uint64, projectNotifications []chan<- *Project) (*Contract, error) {
+func New(epoch uint64, chainEndpoint string, proverContractAddress, projectContractAddress, blockNumberContractAddress, multiCallContractAddress common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- *Project) (*Contract, error) {
 	blockProjects := &blockProjects{
 		capacity: epoch,
 		blocks:   list.New(),
@@ -268,7 +290,7 @@ func New(epoch uint64, chainEndpoint string, proverContractAddress, projectContr
 		projectContractAddress:     projectContractAddress,
 		blockNumberContractAddress: blockNumberContractAddress,
 		multiCallContractAddress:   multiCallContractAddress,
-		blockHeadNotifications:     blockHeadNotifications,
+		chainHeadNotifications:     chainHeadNotifications,
 		projectNotifications:       projectNotifications,
 		blockProjects:              blockProjects,
 		blockProvers:               blockProvers,

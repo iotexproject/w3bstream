@@ -1,15 +1,9 @@
 package scheduler
 
 import (
-	"container/list"
-	"context"
 	"log/slog"
 	"sync"
 	"sync/atomic"
-	"time"
-
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
@@ -21,18 +15,22 @@ type HandleProjectProvers func(projectID uint64, proverIDs []uint64)
 
 type ProjectIDs func() []uint64
 
+type ContractProject func(projectID, blockNumber uint64) *contract.Project
+type LatestProjects func() []*contract.Project
+type ContractProvers func(blockNumber uint64) []*contract.Prover
+
 type projectOffset struct {
 	scheduledBlockNumber atomic.Uint64
 	projectIDs           sync.Map // projectID(uint64)->true
 }
 
 type scheduler struct {
-	contractProver       *contractProver
-	contractProject      *contractProject
+	chainHead            <-chan uint64
+	contractProject      ContractProject
+	contractProvers      ContractProvers
 	projectOffsets       *sync.Map // project offset in epoch offset(uint64) -> *projectOffset
 	epoch                uint64
 	pubSubs              *p2p.PubSubs // TODO define interface
-	chainHead            chan uint64
 	proverID             uint64
 	handleProjectProvers HandleProjectProvers
 }
@@ -50,8 +48,8 @@ func (s *scheduler) schedule() {
 			}
 
 			proverIDs := []uint64{}
-			for id := range s.contractProver.blockProver(blockNumber).Provers {
-				proverIDs = append(proverIDs, id)
+			for _, p := range s.contractProvers(blockNumber) {
+				proverIDs = append(proverIDs, p.ID)
 			}
 			scheduled := true
 
@@ -96,84 +94,29 @@ func (s *scheduler) schedule() {
 	}
 }
 
-func watchChainHead(head chan<- uint64, chainEndpoint string) error {
-	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return errors.Wrapf(err, "failed to dial chain endpoint %s", chainEndpoint)
-	}
-	currentHead := uint64(0)
+func storeProject(epoch uint64, projectOffsets *sync.Map, p *contract.Project) {
+	offset := hash.Keccak256Uint64(p.ID).Big().Uint64() % epoch
 
-	ticker := time.NewTicker(1 * time.Second)
-	go func() {
-		for range ticker.C {
-			latestBlockNumber, err := client.BlockNumber(context.Background())
-			if err != nil {
-				slog.Error("failed to query the latest block number", "error", err)
-				continue
-			}
-			if latestBlockNumber > currentHead {
-				head <- latestBlockNumber
-				currentHead = latestBlockNumber
-			}
-		}
-	}()
-	return nil
+	projects, _ := projectOffsets.LoadOrStore(offset, &projectOffset{})
+	projects.(*projectOffset).projectIDs.Store(p.ID, true)
 }
 
-func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddress, projectFileDirectory string, proverID uint64,
-	pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, getProjectIDs ProjectIDs) error {
-
-	if projectFileDirectory != "" {
-		dummySchedule(pubSubs, handleProjectProvers, getProjectIDs)
-		return nil
-	}
-
-	contractProver := &contractProver{
-		epoch:  epoch,
-		blocks: list.New(),
-	}
-
-	proverCh, err := contract.ListAndWatchProver(chainEndpoint, proverContractAddress, epoch)
-	if err != nil {
-		return err
-	}
-	go func() {
-		for p := range proverCh {
-			slog.Info("get new prover contract events", "block_number", p.BlockNumber)
-			contractProver.add(p)
-		}
-	}()
-
+func Run(epoch uint64, proverID uint64, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, chainHead <-chan uint64, projectNotification <-chan *contract.Project, contractProject ContractProject, latestProjects LatestProjects, contractProvers ContractProvers) error {
 	projectOffsets := &sync.Map{}
-	contractProject := &contractProject{
-		epoch:  epoch,
-		blocks: list.New(),
-	}
-	projectCh, err := contract.ListAndWatchProject(chainEndpoint, projectContractAddress, epoch)
-	if err != nil {
-		return err
+
+	ps := latestProjects()
+	for _, p := range ps {
+		storeProject(epoch, projectOffsets, p)
 	}
 	go func() {
-		for p := range projectCh {
+		for p := range projectNotification {
 			slog.Info("get new project contract events", "block_number", p.BlockNumber)
-			contractProject.add(p)
-
-			for projectID := range p.Projects {
-				offset := hash.Keccak256Uint64(projectID).Big().Uint64() % epoch
-
-				projects, _ := projectOffsets.LoadOrStore(offset, &projectOffset{})
-				projects.(*projectOffset).projectIDs.Store(projectID, true)
-			}
+			storeProject(epoch, projectOffsets, p)
 		}
 	}()
-
-	chainHead := make(chan uint64)
-	if err := watchChainHead(chainHead, chainEndpoint); err != nil {
-		return err
-	}
 
 	s := &scheduler{
-		contractProver:       contractProver,
+		contractProvers:      contractProvers,
 		contractProject:      contractProject,
 		projectOffsets:       projectOffsets,
 		epoch:                epoch,
@@ -186,7 +129,7 @@ func Run(epoch uint64, chainEndpoint, proverContractAddress, projectContractAddr
 	return nil
 }
 
-func dummySchedule(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, projectIDs ProjectIDs) {
+func RunLocal(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, projectIDs ProjectIDs) {
 	s := &scheduler{
 		pubSubs:              pubSubs,
 		handleProjectProvers: handleProjectProvers,
