@@ -175,13 +175,18 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 
 	_ = clients.NewManager()
 
+	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
+	}
+
 	projectConfigManager, err := project.NewLocalManager(conf.ProjectFileDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if err := task.RunLocalDispatcher(pg, datasource.NewPostgres, projectConfigManager.ProjectIDs,
-		projectConfigManager.Project, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, conf.IoTeXChainID); err != nil {
+		projectConfigManager.Project, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}
 

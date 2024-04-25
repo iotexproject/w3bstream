@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/cmd/coordinator/api"
@@ -26,6 +27,11 @@ func main() {
 	}
 	conf.Print()
 	slog.Info("coordinator config loaded")
+
+	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
+	}
 
 	persistence, err := postgres.New(conf.DatabaseDSN)
 	if err != nil {
@@ -61,22 +67,15 @@ func main() {
 
 	if local {
 		err = task.RunLocalDispatcher(persistence, datasource.NewPostgres, projectManager.ProjectIDs, projectManager.Project,
-			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, conf.IoTeXChainID)
+			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
 	} else {
 		err = task.RunDispatcher(persistence, datasource.NewPostgres, projectManager.Project, conf.BootNodeMultiAddr,
-			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.IoTeXChainID,
-			dispatcherNotification, contractPersistence.LatestProjects)
+			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, sequencerPubKey, conf.IoTeXChainID,
+			dispatcherNotification, contractPersistence.LatestProjects, contractPersistence.LatestProvers)
 	}
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}
-
-	// TODO verify sig
-	// sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
-	// if err != nil {
-	// 	log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
-	// }
-	//go dispatcher.Dispatch(nextTaskID, sequencerPubKey)
 
 	go func() {
 		if err := api.NewHttpServer(persistence, conf).Run(conf.ServiceEndpoint); err != nil {
