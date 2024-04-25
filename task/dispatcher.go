@@ -4,12 +4,12 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/project"
 	internaldispatcher "github.com/machinefi/sprout/task/internal/dispatcher"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
@@ -78,9 +78,6 @@ func RunLocalDispatcher(persistence Persistence, newDatasource internaldispatche
 
 	projectIDs := getProjectIDs()
 	for _, id := range projectIDs {
-		pm := &project.Meta{
-			ProjectID: id,
-		}
 		_, ok := projectDispatchers.Load(id)
 		if ok {
 			continue
@@ -89,9 +86,15 @@ func RunLocalDispatcher(persistence Persistence, newDatasource internaldispatche
 		if err != nil {
 			return errors.Wrapf(err, "failed to get project, project_id %v", id)
 		}
-		ps.Add(id)
+		if err := ps.Add(id); err != nil {
+			return errors.Wrapf(err, "failed to add pubsubs, project_id %v", id)
+		}
+		cp := &contract.Project{
+			ID:         id,
+			Attributes: map[common.Hash][]byte{},
+		}
 		pd, err := internaldispatcher.NewProjectDispatcher(persistence.ProcessedTaskID,
-			persistence.UpsertProcessedTask, p.DatasourceURI, newDatasource, pm, ps.Publish, taskStateHandler)
+			persistence.UpsertProcessedTask, p.DatasourceURI, newDatasource, cp, ps.Publish, taskStateHandler)
 		if err != nil {
 			return errors.Wrapf(err, "failed to new project dispatcher, project_id %v", id)
 		}
@@ -115,13 +118,8 @@ func setProjectDispatcher(persistence Persistence, newDatasource internaldispatc
 			slog.Error("failed to add pubsubs", "project_id", p.ID, "error", err)
 			return
 		}
-		pm := &project.Meta{
-			ProjectID: p.ID,
-			Uri:       p.Uri,
-			Hash:      p.Hash,
-		}
 		pd, err := internaldispatcher.NewProjectDispatcher(persistence.ProcessedTaskID,
-			persistence.UpsertProcessedTask, pf.DatasourceURI, newDatasource, pm, ps.Publish, handler)
+			persistence.UpsertProcessedTask, pf.DatasourceURI, newDatasource, p, ps.Publish, handler)
 		if err != nil {
 			slog.Error("failed to new project dispatcher", "project_id", p.ID, "error", err)
 			return

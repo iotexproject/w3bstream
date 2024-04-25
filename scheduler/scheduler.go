@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"log/slog"
+	"strconv"
 	"sync"
 	"sync/atomic"
 
@@ -57,7 +58,24 @@ func (s *scheduler) schedule() {
 				projectID := key.(uint64)
 				slog.Info("a new epoch has arrived", "project_id", projectID, "block_number", blockNumber)
 
-				amount := uint64(1) // TODO fetch amount from project attr
+				cp := s.contractProject(projectID, blockNumber)
+				if cp == nil {
+					slog.Error("failed to find project from contract", "project_id", projectID)
+					scheduled = false
+					return false
+				}
+
+				amount := uint64(1)
+				if v, ok := cp.Attributes[contract.RequiredProverAmountHash]; ok {
+					n, err := strconv.ParseUint(string(v), 10, 64)
+					if err != nil {
+						slog.Error("failed to parse project required prover amount", "project_id", projectID)
+						scheduled = false
+						return false
+					}
+					amount = n
+				}
+
 				if amount > uint64(len(proverIDs)) {
 					slog.Error("no enough resource for the project", "project_id", projectID, "required_prover_amount", amount, "current_prover_amount", len(proverIDs))
 					scheduled = false
