@@ -34,13 +34,13 @@ func TestProject_Merge(t *testing.T) {
 func TestBlockProject_Merge(t *testing.T) {
 	r := require.New(t)
 
-	np := &BlockProject{Projects: map[uint64]*Project{}}
+	np := &blockProject{Projects: map[uint64]*Project{}}
 
 	paused := true
 	hash := hash.Keccak256Uint64(1)
 	attr := map[common.Hash][]byte{}
 	attr[hash] = []byte("1")
-	diff := &BlockProject{
+	diff := &blockProject{
 		BlockNumber: 100,
 		Projects: map[uint64]*Project{
 			1: {
@@ -66,7 +66,7 @@ func TestBlockProjects(t *testing.T) {
 		blocks:   list.New(),
 	}
 
-	cp.add(&BlockProject{
+	cp.add(&blockProject{
 		BlockNumber: 100,
 		Projects: map[uint64]*Project{
 			1: {
@@ -80,7 +80,7 @@ func TestBlockProjects(t *testing.T) {
 	p = cp.project(1, 100)
 	r.Equal(p.ID, uint64(1))
 
-	cp.add(&BlockProject{
+	cp.add(&blockProject{
 		BlockNumber: 101,
 		Projects: map[uint64]*Project{
 			1: {
@@ -97,7 +97,7 @@ func TestBlockProjects(t *testing.T) {
 	r.Equal(p.ID, uint64(1))
 	r.Equal(p.Uri, "uri")
 
-	cp.add(&BlockProject{
+	cp.add(&blockProject{
 		BlockNumber: 102,
 		Projects: map[uint64]*Project{
 			2: {
@@ -126,7 +126,7 @@ func TestBlockProjects(t *testing.T) {
 	p = cp.project(1, 100)
 	r.Nil(p)
 
-	cp.add(&BlockProject{
+	cp.add(&blockProject{
 		BlockNumber: 105,
 		Projects: map[uint64]*Project{
 			1: {

@@ -33,13 +33,13 @@ func TestProver_Merge(t *testing.T) {
 func TestBlockProver_Merge(t *testing.T) {
 	r := require.New(t)
 
-	np := &BlockProver{Provers: map[uint64]*Prover{}}
+	np := &blockProver{Provers: map[uint64]*Prover{}}
 
 	paused := true
 	hash := hash.Keccak256Uint64(1)
 	attr := map[common.Hash][]byte{}
 	attr[hash] = []byte("1")
-	diff := &BlockProver{
+	diff := &blockProver{
 		BlockNumber: 100,
 		Provers: map[uint64]*Prover{
 			1: {
@@ -64,7 +64,7 @@ func TestBlockProvers(t *testing.T) {
 		blocks:   list.New(),
 	}
 
-	cp.add(&BlockProver{
+	cp.add(&blockProver{
 		BlockNumber: 100,
 		Provers: map[uint64]*Prover{
 			1: {
@@ -79,7 +79,7 @@ func TestBlockProvers(t *testing.T) {
 	r.Equal(len(ps.Provers), 1)
 	r.Equal(ps.Provers[1].NodeTypes, uint64(1))
 
-	cp.add(&BlockProver{
+	cp.add(&blockProver{
 		BlockNumber: 101,
 		Provers: map[uint64]*Prover{
 			1: {
@@ -95,7 +95,7 @@ func TestBlockProvers(t *testing.T) {
 	r.Equal(len(ps.Provers), 1)
 	r.Equal(ps.Provers[1].NodeTypes, uint64(2))
 
-	cp.add(&BlockProver{
+	cp.add(&blockProver{
 		BlockNumber: 102,
 		Provers: map[uint64]*Prover{
 			1: {
@@ -118,7 +118,7 @@ func TestBlockProvers(t *testing.T) {
 	r.Equal(ps.Provers[2].NodeTypes, uint64(1))
 	r.Equal(uint64(cp.blocks.Len()), cp.capacity)
 
-	cp.add(&BlockProver{
+	cp.add(&blockProver{
 		BlockNumber: 103,
 		Provers: map[uint64]*Prover{
 			1: {

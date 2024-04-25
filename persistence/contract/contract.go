@@ -86,7 +86,7 @@ func (c *Contract) Prover(operator common.Address) *Prover {
 	return c.blockProvers.prover(operator)
 }
 
-func (c *Contract) notifyProject(bp *BlockProject) {
+func (c *Contract) notifyProject(bp *blockProject) {
 	for _, p := range bp.Projects {
 		for _, n := range c.projectNotifications {
 			n <- p
@@ -100,7 +100,7 @@ func (c *Contract) notifyChainHead(chainHead uint64) {
 	}
 }
 
-func (c *Contract) addBlockProject(bp *BlockProject) {
+func (c *Contract) addBlockProject(bp *blockProject) {
 	c.blockProjects.add(bp)
 	c.notifyProject(bp)
 }
@@ -137,30 +137,30 @@ func (c *Contract) list() (uint64, error) {
 	}
 
 	blockProjects := list.New()
-	blockProjectMap := map[uint64]*BlockProject{}
+	blockProjectMap := map[uint64]*blockProject{}
 	blockProvers := list.New()
-	blockProverMap := map[uint64]*BlockProver{}
+	blockProverMap := map[uint64]*blockProver{}
 
-	if err := processProjectLogs(func(p *BlockProject) {
+	if err := processProjectLogs(func(p *blockProject) {
 		blockProjects.PushBack(p)
 		blockProjectMap[p.BlockNumber] = p
 	}, logs, c.projectInstance); err != nil {
 		return 0, errors.Wrap(err, "failed to process project logs")
 	}
-	if err := processProverLogs(func(p *BlockProver) {
+	if err := processProverLogs(func(p *blockProver) {
 		blockProvers.PushBack(p)
 		blockProverMap[p.BlockNumber] = p
 	}, logs, c.proverInstance); err != nil {
 		return 0, errors.Wrap(err, "failed to process prover logs")
 	}
 
-	minBlockProject := &BlockProject{
+	minBlockProject := &blockProject{
 		BlockNumber: minBlockNumber,
 		Projects:    map[uint64]*Project{},
 	}
 	for _, p := range projects {
 		for e := blockProjects.Back(); e != nil; e = e.Prev() {
-			ebp := e.Value.(*BlockProject)
+			ebp := e.Value.(*blockProject)
 			if ebp.BlockNumber >= p.BlockNumber {
 				continue
 			}
@@ -173,13 +173,13 @@ func (c *Contract) list() (uint64, error) {
 		minBlockProject.Projects[p.ID] = p
 	}
 
-	minBlockProver := &BlockProver{
+	minBlockProver := &blockProver{
 		BlockNumber: minBlockNumber,
 		Provers:     map[uint64]*Prover{},
 	}
 	for _, p := range provers {
 		for e := blockProvers.Back(); e != nil; e = e.Prev() {
-			ebp := e.Value.(*BlockProver)
+			ebp := e.Value.(*blockProver)
 			if ebp.BlockNumber >= p.BlockNumber {
 				continue
 			}
@@ -200,7 +200,7 @@ func (c *Contract) list() (uint64, error) {
 		if ok {
 			c.blockProjects.add(p)
 		} else {
-			c.blockProjects.add(&BlockProject{
+			c.blockProjects.add(&blockProject{
 				BlockNumber: n,
 				Projects:    map[uint64]*Project{},
 			})
@@ -212,7 +212,7 @@ func (c *Contract) list() (uint64, error) {
 		if ok {
 			c.blockProvers.add(p)
 		} else {
-			c.blockProvers.add(&BlockProver{
+			c.blockProvers.add(&blockProver{
 				BlockNumber: n,
 				Provers:     map[uint64]*Prover{},
 			})

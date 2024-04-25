@@ -30,11 +30,6 @@ var (
 	emptyAddress = common.Address{}
 )
 
-type BlockProver struct {
-	BlockNumber uint64
-	Provers     map[uint64]*Prover
-}
-
 type Prover struct {
 	ID              uint64
 	OperatorAddress common.Address
@@ -43,21 +38,9 @@ type Prover struct {
 	NodeTypes       uint64
 }
 
-func (ps *BlockProver) Merge(diff *BlockProver) {
-	ps.BlockNumber = diff.BlockNumber
-	for id, p := range ps.Provers {
-		diffP, ok := diff.Provers[id]
-		if ok {
-			p.Merge(diffP)
-		}
-	}
-	for id, p := range diff.Provers {
-		if _, ok := ps.Provers[id]; !ok {
-			np := &Prover{}
-			np.Merge(p)
-			ps.Provers[id] = np
-		}
-	}
+type blockProver struct {
+	BlockNumber uint64
+	Provers     map[uint64]*Prover
 }
 
 func (p *Prover) Merge(diff *Prover) {
@@ -78,6 +61,23 @@ func (p *Prover) Merge(diff *Prover) {
 	}
 }
 
+func (ps *blockProver) Merge(diff *blockProver) {
+	ps.BlockNumber = diff.BlockNumber
+	for id, p := range ps.Provers {
+		diffP, ok := diff.Provers[id]
+		if ok {
+			p.Merge(diffP)
+		}
+	}
+	for id, p := range diff.Provers {
+		if _, ok := ps.Provers[id]; !ok {
+			np := &Prover{}
+			np.Merge(p)
+			ps.Provers[id] = np
+		}
+	}
+}
+
 type blockProvers struct {
 	mu       sync.Mutex
 	capacity uint64
@@ -94,17 +94,17 @@ func (c *blockProvers) prover(operator common.Address) *Prover {
 	return nil
 }
 
-func (c *blockProvers) provers(blockNumber uint64) *BlockProver {
+func (c *blockProvers) provers(blockNumber uint64) *blockProver {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if blockNumber == 0 {
-		blockNumber = c.blocks.Back().Value.(*BlockProver).BlockNumber
+		blockNumber = c.blocks.Back().Value.(*blockProver).BlockNumber
 	}
-	np := &BlockProver{Provers: map[uint64]*Prover{}}
+	np := &blockProver{Provers: map[uint64]*Prover{}}
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
-		ep := e.Value.(*BlockProver)
+		ep := e.Value.(*blockProver)
 		if blockNumber > ep.BlockNumber {
 			break
 		}
@@ -113,7 +113,7 @@ func (c *blockProvers) provers(blockNumber uint64) *BlockProver {
 	return np
 }
 
-func (c *blockProvers) add(diff *BlockProver) {
+func (c *blockProvers) add(diff *blockProver) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -121,9 +121,9 @@ func (c *blockProvers) add(diff *BlockProver) {
 
 	if uint64(c.blocks.Len()) > c.capacity {
 		h := c.blocks.Front()
-		np := &BlockProver{Provers: map[uint64]*Prover{}}
-		np.Merge(h.Value.(*BlockProver))
-		np.Merge(h.Next().Value.(*BlockProver))
+		np := &blockProver{Provers: map[uint64]*Prover{}}
+		np.Merge(h.Value.(*blockProver))
+		np.Merge(h.Next().Value.(*blockProver))
 		c.blocks.Remove(h.Next())
 		c.blocks.Remove(h)
 		c.blocks.PushFront(np)
@@ -226,19 +226,19 @@ func listProver(client *ethclient.Client, proverContractAddress, blockNumberCont
 	return ps, minBlockNumber, maxBlockNumber, nil
 }
 
-func processProverLogs(add func(*BlockProver), logs []types.Log, instance *prover.Prover) error {
+func processProverLogs(add func(*blockProver), logs []types.Log, instance *prover.Prover) error {
 	sort.Slice(logs, func(i, j int) bool {
 		if logs[i].BlockNumber != logs[j].BlockNumber {
 			return logs[i].BlockNumber < logs[j].BlockNumber
 		}
 		return logs[i].TxIndex < logs[j].TxIndex
 	})
-	psMap := map[uint64]*BlockProver{}
+	psMap := map[uint64]*blockProver{}
 
 	for _, l := range logs {
 		ps, ok := psMap[l.BlockNumber]
 		if !ok {
-			ps = &BlockProver{
+			ps = &blockProver{
 				BlockNumber: l.BlockNumber,
 				Provers:     map[uint64]*Prover{},
 			}
@@ -301,7 +301,7 @@ func processProverLogs(add func(*BlockProver), logs []types.Log, instance *prove
 		psMap[l.BlockNumber] = ps
 	}
 
-	psSlice := []*BlockProver{}
+	psSlice := []*blockProver{}
 	for _, p := range psMap {
 		psSlice = append(psSlice, p)
 	}
