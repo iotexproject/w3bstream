@@ -8,24 +8,26 @@ import (
 )
 
 type Config struct {
-	Risc0ServerEndpoint      string `env:"RISC0_SERVER_ENDPOINT"`
-	Halo2ServerEndpoint      string `env:"HALO2_SERVER_ENDPOINT"`
-	ZKWasmServerEndpoint     string `env:"ZKWASM_SERVER_ENDPOINT"`
-	WasmServerEndpoint       string `env:"WASM_SERVER_ENDPOINT"`
-	ChainEndpoint            string `env:"CHAIN_ENDPOINT"`
-	ProjectContractAddress   string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
-	DatabaseDSN              string `env:"DATABASE_DSN"`
-	BootNodeMultiAddr        string `env:"BOOTNODE_MULTIADDR"`
-	ProverContractAddress    string `env:"PROVER_CONTRACT_ADDRESS,optional"`
-	ProverOperatorPrivateKey string `env:"PROVER_OPERATOR_PRIVATE_KEY,optional"`
-	IoTeXChainID             int    `env:"IOTEX_CHAINID"`
-	SchedulerEpoch           uint64 `env:"SCHEDULER_EPOCH"`
-	IPFSEndpoint             string `env:"IPFS_ENDPOINT"`
-	ProjectFileDirectory     string `env:"PROJECT_FILE_DIRECTORY,optional"`
-	ProjectCacheDirectory    string `env:"PROJECT_CACHE_DIRECTORY,optional"`
-	LogLevel                 int    `env:"LOG_LEVEL,optional"`
-	SequencerPubKey          string `env:"SEQUENCER_PUBKEY,optional"`
-	env                      string `env:"-"`
+	Risc0ServerEndpoint        string `env:"RISC0_SERVER_ENDPOINT"`
+	Halo2ServerEndpoint        string `env:"HALO2_SERVER_ENDPOINT"`
+	ZKWasmServerEndpoint       string `env:"ZKWASM_SERVER_ENDPOINT"`
+	WasmServerEndpoint         string `env:"WASM_SERVER_ENDPOINT"`
+	ChainEndpoint              string `env:"CHAIN_ENDPOINT"`
+	ProjectContractAddress     string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
+	DatabaseDSN                string `env:"DATABASE_DSN"`
+	BootNodeMultiAddr          string `env:"BOOTNODE_MULTIADDR"`
+	ProverContractAddress      string `env:"PROVER_CONTRACT_ADDRESS,optional"`
+	BlockNumberContractAddress string `env:"BLOCK_NUMBER_CONTRACT_ADDRESS,optional"`
+	MultiCallContractAddress   string `env:"MULTICALL_CONTRACT_ADDRESS,optional"`
+	ProverOperatorPrivateKey   string `env:"PROVER_OPERATOR_PRIVATE_KEY,optional"`
+	IoTeXChainID               int    `env:"IOTEX_CHAINID"`
+	SchedulerEpoch             uint64 `env:"SCHEDULER_EPOCH"`
+	IPFSEndpoint               string `env:"IPFS_ENDPOINT"`
+	ProjectFileDirectory       string `env:"PROJECT_FILE_DIRECTORY,optional"`
+	ProjectCacheDirectory      string `env:"PROJECT_CACHE_DIRECTORY,optional"`
+	LogLevel                   int    `env:"LOG_LEVEL,optional"`
+	SequencerPubKey            string `env:"SEQUENCER_PUBKEY,optional"`
+	env                        string `env:"-"`
 }
 
 var (

@@ -1,17 +1,12 @@
 package contract
 
 import (
+	"container/list"
 	"testing"
-	"time"
 
-	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/smartcontracts/go/prover"
 	"github.com/machinefi/sprout/util/hash"
 )
 
@@ -61,52 +56,78 @@ func TestBlockProver_Merge(t *testing.T) {
 	r.Equal(np, diff)
 }
 
-func TestListAndWatchProver(t *testing.T) {
+func TestBlockProvers(t *testing.T) {
 	r := require.New(t)
 
-	t.Run("FailedToDialChain", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
+	cp := &blockProvers{
+		capacity: 2,
+		blocks:   list.New(),
+	}
 
-		p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
-
-		_, err := ListAndWatchProver("", "", 0)
-		r.ErrorContains(err, t.Name())
+	cp.add(&BlockProver{
+		BlockNumber: 100,
+		Provers: map[uint64]*Prover{
+			1: {
+				ID:        1,
+				NodeTypes: 1,
+			},
+		},
 	})
-	t.Run("FailedToNewProverContractInstance", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
+	ps := cp.provers(99)
+	r.Equal(len(ps.Provers), 0)
+	ps = cp.provers(100)
+	r.Equal(len(ps.Provers), 1)
+	r.Equal(ps.Provers[1].NodeTypes, uint64(1))
 
-		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
-		p.ApplyFuncReturn(prover.NewProver, nil, errors.New(t.Name()))
-
-		_, err := ListAndWatchProver("", "", 0)
-		r.ErrorContains(err, t.Name())
+	cp.add(&BlockProver{
+		BlockNumber: 101,
+		Provers: map[uint64]*Prover{
+			1: {
+				ID:        1,
+				NodeTypes: 2,
+			},
+		},
 	})
-	t.Run("FailedToQueryChainHead", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
+	ps = cp.provers(100)
+	r.Equal(len(ps.Provers), 1)
+	r.Equal(ps.Provers[1].NodeTypes, uint64(1))
+	ps = cp.provers(101)
+	r.Equal(len(ps.Provers), 1)
+	r.Equal(ps.Provers[1].NodeTypes, uint64(2))
 
-		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
-		p.ApplyFuncReturn(prover.NewProver, &prover.Prover{}, nil)
-		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(1), errors.New(t.Name()))
-
-		_, err := ListAndWatchProver("", "", 0)
-		r.ErrorContains(err, t.Name())
+	cp.add(&BlockProver{
+		BlockNumber: 102,
+		Provers: map[uint64]*Prover{
+			1: {
+				ID:        1,
+				NodeTypes: 3,
+			},
+			2: {
+				ID:        2,
+				NodeTypes: 1,
+			},
+		},
 	})
-	t.Run("Success", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
+	ps = cp.provers(100)
+	r.Equal(len(ps.Provers), 0)
+	ps = cp.provers(101)
+	r.Equal(len(ps.Provers), 1)
+	ps = cp.provers(102)
+	r.Equal(len(ps.Provers), 2)
+	r.Equal(ps.Provers[1].NodeTypes, uint64(3))
+	r.Equal(ps.Provers[2].NodeTypes, uint64(1))
+	r.Equal(uint64(cp.blocks.Len()), cp.capacity)
 
-		p.ApplyFuncReturn(ethclient.Dial, &ethclient.Client{}, nil)
-		p.ApplyFuncReturn(prover.NewProver, &prover.Prover{}, nil)
-		p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(1), nil)
-		p.ApplyFuncReturn(listProver, nil)
-		p.ApplyFuncReturn(watchProver)
-
-		_, err := ListAndWatchProver("", "", 0)
-		r.NoError(err)
+	cp.add(&BlockProver{
+		BlockNumber: 103,
+		Provers: map[uint64]*Prover{
+			1: {
+				ID:        1,
+				NodeTypes: 2,
+			},
+		},
 	})
+	r.Equal(uint64(cp.blocks.Len()), cp.capacity)
 }
 
 // func TestListProver(t *testing.T) {
@@ -170,22 +191,6 @@ func TestListAndWatchProver(t *testing.T) {
 // 		r.Equal(*res.Provers[1].Paused, false)
 // 	})
 // }
-
-func TestWatchProver(t *testing.T) {
-	p := gomonkey.NewPatches()
-	defer p.Reset()
-
-	c := make(chan time.Time, 10)
-	p.ApplyFuncReturn(time.NewTicker, &time.Ticker{C: c})
-	p.ApplyMethodReturn(&ethclient.Client{}, "BlockNumber", uint64(100), nil)
-	p.ApplyMethodReturn(&ethclient.Client{}, "FilterLogs", []types.Log{}, nil)
-	p.ApplyFuncReturn(processProverLogs, true)
-
-	watchProver(nil, &ethclient.Client{}, &prover.Prover{}, time.Second, "", []common.Hash{{}, {}, {}, {}}, 0, 0)
-	c <- time.Now()
-	time.Sleep(20 * time.Millisecond)
-	close(c)
-}
 
 // func TestProcessProverLogs(t *testing.T) {
 // 	r := require.New(t)

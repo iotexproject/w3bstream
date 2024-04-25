@@ -15,6 +15,7 @@ import (
 
 	"github.com/machinefi/sprout/cmd/prover/config"
 	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/scheduler"
 	"github.com/machinefi/sprout/smartcontracts/go/prover"
@@ -25,28 +26,13 @@ import (
 func main() {
 	conf, err := config.Get()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Wrap(err, "failed to get config"))
 	}
 	conf.Print()
 	slog.Info("prover config loaded")
 
 	if err := migrateDatabase(conf.DatabaseDSN); err != nil {
-		log.Fatal(err)
-	}
-
-	vmHandler := vm.NewHandler(
-		map[vm.Type]string{
-			vm.Risc0:  conf.Risc0ServerEndpoint,
-			vm.Halo2:  conf.Halo2ServerEndpoint,
-			vm.ZKwasm: conf.ZKWasmServerEndpoint,
-			vm.Wasm:   conf.WasmServerEndpoint,
-		},
-	)
-
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress,
-		conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProjectFileDirectory)
-	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Wrap(err, "failed to migrate database"))
 	}
 
 	sk, err := crypto.HexToECDSA(conf.ProverOperatorPrivateKey)
@@ -63,7 +49,7 @@ func main() {
 	// TODO move to utils contract
 	client, err := ethclient.Dial(conf.ChainEndpoint)
 	if err != nil {
-		log.Fatal(err, "failed to dial chain endpoint")
+		log.Fatal(errors.Wrap(err, "failed to dial chain endpoint"))
 	}
 	instance, err := prover.NewProver(common.HexToAddress(conf.ProverContractAddress), client)
 	if err != nil {
@@ -76,17 +62,58 @@ func main() {
 
 	slog.Info("my prover id", "prover_id", proverID.Uint64())
 
+	vmHandler := vm.NewHandler(
+		map[vm.Type]string{
+			vm.Risc0:  conf.Risc0ServerEndpoint,
+			vm.Halo2:  conf.Halo2ServerEndpoint,
+			vm.ZKwasm: conf.ZKWasmServerEndpoint,
+			vm.Wasm:   conf.WasmServerEndpoint,
+		},
+	)
+
+	projectManagerNotification := make(chan *contract.Project, 10)
+	schedulerNotification := make(chan *contract.Project, 10)
+	chainHeadNotification := make(chan uint64, 10)
+
+	projectNotifications := []chan<- *contract.Project{projectManagerNotification, schedulerNotification}
+	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
+
+	local := conf.ProjectFileDirectory != ""
+
+	var contractPersistence *contract.Contract
+	if !local {
+		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddress),
+			common.HexToAddress(conf.ProjectContractAddress), common.HexToAddress(conf.BlockNumberContractAddress),
+			common.HexToAddress(conf.MultiCallContractAddress), chainHeadNotifications, projectNotifications)
+		if err != nil {
+			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
+		}
+	}
+
+	var projectManager *project.Manager
+	if local {
+		projectManager, err = project.NewLocalManager(conf.ProjectFileDirectory)
+	} else {
+		projectManager, err = project.NewManager(conf.ProjectCacheDirectory, conf.IPFSEndpoint, contractPersistence.LatestProject, projectManagerNotification)
+	}
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new project manager"))
+	}
+
 	taskProcessor := task.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, proverID.Uint64())
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Wrap(err, "failed to new pubsubs"))
 	}
 
-	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress,
-		conf.ProjectContractAddress, conf.ProjectFileDirectory, proverID.Uint64(), pubSubs, taskProcessor.HandleProjectProvers,
-		projectManager.ProjectIDs); err != nil {
-		log.Fatal(err)
+	if local {
+		scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager.ProjectIDs)
+	} else {
+		if err := scheduler.Run(conf.SchedulerEpoch, proverID.Uint64(), pubSubs, taskProcessor.HandleProjectProvers,
+			chainHeadNotification, schedulerNotification, contractPersistence.Project, contractPersistence.LatestProjects, contractPersistence.Provers); err != nil {
+			log.Fatal(errors.Wrap(err, "failed to run scheduler"))
+		}
 	}
 
 	done := make(chan os.Signal, 1)

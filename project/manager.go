@@ -1,27 +1,24 @@
 package project
 
 import (
-	"bytes"
 	"log/slog"
-	"math/big"
 	"os"
 	"path"
 	"strconv"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/smartcontracts/go/project"
 )
 
+type ContractProject func(projectID uint64) *contract.Project
+
 type Manager struct {
-	ipfsEndpoint string
-	instance     *project.Project
-	projects     sync.Map // projectID(uint64) -> *Project
-	cache        *cache   // optional
+	contractProject ContractProject
+	ipfsEndpoint    string
+	projects        sync.Map // projectID(uint64) -> *Project
+	cache           *cache   // optional
 }
 
 func (m *Manager) ProjectIDs() []uint64 {
@@ -46,25 +43,22 @@ func (m *Manager) Project(projectID uint64) (*Project, error) {
 }
 
 func (m *Manager) load(projectID uint64) (*Project, error) {
-	emptyHash := [32]byte{}
-	c, err := m.instance.Config(nil, new(big.Int).SetUint64(projectID))
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get project meta from chain, project_id %v", projectID)
-	}
-	if c.Uri == "" || bytes.Equal(c.Hash[:], emptyHash[:]) {
+	cp := m.contractProject(projectID)
+	if cp.IsEmpty() {
 		return nil, errors.Errorf("the project not exist, project_id %v", projectID)
 	}
 
 	pm := &Meta{
 		ProjectID: projectID,
-		Uri:       c.Uri,
-		Hash:      c.Hash,
+		Uri:       cp.Uri,
+		Hash:      cp.Hash,
 	}
 
 	var data []byte
+	var err error
 	cached := true
 	if m.cache != nil {
-		data = m.cache.get(projectID, c.Hash[:])
+		data = m.cache.get(projectID, cp.Hash[:])
 	}
 	if len(data) == 0 {
 		cached = false
@@ -116,28 +110,17 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 	return nil
 }
 
-func (m *Manager) watchProjectContract(chainEndpoint, contractAddress string) error {
-	projectCh, err := contract.ListAndWatchProject(chainEndpoint, contractAddress, 0)
-	if err != nil {
-		return err
+func (m *Manager) watchProject(projectNotification <-chan *contract.Project) {
+	for p := range projectNotification {
+		m.projects.Delete(p.ID)
 	}
-
-	go func() {
-		for p := range projectCh {
-			for id := range p.Projects {
-				m.projects.Delete(id)
-			}
-		}
-	}()
-	return nil
 }
 
-func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint, projectFileDirectory string) (*Manager, error) {
+func NewManager(projectCacheDir, ipfsEndpoint string, contractProject ContractProject, projectNotification <-chan *contract.Project) (*Manager, error) {
 	var (
 		c   *cache
 		err error
 	)
-
 	if projectCacheDir != "" {
 		c, err = newCache(projectCacheDir)
 		if err != nil {
@@ -146,28 +129,18 @@ func NewManager(chainEndpoint, contractAddress, projectCacheDir, ipfsEndpoint, p
 	}
 
 	m := &Manager{
-		ipfsEndpoint: ipfsEndpoint,
-		cache:        c,
+		contractProject: contractProject,
+		ipfsEndpoint:    ipfsEndpoint,
+		cache:           c,
 	}
+	go m.watchProject(projectNotification)
+	return m, nil
+}
 
-	if projectFileDirectory != "" {
-		if err := m.loadFromLocal(projectFileDirectory); err != nil {
-			return nil, err
-		}
-		return m, nil
-	}
+func NewLocalManager(projectFileDirectory string) (*Manager, error) {
+	m := &Manager{}
 
-	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to dial chain, endpoint %s", chainEndpoint)
-	}
-	instance, err := project.NewProject(common.HexToAddress(contractAddress), client)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to new contract instance, endpoint %s, contractAddress %s", chainEndpoint, contractAddress)
-	}
-	m.instance = instance
-
-	if err := m.watchProjectContract(chainEndpoint, contractAddress); err != nil {
+	if err := m.loadFromLocal(projectFileDirectory); err != nil {
 		return nil, err
 	}
 	return m, nil

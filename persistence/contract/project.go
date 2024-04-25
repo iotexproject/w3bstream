@@ -3,16 +3,12 @@ package contract
 import (
 	"bytes"
 	"container/list"
-	"context"
-	"log/slog"
 	"math"
 	"math/big"
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -103,6 +99,9 @@ func (c *blockProjects) project(projectID, blockNumber uint64) *Project {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if blockNumber == 0 {
+		blockNumber = c.blocks.Back().Value.(*BlockProject).BlockNumber
+	}
 	np := &Project{Attributes: map[common.Hash][]byte{}}
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
@@ -114,6 +113,19 @@ func (c *blockProjects) project(projectID, blockNumber uint64) *Project {
 		if ok {
 			np.Merge(p)
 		}
+	}
+	return np
+}
+
+func (c *blockProjects) projects() *BlockProject {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	np := &BlockProject{Projects: map[uint64]*Project{}}
+
+	for e := c.blocks.Front(); e != nil; e = e.Next() {
+		ep := e.Value.(*BlockProject)
+		np.Merge(ep)
 	}
 	return np
 }
@@ -133,34 +145,6 @@ func (c *blockProjects) add(diff *BlockProject) {
 		c.blocks.Remove(h)
 		c.blocks.PushFront(np)
 	}
-}
-
-func ListAndWatchProject(chainEndpoint, contractAddress string, tracebackLength uint64) (<-chan *BlockProject, error) {
-	ch := make(chan *BlockProject, 10)
-	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to dial chain endpoint")
-	}
-
-	instance, err := project.NewProject(common.HexToAddress(contractAddress), client)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to new project contract instance")
-	}
-
-	latestBlockNumber, err := client.BlockNumber(context.Background())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to query the latest block number")
-	}
-	targetBlockNumber := latestBlockNumber - tracebackLength
-	// TODO delete
-	// if err := listProject(ch, instance, targetBlockNumber); err != nil {
-	// 	return nil, err
-	// }
-
-	topics := []common.Hash{attributeSetTopicHash, projectPausedTopicHash, projectResumedTopicHash, projectConfigUpdatedTopicHash}
-	watchProject(ch, client, instance, 3*time.Second, contractAddress, topics, 1000, targetBlockNumber)
-
-	return ch, nil
 }
 
 func listProject(client *ethclient.Client, projectContractAddress, blockNumberContractAddress, multiCallContractAddress common.Address) ([]*Project, uint64, uint64, error) {
@@ -274,92 +258,6 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 		})
 	}
 	return ps, minBlockNumber, maxBlockNumber, nil
-}
-
-func listProject1(ch chan<- *BlockProject, instance *project.Project, targetBlockNumber uint64) error {
-	projects := map[uint64]*Project{}
-	for projectID := uint64(1); ; projectID++ {
-		mp, err := instance.Config(nil, new(big.Int).SetUint64(projectID))
-		if err != nil {
-			if strings.Contains(err.Error(), "execution reverted: ERC721: invalid token ID") {
-				break
-			}
-			return errors.Wrapf(err, "failed to get project meta from chain, project_id %v", projectID)
-		}
-
-		isPaused, err := instance.IsPaused(nil, new(big.Int).SetUint64(projectID))
-		if err != nil {
-			return errors.Wrapf(err, "failed to get project pause status from chain, project_id %v", projectID)
-		}
-
-		proverAmt, err := instance.Attributes(nil, new(big.Int).SetUint64(projectID), RequiredProverAmountHash)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get project attributes from chain, project_id %v, key %s", projectID, proverAmt)
-		}
-		vmType, err := instance.Attributes(nil, new(big.Int).SetUint64(projectID), VmTypeHash)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get project attributes from chain, project_id %v, key %s", projectID, vmType)
-		}
-		attributes := make(map[common.Hash][]byte)
-		attributes[RequiredProverAmountHash] = proverAmt
-		attributes[VmTypeHash] = vmType
-
-		projects[projectID] = &Project{
-			ID:          projectID,
-			BlockNumber: targetBlockNumber,
-			Paused:      &isPaused,
-			Uri:         mp.Uri,
-			Hash:        mp.Hash,
-			Attributes:  attributes,
-		}
-	}
-	ch <- &BlockProject{
-		BlockNumber: targetBlockNumber,
-		Projects:    projects,
-	}
-	return nil
-}
-
-func watchProject(ch chan<- *BlockProject, client *ethclient.Client, instance *project.Project, interval time.Duration, contractAddress string, topics []common.Hash, step, startBlockNumber uint64) {
-	queriedBlockNumber := startBlockNumber
-	query := ethereum.FilterQuery{
-		Addresses: []common.Address{common.HexToAddress(contractAddress)},
-		Topics: [][]common.Hash{{
-			(topics[0]),
-			(topics[1]),
-			(topics[2]),
-			(topics[3]),
-		}},
-	}
-	ticker := time.NewTicker(interval)
-
-	go func() {
-		for range ticker.C {
-			from := queriedBlockNumber + 1
-			to := from + step
-
-			latestBlockNumber, err := client.BlockNumber(context.Background())
-			if err != nil {
-				slog.Error("failed to query the latest block number", "error", err)
-				continue
-			}
-			if to > latestBlockNumber {
-				to = latestBlockNumber
-			}
-			if from > to {
-				continue
-			}
-			query.FromBlock = new(big.Int).SetUint64(from)
-			query.ToBlock = new(big.Int).SetUint64(to)
-			logs, err := client.FilterLogs(context.Background(), query)
-			if err != nil {
-				slog.Error("failed to filter contract logs", "error", err)
-				continue
-			}
-			// TODO delete
-			processProjectLogs(nil, logs, instance)
-		}
-	}()
 }
 
 func processProjectLogs(add func(*BlockProject), logs []types.Log, instance *project.Project) error {
