@@ -82,6 +82,10 @@ func (c *Contract) LatestProvers() []*Prover {
 	return ps
 }
 
+func (c *Contract) Prover(operator common.Address) *Prover {
+	return c.blockProvers.prover(operator)
+}
+
 func (c *Contract) notifyProject(bp *BlockProject) {
 	for _, p := range bp.Projects {
 		for _, n := range c.projectNotifications {
