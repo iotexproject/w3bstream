@@ -84,6 +84,16 @@ type blockProvers struct {
 	blocks   *list.List
 }
 
+func (c *blockProvers) prover(operator common.Address) *Prover {
+	bp := c.provers(0)
+	for _, p := range bp.Provers {
+		if p.OperatorAddress == operator {
+			return p
+		}
+	}
+	return nil
+}
+
 func (c *blockProvers) provers(blockNumber uint64) *BlockProver {
 	c.mu.Lock()
 	defer c.mu.Unlock()

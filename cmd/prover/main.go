@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/cmd/prover/config"
@@ -18,7 +17,6 @@ import (
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/scheduler"
-	"github.com/machinefi/sprout/smartcontracts/go/prover"
 	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/vm"
 )
@@ -45,22 +43,6 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
-
-	// TODO move to utils contract
-	client, err := ethclient.Dial(conf.ChainEndpoint)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to dial chain endpoint"))
-	}
-	instance, err := prover.NewProver(common.HexToAddress(conf.ProverContractAddress), client)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new prover contract instance"))
-	}
-	proverID, _, err := instance.OwnerOfOperator(nil, proverOperatorAddress)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to query operator's prover id"))
-	}
-
-	slog.Info("my prover id", "prover_id", proverID.Uint64())
 
 	vmHandler := vm.NewHandler(
 		map[vm.Type]string{
@@ -90,6 +72,16 @@ func main() {
 		}
 	}
 
+	proverID := uint64(0)
+	if !local {
+		p := contractPersistence.Prover(proverOperatorAddress)
+		if p == nil {
+			log.Fatal(errors.Wrap(err, "failed to query operator's prover id"))
+		}
+		proverID = p.ID
+	}
+	slog.Info("my prover id", "prover_id", proverID)
+
 	var projectManager *project.Manager
 	if local {
 		projectManager, err = project.NewLocalManager(conf.ProjectFileDirectory)
@@ -100,7 +92,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, proverID.Uint64())
+	taskProcessor := task.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, proverID)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
@@ -110,7 +102,7 @@ func main() {
 	if local {
 		scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager.ProjectIDs)
 	} else {
-		if err := scheduler.Run(conf.SchedulerEpoch, proverID.Uint64(), pubSubs, taskProcessor.HandleProjectProvers,
+		if err := scheduler.Run(conf.SchedulerEpoch, proverID, pubSubs, taskProcessor.HandleProjectProvers,
 			chainHeadNotification, schedulerNotification, contractPersistence.Project, contractPersistence.LatestProjects, contractPersistence.Provers); err != nil {
 			log.Fatal(errors.Wrap(err, "failed to run scheduler"))
 		}
