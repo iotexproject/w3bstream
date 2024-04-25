@@ -133,6 +133,19 @@ func (c *blockProjects) projects() *BlockProject {
 	return np
 }
 
+func (c *blockProjects) projects() *BlockProject {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	np := &BlockProject{Projects: map[uint64]*Project{}}
+
+	for e := c.blocks.Front(); e != nil; e = e.Next() {
+		ep := e.Value.(*BlockProject)
+		np.Merge(ep)
+	}
+	return np
+}
+
 func (c *blockProjects) add(diff *BlockProject) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
