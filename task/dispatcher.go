@@ -48,8 +48,8 @@ func (d *dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 }
 
 func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource,
-	getProject handler.Project, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string,
-	iotexChainID int, projectNotification <-chan *contract.Project, latestProjects LatestProjects) error {
+	getProject handler.Project, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, sequencerPubKey []byte,
+	iotexChainID int, projectNotification <-chan *contract.Project, latestProjects LatestProjects, latestProvers handler.LatestProvers) error {
 	projectDispatchers := &sync.Map{}
 	d := &dispatcher{projectDispatchers: projectDispatchers}
 
@@ -58,14 +58,14 @@ func RunDispatcher(persistence Persistence, newDatasource internaldispatcher.New
 		return err
 	}
 
-	taskStateHandler := handler.NewTaskStateHandler(persistence.Create, getProject, operatorPrivateKey, operatorPrivateKeyED25519)
+	taskStateHandler := handler.NewTaskStateHandler(persistence.Create, latestProvers, getProject, operatorPrivateKey, operatorPrivateKeyED25519)
 
 	return dispatch(persistence, newDatasource, getProject, projectDispatchers, ps, taskStateHandler,
-		projectNotification, latestProjects)
+		projectNotification, latestProjects, sequencerPubKey)
 }
 
 func RunLocalDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource,
-	getProjectIDs ProjectIDs, getProject handler.Project, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr string, iotexChainID int) error {
+	getProjectIDs ProjectIDs, getProject handler.Project, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr string, sequencerPubKey []byte, iotexChainID int) error {
 	projectDispatchers := &sync.Map{}
 	d := &dispatcher{projectDispatchers: projectDispatchers}
 
@@ -74,7 +74,7 @@ func RunLocalDispatcher(persistence Persistence, newDatasource internaldispatche
 		return err
 	}
 
-	taskStateHandler := handler.NewTaskStateHandler(persistence.Create, getProject, operatorPrivateKey, operatorPrivateKeyED25519)
+	taskStateHandler := handler.NewTaskStateHandler(persistence.Create, nil, getProject, operatorPrivateKey, operatorPrivateKeyED25519)
 
 	projectIDs := getProjectIDs()
 	for _, id := range projectIDs {
@@ -94,7 +94,7 @@ func RunLocalDispatcher(persistence Persistence, newDatasource internaldispatche
 			Attributes: map[common.Hash][]byte{},
 		}
 		pd, err := internaldispatcher.NewProjectDispatcher(persistence.ProcessedTaskID,
-			persistence.UpsertProcessedTask, p.DatasourceURI, newDatasource, cp, ps.Publish, taskStateHandler)
+			persistence.UpsertProcessedTask, p.DatasourceURI, newDatasource, cp, ps.Publish, taskStateHandler, sequencerPubKey)
 		if err != nil {
 			return errors.Wrapf(err, "failed to new project dispatcher, project_id %v", id)
 		}
@@ -103,7 +103,7 @@ func RunLocalDispatcher(persistence Persistence, newDatasource internaldispatche
 	return nil
 }
 
-func setProjectDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource, projectDispatchers *sync.Map, p *contract.Project, getProject handler.Project, ps *p2p.PubSubs, handler *handler.TaskStateHandler) {
+func setProjectDispatcher(persistence Persistence, newDatasource internaldispatcher.NewDatasource, projectDispatchers *sync.Map, p *contract.Project, getProject handler.Project, ps *p2p.PubSubs, handler *handler.TaskStateHandler, sequencerPubKey []byte) {
 	if p.Uri != "" {
 		_, ok := projectDispatchers.Load(p.ID)
 		if ok {
@@ -119,7 +119,7 @@ func setProjectDispatcher(persistence Persistence, newDatasource internaldispatc
 			return
 		}
 		pd, err := internaldispatcher.NewProjectDispatcher(persistence.ProcessedTaskID,
-			persistence.UpsertProcessedTask, pf.DatasourceURI, newDatasource, p, ps.Publish, handler)
+			persistence.UpsertProcessedTask, pf.DatasourceURI, newDatasource, p, ps.Publish, handler, sequencerPubKey)
 		if err != nil {
 			slog.Error("failed to new project dispatcher", "project_id", p.ID, "error", err)
 			return
@@ -131,17 +131,17 @@ func setProjectDispatcher(persistence Persistence, newDatasource internaldispatc
 
 func dispatch(persistence Persistence, newDatasource internaldispatcher.NewDatasource, getProject handler.Project,
 	projectDispatchers *sync.Map, ps *p2p.PubSubs, handler *handler.TaskStateHandler,
-	projectNotification <-chan *contract.Project, latestProjects LatestProjects) error {
+	projectNotification <-chan *contract.Project, latestProjects LatestProjects, sequencerPubKey []byte) error {
 
 	projects := latestProjects()
 	for _, p := range projects {
-		setProjectDispatcher(persistence, newDatasource, projectDispatchers, p, getProject, ps, handler)
+		setProjectDispatcher(persistence, newDatasource, projectDispatchers, p, getProject, ps, handler, sequencerPubKey)
 	}
 
 	go func() {
 		for p := range projectNotification {
 			slog.Info("get new project contract event", "project_id", p.ID, "block_number", p.BlockNumber)
-			setProjectDispatcher(persistence, newDatasource, projectDispatchers, p, getProject, ps, handler)
+			setProjectDispatcher(persistence, newDatasource, projectDispatchers, p, getProject, ps, handler, sequencerPubKey)
 		}
 	}()
 	return nil
