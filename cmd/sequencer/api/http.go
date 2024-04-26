@@ -40,8 +40,9 @@ func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinat
 		privateKey:            sk,
 	}
 
-	s.engine.POST("/message", s.verifyToken, s.handleMessage)
-	s.engine.GET("/message/:id", s.verifyToken, s.queryStateLogByID)
+	// TODO add s.verifyToken back
+	s.engine.POST("/message", s.handleMessage)
+	s.engine.GET("/message/:id", s.queryStateLogByID)
 
 	return s
 }
