@@ -105,7 +105,7 @@ func (c *blockProvers) provers(blockNumber uint64) *blockProver {
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
 		ep := e.Value.(*blockProver)
-		if blockNumber > ep.BlockNumber {
+		if blockNumber < ep.BlockNumber {
 			break
 		}
 		np.Merge(ep)

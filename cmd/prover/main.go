@@ -76,7 +76,7 @@ func main() {
 	if !local {
 		p := contractPersistence.Prover(proverOperatorAddress)
 		if p == nil {
-			log.Fatal(errors.Wrap(err, "failed to query operator's prover id"))
+			log.Fatal(errors.New("failed to query operator's prover id"))
 		}
 		proverID = p.ID
 	}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"log/slog"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -238,7 +239,9 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 			query.ToBlock = new(big.Int).SetUint64(target)
 			logs, err := c.client.FilterLogs(context.Background(), query)
 			if err != nil {
-				slog.Error("failed to filter contract logs", "error", err)
+				if !strings.Contains(err.Error(), "start block > tip height") {
+					slog.Error("failed to filter contract logs", "error", err)
+				}
 				continue
 			}
 

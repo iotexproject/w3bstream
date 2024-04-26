@@ -106,7 +106,7 @@ func (c *blockProjects) project(projectID, blockNumber uint64) *Project {
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
 		ep := e.Value.(*blockProject)
-		if blockNumber > ep.BlockNumber {
+		if blockNumber < ep.BlockNumber {
 			break
 		}
 		p, ok := ep.Projects[projectID]
@@ -247,9 +247,13 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 		}
 		vmType := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
 
-		attributes := make(map[common.Hash][]byte)
-		attributes[RequiredProverAmountHash] = proverAmt
-		attributes[VmTypeHash] = vmType
+		attributes := map[common.Hash][]byte{}
+		if len(proverAmt) != 0 {
+			attributes[RequiredProverAmountHash] = proverAmt
+		}
+		if len(vmType) != 0 {
+			attributes[VmTypeHash] = vmType
+		}
 
 		ps = append(ps, &Project{
 			ID:          projectID,

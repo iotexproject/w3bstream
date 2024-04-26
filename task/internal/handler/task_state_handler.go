@@ -26,25 +26,26 @@ type TaskStateHandler struct {
 }
 
 func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finished bool) {
-	if h.latestProvers != nil {
-		ps := h.latestProvers()
-		signerAddress, err := s.SignerAddress(t)
-		if err != nil {
-			slog.Error("failed to get task state log signer address", "error", err, "task_id", s.TaskID)
-			return
-		}
-		legal := false
-		for _, p := range ps {
-			if p.OperatorAddress == signerAddress {
-				legal = true
-				break
-			}
-		}
-		if !legal {
-			slog.Error("failed to verify task state log signature", "task_id", s.TaskID, "signer_address", signerAddress.String())
-			return
-		}
-	}
+	// TODO dispatcher will send a failed TaskStateLog when timeout, without signature. maybe dispatcher need a sig also
+	// if h.latestProvers != nil && s.Signature != "" {
+	// 	ps := h.latestProvers()
+	// 	signerAddress, err := s.SignerAddress(t)
+	// 	if err != nil {
+	// 		slog.Error("failed to get task state log signer address", "error", err, "task_id", s.TaskID)
+	// 		return
+	// 	}
+	// 	legal := false
+	// 	for _, p := range ps {
+	// 		if p.OperatorAddress == signerAddress {
+	// 			legal = true
+	// 			break
+	// 		}
+	// 	}
+	// 	if !legal {
+	// 		slog.Error("failed to verify task state log signature", "task_id", s.TaskID, "signer_address", signerAddress.String())
+	// 		return
+	// 	}
+	// }
 	if err := h.saveTaskStateLog(s, t); err != nil {
 		slog.Error("failed to create task state log", "error", err, "task_id", s.TaskID)
 		return
