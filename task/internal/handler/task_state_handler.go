@@ -50,6 +50,8 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 		return
 	}
 	if s.State == types.TaskStateFailed {
+		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
+		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
 		return true
 	}
 
