@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&projectMinterPrivateKey, "projectMinterPrivateKey", "1232997017ad09d7e3af812a22d61b46ec0d640a7d45cc26908960e9471f7024", "sequencer private key")
+	flag.StringVar(&projectMinterPrivateKey, "projectMinterPrivateKey", "1232997017ad09d7e3af812a22d61b46ec0d640a7d45cc26908960e9471f7024", "project minter private key")
 }
 
 func main() {
