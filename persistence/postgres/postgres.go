@@ -91,7 +91,7 @@ func (p *Postgres) Fetch(taskID, projectID uint64) ([]*types.TaskStateLog, error
 	return tls, nil
 }
 
-func NewPostgres(pgEndpoint string) (*Postgres, error) {
+func New(pgEndpoint string) (*Postgres, error) {
 	db, err := gorm.Open(postgres.Open(pgEndpoint), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})

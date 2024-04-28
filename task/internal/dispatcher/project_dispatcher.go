@@ -2,14 +2,17 @@ package dispatcher
 
 import (
 	"log/slog"
+	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/machinefi/sprout/datasource"
+	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
-	"github.com/pkg/errors"
 )
 
 type NewDatasource func(datasourceURI string) (datasource.Datasource, error)
@@ -21,12 +24,13 @@ type FetchProcessedTaskID func(projectID uint64) (uint64, error)
 type UpsertProcessedTask func(projectID, taskID uint64) error
 
 type ProjectDispatcher struct {
-	window       *window
-	waitInterval time.Duration
-	startTaskID  uint64
-	projectID    uint64
-	datasource   datasource.Datasource
-	publish      Publish
+	window          *window
+	waitInterval    time.Duration
+	startTaskID     uint64
+	projectID       uint64
+	datasource      datasource.Datasource
+	publish         Publish
+	sequencerPubKey []byte
 }
 
 func (d *ProjectDispatcher) Handle(s *types.TaskStateLog) {
@@ -56,7 +60,14 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	if t == nil {
 		return nextTaskID, nil
 	}
+	if err := t.VerifySignature(d.sequencerPubKey); err != nil {
+		return 0, errors.Wrap(err, "failed to verify task signature")
+	}
+
 	d.window.produce(t)
+
+	metrics.DispatchedTaskNumMtc(d.projectID, t.ProjectVersion)
+	metrics.TaskStartTimeMtc(d.projectID, t.ID, t.ProjectVersion)
 
 	if err := d.publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
 		return 0, errors.Wrapf(err, "failed to publish data, project_id %v, task_id %v", t.ProjectID, t.ID)
@@ -65,28 +76,34 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	return t.ID + 1, nil
 }
 
-func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask, datasourceURI string, newDatasource NewDatasource, projectMeta *project.Meta, publish Publish, handler *handler.TaskStateHandler) (*ProjectDispatcher, error) {
-	processedTaskID, err := fetch(projectMeta.ProjectID)
+func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask, datasourceURI string, newDatasource NewDatasource, p *contract.Project, publish Publish, handler *handler.TaskStateHandler, sequencerPubKey []byte) (*ProjectDispatcher, error) {
+	processedTaskID, err := fetch(p.ID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", projectMeta.ProjectID)
+		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", p.ID)
 	}
 	datasource, err := newDatasource(datasourceURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new task retriever")
 	}
-	// TODO get prover amount from project attr
-	//windowSize := projectMeta.ProverAmount
-	//if windowSize == 0 {
-	windowSize := uint64(1)
-	//}
-	window := newWindow(windowSize, publish, handler, upsert)
+
+	proverAmount := uint64(1)
+	if v, ok := p.Attributes[contract.RequiredProverAmountHash]; ok {
+		n, err := strconv.ParseUint(string(v), 10, 64)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to parse project required prover amount, project_id %v", p.ID)
+		}
+		proverAmount = n
+	}
+
+	window := newWindow(proverAmount, publish, handler, upsert)
 	d := &ProjectDispatcher{
-		window:       window,
-		waitInterval: 3 * time.Second,
-		startTaskID:  processedTaskID + 1,
-		datasource:   datasource,
-		projectID:    projectMeta.ProjectID,
-		publish:      publish,
+		window:          window,
+		waitInterval:    3 * time.Second,
+		startTaskID:     processedTaskID + 1,
+		datasource:      datasource,
+		projectID:       p.ID,
+		publish:         publish,
+		sequencerPubKey: sequencerPubKey,
 	}
 	go d.run()
 	return d, nil

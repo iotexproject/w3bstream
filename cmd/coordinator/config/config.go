@@ -8,50 +8,55 @@ import (
 )
 
 type Config struct {
-	ServiceEndpoint           string `env:"HTTP_SERVICE_ENDPOINT"`
-	ChainEndpoint             string `env:"CHAIN_ENDPOINT"`
-	DatabaseDSN               string `env:"DATABASE_DSN"`
-	BootNodeMultiAddr         string `env:"BOOTNODE_MULTIADDR"`
-	IoTeXChainID              int    `env:"IOTEX_CHAINID"`
-	ProjectContractAddress    string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
-	IPFSEndpoint              string `env:"IPFS_ENDPOINT"`
-	DIDAuthServerEndpoint     string `env:"DIDAUTH_SERVER_ENDPOINT"`
-	OperatorPrivateKey        string `env:"OPERATOR_PRIVATE_KEY,optional"`
-	OperatorPrivateKeyED25519 string `env:"OPERATOR_PRIVATE_KEY_ED25519,optional"`
-	ProjectFileDirectory      string `env:"PROJECT_FILE_DIRECTORY,optional"`
-	ProjectCacheDirectory     string `env:"PROJECT_CACHE_DIRECTORY,optional"`
-	LogLevel                  int    `env:"LOG_LEVEL,optional"`
-	SequencerPubKey           string `env:"SEQUENCER_PUBKEY,optional"`
-	env                       string `env:"-"`
+	ServiceEndpoint            string `env:"HTTP_SERVICE_ENDPOINT"`
+	DatabaseDSN                string `env:"DATABASE_DSN"`
+	BootNodeMultiAddr          string `env:"BOOTNODE_MULTIADDR"`
+	IoTeXChainID               int    `env:"IOTEX_CHAINID"`
+	ChainEndpoint              string `env:"CHAIN_ENDPOINT,optional"`
+	ProjectContractAddress     string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
+	ProverContractAddress      string `env:"PROVER_CONTRACT_ADDRESS,optional"`
+	BlockNumberContractAddress string `env:"BLOCK_NUMBER_CONTRACT_ADDRESS,optional"`
+	MultiCallContractAddress   string `env:"MULTICALL_CONTRACT_ADDRESS,optional"`
+	IPFSEndpoint               string `env:"IPFS_ENDPOINT"`
+	DIDAuthServerEndpoint      string `env:"DIDAUTH_SERVER_ENDPOINT"`
+	OperatorPrivateKey         string `env:"OPERATOR_PRIVATE_KEY,optional"`
+	OperatorPrivateKeyED25519  string `env:"OPERATOR_PRIVATE_KEY_ED25519,optional"`
+	ProjectFileDirectory       string `env:"PROJECT_FILE_DIRECTORY,optional"`
+	ProjectCacheDirectory      string `env:"PROJECT_CACHE_DIRECTORY,optional"`
+	SchedulerEpoch             uint64 `env:"SCHEDULER_EPOCH,optional"`
+	LogLevel                   int    `env:"LOG_LEVEL,optional"`
+	SequencerPubKey            string `env:"SEQUENCER_PUBKEY,optional"`
+	env                        string `env:"-"`
 }
 
 var (
 	// prod default config for coordinator; all config elements come from docker-compose.yaml in root of project
 	defaultConfig = &Config{
-		ServiceEndpoint:        ":9001",
-		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
-		DatabaseDSN:            "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
-		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
-		IoTeXChainID:           2,
-		ProjectContractAddress: "0x62Ab162C58c1BbC4082AeEaf878f48604da7d5a1",
-		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
-		DIDAuthServerEndpoint:  "didkit:9999",
-		SequencerPubKey:        "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
-		LogLevel:               int(slog.LevelDebug),
+		ServiceEndpoint:            ":9001",
+		DatabaseDSN:                "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
+		BootNodeMultiAddr:          "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
+		IoTeXChainID:               2,
+		ChainEndpoint:              "https://babel-api.testnet.iotex.io",
+		ProjectContractAddress:     "0x64291e7BbD450CBA7b7f1293c6d348e7fE52c821",
+		ProverContractAddress:      "0x8C9adA8F21bAf3e1E21EDbF058aE16b7d49aA498",
+		BlockNumberContractAddress: "0x8fEa35A413A49c07f7ccDd03c6CE8AD751334aA4",
+		MultiCallContractAddress:   "0xDa3CF8a30F4dD85f5E8A92478e150EAD210f4458",
+		IPFSEndpoint:               "ipfs.mainnet.iotex.io",
+		DIDAuthServerEndpoint:      "didkit:9999",
+		SequencerPubKey:            "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
+		LogLevel:                   int(slog.LevelDebug),
+		SchedulerEpoch:             720,
 	}
 	// local debug default config for coordinator; all config elements come from docker-compose-dev.yaml in root of project
 	defaultDebugConfig = &Config{
-		ServiceEndpoint:        ":9001",
-		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
-		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
-		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
-		IoTeXChainID:           2,
-		ProjectContractAddress: "0x62Ab162C58c1BbC4082AeEaf878f48604da7d5a1",
-		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
-		DIDAuthServerEndpoint:  "localhost:9999",
-		ProjectCacheDirectory:  "./project_cache",
-		SequencerPubKey:        "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
-		LogLevel:               int(slog.LevelDebug),
+		ServiceEndpoint:       ":9001",
+		DatabaseDSN:           "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
+		BootNodeMultiAddr:     "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
+		IoTeXChainID:          2,
+		IPFSEndpoint:          "ipfs.mainnet.iotex.io",
+		DIDAuthServerEndpoint: "localhost:9999",
+		SequencerPubKey:       "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
+		LogLevel:              int(slog.LevelDebug),
 	}
 	// integration default config for coordinator; all config elements come from Makefile in `integration_test` entry
 	defaultTestConfig = &Config{

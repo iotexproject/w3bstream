@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
@@ -39,11 +40,15 @@ func (t *dispatcherTask) runWatchdog(ctx context.Context) {
 			return
 		case <-retryChan:
 			slog.Info("retry task", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", t.waitTime)
+			metrics.RetryTaskNumMtc(t.task.ProjectID, t.task.ID, t.task.ProjectVersion)
+
 			if err := t.publish(t.task.ProjectID, &p2p.Data{Task: t.task}); err != nil {
 				slog.Error("failed to publish p2p data", "project_id", t.task.ProjectID, "task_id", t.task.ID)
 			}
 		case <-timeoutChan:
 			slog.Info("task timeout", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", 2*t.waitTime)
+			metrics.TimeoutTaskNumMtc(t.task.ProjectID, t.task.ID, t.task.ProjectVersion)
+
 			t.timeOut(&types.TaskStateLog{
 				TaskID:    t.task.ID,
 				State:     types.TaskStateFailed,

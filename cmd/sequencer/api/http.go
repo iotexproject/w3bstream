@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
-	"github.com/machinefi/ioconnect-go/cmd/srv-did-vc/apis"
 	"io"
 	"log"
 	"log/slog"
@@ -16,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/ioconnect-go/cmd/srv-did-vc/apis"
 	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/machinefi/sprout/apitypes"
 	"github.com/machinefi/sprout/auth/didvc"
@@ -86,7 +86,7 @@ func (s *httpServer) verifyToken(c *gin.Context) {
 	if tok == "" {
 		tok = c.Query("authorization")
 	}
-	// no token
+	// TODO del no token
 	if tok == "" {
 		return
 	}
