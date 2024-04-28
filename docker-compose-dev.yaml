@@ -57,13 +57,10 @@ services:
     ports:
      - "5432:5432"
 
-  didkit:
-    image: ghcr.io/spruceid/didkit-http:latest
+  srv-did-vc:
+    image: ghcr.io/machinefi/ioconnect-go:v0.0.1
     platform: linux/amd64
-    container_name: didkit-http
+    container_name: srv-did-vc
     restart: always
-    environment:
-      DIDKIT_HTTP_HTTP_PORT: 9999
-      DIDKIT_HTTP_HTTP_ADDRESS: '[0,0,0,0]'
-      DIDKIT_HTTP_HTTP_BODYSIZELIMIT: 2097152
-      DIDKIT_HTTP_ISSUER_KEYS: '[{"kty":"OKP","crv":"Ed25519","x":"THRnf4Zj7gh93XTnII8G0tQIoYb4IbkoTqcy5TNKJlg","d":"es8N8nmdU9o5wWdCEMc2xKCigN1LKc6xro1efDy7Y7M"}, {"kty":"OKP","crv":"Ed25519","x":"STSryIxBN3pyC5YQ5GnjlMmILUWcb5M0_sHpqxxmsog","d":"BiKwVOhhI-fcMMjfcxo2AdB3ygamMmgcMzjaOUl7O6s"}]'
+    ports:
+      - "9999:9999"
