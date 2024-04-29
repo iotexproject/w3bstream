@@ -65,6 +65,7 @@ func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinat
 		slog.Info(string(docContent))
 	}
 
+	s.engine.POST("/issue_vc", s.issueJWTCredential)
 	s.engine.POST("/message", s.verifyToken, s.handleMessage)
 	s.engine.GET("/message/:id", s.verifyToken, s.queryStateLogByID)
 	s.engine.GET("/didDoc", s.didDoc)

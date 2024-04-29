@@ -2,19 +2,19 @@ version: "3.6"
 
 services:
   sequencer:
-    image: ghcr.io/machinefi/sequencer:latest
+    image: ghcr.io/machinefi/sequencer:v0.10.1
     depends_on:
       - "postgres"
       - "coordinator"
     container_name: w3bstream-sequencer
-    platform: linux/x86_64
+    platform: linux/amd64
     restart: always
     ports:
       - "9000:9000"
     command: [ "-coordinatorAddress", "coordinator:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
 
   coordinator:
-    image: ghcr.io/machinefi/coordinator:latest
+    image: ghcr.io/machinefi/coordinator:v0.10.1
     depends_on:
       - "postgres"
     container_name: w3bstream-coordinator
@@ -31,7 +31,7 @@ services:
       - ./test/container_model:/data
 
   prover:
-    image: ghcr.io/machinefi/prover:latest
+    image: ghcr.io/machinefi/prover:v0.10.1
     depends_on:
       - "risc0"
       - "halo2"
