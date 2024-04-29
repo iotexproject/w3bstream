@@ -140,12 +140,12 @@ func sendMessage(contractPersistence *contract.Contract, projectManager *project
 	for i := 0; i < 3; i++ {
 		index := rand.Intn(len(projects))
 		project := projects[index]
-		projectData, err := projectManager.Project(project.ID)
+		projectFile, err := projectManager.Project(project.ID)
 		if err != nil {
 			slog.Error("failed to get project data", "project_id", project.ID, "error", err)
 			continue
 		}
-		defaultVer, err := projectData.DefaultConfig()
+		defaultVer, err := projectFile.DefaultConfig()
 		if err != nil {
 			slog.Error("failed to get project default version", "project_id", project.ID, "error", err)
 			continue
@@ -174,7 +174,6 @@ func sendMessage(contractPersistence *contract.Contract, projectManager *project
 			continue
 		}
 
-		// 发送HTTP POST请求
 		response, err := http.Post("http://sprout-staging.w3bstream.com:9000/message", "application/json", bytes.NewReader(j))
 		if err != nil {
 			slog.Error("failed to send message", "project_id", project.ID, "error", err)
