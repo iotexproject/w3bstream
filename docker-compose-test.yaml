@@ -63,4 +63,4 @@ services:
     container_name: srv-did-vc
     restart: always
     ports:
-      - "9999:9999"
+      - "19999:9999"
