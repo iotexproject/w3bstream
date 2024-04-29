@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/ecdsa"
 	"encoding/json"
 	"flag"
 	"log"
@@ -20,7 +19,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -59,7 +57,7 @@ var (
 
 var (
 	halo2MessageData  = "{\"private_a\": 3, \"private_b\": 4}"
-	risc0MessageData  = "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+	risc0MessageData  = "{\"private_input\":\"20\", \"public_input\":\"11,43\", \"receipt_type\":\"Stark\"}"
 	zkwasmMessageData = "{\"private_input\": [1, 1] , \"public_input\": [] }"
 )
 
@@ -67,8 +65,8 @@ func init() {
 	flag.StringVar(&projectMinterPrivateKey, "projectMinterPrivateKey", "", "project minter private key")
 }
 
-func createProject(client *ethclient.Client, projectInstance *contractproject.Project, privateKey *ecdsa.PrivateKey, singer bind.SignerFn) {
-	tx, err := projectInstance.Mint(&bind.TransactOpts{Signer: singer}, crypto.PubkeyToAddress(privateKey.PublicKey))
+func createProject(client *ethclient.Client, projectInstance *contractproject.Project, opts *bind.TransactOpts) {
+	tx, err := projectInstance.Mint(opts, opts.From)
 	if err != nil {
 		slog.Error("failed to mint project", "error", err)
 		return
@@ -94,24 +92,21 @@ func createProject(client *ethclient.Client, projectInstance *contractproject.Pr
 
 	switch rand.Intn(3) {
 	case 0:
-		tx, err := projectInstance.UpdateConfig(&bind.TransactOpts{Signer: singer},
-			projectID, halo2ProjectFileURI, halo2ProjectFileHash)
+		tx, err := projectInstance.UpdateConfig(opts, projectID, halo2ProjectFileURI, halo2ProjectFileHash)
 		if err != nil {
 			slog.Error("failed to update project config", "error", err)
 			return
 		}
 		slog.Info("project halo2 config updated", "tx_hash", tx.Hash().Hex())
 	case 1:
-		tx, err := projectInstance.UpdateConfig(&bind.TransactOpts{Signer: singer},
-			projectID, risc0ProjectFileURI, risc0ProjectFileHash)
+		tx, err := projectInstance.UpdateConfig(opts, projectID, risc0ProjectFileURI, risc0ProjectFileHash)
 		if err != nil {
 			slog.Error("failed to update project config", "error", err)
 			return
 		}
 		slog.Info("project risc0 config updated", "tx_hash", tx.Hash().Hex())
 	case 2:
-		tx, err := projectInstance.UpdateConfig(&bind.TransactOpts{Signer: singer},
-			projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
+		tx, err := projectInstance.UpdateConfig(opts, projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
 		if err != nil {
 			slog.Error("failed to update project config", "error", err)
 			return
@@ -120,7 +115,7 @@ func createProject(client *ethclient.Client, projectInstance *contractproject.Pr
 	}
 }
 
-func updateProjectRequiredProver(contractPersistence *contract.Contract, projectInstance *contractproject.Project, privateKey *ecdsa.PrivateKey, singer bind.SignerFn) {
+func updateProjectRequiredProver(contractPersistence *contract.Contract, projectInstance *contractproject.Project, opts *bind.TransactOpts) {
 	projects := contractPersistence.LatestProjects()
 	provers := contractPersistence.LatestProvers()
 	if len(provers) == 0 {
@@ -132,7 +127,7 @@ func updateProjectRequiredProver(contractPersistence *contract.Contract, project
 	project := projects[index]
 	expectProvers := rand.Intn(len(provers)) + 1
 
-	tx, err := projectInstance.SetAttributes(&bind.TransactOpts{Signer: singer}, new(big.Int).SetUint64(project.ID), [][32]byte{contract.RequiredProverAmountHash}, [][]byte{[]byte(strconv.Itoa(expectProvers))})
+	tx, err := projectInstance.SetAttributes(opts, new(big.Int).SetUint64(project.ID), [][32]byte{contract.RequiredProverAmountHash}, [][]byte{[]byte(strconv.Itoa(expectProvers))})
 	if err != nil {
 		slog.Error("failed to set project attributes", "error", err)
 		return
@@ -203,7 +198,7 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed parse project minter private key"))
 	}
-	slog.Info("project minter public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&priKey.PublicKey)))
+	slog.Info("project minter address", "address", crypto.PubkeyToAddress(priKey.PublicKey).String())
 
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
@@ -219,14 +214,17 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to get chain id"))
 	}
 
-	singer := func(a common.Address, tx *types.Transaction) (*types.Transaction, error) {
-		return types.SignTx(tx, types.NewLondonSigner(chainID), priKey)
+	opts := &bind.TransactOpts{
+		From: crypto.PubkeyToAddress(priKey.PublicKey),
+		Signer: func(a common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			return types.SignTx(tx, types.NewLondonSigner(chainID), priKey)
+		},
 	}
 
 	createProjectTicker := time.NewTicker(10 * time.Minute)
 	go func() {
 		for range createProjectTicker.C {
-			createProject(client, projectInstance, priKey, singer)
+			createProject(client, projectInstance, opts)
 		}
 	}()
 
@@ -244,7 +242,7 @@ func main() {
 	updateProjectRequiredProverTicker := time.NewTicker(1 * time.Hour)
 	go func() {
 		for range updateProjectRequiredProverTicker.C {
-			updateProjectRequiredProver(contractPersistence, projectInstance, priKey, singer)
+			updateProjectRequiredProver(contractPersistence, projectInstance, opts)
 		}
 	}()
 
