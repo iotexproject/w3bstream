@@ -2,72 +2,81 @@ package project
 
 import (
 	"os"
+	"reflect"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/persistence/contract"
 )
 
-// func TestNewManager(t *testing.T) {
-// 	r := require.New(t)
+func TestNewManager(t *testing.T) {
+	r := require.New(t)
 
-// 	t.Run("FailedToDialChain", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+	t.Run("FailedToNewCache", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(newCache, nil, errors.New(t.Name()))
 
-// 		_, err := NewManager("", "", "", "", "")
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToNewContracts", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		_, err := NewManager("cache", "", nil, nil)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
-// 		p.ApplyFuncReturn(project.NewProject, nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(newCache, nil, nil)
 
-// 		_, err := NewManager("", "", "", "", "")
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToWatch", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		_, err := NewManager("", "", nil, nil)
+		r.NoError(err)
+	})
+}
 
-// 		p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
-// 		p.ApplyFuncReturn(project.NewProject, nil, nil)
-// 		p.ApplyPrivateMethod(&Manager{}, "watchProjectContract", func() error { return errors.New(t.Name()) })
+func TestNewLocalManager(t *testing.T) {
+	r := require.New(t)
 
-// 		_, err := NewManager("", "", "", "", "")
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToNewCache", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+	m := &Manager{}
 
-// 		p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
-// 		p.ApplyFuncReturn(project.NewProject, nil, nil)
-// 		p.ApplyFuncReturn(newCache, nil, errors.New(t.Name()))
+	t.Run("FailedToLoadFromLocal", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		_, err := NewManager("", "", "/cache", "", "")
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("Success", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		p.ApplyPrivateMethod(
+			m,
+			"loadFromLocal",
+			func(projectFileDir string) error {
+				return errors.New(t.Name())
+			},
+		)
 
-// 		p.ApplyFuncReturn(ethclient.Dial, ethclient.NewClient(&rpc.Client{}), nil)
-// 		p.ApplyFuncReturn(project.NewProject, nil, nil)
-// 		p.ApplyFuncReturn(newCache, nil, nil)
-// 		p.ApplyPrivateMethod(&Manager{}, "watchProjectContract", func() error { return nil })
+		_, err := NewLocalManager("")
+		r.ErrorContains(err, t.Name())
+	})
 
-// 		_, err := NewManager("", "", "/cache", "", "")
-// 		r.NoError(err)
-// 	})
-// }
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-func TestManager_Get(t *testing.T) {
+		p.ApplyPrivateMethod(
+			m,
+			"loadFromLocal",
+			func(projectFileDir string) error {
+				return nil
+			},
+		)
+
+		_, err := NewLocalManager("")
+		r.NoError(err)
+	})
+}
+
+func TestManager_Project(t *testing.T) {
 	r := require.New(t)
 
 	m := &Manager{}
@@ -88,86 +97,78 @@ func TestManager_Get(t *testing.T) {
 	})
 }
 
-// func TestManager_load(t *testing.T) {
-// 	r := require.New(t)
+func TestManager_ProjectIDs(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
 
-// 	m := &Manager{
-// 		instance: &project.Project{},
-// 		cache:    &cache{},
-// 	}
+	m := &Manager{}
 
-// 	t.Run("FailedToGetMeta", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+	p.ApplyMethod(reflect.TypeOf(&sync.Map{}), "Range", func(m *sync.Map, f func(key, value interface{}) bool) {
+		f(uint64(1), &Project{})
+		f(uint64(2), &Project{})
+	})
 
-// 		p.ApplyMethodReturn(&project.ProjectCaller{}, "Config", nil, errors.New(t.Name()))
-// 		_, err := m.load(uint64(0))
-// 		r.ErrorContains(err, t.Name())
-// 	})
+	ids := m.ProjectIDs()
+	r.Equal(2, len(ids))
+}
 
-// 	t.Run("NotExist", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+func TestManager_load(t *testing.T) {
+	r := require.New(t)
 
-// 		p.ApplyMethodReturn(&project.ProjectCaller{}, "Config", project.W3bstreamProjectProjectConfig{}, nil)
-// 		_, err := m.load(uint64(0))
-// 		r.ErrorContains(err, "the project not exist")
-// 	})
+	m := &Manager{
+		contractProject: func(projectID uint64) *contract.Project {
+			return &contract.Project{
+				Uri:  "",
+				Hash: common.Hash{},
+			}
+		},
+		ipfsEndpoint: "https://ipfs.com",
+		cache:        &cache{},
+	}
 
-// 	t.Run("FailedToGetProject", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+	t.Run("NotExist", func(t *testing.T) {
+		m1 := *m
+		m1.contractProject = func(projectID uint64) *contract.Project {
+			return nil
+		}
+		_, err := m1.load(uint64(0))
+		r.ErrorContains(err, "the project not exist")
+	})
 
-// 		p = p.ApplyMethodReturn(
-// 			&project.ProjectCaller{},
-// 			"Config",
-// 			project.W3bstreamProjectProjectConfig{Uri: "uri", Hash: [32]byte{1}},
-// 			nil,
-// 		)
-// 		p.ApplyPrivateMethod(&cache{}, "get", func(projectID uint64, hash []byte) []byte { return []byte("") })
-// 		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", nil, errors.New(t.Name()))
+	t.Run("FailedToGetRawData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		_, err := m.load(uint64(0))
-// 		r.ErrorContains(err, t.Name())
-// 	})
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", nil, errors.New(t.Name()))
+		_, err := m.load(uint64(0))
+		r.ErrorContains(err, t.Name())
+	})
 
-// 	t.Run("FailedToConvertProject", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+	t.Run("FailedToConvertProject", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		p.ApplyMethodReturn(
-// 			&project.ProjectCaller{},
-// 			"Config",
-// 			project.W3bstreamProjectProjectConfig{Uri: "uri", Hash: [32]byte{1}},
-// 			nil,
-// 		)
-// 		p.ApplyPrivateMethod(&cache{}, "get", func(projectID uint64, hash []byte) []byte { return []byte("data") })
-// 		p.ApplyPrivateMethod(&cache{}, "set", func(projectID uint64, data []byte) {})
-// 		p.ApplyFuncReturn(convertProject, nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", []byte(""), nil)
 
-// 		_, err := m.load(uint64(0))
-// 		r.ErrorContains(err, t.Name())
-// 	})
+		p.ApplyFuncReturn(convertProject, nil, errors.New(t.Name()))
 
-// 	t.Run("Success", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		_, err := m.load(uint64(0))
+		r.ErrorContains(err, t.Name())
+	})
 
-// 		p.ApplyMethodReturn(
-// 			&project.ProjectCaller{},
-// 			"Config",
-// 			project.W3bstreamProjectProjectConfig{Uri: "uri", Hash: [32]byte{1}},
-// 			nil,
-// 		)
-// 		p.ApplyPrivateMethod(&cache{}, "get", func(projectID uint64, hash []byte) []byte { return []byte("data") })
-// 		p.ApplyPrivateMethod(&cache{}, "set", func(projectID uint64, data []byte) {})
-// 		p.ApplyFuncReturn(convertProject, &Project{}, nil)
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		project, err := m.load(uint64(0))
-// 		r.NoError(err)
-// 		r.Empty(project)
-// 	})
-// }
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", []byte(""), nil)
+		p.ApplyFuncReturn(convertProject, &Project{}, nil)
+
+		project, err := m.load(uint64(0))
+		r.NoError(err)
+		r.Empty(project)
+	})
+}
 
 func TestManager_loadFromLocal(t *testing.T) {
 	r := require.New(t)
@@ -183,17 +184,20 @@ func TestManager_loadFromLocal(t *testing.T) {
 	})
 }
 
-// func TestManager_watchProjectContract(t *testing.T) {
-// 	r := require.New(t)
+func TestManager_watchProject(t *testing.T) {
+	r := require.New(t)
 
-// 	m := &Manager{}
-// 	t.Run("FailedToWatch", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+	m := &Manager{}
+	m.projects.Store(uint64(0), &Project{})
 
-// 		p.ApplyFuncReturn(contract.ListAndWatchProject, nil, errors.New(t.Name()))
+	projectNotification := make(chan *contract.Project)
+	defer close(projectNotification)
 
-// 		err := m.watchProjectContract("", "")
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// }
+	go m.watchProject(projectNotification)
+	projectNotification <- &contract.Project{ID: 0}
+
+	<-time.After(100 * time.Millisecond)
+
+	_, ok := m.projects.Load(uint64(0))
+	r.Equal(false, ok)
+}
