@@ -17,7 +17,7 @@ require (
 	github.com/libp2p/go-libp2p v0.32.2
 	github.com/libp2p/go-libp2p-kad-dht v0.25.2
 	github.com/libp2p/go-libp2p-pubsub v0.10.0
-	github.com/machinefi/ioconnect-go v0.0.2-0.20240428174125-57c38b60cacc
+	github.com/machinefi/ioconnect-go v0.0.2
 	github.com/multiformats/go-multiaddr v0.12.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.18.0

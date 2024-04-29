@@ -116,7 +116,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	clientID, ok := didvc.ClientIDFrom(c.Request.Context())
 	// TODO change ok
 	if ok || s.didJWK != nil {
-		payload, err = s.didJWK.DecryptBySenderDID("io", payload, "")
+		payload, err = s.didJWK.DecryptBySenderDID("io", payload, clientID)
 		//payload, err = s.didJWK.DecryptBySenderDID("io", payload, clientID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(errors.Wrap(err, "failed to decrypt didcomm cipher data")))
