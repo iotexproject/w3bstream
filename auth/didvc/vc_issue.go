@@ -3,10 +3,10 @@ package didvc
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/machinefi/ioconnect-go/cmd/srv-did-vc/apis"
 	"io"
 	"net/http"
 
+	"github.com/machinefi/ioconnect-go/cmd/srv-did-vc/apis"
 	"github.com/pkg/errors"
 )
 

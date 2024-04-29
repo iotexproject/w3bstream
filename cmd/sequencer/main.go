@@ -36,7 +36,7 @@ func init() {
 	flag.StringVar(&databaseDSN, "databaseDSN", "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable", "database dsn")
 	flag.StringVar(&didAuthServer, "didAuthServer", "localhost:9999", "did auth server endpoint")
 	flag.StringVar(&privateKey, "privateKey", "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85", "sequencer private key")
-	flag.BoolVar(&did, "did", false, "did flag")
+	flag.BoolVar(&did, "did", true, "did flag")
 }
 
 func main() {
