@@ -14,17 +14,18 @@ import (
 )
 
 type dispatcherTask struct {
-	finished atomic.Bool
-	timeOut  func(s *types.TaskStateLog)
-	cancel   context.CancelFunc
-	waitTime time.Duration
-	task     *types.Task
-	publish  Publish
-	handler  *handler.TaskStateHandler
+	dispatchedTime time.Time
+	finished       atomic.Bool
+	timeOut        func(s *types.TaskStateLog)
+	cancel         context.CancelFunc
+	waitTime       time.Duration
+	task           *types.Task
+	publish        Publish
+	handler        *handler.TaskStateHandler
 }
 
 func (t *dispatcherTask) handleState(s *types.TaskStateLog) {
-	if t.handler.Handle(s, t.task) {
+	if t.handler.Handle(t.dispatchedTime, s, t.task) {
 		t.cancel()
 		t.finished.Store(true)
 	}
@@ -62,13 +63,14 @@ func (t *dispatcherTask) runWatchdog(ctx context.Context) {
 func newDispatcherTask(task *types.Task, timeOut func(s *types.TaskStateLog), publish Publish, handler *handler.TaskStateHandler) *dispatcherTask {
 	ctx, cancel := context.WithCancel(context.Background())
 	t := &dispatcherTask{
-		finished: atomic.Bool{},
-		timeOut:  timeOut,
-		cancel:   cancel,
-		waitTime: 5 * time.Minute, // TODO define wait time config
-		task:     task,
-		publish:  publish,
-		handler:  handler,
+		dispatchedTime: time.Now(),
+		finished:       atomic.Bool{},
+		timeOut:        timeOut,
+		cancel:         cancel,
+		waitTime:       5 * time.Minute, // TODO define wait time config
+		task:           task,
+		publish:        publish,
+		handler:        handler,
 	}
 	go t.runWatchdog(ctx)
 	return t
