@@ -435,6 +435,8 @@ github.com/machinefi/ioconnect-go v0.0.2-0.20240428174125-57c38b60cacc h1:wvx49P
 github.com/machinefi/ioconnect-go v0.0.2-0.20240428174125-57c38b60cacc/go.mod h1:J7nsaHy5aB3gyiYrxO5vzulAJQFryivrN0nvD5aVGUw=
 github.com/machinefi/ioconnect-go v0.0.2 h1:WMSBlXwQOzZ+7S1Ulrb85H5bG6JdtI/aCrrs8iFU3y4=
 github.com/machinefi/ioconnect-go v0.0.2/go.mod h1:J7nsaHy5aB3gyiYrxO5vzulAJQFryivrN0nvD5aVGUw=
+github.com/machinefi/ioconnect-go v0.0.3 h1:ENINb2TCuUA7kjBm9X21+z7sP1OxcgHG2mntk6V8iN8=
+github.com/machinefi/ioconnect-go v0.0.3/go.mod h1:J7nsaHy5aB3gyiYrxO5vzulAJQFryivrN0nvD5aVGUw=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
 github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
