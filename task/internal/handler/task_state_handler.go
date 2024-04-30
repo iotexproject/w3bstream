@@ -25,7 +25,7 @@ type TaskStateHandler struct {
 	operatorPrivateKeyED25519 string
 }
 
-func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finished bool) {
+func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLog, t *types.Task) (finished bool) {
 	// TODO dispatcher will send a failed TaskStateLog when timeout, without signature. maybe dispatcher need a sig also
 	// if h.latestProvers != nil && s.Signature != "" {
 	// 	ps := h.latestProvers()
