@@ -1,4 +1,3 @@
-# ghcr.io/machinefi/coordinator:latest
 FROM golang:1.22 AS builder
 
 ENV GO111MODULE=on
