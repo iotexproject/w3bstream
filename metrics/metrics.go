@@ -2,12 +2,13 @@ package metrics
 
 import (
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var timeMap = make(map[uint64]float64)
+var timeMap sync.Map
 
 var (
 	dispatchedTaskNumMtc = prometheus.NewCounterVec(
@@ -62,7 +63,7 @@ func init() {
 }
 
 func TaskStartTimeMtc(taskID uint64) {
-	timeMap[taskID] = float64(time.Now().UnixNano()) / 1e9
+	timeMap.Store(taskID, float64(time.Now().UnixNano())/1e9)
 }
 
 func DispatchedTaskNumMtc(projectID uint64, projectVersion string) {
@@ -78,8 +79,9 @@ func TimeoutTaskNumMtc(projectID uint64, projectVersion string) {
 }
 
 func TaskEndTimeMtc(projectID, taskID uint64, projectVersion string) {
-	duration := float64(time.Now().UnixNano())/1e9 - timeMap[taskID]
-	delete(timeMap, taskID)
+	start, _ := timeMap.Load(taskID)
+	duration := float64(time.Now().UnixNano())/1e9 - start.(float64)
+	timeMap.Delete(taskID)
 	taskEndTimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Set(duration)
 
 	taskRuntimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Observe(duration)
