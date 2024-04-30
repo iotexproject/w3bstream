@@ -2,13 +2,9 @@ package metrics
 
 import (
 	"strconv"
-	"sync"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-var timeMap sync.Map
 
 var (
 	dispatchedTaskNumMtc = prometheus.NewCounterVec(
@@ -26,14 +22,14 @@ var (
 			Name: "timeout_task_num_metrics",
 			Help: "timeout task num metrics.",
 		}, []string{"projectID", "projectVersion"})
-	taskEndTimeMtc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "task_end_time_metrics",
-		Help: "task end time metrics.",
+	taskDurationMtc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "task_duration_metrics",
+		Help: "task duration metrics.",
 	}, []string{"projectID", "projectVersion"})
 	taskRuntimeMtc = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "task_runtime_metrics",
 		Help:    "task runtime metrics.",
-		Buckets: nil,
+		Buckets: prometheus.LinearBuckets(0, 60, 10),
 	}, []string{"projectID", "projectVersion"})
 	failedTaskNumMtc = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -55,15 +51,11 @@ func init() {
 	prometheus.MustRegister(dispatchedTaskNumMtc)
 	prometheus.MustRegister(retryTaskNumMtc)
 	prometheus.MustRegister(timeoutTaskNumMtc)
-	prometheus.MustRegister(taskEndTimeMtc)
+	prometheus.MustRegister(taskDurationMtc)
 	prometheus.MustRegister(failedTaskNumMtc)
 	prometheus.MustRegister(succeedTaskNumMtc)
 	prometheus.MustRegister(taskFinalStateNumMtc)
 	prometheus.MustRegister(taskRuntimeMtc)
-}
-
-func TaskStartTimeMtc(taskID uint64) {
-	timeMap.Store(taskID, float64(time.Now().UnixNano())/1e9)
 }
 
 func DispatchedTaskNumMtc(projectID uint64, projectVersion string) {
@@ -78,11 +70,8 @@ func TimeoutTaskNumMtc(projectID uint64, projectVersion string) {
 	timeoutTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
 }
 
-func TaskEndTimeMtc(projectID, taskID uint64, projectVersion string) {
-	start, _ := timeMap.Load(taskID)
-	duration := float64(time.Now().UnixNano())/1e9 - start.(float64)
-	timeMap.Delete(taskID)
-	taskEndTimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Set(duration)
+func TaskDurationMtc(projectID uint64, projectVersion string, duration float64) {
+	taskDurationMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Set(duration)
 
 	taskRuntimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Observe(duration)
 }

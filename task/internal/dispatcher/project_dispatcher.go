@@ -67,7 +67,6 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	d.window.produce(t)
 
 	metrics.DispatchedTaskNumMtc(d.projectID, t.ProjectVersion)
-	metrics.TaskStartTimeMtc(t.ID)
 
 	if err := d.publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
 		return 0, errors.Wrapf(err, "failed to publish data, project_id %v, task_id %v", t.ProjectID, t.ID)

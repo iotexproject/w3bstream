@@ -106,7 +106,7 @@ func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLo
 		return true
 	}
 
-	metrics.TaskEndTimeMtc(t.ProjectID, t.ID, t.ProjectVersion)
+	metrics.TaskDurationMtc(t.ProjectID, t.ProjectVersion, float64(time.Now().UnixNano())/1e9-float64(dispatchedTime.UnixNano())/1e9)
 	metrics.SucceedTaskNumMtc(t.ProjectID, t.ProjectVersion)
 	metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateOutputted.String())
 
