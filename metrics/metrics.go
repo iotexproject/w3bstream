@@ -7,10 +7,6 @@ import (
 )
 
 var (
-	taskStartTimeMtc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "task_start_time_metrics",
-		Help: "task start time metrics.",
-	}, []string{"projectID", "projectVersion", "taskID"})
 	dispatchedTaskNumMtc = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "dispatched_task_num_metrics",
@@ -20,16 +16,21 @@ var (
 		prometheus.CounterOpts{
 			Name: "retry_task_num_metrics",
 			Help: "retry task num metrics.",
-		}, []string{"projectID", "projectVersion", "taskID"})
+		}, []string{"projectID", "projectVersion"})
 	timeoutTaskNumMtc = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "timeout_task_num_metrics",
 			Help: "timeout task num metrics.",
-		}, []string{"projectID", "projectVersion", "taskID"})
-	taskEndTimeMtc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "task_end_time_metrics",
-		Help: "task end time metrics.",
-	}, []string{"projectID", "projectVersion", "taskID"})
+		}, []string{"projectID", "projectVersion"})
+	taskDurationMtc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "task_duration_metrics",
+		Help: "task duration metrics.",
+	}, []string{"projectID", "projectVersion"})
+	taskRuntimeMtc = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "task_runtime_metrics",
+		Help:    "task runtime metrics.",
+		Buckets: prometheus.LinearBuckets(0, 60, 10),
+	}, []string{"projectID", "projectVersion"})
 	failedTaskNumMtc = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "failed_task_num_metrics",
@@ -40,41 +41,39 @@ var (
 			Name: "succeed_task_num_metrics",
 			Help: "succeed task num metrics.",
 		}, []string{"projectID", "projectVersion"})
-	taskFinalStateMtc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "task_final_state_metrics",
-		Help: "task final state metrics.",
-	}, []string{"projectID", "projectVersion", "taskID", "state"})
+	taskFinalStateNumMtc = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "task_final_state_num_metrics",
+		Help: "task final state num metrics.",
+	}, []string{"projectID", "projectVersion", "state"})
 )
 
 func init() {
-	prometheus.MustRegister(taskStartTimeMtc)
 	prometheus.MustRegister(dispatchedTaskNumMtc)
 	prometheus.MustRegister(retryTaskNumMtc)
 	prometheus.MustRegister(timeoutTaskNumMtc)
-	prometheus.MustRegister(taskEndTimeMtc)
+	prometheus.MustRegister(taskDurationMtc)
 	prometheus.MustRegister(failedTaskNumMtc)
 	prometheus.MustRegister(succeedTaskNumMtc)
-	prometheus.MustRegister(taskFinalStateMtc)
-}
-
-func TaskStartTimeMtc(projectID, taskID uint64, projectVersion string) {
-	taskStartTimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10)).SetToCurrentTime()
+	prometheus.MustRegister(taskFinalStateNumMtc)
+	prometheus.MustRegister(taskRuntimeMtc)
 }
 
 func DispatchedTaskNumMtc(projectID uint64, projectVersion string) {
 	dispatchedTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
 }
 
-func RetryTaskNumMtc(projectID, taskID uint64, projectVersion string) {
-	retryTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10)).Inc()
+func RetryTaskNumMtc(projectID uint64, projectVersion string) {
+	retryTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
 }
 
-func TimeoutTaskNumMtc(projectID, taskID uint64, projectVersion string) {
-	timeoutTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10)).Inc()
+func TimeoutTaskNumMtc(projectID uint64, projectVersion string) {
+	timeoutTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
 }
 
-func TaskEndTimeMtc(projectID, taskID uint64, projectVersion string) {
-	taskEndTimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10)).SetToCurrentTime()
+func TaskDurationMtc(projectID uint64, projectVersion string, duration float64) {
+	taskDurationMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Set(duration)
+
+	taskRuntimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Observe(duration)
 }
 
 func FailedTaskNumMtc(projectID uint64, projectVersion string) {
@@ -85,6 +84,6 @@ func SucceedTaskNumMtc(projectID uint64, projectVersion string) {
 	succeedTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
 }
 
-func TaskFinalStateMtc(projectID, taskID uint64, projectVersion, state string) {
-	taskFinalStateMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, strconv.FormatUint(taskID, 10), state).SetToCurrentTime()
+func TaskFinalStateNumMtc(projectID uint64, projectVersion, state string) {
+	taskFinalStateNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, state).Inc()
 }
