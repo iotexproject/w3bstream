@@ -52,7 +52,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	}
 	if s.State == types.TaskStateFailed {
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateFailed.String())
 		return true
 	}
 
@@ -74,7 +74,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	if err != nil {
 		slog.Error("failed to init output", "error", err, "project_id", t.ProjectID)
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateFailed.String())
 
 		if err := h.saveTaskStateLog(&types.TaskStateLog{
 			TaskID:    s.TaskID,
@@ -92,7 +92,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	if err != nil {
 		slog.Error("failed to output", "error", err, "task_id", s.TaskID)
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateFailed.String())
 
 		if err := h.saveTaskStateLog(&types.TaskStateLog{
 			TaskID:    s.TaskID,
@@ -108,7 +108,7 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 
 	metrics.TaskEndTimeMtc(t.ProjectID, t.ID, t.ProjectVersion)
 	metrics.SucceedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-	metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateOutputted.String())
+	metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateOutputted.String())
 
 	if err := h.saveTaskStateLog(&types.TaskStateLog{
 		TaskID:    s.TaskID,
