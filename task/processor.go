@@ -78,7 +78,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 
-	slog.Debug("get a new task", "task_id", t.ID)
+	slog.Debug("get a new task", "project_id", t.ProjectID, "task_id", t.ID)
 	r.reportSuccess(t, types.TaskStateDispatched, nil, "", topic)
 
 	res, err := r.vmHandler.Handle(t, c.VMType, c.Code, c.CodeExpParam)

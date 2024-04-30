@@ -1,6 +1,18 @@
 # Changelog
 
 ---
+## [0.10.1] - 2024-04-26
+
+### Changed
+- Use contract multi call to query block accurate prover&project contract data
+- Change block memeory snapshot logic, now scheduler data more determinate
+- Support "RequiredProverAmountHash" project attribute, now project can define required provers, and change it at running
+- All chain monitor logic summarized in one place, avoid data inconsistencies
+
+### Added
+- task metrics
+
+---
 ## [0.10.0] - 2024-04-12
 
 ### Changed

@@ -21,8 +21,8 @@ func TestPostgres_Create(t *testing.T) {
 		Error:     nil,
 		Statement: &gorm.Statement{},
 	}
-	p = p.ApplyFuncReturn(NewPostgres, &Postgres{db: db}, nil)
-	v, err := NewPostgres("any")
+	p = p.ApplyFuncReturn(New, &Postgres{db: db}, nil)
+	v, err := New("any")
 	r.NoError(err)
 	r.NotNil(v)
 
@@ -80,21 +80,21 @@ func TestNewPostgres(t *testing.T) {
 
 	t.Run("FailedToOpenDSN", func(t *testing.T) {
 		p = testutil.GormOpen(p, nil, errors.New(t.Name()))
-		v, err := NewPostgres("any")
+		v, err := New("any")
 		r.Nil(v)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToMigrate", func(t *testing.T) {
 		p = testutil.GormOpen(p, d, nil)
 		p = testutil.GormDBAutoMigrate(p, errors.New(t.Name()))
-		v, err := NewPostgres("any")
+		v, err := New("any")
 		r.Nil(v)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
 		p = testutil.GormOpen(p, d, nil)
 		p = testutil.GormDBAutoMigrate(p, nil)
-		v, err := NewPostgres("any")
+		v, err := New("any")
 		r.NotNil(v)
 		r.NoError(err)
 	})

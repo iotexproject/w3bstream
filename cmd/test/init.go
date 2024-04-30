@@ -140,7 +140,7 @@ func runProver(conf *proverconfig.Config) {
 		},
 	)
 
-	projectManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProjectFileDirectory)
+	projectManager, err := project.NewLocalManager(conf.ProjectFileDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -162,30 +162,31 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(err)
 	}
 
-	if err := scheduler.Run(conf.SchedulerEpoch, conf.ChainEndpoint, conf.ProverContractAddress, conf.ProjectContractAddress,
-		conf.ProjectFileDirectory, 1, pubSubs, taskProcessor.HandleProjectProvers, projectManager.ProjectIDs); err != nil {
-		log.Fatal(err)
-	}
+	scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager.ProjectIDs)
 
 	slog.Info("prover started")
 }
 
 func runCoordinator(conf *coordinatorconfig.Config) {
-	pg, err := postgres.NewPostgres(conf.DatabaseDSN)
+	pg, err := postgres.New(conf.DatabaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	_ = clients.NewManager()
 
-	projectConfigManager, err := project.NewManager(conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectCacheDirectory, conf.IPFSEndpoint, conf.ProjectFileDirectory)
+	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
+	}
+
+	projectConfigManager, err := project.NewLocalManager(conf.ProjectFileDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := task.RunDispatcher(pg, datasource.NewPostgres, projectConfigManager.ProjectIDs,
-		projectConfigManager.Project, conf.BootNodeMultiAddr, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519,
-		conf.ChainEndpoint, conf.ProjectContractAddress, conf.ProjectFileDirectory, conf.IoTeXChainID); err != nil {
+	if err := task.RunLocalDispatcher(pg, datasource.NewPostgres, projectConfigManager.ProjectIDs,
+		projectConfigManager.Project, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}
 

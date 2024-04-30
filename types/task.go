@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
@@ -75,44 +76,41 @@ type TaskStateLog struct {
 	CreatedAt time.Time
 }
 
-func (l *TaskStateLog) VerifySignature(pubkey string, task *Task) error {
-	proverPubKey, err := hexutil.Decode(pubkey)
-	if err != nil {
-		return errors.Wrap(err, "failed to decode prover pubkey")
-	}
-
+func (l *TaskStateLog) SignerAddress(task *Task) (common.Address, error) {
 	sig, err := hexutil.Decode(task.Signature)
 	if err != nil {
-		return errors.Wrap(err, "failed to decode task signature")
+		return common.Address{}, errors.Wrap(err, "failed to decode task signature")
 	}
 
 	buf := bytes.NewBuffer(nil)
 
 	if err = binary.Write(buf, binary.BigEndian, task.ID); err != nil {
-		return err
+		return common.Address{}, errors.Wrap(err, "failed to write binary")
 	}
 	if err = binary.Write(buf, binary.BigEndian, task.ProjectID); err != nil {
-		return err
+		return common.Address{}, errors.Wrap(err, "failed to write binary")
 	}
 	if _, err = buf.WriteString(task.ClientID); err != nil {
-		return err
+		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
 	if _, err = buf.Write(crypto.Keccak256Hash(task.Data...).Bytes()); err != nil {
-		return err
+		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
 	if _, err = buf.Write(l.Result); err != nil {
-		return err
+		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
 
 	h := crypto.Keccak256Hash(buf.Bytes())
 	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
 	if err != nil {
-		return errors.Wrap(err, "failed to recover public key")
+		return common.Address{}, errors.Wrap(err, "failed to recover public key")
 	}
-	if !bytes.Equal(sigpk, proverPubKey) {
-		return errors.New("proof signature unmatched")
+
+	publicKey, err := crypto.UnmarshalPubkey(sigpk)
+	if err != nil {
+		return common.Address{}, errors.Wrap(err, "failed to unmarshal public key")
 	}
-	return nil
+	return crypto.PubkeyToAddress(*publicKey), nil
 }
 
 func (s TaskState) String() string {
