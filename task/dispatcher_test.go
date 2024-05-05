@@ -5,9 +5,13 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/project"
 	internaldispatcher "github.com/machinefi/sprout/task/internal/dispatcher"
+	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
 )
 
@@ -51,87 +55,118 @@ func TestDispatcher_handleP2PData(t *testing.T) {
 	})
 }
 
-// func TestRunDispatcher(t *testing.T) {
-// 	r := require.New(t)
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+func TestRunDispatcher(t *testing.T) {
+	r := require.New(t)
 
-// 	p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
-// 	p.ApplyFuncReturn(handler.NewTaskStateHandler, nil)
-// 	p.ApplyFuncReturn(dispatch, nil)
-// 	p.ApplyFuncReturn(dummyDispatch, nil)
+	t.Run("FailedToNewPubSubs", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 	err := RunDispatcher(&mockPersistence{}, nil, nil, nil, "", "", "", "", "", "", 0)
-// 	r.NoError(err)
+		p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 
-// 	err = RunDispatcher(&mockPersistence{}, nil, nil, nil, "", "", "", "", "", "/test", 0)
-// 	r.NoError(err)
-// }
+		err := RunDispatcher(&mockPersistence{}, nil, nil,
+			"", "", "", []byte(""), 0,
+			nil, nil, nil)
 
-// func TestDummyDispatch(t *testing.T) {
-// 	r := require.New(t)
+		r.ErrorContains(err, t.Name())
+	})
 
-// 	t.Run("FailedToGetProject", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		pm := &project.Manager{}
-// 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1})
-// 		p.ApplyMethodReturn(pm, "Project", nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+		p.ApplyFuncReturn(handler.NewTaskStateHandler, nil)
+		p.ApplyFuncReturn(dispatch, nil)
 
-// 		err := dummyDispatch(&mockPersistence{}, nil, pm.ProjectIDs, pm.Project, &sync.Map{}, nil, nil)
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("Success", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		err := RunDispatcher(&mockPersistence{}, nil, nil,
+			"", "", "", []byte(""), 0,
+			nil, nil, nil)
+		r.NoError(err)
+	})
+}
 
-// 		pm := &project.Manager{}
-// 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1, 1})
-// 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
-// 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
-// 		p.ApplyFuncReturn(internaldispatcher.NewProjectDispatcher, &internaldispatcher.ProjectDispatcher{}, nil)
+func TestRunLocalDispatcher(t *testing.T) {
+	r := require.New(t)
 
-// 		err := dummyDispatch(&mockPersistence{}, nil, pm.ProjectIDs, pm.Project, &sync.Map{}, &p2p.PubSubs{}, nil)
-// 		r.NoError(err)
-// 	})
-// }
+	t.Run("FailedToNewPubSubs", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// func TestDispatch(t *testing.T) {
-// 	r := require.New(t)
+		p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 
-// 	t.Run("FailedToListAndWatchProject", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		err := RunLocalDispatcher(&mockPersistence{}, nil, nil, nil,
+			"", "", "", []byte(""), 0)
 
-// 		pm := &project.Manager{}
-// 		p.ApplyFuncReturn(contract.ListAndWatchProject, nil, errors.New(t.Name()))
+		r.ErrorContains(err, t.Name())
+	})
 
-// 		err := dispatch(&mockPersistence{}, nil, pm.Project, &sync.Map{}, nil, nil, "", "")
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("Success", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+	t.Run("FailedToGetProject", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		ch := make(chan *contract.BlockProject, 10)
-// 		ch <- &contract.BlockProject{
-// 			Projects: map[uint64]*contract.Project{
-// 				1: {
-// 					ID: 1,
-// 				},
-// 			},
-// 		}
-// 		m := &sync.Map{}
-// 		pm := &project.Manager{}
-// 		p.ApplyFuncReturn(contract.ListAndWatchProject, ch, nil)
-// 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
-// 		p.ApplyFuncReturn(internaldispatcher.NewProjectDispatcher, &internaldispatcher.ProjectDispatcher{}, nil)
-// 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
+		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 
-// 		err := dispatch(&mockPersistence{}, nil, pm.Project, m, &p2p.PubSubs{}, nil, "", "")
-// 		r.NoError(err)
-// 		time.Sleep(20 * time.Millisecond)
-// 		close(ch)
-// 	})
-// }
+		err := RunLocalDispatcher(&mockPersistence{}, nil, func() []uint64 {
+			return []uint64{uint64(0)}
+		}, func(projectID uint64) (*project.Project, error) {
+			return nil, errors.New(t.Name())
+		},
+			"", "", "", []byte(""), 0)
+
+		r.ErrorContains(err, t.Name())
+	})
+
+	t.Run("FailedToAddPubSubs", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
+
+		err := RunLocalDispatcher(&mockPersistence{}, nil, func() []uint64 {
+			return []uint64{uint64(0)}
+		}, func(projectID uint64) (*project.Project, error) {
+			return nil, nil
+		},
+			"", "", "", []byte(""), 0)
+
+		r.ErrorContains(err, t.Name())
+	})
+
+	t.Run("FailedToNewProjectDispatch", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
+		p.ApplyFuncReturn(internaldispatcher.NewProjectDispatcher, nil, errors.New(t.Name()))
+
+		err := RunLocalDispatcher(&mockPersistence{}, nil, func() []uint64 {
+			return []uint64{uint64(0)}
+		}, func(projectID uint64) (*project.Project, error) {
+			return &project.Project{}, nil
+		},
+			"", "", "", []byte(""), 0)
+
+		r.ErrorContains(err, t.Name())
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
+		p.ApplyFuncReturn(internaldispatcher.NewProjectDispatcher, &internaldispatcher.ProjectDispatcher{}, nil)
+
+		err := RunLocalDispatcher(&mockPersistence{}, nil, func() []uint64 {
+			return []uint64{uint64(0)}
+		}, func(projectID uint64) (*project.Project, error) {
+			return &project.Project{}, nil
+		},
+			"", "", "", []byte(""), 0)
+
+		r.NoError(err)
+	})
+}
