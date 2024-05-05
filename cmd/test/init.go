@@ -25,7 +25,8 @@ import (
 	"github.com/machinefi/sprout/persistence/postgres"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/scheduler"
-	"github.com/machinefi/sprout/task"
+	"github.com/machinefi/sprout/task/dispatcher"
+	"github.com/machinefi/sprout/task/processor"
 	"github.com/machinefi/sprout/vm"
 )
 
@@ -155,7 +156,7 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, 1)
+	taskProcessor := processor.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, 1)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
@@ -180,13 +181,12 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	projectConfigManager, err := project.NewLocalManager(conf.ProjectFileDirectory)
+	projectManager, err := project.NewLocalManager(conf.ProjectFileDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := task.RunLocalDispatcher(pg, datasource.NewPostgres, projectConfigManager.ProjectIDs,
-		projectConfigManager.Project, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID); err != nil {
+	if err := dispatcher.RunLocalDispatcher(pg, datasource.NewPostgres, projectManager, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
 	}
 

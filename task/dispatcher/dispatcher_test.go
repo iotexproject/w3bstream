@@ -1,4 +1,4 @@
-package task
+package dispatcher
 
 import (
 	"sync"
@@ -10,8 +10,6 @@ import (
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
-	internaldispatcher "github.com/machinefi/sprout/task/internal/dispatcher"
-	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
 )
 
@@ -20,13 +18,20 @@ type mockPersistence struct{}
 func (m *mockPersistence) Create(tl *types.TaskStateLog, t *types.Task) error {
 	return nil
 }
-
 func (m *mockPersistence) ProcessedTaskID(projectID uint64) (uint64, error) {
 	return 0, nil
 }
-
 func (m *mockPersistence) UpsertProcessedTask(projectID, taskID uint64) error {
 	return nil
+}
+
+type mockProjectManager struct{}
+
+func (m *mockProjectManager) ProjectIDs() []uint64 {
+	return []uint64{uint64(0)}
+}
+func (m *mockProjectManager) Project(projectID uint64) (*project.Project, error) {
+	return nil, nil
 }
 
 func TestDispatcher_handleP2PData(t *testing.T) {
@@ -42,7 +47,7 @@ func TestDispatcher_handleP2PData(t *testing.T) {
 	})
 	t.Run("Success", func(t *testing.T) {
 		pid := uint64(1)
-		pd := &internaldispatcher.ProjectDispatcher{}
+		pd := &projectDispatcher{}
 		d.projectDispatchers.Store(pid, pd)
 
 		p := gomonkey.NewPatches()
@@ -66,7 +71,7 @@ func TestRunDispatcher(t *testing.T) {
 
 		err := RunDispatcher(&mockPersistence{}, nil, nil,
 			"", "", "", []byte(""), 0,
-			nil, nil, nil)
+			nil, nil)
 
 		r.ErrorContains(err, t.Name())
 	})
@@ -76,12 +81,12 @@ func TestRunDispatcher(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
-		p.ApplyFuncReturn(handler.NewTaskStateHandler, nil)
+		p.ApplyFuncReturn(newTaskStateHandler, nil)
 		p.ApplyFuncReturn(dispatch, nil)
 
 		err := RunDispatcher(&mockPersistence{}, nil, nil,
 			"", "", "", []byte(""), 0,
-			nil, nil, nil)
+			nil, nil)
 		r.NoError(err)
 	})
 }
@@ -95,7 +100,7 @@ func TestRunLocalDispatcher(t *testing.T) {
 
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, nil, nil,
+		err := RunLocalDispatcher(&mockPersistence{}, nil, nil,
 			"", "", "", []byte(""), 0)
 
 		r.ErrorContains(err, t.Name())
@@ -105,13 +110,11 @@ func TestRunLocalDispatcher(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
+		pm := &mockProjectManager{}
+		p.ApplyMethodReturn(pm, "Project", nil, errors.New(t.Name()))
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, func() []uint64 {
-			return []uint64{uint64(0)}
-		}, func(projectID uint64) (*project.Project, error) {
-			return nil, errors.New(t.Name())
-		},
+		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
 			"", "", "", []byte(""), 0)
 
 		r.ErrorContains(err, t.Name())
@@ -121,14 +124,12 @@ func TestRunLocalDispatcher(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
+		pm := &mockProjectManager{}
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
+		p.ApplyMethodReturn(pm, "Project", nil, nil)
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, func() []uint64 {
-			return []uint64{uint64(0)}
-		}, func(projectID uint64) (*project.Project, error) {
-			return nil, nil
-		},
+		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
 			"", "", "", []byte(""), 0)
 
 		r.ErrorContains(err, t.Name())
@@ -138,15 +139,13 @@ func TestRunLocalDispatcher(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
+		pm := &mockProjectManager{}
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
-		p.ApplyFuncReturn(internaldispatcher.NewProjectDispatcher, nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, func() []uint64 {
-			return []uint64{uint64(0)}
-		}, func(projectID uint64) (*project.Project, error) {
-			return &project.Project{}, nil
-		},
+		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
 			"", "", "", []byte(""), 0)
 
 		r.ErrorContains(err, t.Name())
@@ -156,15 +155,13 @@ func TestRunLocalDispatcher(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
+		pm := &mockProjectManager{}
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
-		p.ApplyFuncReturn(internaldispatcher.NewProjectDispatcher, &internaldispatcher.ProjectDispatcher{}, nil)
+		p.ApplyFuncReturn(newProjectDispatcher, &projectDispatcher{}, nil)
+		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, func() []uint64 {
-			return []uint64{uint64(0)}
-		}, func(projectID uint64) (*project.Project, error) {
-			return &project.Project{}, nil
-		},
+		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
 			"", "", "", []byte(""), 0)
 
 		r.NoError(err)

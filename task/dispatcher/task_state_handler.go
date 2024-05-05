@@ -1,4 +1,4 @@
-package handler
+package dispatcher
 
 import (
 	"log/slog"
@@ -6,26 +6,18 @@ import (
 
 	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/types"
 )
 
-type SaveTaskStateLog func(s *types.TaskStateLog, t *types.Task) error
-
-type Project func(projectID uint64) (*project.Project, error)
-
-type LatestProvers func() []*contract.Prover
-
-type TaskStateHandler struct {
-	latestProvers             LatestProvers // optional, will be nil in local model
-	saveTaskStateLog          SaveTaskStateLog
-	project                   Project
+type taskStateHandler struct {
+	contract                  Contract // optional, will be nil in local model
+	persistence               Persistence
+	projectManager            ProjectManager
 	operatorPrivateKeyECDSA   string
 	operatorPrivateKeyED25519 string
 }
 
-func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLog, t *types.Task) (finished bool) {
+func (h *taskStateHandler) handle(dispatchedTime time.Time, s *types.TaskStateLog, t *types.Task) (finished bool) {
 	// TODO dispatcher will send a failed TaskStateLog when timeout, without signature. maybe dispatcher need a sig also
 	// if h.latestProvers != nil && s.Signature != "" {
 	// 	ps := h.latestProvers()
@@ -46,7 +38,7 @@ func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLo
 	// 		return
 	// 	}
 	// }
-	if err := h.saveTaskStateLog(s, t); err != nil {
+	if err := h.persistence.Create(s, t); err != nil {
 		slog.Error("failed to create task state log", "error", err, "task_id", s.TaskID)
 		return
 	}
@@ -59,7 +51,7 @@ func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLo
 	if s.State != types.TaskStateProved {
 		return
 	}
-	p, err := h.project(t.ProjectID)
+	p, err := h.projectManager.Project(t.ProjectID)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
 		return
@@ -76,7 +68,7 @@ func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLo
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
 		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateFailed.String())
 
-		if err := h.saveTaskStateLog(&types.TaskStateLog{
+		if err := h.persistence.Create(&types.TaskStateLog{
 			TaskID:    s.TaskID,
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
@@ -94,7 +86,7 @@ func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLo
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
 		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateFailed.String())
 
-		if err := h.saveTaskStateLog(&types.TaskStateLog{
+		if err := h.persistence.Create(&types.TaskStateLog{
 			TaskID:    s.TaskID,
 			State:     types.TaskStateFailed,
 			Comment:   err.Error(),
@@ -110,7 +102,7 @@ func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLo
 	metrics.SucceedTaskNumMtc(t.ProjectID, t.ProjectVersion)
 	metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateOutputted.String())
 
-	if err := h.saveTaskStateLog(&types.TaskStateLog{
+	if err := h.persistence.Create(&types.TaskStateLog{
 		TaskID:    s.TaskID,
 		State:     types.TaskStateOutputted,
 		Comment:   "output type: " + string(c.Output.Type),
@@ -123,11 +115,11 @@ func (h *TaskStateHandler) Handle(dispatchedTime time.Time, s *types.TaskStateLo
 	return true
 }
 
-func NewTaskStateHandler(saveTaskStateLog SaveTaskStateLog, latestProvers LatestProvers, project Project, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *TaskStateHandler {
-	return &TaskStateHandler{
-		latestProvers:             latestProvers,
-		saveTaskStateLog:          saveTaskStateLog,
-		project:                   project,
+func newTaskStateHandler(persistence Persistence, contract Contract, projectManager ProjectManager, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *taskStateHandler {
+	return &taskStateHandler{
+		contract:                  contract,
+		persistence:               persistence,
+		projectManager:            projectManager,
 		operatorPrivateKeyECDSA:   operatorPrivateKeyECDSA,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
 	}
