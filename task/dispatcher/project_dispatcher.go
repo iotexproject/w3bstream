@@ -11,7 +11,7 @@ import (
 	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type projectDispatcher struct {
@@ -24,7 +24,7 @@ type projectDispatcher struct {
 	sequencerPubKey []byte
 }
 
-func (d *projectDispatcher) handle(s *types.TaskStateLog) {
+func (d *projectDispatcher) handle(s *task.StateLog) {
 	d.window.consume(s)
 }
 

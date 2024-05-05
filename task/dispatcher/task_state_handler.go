@@ -6,7 +6,7 @@ import (
 
 	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type taskStateHandler struct {
@@ -17,7 +17,7 @@ type taskStateHandler struct {
 	operatorPrivateKeyED25519 string
 }
 
-func (h *taskStateHandler) handle(dispatchedTime time.Time, s *types.TaskStateLog, t *types.Task) (finished bool) {
+func (h *taskStateHandler) handle(dispatchedTime time.Time, s *task.StateLog, t *task.Task) (finished bool) {
 	// TODO dispatcher will send a failed TaskStateLog when timeout, without signature. maybe dispatcher need a sig also
 	// if h.latestProvers != nil && s.Signature != "" {
 	// 	ps := h.latestProvers()
@@ -42,13 +42,13 @@ func (h *taskStateHandler) handle(dispatchedTime time.Time, s *types.TaskStateLo
 		slog.Error("failed to create task state log", "error", err, "task_id", s.TaskID)
 		return
 	}
-	if s.State == types.TaskStateFailed {
+	if s.State == task.StateFailed {
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, task.StateFailed.String())
 		return true
 	}
 
-	if s.State != types.TaskStateProved {
+	if s.State != task.StateProved {
 		return
 	}
 	p, err := h.projectManager.Project(t.ProjectID)
@@ -66,11 +66,11 @@ func (h *taskStateHandler) handle(dispatchedTime time.Time, s *types.TaskStateLo
 	if err != nil {
 		slog.Error("failed to init output", "error", err, "project_id", t.ProjectID)
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, task.StateFailed.String())
 
-		if err := h.persistence.Create(&types.TaskStateLog{
+		if err := h.persistence.Create(&task.StateLog{
 			TaskID:    s.TaskID,
-			State:     types.TaskStateFailed,
+			State:     task.StateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		}, t); err != nil {
@@ -84,11 +84,11 @@ func (h *taskStateHandler) handle(dispatchedTime time.Time, s *types.TaskStateLo
 	if err != nil {
 		slog.Error("failed to output", "error", err, "task_id", s.TaskID)
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, task.StateFailed.String())
 
-		if err := h.persistence.Create(&types.TaskStateLog{
+		if err := h.persistence.Create(&task.StateLog{
 			TaskID:    s.TaskID,
-			State:     types.TaskStateFailed,
+			State:     task.StateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		}, t); err != nil {
@@ -100,11 +100,11 @@ func (h *taskStateHandler) handle(dispatchedTime time.Time, s *types.TaskStateLo
 
 	metrics.TaskDurationMtc(t.ProjectID, t.ProjectVersion, float64(time.Now().UnixNano())/1e9-float64(dispatchedTime.UnixNano())/1e9)
 	metrics.SucceedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-	metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, types.TaskStateOutputted.String())
+	metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, task.StateOutputted.String())
 
-	if err := h.persistence.Create(&types.TaskStateLog{
+	if err := h.persistence.Create(&task.StateLog{
 		TaskID:    s.TaskID,
-		State:     types.TaskStateOutputted,
+		State:     task.StateOutputted,
 		Comment:   "output type: " + string(c.Output.Type),
 		Result:    []byte(outRes),
 		CreatedAt: time.Now(),

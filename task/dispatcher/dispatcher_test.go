@@ -10,12 +10,12 @@ import (
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type mockPersistence struct{}
 
-func (m *mockPersistence) Create(tl *types.TaskStateLog, t *types.Task) error {
+func (m *mockPersistence) Create(tl *task.StateLog, t *task.Task) error {
 	return nil
 }
 func (m *mockPersistence) ProcessedTaskID(projectID uint64) (uint64, error) {
@@ -43,7 +43,7 @@ func TestDispatcher_handleP2PData(t *testing.T) {
 		d.handleP2PData(&p2p.Data{}, nil)
 	})
 	t.Run("ProjectDispatcherNotExist", func(t *testing.T) {
-		d.handleP2PData(&p2p.Data{TaskStateLog: &types.TaskStateLog{}}, nil)
+		d.handleP2PData(&p2p.Data{TaskStateLog: &task.StateLog{}}, nil)
 	})
 	t.Run("Success", func(t *testing.T) {
 		pid := uint64(1)
@@ -54,7 +54,7 @@ func TestDispatcher_handleP2PData(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(pd, "Handle")
-		d.handleP2PData(&p2p.Data{TaskStateLog: &types.TaskStateLog{
+		d.handleP2PData(&p2p.Data{TaskStateLog: &task.StateLog{
 			ProjectID: pid,
 		}}, nil)
 	})

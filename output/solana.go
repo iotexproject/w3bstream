@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type solanaProgram struct {
@@ -21,7 +21,7 @@ type solanaProgram struct {
 	stateAccountPK string
 }
 
-func (e *solanaProgram) Output(task *types.Task, proof []byte) (string, error) {
+func (e *solanaProgram) Output(task *task.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to solana program", "chain endpoint", e.endpoint)
 	ins := e.packInstructions(proof)
 	txHash, err := e.sendTX(ins)
