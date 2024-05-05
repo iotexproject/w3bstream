@@ -6,7 +6,7 @@ ENV GO111MODULE=on
 WORKDIR /go/src
 COPY ./ ./
 
-RUN cd ./cmd/sequencer && CGO_LDFLAGS='-L./lib/linux-x86_64 -lioConnectCore' go build -o sequencer
+RUN cd ./cmd/sequencer && go build -o sequencer
 
 FROM golang:1.21 AS runtime
 
