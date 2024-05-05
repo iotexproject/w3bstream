@@ -53,7 +53,7 @@ func TestDispatcher_handleP2PData(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(pd, "Handle")
+		p.ApplyPrivateMethod(pd, "handle", func(*types.TaskStateLog) {})
 		d.handleP2PData(&p2p.Data{TaskStateLog: &types.TaskStateLog{
 			ProjectID: pid,
 		}}, nil)
@@ -105,27 +105,25 @@ func TestRunLocalDispatcher(t *testing.T) {
 
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("FailedToGetProject", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		pm := &mockProjectManager{}
 		p.ApplyMethodReturn(pm, "Project", nil, errors.New(t.Name()))
-		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 
 		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
 			"", "", "", []byte(""), 0)
 
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("FailedToAddPubSubs", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		pm := &mockProjectManager{}
-		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 		p.ApplyMethodReturn(pm, "Project", nil, nil)
 
@@ -134,13 +132,12 @@ func TestRunLocalDispatcher(t *testing.T) {
 
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("FailedToNewProjectDispatch", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		pm := &mockProjectManager{}
-		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
@@ -150,13 +147,12 @@ func TestRunLocalDispatcher(t *testing.T) {
 
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		pm := &mockProjectManager{}
-		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
+		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, &projectDispatcher{}, nil)
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
