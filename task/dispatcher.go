@@ -23,10 +23,6 @@ type Persistence interface {
 	UpsertProcessedTask(projectID, taskID uint64) error
 }
 
-type Datasource interface {
-	Retrieve(projectID, nextTaskID uint64) (*types.Task, error)
-}
-
 type ProjectIDs func() []uint64
 
 type dispatcher struct {
