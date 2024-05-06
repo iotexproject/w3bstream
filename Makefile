@@ -1,17 +1,17 @@
 
 DOCKER_COMPOSE_TEST_FILE=./docker-compose-test.yaml
 
-integration_test_depends_stop:
+e2e_test_depends_stop:
 	@docker-compose -f ${DOCKER_COMPOSE_TEST_FILE} down
 
-integration_test_depends_start:
+e2e_test_depends_start:
 	@docker-compose -p w3bstream-sprout -f ${DOCKER_COMPOSE_TEST_FILE} up -d
 
-.PHONY: integration_test_depends
-integration_test_depends: integration_test_depends_stop integration_test_depends_start
+.PHONY: e2e_test_depends
+e2e_test_depends: e2e_test_depends_stop e2e_test_depends_start
 
-integration_test: integration_test_depends
-	@cd cmd/test/ && go test ./... -v
+e2e_test: e2e_test_depends
+	@cd cmd/e2etest/ && go test ./... -v
 
 unit_test:
 	GOARCH=amd64 go test -gcflags="all=-N -l" `go list ./... | grep -v github.com/machinefi/sprout/cmd/e2etest` -covermode=atomic -coverprofile cover.out
