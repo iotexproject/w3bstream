@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"context"
 	"encoding/hex"
 	"testing"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/task"
-	"github.com/machinefi/sprout/vm/server"
 )
 
 func TestHandler_Handle(t *testing.T) {
@@ -37,7 +37,9 @@ func TestHandler_Handle(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&server.Mgr{}, "Acquire", nil, errors.New(t.Name()))
+		p.ApplyPrivateMethod(&manager{}, "acquire", func(uint64, string, string, string) (*instance, error) {
+			return nil, errors.New(t.Name())
+		})
 		_, err := h.Handle(&task.Task{}, ZKwasm, "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
@@ -46,9 +48,13 @@ func TestHandler_Handle(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&server.Mgr{}, "Acquire", &server.Instance{}, nil)
-		p = p.ApplyMethod(&server.Mgr{}, "Release", func(*server.Mgr, uint64, *server.Instance) {})
-		p = p.ApplyMethodReturn(&server.Instance{}, "Execute", nil, errors.New(t.Name()))
+		p.ApplyPrivateMethod(&manager{}, "acquire", func(uint64, string, string, string) (*instance, error) {
+			return &instance{}, nil
+		})
+		p.ApplyPrivateMethod(&manager{}, "release", func(uint64, *instance) {})
+		p.ApplyPrivateMethod(&instance{}, "execute", func(context.Context, *task.Task) ([]byte, error) {
+			return nil, errors.New(t.Name())
+		})
 
 		_, err := h.Handle(&task.Task{}, ZKwasm, "any", "any")
 		r.ErrorContains(err, t.Name())
@@ -58,10 +64,14 @@ func TestHandler_Handle(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&server.Mgr{}, "Acquire", &server.Instance{}, nil)
-		p = p.ApplyMethod(&server.Mgr{}, "Release", func(*server.Mgr, uint64, *server.Instance) {})
-		p = p.ApplyMethodReturn(&server.Instance{}, "Execute", []byte("any"), nil)
-		p = p.ApplyFuncReturn(hex.DecodeString, []byte("any"), nil)
+		p.ApplyPrivateMethod(&manager{}, "acquire", func(uint64, string, string, string) (*instance, error) {
+			return &instance{}, nil
+		})
+		p.ApplyPrivateMethod(&manager{}, "release", func(uint64, *instance) {})
+		p.ApplyPrivateMethod(&instance{}, "execute", func(context.Context, *task.Task) ([]byte, error) {
+			return []byte("any"), nil
+		})
+		p.ApplyFuncReturn(hex.DecodeString, []byte("any"), nil)
 
 		_, err := h.Handle(&task.Task{}, ZKwasm, "any", "any")
 		r.NoError(err)

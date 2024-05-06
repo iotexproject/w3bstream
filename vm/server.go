@@ -1,4 +1,4 @@
-package server
+package vm
 
 import (
 	"context"
@@ -12,12 +12,12 @@ import (
 	"github.com/machinefi/sprout/vm/proto"
 )
 
-type Instance struct {
+type instance struct {
 	conn *grpc.ClientConn
 	resp *proto.CreateResponse
 }
 
-func NewInstance(ctx context.Context, endpoint string, projectID uint64, executeBinary string, expParam string) (*Instance, error) {
+func newInstance(ctx context.Context, endpoint string, projectID uint64, executeBinary string, expParam string) (*instance, error) {
 	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial vm server")
@@ -33,10 +33,10 @@ func NewInstance(ctx context.Context, endpoint string, projectID uint64, execute
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
-	return &Instance{conn: conn, resp: resp}, nil
+	return &instance{conn: conn, resp: resp}, nil
 }
 
-func (i *Instance) Execute(ctx context.Context, task *task.Task) ([]byte, error) {
+func (i *instance) execute(ctx context.Context, task *task.Task) ([]byte, error) {
 	ds := []string{}
 	for _, d := range task.Data {
 		ds = append(ds, string(d))
@@ -57,6 +57,6 @@ func (i *Instance) Execute(ctx context.Context, task *task.Task) ([]byte, error)
 	return resp.Result, nil
 }
 
-func (i *Instance) Release() {
+func (i *instance) release() {
 	i.conn.Close()
 }
