@@ -14,7 +14,7 @@ integration_test: integration_test_depends
 	@cd cmd/test/ && go test ./... -v
 
 unit_test:
-	go test -p 1 -gcflags="all=-N -l" `go list ./... | grep -v github.com/machinefi/sprout/cmd/test` -covermode=atomic -coverprofile cover.out
+	GOARCH=amd64 go test -gcflags="all=-N -l" `go list ./... | grep -v github.com/machinefi/sprout/cmd/test` -covermode=atomic -coverprofile cover.out
 
 .PHONY: contract_test_depends
 contract_test_depends:
