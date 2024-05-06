@@ -42,7 +42,7 @@ jobs:
         #run: go test -gcflags="all=-N -l" ./... -coverprofile cover.out -covermode=atomic
 
       - name: Run E2E tests.
-        run: make integration_test
+        run: make e2e_test
 
       - name: Upload Coverage report to CodeCov
         uses: codecov/codecov-action@v1.0.0
