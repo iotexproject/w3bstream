@@ -13,16 +13,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_newSubscriber(t *testing.T) {
+func Test_newProjectPubSub(t *testing.T) {
 	r := require.New(t)
 
 	t.Run("FailedToJoinTopic", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", nil, errors.New(t.Name()))
 
-		_, err := newSubscriber(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		_, err := newProjectPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -30,10 +30,10 @@ func Test_newSubscriber(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", &pubsub.Topic{}, nil)
-		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", &pubsub.Topic{}, nil)
+		p.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", nil, errors.New(t.Name()))
 
-		_, err := newSubscriber(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		_, err := newProjectPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -41,16 +41,16 @@ func Test_newSubscriber(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", &pubsub.Topic{}, nil)
-		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", &pubsub.Subscription{}, nil)
+		p.ApplyMethodReturn(&pubsub.PubSub{}, "Join", &pubsub.Topic{}, nil)
+		p.ApplyMethodReturn(&pubsub.Topic{}, "Subscribe", &pubsub.Subscription{}, nil)
 
-		_, err := newSubscriber(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
+		_, err := newProjectPubSub(uint64(0x1), &pubsub.PubSub{}, nil, peer.ID("0"))
 		r.NoError(err)
 	})
 }
 
-func Test_subscriber_release(t *testing.T) {
-	ps := &subscriber{
+func Test_projectPubSub_release(t *testing.T) {
+	ps := &projectPubSub{
 		topic:        &pubsub.Topic{},
 		cancel:       func() {},
 		subscription: &pubsub.Subscription{},
@@ -60,8 +60,8 @@ func Test_subscriber_release(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethod(&pubsub.Subscription{}, "Cancel", func() {})
-		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Close", errors.New(t.Name()))
+		p.ApplyMethod(&pubsub.Subscription{}, "Cancel", func() {})
+		p.ApplyMethodReturn(&pubsub.Topic{}, "Close", errors.New(t.Name()))
 
 		ps.release()
 	})
@@ -70,19 +70,19 @@ func Test_subscriber_release(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyMethod(&pubsub.Subscription{}, "Cancel", func() {})
-		p = p.ApplyMethodReturn(&pubsub.Topic{}, "Close", nil)
+		p.ApplyMethod(&pubsub.Subscription{}, "Cancel", func() {})
+		p.ApplyMethodReturn(&pubsub.Topic{}, "Close", nil)
 
 		ps.release()
 	})
 }
 
-func Test_subscriber_run(t *testing.T) {
+func Test_projectPubSub_run(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
 	selfID := peer.ID("self")
-	ps := &subscriber{
+	ps := &projectPubSub{
 		selfID:       selfID,
 		topic:        &pubsub.Topic{},
 		subscription: &pubsub.Subscription{},
