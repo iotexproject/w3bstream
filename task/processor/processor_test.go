@@ -1,4 +1,4 @@
-package task
+package processor
 
 import (
 	"testing"
@@ -12,8 +12,8 @@ import (
 	"github.com/machinefi/sprout/output"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/testutil"
-	"github.com/machinefi/sprout/types"
 	"github.com/machinefi/sprout/vm"
 )
 
@@ -25,7 +25,7 @@ func TestProcessor_ReportFail(t *testing.T) {
 		defer p.Reset()
 
 		testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
-		processor.reportFail(&types.Task{}, errors.New(t.Name()), nil)
+		processor.reportFail(&task.Task{}, errors.New(t.Name()), nil)
 	})
 	t.Run("FailedToPublish", func(t *testing.T) {
 		p := NewPatches()
@@ -33,7 +33,7 @@ func TestProcessor_ReportFail(t *testing.T) {
 
 		testutil.JsonMarshal(p, []byte("any"), nil)
 		testutil.TopicPublish(p, errors.New(t.Name()))
-		processor.reportFail(&types.Task{}, errors.New(t.Name()), nil)
+		processor.reportFail(&task.Task{}, errors.New(t.Name()), nil)
 	})
 }
 
@@ -45,7 +45,7 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 		defer p.Reset()
 
 		testutil.JsonMarshal(p, []byte("any"), errors.New(t.Name()))
-		processor.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, "", nil)
+		processor.reportSuccess(&task.Task{}, task.StatePacked, nil, "", nil)
 	})
 	t.Run("FailedToPublish", func(t *testing.T) {
 		p := NewPatches()
@@ -53,7 +53,7 @@ func TestProcessor_ReportSuccess(t *testing.T) {
 
 		testutil.JsonMarshal(p, []byte("any"), nil)
 		testutil.TopicPublish(p, errors.New(t.Name()))
-		processor.reportSuccess(&types.Task{}, types.TaskStatePacked, nil, "", nil)
+		processor.reportSuccess(&task.Task{}, task.StatePacked, nil, "", nil)
 	})
 }
 
@@ -83,7 +83,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 	})
 
 	data := &p2p.Data{
-		Task: &types.Task{
+		Task: &task.Task{
 			ID:             1,
 			ProjectID:      uint64(0x1),
 			ProjectVersion: "0.1",
@@ -161,7 +161,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
-		p.ApplyMethodReturn(&types.Task{}, "VerifySignature", nil)
+		p.ApplyMethodReturn(&task.Task{}, "VerifySignature", nil)
 		p.ApplyMethodReturn(&vm.Handler{}, "Handle", nil, errors.New(t.Name()))
 		processorReportFail(p)
 		processorReportSuccess(p)
@@ -173,9 +173,9 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
-		p.ApplyMethodReturn(&types.Task{}, "VerifySignature", nil)
+		p.ApplyMethodReturn(&task.Task{}, "VerifySignature", nil)
 		p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
-		p.ApplyPrivateMethod(processor, "signProof", func(*types.Task, []byte) (string, error) { return "", errors.New(t.Name()) })
+		p.ApplyPrivateMethod(processor, "signProof", func(*task.Task, []byte) (string, error) { return "", errors.New(t.Name()) })
 		processorReportFail(p)
 		processorReportSuccess(p)
 
@@ -186,9 +186,9 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(&project.Manager{}, "Project", testProject, nil)
-		p.ApplyMethodReturn(&types.Task{}, "VerifySignature", nil)
+		p.ApplyMethodReturn(&task.Task{}, "VerifySignature", nil)
 		p.ApplyMethodReturn(&vm.Handler{}, "Handle", []byte("res"), nil)
-		p.ApplyPrivateMethod(processor, "signProof", func(*types.Task, []byte) (string, error) { return "", nil })
+		p.ApplyPrivateMethod(processor, "signProof", func(*task.Task, []byte) (string, error) { return "", nil })
 		processorReportSuccess(p)
 
 		processor.HandleP2PData(data, nil)
@@ -202,7 +202,7 @@ func TestProcessor_signProof(t *testing.T) {
 	p := &Processor{
 		proverPrivateKey: sk,
 	}
-	_, err = p.signProof(&types.Task{}, []byte{})
+	_, err = p.signProof(&task.Task{}, []byte{})
 	r.NoError(err)
 }
 
@@ -214,7 +214,7 @@ func TestNewProcessor(t *testing.T) {
 
 func processorReportSuccess(p *Patches) *Patches {
 	var pro *Processor
-	return p.ApplyPrivateMethod(pro, "reportSuccess", func(taskID string, state types.TaskState, comment string, topic *pubsub.Topic) {})
+	return p.ApplyPrivateMethod(pro, "reportSuccess", func(taskID string, state task.State, comment string, topic *pubsub.Topic) {})
 }
 
 func processorReportFail(p *Patches) *Patches {

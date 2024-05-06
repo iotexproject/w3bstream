@@ -19,7 +19,7 @@ import (
 	"github.com/tablelandnetwork/basin-cli/pkg/signing"
 	"github.com/tidwall/gjson"
 
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type textileDB struct {
@@ -27,7 +27,7 @@ type textileDB struct {
 	secretKey *ecdsa.PrivateKey
 }
 
-func (t *textileDB) Output(task *types.Task, proof []byte) (string, error) {
+func (t *textileDB) Output(task *task.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to textileDB", "chain endpoint", t.endpoint)
 	encodedData, err := t.packData(proof)
 	if err != nil {

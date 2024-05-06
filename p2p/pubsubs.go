@@ -29,7 +29,7 @@ func NewPubSubs(handle HandleSubscriptionMessage, bootNodeMultiaddr string, iote
 
 	return &PubSubs{
 		ps:      ps,
-		pubSubs: make(map[uint64]*subscriber),
+		pubSubs: make(map[uint64]*projectPubSub),
 		selfID:  h.ID(),
 		handle:  handle,
 	}, nil
@@ -37,7 +37,7 @@ func NewPubSubs(handle HandleSubscriptionMessage, bootNodeMultiaddr string, iote
 
 type PubSubs struct {
 	mux     sync.RWMutex
-	pubSubs map[uint64]*subscriber
+	pubSubs map[uint64]*projectPubSub
 	ps      *pubsub.PubSub
 	selfID  peer.ID
 	handle  HandleSubscriptionMessage
@@ -51,7 +51,7 @@ func (p *PubSubs) Add(projectID uint64) error {
 		return nil
 	}
 
-	nps, err := newSubscriber(projectID, p.ps, p.handle, p.selfID)
+	nps, err := newProjectPubSub(projectID, p.ps, p.handle, p.selfID)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (p *PubSubs) Delete(projectID uint64) {
 	delete(p.pubSubs, projectID)
 }
 
-func (p *PubSubs) get(projectID uint64) (*subscriber, bool) {
+func (p *PubSubs) get(projectID uint64) (*projectPubSub, bool) {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
 

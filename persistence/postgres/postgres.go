@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type projectProcessedTask struct {
@@ -18,10 +18,10 @@ type projectProcessedTask struct {
 
 type taskStateLog struct {
 	gorm.Model
-	TaskID         uint64          `gorm:"index:state_fetch,not null"`
-	ProjectID      uint64          `gorm:"index:state_fetch,not null"`
-	ProjectVersion string          `gorm:"index:state_fetch,not null"`
-	State          types.TaskState `gorm:"not null"`
+	TaskID         uint64     `gorm:"index:state_fetch,not null"`
+	ProjectID      uint64     `gorm:"index:state_fetch,not null"`
+	ProjectVersion string     `gorm:"index:state_fetch,not null"`
+	State          task.State `gorm:"not null"`
 	Comment        string
 	Result         []byte
 }
@@ -55,7 +55,7 @@ func (p *Postgres) UpsertProcessedTask(projectID, taskID uint64) error {
 	return nil
 }
 
-func (p *Postgres) Create(tl *types.TaskStateLog, t *types.Task) error {
+func (p *Postgres) Create(tl *task.StateLog, t *task.Task) error {
 	l := &taskStateLog{
 		TaskID:         tl.TaskID,
 		ProjectID:      t.ProjectID,
@@ -73,14 +73,14 @@ func (p *Postgres) Create(tl *types.TaskStateLog, t *types.Task) error {
 	return nil
 }
 
-func (p *Postgres) Fetch(taskID, projectID uint64) ([]*types.TaskStateLog, error) {
+func (p *Postgres) Fetch(taskID, projectID uint64) ([]*task.StateLog, error) {
 	ls := []*taskStateLog{}
 	if err := p.db.Order("created_at").Where("task_id = ? AND project_id = ?", taskID, projectID).Find(&ls).Error; err != nil {
 		return nil, errors.Wrapf(err, "failed to query task state log, task_id %v, project_id %v", taskID, projectID)
 	}
-	tls := []*types.TaskStateLog{}
+	tls := []*task.StateLog{}
 	for _, l := range ls {
-		tls = append(tls, &types.TaskStateLog{
+		tls = append(tls, &task.StateLog{
 			TaskID:    taskID,
 			State:     l.State,
 			Comment:   l.Comment,

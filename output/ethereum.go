@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 var (
@@ -35,7 +35,7 @@ type ethereumContract struct {
 	contractMethod  abi.Method
 }
 
-func (e *ethereumContract) Output(task *types.Task, proof []byte) (string, error) {
+func (e *ethereumContract) Output(task *task.Task, proof []byte) (string, error) {
 	params := []interface{}{}
 	for _, a := range e.contractMethod.Inputs {
 		switch a.Name {

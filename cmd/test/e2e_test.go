@@ -14,7 +14,7 @@ import (
 
 	"github.com/machinefi/sprout/apitypes"
 	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 func TestHttpApi(t *testing.T) {
@@ -80,11 +80,11 @@ func TestHttpApi(t *testing.T) {
 				states.ForEach(func(_, v gjson.Result) bool {
 					state := v.Get("state").String()
 					switch state {
-					case types.TaskStateOutputted.String():
+					case task.StateOutputted.String():
 						finalState = state
 						isBreak = true
 						return false
-					case types.TaskStateFailed.String():
+					case task.StateFailed.String():
 						finalState = state
 						isBreak = true
 						return false
@@ -96,7 +96,7 @@ func TestHttpApi(t *testing.T) {
 					break
 				}
 			}
-			r.Equal(types.TaskStateOutputted.String(), finalState)
+			r.Equal(task.StateOutputted.String(), finalState)
 		})
 	})
 
@@ -140,11 +140,11 @@ func TestHttpApi(t *testing.T) {
 				states.ForEach(func(_, v gjson.Result) bool {
 					state := v.Get("state").String()
 					switch state {
-					case types.TaskStateOutputted.String():
+					case task.StateOutputted.String():
 						finalState = state
 						isBreak = true
 						return false
-					case types.TaskStateFailed.String():
+					case task.StateFailed.String():
 						finalState = state
 						isBreak = true
 						return false
@@ -156,7 +156,7 @@ func TestHttpApi(t *testing.T) {
 					break
 				}
 			}
-			r.Equal(types.TaskStateOutputted.String(), finalState)
+			r.Equal(task.StateOutputted.String(), finalState)
 		})
 	})
 }
