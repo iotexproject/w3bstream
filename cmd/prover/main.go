@@ -17,7 +17,7 @@ import (
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
 	"github.com/machinefi/sprout/scheduler"
-	"github.com/machinefi/sprout/task"
+	"github.com/machinefi/sprout/task/processor"
 	"github.com/machinefi/sprout/vm"
 )
 
@@ -92,7 +92,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}
 
-	taskProcessor := task.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, proverID)
+	taskProcessor := processor.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, proverID)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {

@@ -9,29 +9,28 @@ import (
 
 	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/task/internal/handler"
 	"github.com/machinefi/sprout/types"
 )
 
-type dispatcherTask struct {
+type dispatchedTask struct {
 	dispatchedTime time.Time
 	finished       atomic.Bool
 	timeOut        func(s *types.TaskStateLog)
 	cancel         context.CancelFunc
 	waitTime       time.Duration
 	task           *types.Task
-	publish        Publish
-	handler        *handler.TaskStateHandler
+	pubSubs        *p2p.PubSubs
+	handler        *taskStateHandler
 }
 
-func (t *dispatcherTask) handleState(s *types.TaskStateLog) {
-	if t.handler.Handle(t.dispatchedTime, s, t.task) {
+func (t *dispatchedTask) handleState(s *types.TaskStateLog) {
+	if t.handler.handle(t.dispatchedTime, s, t.task) {
 		t.cancel()
 		t.finished.Store(true)
 	}
 }
 
-func (t *dispatcherTask) runWatchdog(ctx context.Context) {
+func (t *dispatchedTask) runWatchdog(ctx context.Context) {
 	retryChan := time.After(t.waitTime)
 	timeoutChan := time.After(2 * t.waitTime)
 	for {
@@ -43,7 +42,7 @@ func (t *dispatcherTask) runWatchdog(ctx context.Context) {
 			slog.Info("retry task", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", t.waitTime)
 			metrics.RetryTaskNumMtc(t.task.ProjectID, t.task.ProjectVersion)
 
-			if err := t.publish(t.task.ProjectID, &p2p.Data{Task: t.task}); err != nil {
+			if err := t.pubSubs.Publish(t.task.ProjectID, &p2p.Data{Task: t.task}); err != nil {
 				slog.Error("failed to publish p2p data", "project_id", t.task.ProjectID, "task_id", t.task.ID)
 			}
 		case <-timeoutChan:
@@ -60,16 +59,16 @@ func (t *dispatcherTask) runWatchdog(ctx context.Context) {
 	}
 }
 
-func newDispatcherTask(task *types.Task, timeOut func(s *types.TaskStateLog), publish Publish, handler *handler.TaskStateHandler) *dispatcherTask {
+func newDispatchedTask(task *types.Task, timeOut func(s *types.TaskStateLog), pubSubs *p2p.PubSubs, handler *taskStateHandler) *dispatchedTask {
 	ctx, cancel := context.WithCancel(context.Background())
-	t := &dispatcherTask{
+	t := &dispatchedTask{
 		dispatchedTime: time.Now(),
 		finished:       atomic.Bool{},
 		timeOut:        timeOut,
 		cancel:         cancel,
 		waitTime:       5 * time.Minute, // TODO define wait time config
 		task:           task,
-		publish:        publish,
+		pubSubs:        pubSubs,
 		handler:        handler,
 	}
 	go t.runWatchdog(ctx)
