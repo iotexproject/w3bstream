@@ -17,7 +17,7 @@ import (
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/persistence/postgres"
 	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/task"
+	"github.com/machinefi/sprout/task/dispatcher"
 )
 
 func main() {
@@ -66,12 +66,12 @@ func main() {
 	}
 
 	if local {
-		err = task.RunLocalDispatcher(persistence, datasource.NewPostgres, projectManager.ProjectIDs, projectManager.Project,
+		err = dispatcher.RunLocalDispatcher(persistence, datasource.NewPostgres, projectManager,
 			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
 	} else {
-		err = task.RunDispatcher(persistence, datasource.NewPostgres, projectManager.Project, conf.BootNodeMultiAddr,
+		err = dispatcher.RunDispatcher(persistence, datasource.NewPostgres, projectManager, conf.BootNodeMultiAddr,
 			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, sequencerPubKey, conf.IoTeXChainID,
-			dispatcherNotification, contractPersistence.LatestProjects, contractPersistence.LatestProvers)
+			dispatcherNotification, contractPersistence)
 	}
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
