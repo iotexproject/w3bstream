@@ -20,7 +20,8 @@ func TestNewPostgres(t *testing.T) {
 		defer p.Reset()
 
 		testutil.GormOpen(p, nil, errors.New(t.Name()))
-		datasource, err := NewPostgres("any")
+		pg := NewPostgres()
+		datasource, err := pg.New("any")
 		r.Nil(datasource)
 		r.ErrorContains(err, t.Name())
 	})
@@ -31,7 +32,8 @@ func TestNewPostgres(t *testing.T) {
 		d := &gorm.DB{}
 
 		testutil.GormOpen(p, d, nil)
-		datasource, err := NewPostgres("any")
+		pg := NewPostgres()
+		datasource, err := pg.New("any")
 		r.NotNil(datasource)
 		r.NoError(err)
 	})

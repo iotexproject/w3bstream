@@ -65,11 +65,13 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}
 
+	datasourcePG := datasource.NewPostgres()
+
 	if local {
-		err = dispatcher.RunLocalDispatcher(persistence, datasource.NewPostgres, projectManager,
+		err = dispatcher.RunLocalDispatcher(persistence, datasourcePG.New, projectManager,
 			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
 	} else {
-		err = dispatcher.RunDispatcher(persistence, datasource.NewPostgres, projectManager, conf.BootNodeMultiAddr,
+		err = dispatcher.RunDispatcher(persistence, datasourcePG.New, projectManager, conf.BootNodeMultiAddr,
 			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, sequencerPubKey, conf.IoTeXChainID,
 			dispatcherNotification, contractPersistence)
 	}
