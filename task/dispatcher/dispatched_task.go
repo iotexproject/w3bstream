@@ -9,21 +9,21 @@ import (
 
 	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type dispatchedTask struct {
 	dispatchedTime time.Time
 	finished       atomic.Bool
-	timeOut        func(s *types.TaskStateLog)
+	timeOut        func(s *task.StateLog)
 	cancel         context.CancelFunc
 	waitTime       time.Duration
-	task           *types.Task
+	task           *task.Task
 	pubSubs        *p2p.PubSubs
 	handler        *taskStateHandler
 }
 
-func (t *dispatchedTask) handleState(s *types.TaskStateLog) {
+func (t *dispatchedTask) handleState(s *task.StateLog) {
 	if t.handler.handle(t.dispatchedTime, s, t.task) {
 		t.cancel()
 		t.finished.Store(true)
@@ -49,9 +49,9 @@ func (t *dispatchedTask) runWatchdog(ctx context.Context) {
 			slog.Info("task timeout", "project_id", t.task.ProjectID, "task_id", t.task.ID, "wait_time", 2*t.waitTime)
 			metrics.TimeoutTaskNumMtc(t.task.ProjectID, t.task.ProjectVersion)
 
-			t.timeOut(&types.TaskStateLog{
+			t.timeOut(&task.StateLog{
 				TaskID:    t.task.ID,
-				State:     types.TaskStateFailed,
+				State:     task.StateFailed,
 				Comment:   fmt.Sprintf("task timeout, number of retries %v, total waiting time %v", 1, 2*t.waitTime),
 				CreatedAt: time.Now(),
 			})
@@ -59,7 +59,7 @@ func (t *dispatchedTask) runWatchdog(ctx context.Context) {
 	}
 }
 
-func newDispatchedTask(task *types.Task, timeOut func(s *types.TaskStateLog), pubSubs *p2p.PubSubs, handler *taskStateHandler) *dispatchedTask {
+func newDispatchedTask(task *task.Task, timeOut func(s *task.StateLog), pubSubs *p2p.PubSubs, handler *taskStateHandler) *dispatchedTask {
 	ctx, cancel := context.WithCancel(context.Background())
 	t := &dispatchedTask{
 		dispatchedTime: time.Now(),

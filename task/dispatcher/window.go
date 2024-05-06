@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type window struct {
@@ -18,7 +18,7 @@ type window struct {
 	persistence Persistence
 }
 
-func (w *window) consume(s *types.TaskStateLog) {
+func (w *window) consume(s *task.StateLog) {
 	w.cond.L.Lock()
 	defer w.cond.Broadcast()
 	defer w.cond.L.Unlock()
@@ -32,7 +32,7 @@ func (w *window) consume(s *types.TaskStateLog) {
 	w.deQueue()
 }
 
-func (w *window) produce(t *types.Task) {
+func (w *window) produce(t *task.Task) {
 	w.cond.L.Lock()
 	for w.isFull() {
 		w.cond.Wait()

@@ -17,13 +17,13 @@ import (
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 	"github.com/machinefi/sprout/util/distance"
 	"github.com/machinefi/sprout/vm"
 )
 
 type VMHandler interface {
-	Handle(task *types.Task, vmtype vm.Type, code string, expParam string) ([]byte, error)
+	Handle(task *task.Task, vmtype vm.Type, code string, expParam string) ([]byte, error)
 }
 
 type Project func(projectID uint64) (*project.Project, error)
@@ -79,7 +79,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	}
 
 	slog.Debug("get a new task", "project_id", t.ProjectID, "task_id", t.ID)
-	r.reportSuccess(t, types.TaskStateDispatched, nil, "", topic)
+	r.reportSuccess(t, task.StateDispatched, nil, "", topic)
 
 	res, err := r.vmHandler.Handle(t, c.VMType, c.Code, c.CodeExpParam)
 	if err != nil {
@@ -94,10 +94,10 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		return
 	}
 
-	r.reportSuccess(t, types.TaskStateProved, res, signature, topic)
+	r.reportSuccess(t, task.StateProved, res, signature, topic)
 }
 
-func (r *Processor) signProof(t *types.Task, res []byte) (string, error) {
+func (r *Processor) signProof(t *task.Task, res []byte) (string, error) {
 	// TODO: use protobuf or json to encode
 	buf := bytes.NewBuffer(nil)
 
@@ -125,12 +125,12 @@ func (r *Processor) signProof(t *types.Task, res []byte) (string, error) {
 	return hexutil.Encode(sig), nil
 }
 
-func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
+func (r *Processor) reportFail(t *task.Task, err error, topic *pubsub.Topic) {
 	d, err := json.Marshal(&p2p.Data{
-		TaskStateLog: &types.TaskStateLog{
+		TaskStateLog: &task.StateLog{
 			TaskID:    t.ID,
 			ProjectID: t.ProjectID,
-			State:     types.TaskStateFailed,
+			State:     task.StateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		},
@@ -144,9 +144,9 @@ func (r *Processor) reportFail(t *types.Task, err error, topic *pubsub.Topic) {
 	}
 }
 
-func (r *Processor) reportSuccess(t *types.Task, state types.TaskState, result []byte, signature string, topic *pubsub.Topic) {
+func (r *Processor) reportSuccess(t *task.Task, state task.State, result []byte, signature string, topic *pubsub.Topic) {
 	d, err := json.Marshal(&p2p.Data{
-		TaskStateLog: &types.TaskStateLog{
+		TaskStateLog: &task.StateLog{
 			TaskID:    t.ID,
 			ProjectID: t.ProjectID,
 			State:     state,

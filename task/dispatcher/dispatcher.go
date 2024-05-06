@@ -12,7 +12,7 @@ import (
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type NewDatasource func(datasourceURI string) (datasource.Datasource, error)
@@ -28,7 +28,7 @@ type ProjectManager interface {
 }
 
 type Persistence interface {
-	Create(tl *types.TaskStateLog, t *types.Task) error
+	Create(tl *task.StateLog, t *task.Task) error
 	ProcessedTaskID(projectID uint64) (uint64, error)
 	UpsertProcessedTask(projectID, taskID uint64) error
 }
