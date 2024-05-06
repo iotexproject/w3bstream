@@ -18,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 var (
@@ -73,7 +73,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
 
-			txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
+			txHash, err := o.Output(&task.Task{}, []byte("any proof data"))
 			r.Equal(txHash, txHashRet)
 			r.NoError(err)
 		})
@@ -92,7 +92,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
 
-			txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
+			txHash, err := o.Output(&task.Task{}, []byte("any proof data"))
 			r.Equal(txHash, txHashRet)
 			r.NoError(err)
 		})
@@ -112,7 +112,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			r.True(ok)
 
 			t.Run("ReceiverAddressNotInConfig", func(t *testing.T) {
-				txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
+				txHash, err := o.Output(&task.Task{}, []byte("any proof data"))
 				r.Equal(txHash, "")
 				r.Equal(err, errMissingReceiverParam)
 			})
@@ -124,7 +124,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			r.True(ok)
 
 			t.Run("Success", func(t *testing.T) {
-				txHash, err := o.Output(&types.Task{}, []byte("any proof data"))
+				txHash, err := o.Output(&task.Task{}, []byte("any proof data"))
 				r.Equal(txHash, txHashRet)
 				r.NoError(err)
 			})
@@ -145,7 +145,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			r.True(ok)
 
 			t.Run("FailedToDecodeProof", func(t *testing.T) {
-				txHash, err := o.Output(&types.Task{}, []byte("INVALID_HEX_DECODE"))
+				txHash, err := o.Output(&task.Task{}, []byte("INVALID_HEX_DECODE"))
 				r.Equal(txHash, "")
 				r.Error(err)
 			})
@@ -159,7 +159,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				r.NoError(err)
 				hexdata := hex.EncodeToString(data)
 
-				txHash, err := o.Output(&types.Task{}, []byte(hexdata))
+				txHash, err := o.Output(&task.Task{}, []byte(hexdata))
 				r.Equal(txHash, "")
 				r.Equal(err, errSnarkProofDataMissingFieldSnark)
 			})
@@ -179,7 +179,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				_, ok := o.(*ethereumContract)
 				r.True(ok)
 
-				txHash, err := o.Output(&types.Task{
+				txHash, err := o.Output(&task.Task{
 					ProjectID: 1,
 					Data:      [][]byte{[]byte(`{"other":""}`)},
 				}, nil)
@@ -195,7 +195,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(&types.Task{
+					txHash, err := o.Output(&task.Task{
 						ProjectID: 1,
 						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
@@ -209,7 +209,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(&types.Task{
+					txHash, err := o.Output(&task.Task{
 						ProjectID: 1,
 						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
@@ -223,7 +223,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(&types.Task{
+					txHash, err := o.Output(&task.Task{
 						ProjectID: 1,
 						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
@@ -247,7 +247,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			o, err := New(conf, "1", "")
 			r.NoError(err)
 
-			txHash, err := o.Output(&types.Task{
+			txHash, err := o.Output(&task.Task{
 				ProjectID: 1,
 				Data:      [][]byte{[]byte(`{"other":""}`)},
 			}, nil)
@@ -270,7 +270,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			o, err := New(conf, "1", "")
 			r.NoError(err)
 
-			txHash, err := o.Output(&types.Task{
+			txHash, err := o.Output(&task.Task{
 				ProjectID: 1,
 				Data:      [][]byte{[]byte(`{"other":""}`)},
 			}, nil)
@@ -292,7 +292,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 		o, err := New(conf, "1", "")
 		r.NoError(err)
 
-		txHash, err := o.Output(&types.Task{
+		txHash, err := o.Output(&task.Task{
 			ProjectID: 1,
 			Data:      [][]byte{[]byte(`{"other":""}`)},
 		}, nil)

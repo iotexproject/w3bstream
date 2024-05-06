@@ -1,6 +1,6 @@
 package output
 
-import "github.com/machinefi/sprout/types"
+import "github.com/machinefi/sprout/task"
 
 type Type string
 
@@ -37,7 +37,7 @@ type TextileConfig struct {
 }
 
 type Output interface {
-	Output(task *types.Task, proof []byte) (string, error)
+	Output(task *task.Task, proof []byte) (string, error)
 }
 
 func New(conf *Config, privateKeyECDSA, privateKeyED25519 string) (Output, error) {

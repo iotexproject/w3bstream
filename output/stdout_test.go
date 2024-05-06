@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 func Test_stdout_Output(t *testing.T) {
 	r := require.New(t)
 	o := &stdout{}
-	_, err := o.Output(&types.Task{}, []byte("any"))
+	_, err := o.Output(&task.Task{}, []byte("any"))
 	r.NoError(err)
 }
