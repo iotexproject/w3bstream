@@ -130,8 +130,6 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(req)
-
 	// validate project permission
 	if clientID != "" {
 		// TODO consider if project has public attribute

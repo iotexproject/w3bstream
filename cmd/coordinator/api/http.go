@@ -41,7 +41,7 @@ func NewHttpServer(persistence *postgres.Postgres, conf *config.Config) *HttpSer
 	}
 
 	if len(s.conf.OperatorPrivateKeyED25519) > 0 {
-		wallet, err := solanatypes.AccountFromHex(s.conf.ServiceEndpoint)
+		wallet, err := solanatypes.AccountFromHex(s.conf.OperatorPrivateKeyED25519)
 		if err != nil {
 			panic(errors.Wrapf(err, "invalid solana wallet address"))
 		}

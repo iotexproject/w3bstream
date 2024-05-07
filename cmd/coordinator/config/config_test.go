@@ -5,9 +5,12 @@ import (
 	"strconv"
 	"testing"
 
+	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/cmd/coordinator/config"
+	"github.com/machinefi/sprout/cmd/internal"
 )
 
 func TestConfig_Init(t *testing.T) {
@@ -63,5 +66,44 @@ func TestConfig_Init(t *testing.T) {
 			r.NotNil(recover())
 		}()
 		_ = c.Init()
+	})
+
+	t.Run("FailedToParseEnv", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(internal.ParseEnv, errors.New(t.Name()))
+
+		c := &config.Config{}
+		err := c.Init()
+		r.ErrorContains(err, t.Name())
+	})
+}
+
+func TestGet(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("GetDefaultTestConfig", func(t *testing.T) {
+		_ = os.Setenv("COORDINATOR_ENV", "INTEGRATION_TEST")
+
+		conf, err := config.Get()
+		r.NoError(err)
+		r.Equal(":19001", conf.ServiceEndpoint)
+	})
+
+	t.Run("GetDefaultDebugConfig", func(t *testing.T) {
+		_ = os.Setenv("COORDINATOR_ENV", "LOCAL_DEBUG")
+
+		conf, err := config.Get()
+		r.NoError(err)
+		r.Equal(":9001", conf.ServiceEndpoint)
+	})
+
+	t.Run("GetDefaultConfig", func(t *testing.T) {
+		_ = os.Setenv("COORDINATOR_ENV", "PROD")
+
+		conf, err := config.Get()
+		r.NoError(err)
+		r.Equal(":9001", conf.ServiceEndpoint)
 	})
 }

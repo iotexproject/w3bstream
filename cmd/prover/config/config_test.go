@@ -5,8 +5,11 @@ import (
 	"strconv"
 	"testing"
 
+	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
+	"github.com/machinefi/sprout/cmd/internal"
 	"github.com/machinefi/sprout/cmd/prover/config"
 )
 
@@ -60,5 +63,44 @@ func TestConfig_Init(t *testing.T) {
 			r.NotNil(recover())
 		}()
 		_ = c.Init()
+	})
+
+	t.Run("FailedToParseEnv", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(internal.ParseEnv, errors.New(t.Name()))
+
+		c := &config.Config{}
+		err := c.Init()
+		r.ErrorContains(err, t.Name())
+	})
+}
+
+func TestGet(t *testing.T) {
+	r := require.New(t)
+
+	t.Run("GetDefaultTestConfig", func(t *testing.T) {
+		_ = os.Setenv("PROVER_ENV", "INTEGRATION_TEST")
+
+		conf, err := config.Get()
+		r.NoError(err)
+		r.Equal("localhost:14001", conf.Risc0ServerEndpoint)
+	})
+
+	t.Run("GetDefaultDebugConfig", func(t *testing.T) {
+		_ = os.Setenv("PROVER_ENV", "LOCAL_DEBUG")
+
+		conf, err := config.Get()
+		r.NoError(err)
+		r.Equal("localhost:4001", conf.Risc0ServerEndpoint)
+	})
+
+	t.Run("GetDefaultConfig", func(t *testing.T) {
+		_ = os.Setenv("PROVER_ENV", "PROD")
+
+		conf, err := config.Get()
+		r.NoError(err)
+		r.Equal("risc0:4001", conf.Risc0ServerEndpoint)
 	})
 }
