@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"encoding/json"
+	"sync"
 
 	"github.com/pkg/errors"
 	"gorm.io/datatypes"
@@ -71,12 +72,33 @@ func (p *postgres) Retrieve(projectID, nextTaskID uint64) (*tasktype.Task, error
 	}, nil
 }
 
-func NewPostgres(dsn string) (Datasource, error) {
+type Postgres struct {
+	mux sync.Mutex
+	ps  map[string]*postgres
+}
+
+func (p *Postgres) New(dsn string) (Datasource, error) {
+	p.mux.Lock()
+	defer p.mux.Unlock()
+
+	d, ok := p.ps[dsn]
+	if ok {
+		return d, nil
+	}
+
 	db, err := gorm.Open(pgdriver.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect postgres")
+		return nil, errors.Wrapf(err, "failed to connect postgres, dsn %s", dsn)
 	}
-	return &postgres{db}, nil
+	d = &postgres{db}
+	p.ps[dsn] = d
+	return d, nil
+}
+
+func NewPostgres() *Postgres {
+	return &Postgres{
+		ps: map[string]*postgres{},
+	}
 }
