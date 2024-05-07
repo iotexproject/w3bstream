@@ -26,7 +26,7 @@ func TestProver_Merge(t *testing.T) {
 		OperatorAddress: common.Address{1},
 		NodeTypes:       1,
 	}
-	np.Merge(diff)
+	np.merge(diff)
 	r.Equal(np, diff)
 }
 
@@ -52,7 +52,7 @@ func TestBlockProver_Merge(t *testing.T) {
 		},
 	}
 
-	np.Merge(diff)
+	np.merge(diff)
 	r.Equal(np, diff)
 }
 
