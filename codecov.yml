@@ -17,11 +17,10 @@ ignore:
   # generated proto
   - vm/proto
   # generated contracts
-  - project/contracts
   - smartcontracts
-  - persistence/znode
   # test utils
   - test
   - testutil
   # e2e test
-  - cmd/tests
+  - cmd/e2etest
+  - cmd/stresstest
