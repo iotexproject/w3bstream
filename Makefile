@@ -11,7 +11,7 @@ e2e_test_depends_start:
 e2e_test_depends: e2e_test_depends_stop e2e_test_depends_start
 
 e2e_test: e2e_test_depends
-	@cd cmd/e2etest/ && go test ./... -v
+	@cd cmd/e2etest/ && CGO_LDFLAGS='-L../sequencer/lib/linux-x86_64 -lioConnectCore' go test ./... -v
 
 unit_test:
 	GOARCH=amd64 go test -gcflags="all=-N -l" `go list ./... | grep -v github.com/machinefi/sprout/cmd/e2etest` -covermode=atomic -coverprofile cover.out
