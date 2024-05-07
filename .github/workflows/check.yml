@@ -37,7 +37,7 @@ jobs:
           go-version: 1.21
 
       - name: Run Unit tests.
-        # skip integration testing
+        # skip e2e testing
         run: go test -p 1 -gcflags="all=-N -l" `go list ./... | grep -v github.com/machinefi/sprout/cmd/e2etest` -covermode=atomic -coverprofile cover.out
         #run: go test -gcflags="all=-N -l" ./... -coverprofile cover.out -covermode=atomic
 
