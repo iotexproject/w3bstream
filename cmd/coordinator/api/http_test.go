@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/ecdsa"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -139,19 +140,14 @@ func TestHttpServer_getTaskStateLog(t *testing.T) {
 		persistence: &postgres.Postgres{},
 	}
 
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Params = []gin.Param{
-		{Key: "project_id", Value: "123"},
-		{Key: "task_id", Value: "456"},
-	}
-
 	t.Run("FailedToParseProjectID", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(strconv.ParseUint, uint64(0), errors.New(t.Name()))
 
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
 		s.getTaskStateLog(c)
 		r.Equal(http.StatusBadRequest, w.Code)
 
@@ -173,10 +169,13 @@ func TestHttpServer_getTaskStateLog(t *testing.T) {
 		}
 		p.ApplyFuncSeq(strconv.ParseUint, outputs)
 
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
 		s.getTaskStateLog(c)
 		r.Equal(http.StatusBadRequest, w.Code)
 
 		actualResponse := &apitypes.ErrRsp{}
+		fmt.Println(string(w.Body.Bytes()))
 		err := json.Unmarshal(w.Body.Bytes(), &actualResponse)
 		r.NoError(err)
 		r.Equal(&apitypes.ErrRsp{
@@ -195,6 +194,8 @@ func TestHttpServer_getTaskStateLog(t *testing.T) {
 		p.ApplyFuncSeq(strconv.ParseUint, outputs)
 		p.ApplyMethodReturn(&postgres.Postgres{}, "Fetch", nil, errors.New(t.Name()))
 
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
 		s.getTaskStateLog(c)
 		r.Equal(http.StatusInternalServerError, w.Code)
 
@@ -219,6 +220,8 @@ func TestHttpServer_getTaskStateLog(t *testing.T) {
 		p.ApplyFuncSeq(strconv.ParseUint, outputs)
 		p.ApplyMethodReturn(&postgres.Postgres{}, "Fetch", []*task.StateLog{}, nil)
 
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
 		s.getTaskStateLog(c)
 		r.Equal(http.StatusOK, w.Code)
 
@@ -253,6 +256,8 @@ func TestHttpServer_getTaskStateLog(t *testing.T) {
 		p.ApplyFuncSeq(strconv.ParseUint, outputs)
 		p.ApplyMethodReturn(&postgres.Postgres{}, "Fetch", ts, nil)
 
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
 		s.getTaskStateLog(c)
 		r.Equal(http.StatusOK, w.Code)
 
