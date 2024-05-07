@@ -40,6 +40,7 @@ type sequencerConf struct {
 	databaseDSN       string
 	coordinatorAddr   string
 	didAuthServerAddr string
+	did               bool
 }
 
 func seqConf(coordinatorEndpoint, didAuthServerAddr string) *sequencerConf {
@@ -49,6 +50,7 @@ func seqConf(coordinatorEndpoint, didAuthServerAddr string) *sequencerConf {
 		databaseDSN:       "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		coordinatorAddr:   fmt.Sprintf("localhost%s", coordinatorEndpoint),
 		didAuthServerAddr: didAuthServerAddr,
+		did:               false,
 	}
 }
 
@@ -66,7 +68,7 @@ func init() {
 	}
 
 	conf := seqConf(coordinatorConf.ServiceEndpoint, coordinatorConf.DIDAuthServerEndpoint)
-	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddr, conf.didAuthServerAddr, conf.endpoint)
+	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddr, conf.didAuthServerAddr, conf.endpoint, conf.did)
 	go runProver(proverConf)
 	go runCoordinator(coordinatorConf)
 
@@ -201,7 +203,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 	slog.Info("coordinator started")
 }
 
-func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address string) {
+func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address string, did bool) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(int(slog.LevelDebug))})))
 
 	sk, err := crypto.HexToECDSA(privateKey)
@@ -219,7 +221,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 	}
 
 	go func() {
-		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk).Run(address); err != nil {
+		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk, did).Run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()

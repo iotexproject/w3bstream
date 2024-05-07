@@ -1,6 +1,7 @@
 # IoTeX W3bstream (Sprout Release 🍀)
 
 W3bstream is an integral part of the IoTeX network. It is a Layer-2 protocol orchestrated by the IoTeX Blockchain, dedicated to facilitating decentralized data processing in blockchain ecosystems. W3bstream nodes fetch raw data messages from supported data infrastructures and process them through project-specific ZK circuits to generate Zero-Knowledge (ZK) Proofs. These proofs are then dispatched to dApps on different blockchains and verified on-chain, enabling dApps to securely act on validated data insights. W3bstream enhances scalability and trust in blockchain applications, particularly where actions depend on the integrity of real-world data, such as in supply chain management, IoT, or any DePIN network where data authenticity triggers significant incentives on the blockchain.
+
 ## Architecture
 
 <p align="center">
@@ -16,6 +17,13 @@ The diagram represents the main components of the software and how they interact
 - IPFS: Project config data is stored on IPFS. Users who want to publish a new project can use [ioctl](https://docs.iotex.io/the-iotex-stack/reference/ioctl-cli-reference) to push the project config file to IPFS.
 - Chain contract: Projects and provers are registered in IoTeX contracts. They are publicly available and open to all to register.
 - ZK runtime: Three ZK runtimes are supported, including Halo2, ZkWasm, and Risc0. A project could specify the runtime to be used in the project.
+
+## Docker images
+
+* [sequencer](https://github.com/machinefi/sprout/pkgs/container/sequencer)
+* [prover](https://github.com/machinefi/sprout/pkgs/container/prover)
+* [coordinator](https://github.com/machinefi/sprout/pkgs/container/coordinator)
+
 
 ## Running
 

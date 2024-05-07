@@ -2,19 +2,19 @@ version: "3.6"
 
 services:
   sequencer:
-    image: huangzhiran/sequencer:v0.10.1
+    image: ghcr.io/machinefi/sequencer:v0.10.1
     depends_on:
       - "postgres"
       - "coordinator"
     container_name: w3bstream-sequencer
-    platform: linux/x86_64
+    platform: linux/amd64
     restart: always
     ports:
       - "9000:9000"
     command: [ "-coordinatorAddress", "coordinator:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
 
   coordinator:
-    image: huangzhiran/coordinator:v0.10.1
+    image: ghcr.io/machinefi/coordinator:v0.10.1
     depends_on:
       - "postgres"
     container_name: w3bstream-coordinator
@@ -31,7 +31,7 @@ services:
       - ./test/container_model:/data
 
   prover:
-    image: huangzhiran/prover:v0.10.1
+    image: ghcr.io/machinefi/prover:v0.10.1
     depends_on:
       - "risc0"
       - "halo2"
@@ -93,13 +93,10 @@ services:
     volumes:
       - ./postgres:/var/lib/postgresql/data
 
-  didkit:
-    image: ghcr.io/spruceid/didkit-http:latest
+  srv-did-vc:
+    image: ghcr.io/machinefi/ioconnect-go:v0.0.1
     platform: linux/amd64
-    container_name: didkit-http
+    container_name: srv-did-vc
     restart: always
-    environment:
-      DIDKIT_HTTP_HTTP_PORT: 9999
-      DIDKIT_HTTP_HTTP_ADDRESS: '[0,0,0,0]'
-      DIDKIT_HTTP_HTTP_BODYSIZELIMIT: 2097152
-      DIDKIT_HTTP_ISSUER_KEYS: '[{"kty":"OKP","crv":"Ed25519","x":"THRnf4Zj7gh93XTnII8G0tQIoYb4IbkoTqcy5TNKJlg","d":"es8N8nmdU9o5wWdCEMc2xKCigN1LKc6xro1efDy7Y7M"}, {"kty":"OKP","crv":"Ed25519","x":"STSryIxBN3pyC5YQ5GnjlMmILUWcb5M0_sHpqxxmsog","d":"BiKwVOhhI-fcMMjfcxo2AdB3ygamMmgcMzjaOUl7O6s"}]'
+    ports:
+      - "9999:9999"
