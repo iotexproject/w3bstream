@@ -1,14 +1,14 @@
 # ghcr.io/machinefi/sequencer:latest
-FROM golang:1.21 AS builder
+FROM --platform=linux/amd64 golang:1.22 AS builder
 
 ENV GO111MODULE=on
 
 WORKDIR /go/src
 COPY ./ ./
 
-RUN cd ./cmd/sequencer && go build -o sequencer
+RUN cd ./cmd/sequencer && CGO_LDFLAGS='-L./lib/linux-x86_64 -lioConnectCore' go build -ldflags "-s -w -extldflags '-static'" -o sequencer
 
-FROM golang:1.21 AS runtime
+FROM --platform=linux/amd64 scratch AS runtime
 
 COPY --from=builder /go/src/cmd/sequencer/sequencer /go/bin/sequencer
 EXPOSE 9000

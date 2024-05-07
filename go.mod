@@ -1,12 +1,14 @@
 module github.com/machinefi/sprout
 
-go 1.21
+go 1.22.0
+
+toolchain go1.22.2
 
 require (
 	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/blocto/solana-go-sdk v1.26.0
 	github.com/ethereum/go-ethereum v1.13.4
-	github.com/fatih/color v1.14.1
+	github.com/fatih/color v1.16.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.5.0
 	github.com/ipfs/go-ipfs-api v0.7.0
@@ -15,6 +17,7 @@ require (
 	github.com/libp2p/go-libp2p v0.32.2
 	github.com/libp2p/go-libp2p-kad-dht v0.25.2
 	github.com/libp2p/go-libp2p-pubsub v0.10.0
+	github.com/machinefi/ioconnect-go v0.0.3
 	github.com/multiformats/go-multiaddr v0.12.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.18.0
