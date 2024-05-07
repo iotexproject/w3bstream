@@ -1,4 +1,4 @@
-package handler
+package dispatcher
 
 import (
 	"log/slog"
@@ -6,26 +6,18 @@ import (
 
 	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
-type SaveTaskStateLog func(s *types.TaskStateLog, t *types.Task) error
-
-type Project func(projectID uint64) (*project.Project, error)
-
-type LatestProvers func() []*contract.Prover
-
-type TaskStateHandler struct {
-	latestProvers             LatestProvers // optional, will be nil in local model
-	saveTaskStateLog          SaveTaskStateLog
-	project                   Project
+type taskStateHandler struct {
+	contract                  Contract // optional, will be nil in local model
+	persistence               Persistence
+	projectManager            ProjectManager
 	operatorPrivateKeyECDSA   string
 	operatorPrivateKeyED25519 string
 }
 
-func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finished bool) {
+func (h *taskStateHandler) handle(dispatchedTime time.Time, s *task.StateLog, t *task.Task) (finished bool) {
 	// TODO dispatcher will send a failed TaskStateLog when timeout, without signature. maybe dispatcher need a sig also
 	// if h.latestProvers != nil && s.Signature != "" {
 	// 	ps := h.latestProvers()
@@ -46,20 +38,20 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	// 		return
 	// 	}
 	// }
-	if err := h.saveTaskStateLog(s, t); err != nil {
+	if err := h.persistence.Create(s, t); err != nil {
 		slog.Error("failed to create task state log", "error", err, "task_id", s.TaskID)
 		return
 	}
-	if s.State == types.TaskStateFailed {
+	if s.State == task.StateFailed {
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, task.StateFailed.String())
 		return true
 	}
 
-	if s.State != types.TaskStateProved {
+	if s.State != task.StateProved {
 		return
 	}
-	p, err := h.project(t.ProjectID)
+	p, err := h.projectManager.Project(t.ProjectID)
 	if err != nil {
 		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
 		return
@@ -74,11 +66,11 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	if err != nil {
 		slog.Error("failed to init output", "error", err, "project_id", t.ProjectID)
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, task.StateFailed.String())
 
-		if err := h.saveTaskStateLog(&types.TaskStateLog{
+		if err := h.persistence.Create(&task.StateLog{
 			TaskID:    s.TaskID,
-			State:     types.TaskStateFailed,
+			State:     task.StateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		}, t); err != nil {
@@ -92,11 +84,11 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	if err != nil {
 		slog.Error("failed to output", "error", err, "task_id", s.TaskID)
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-		metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateFailed.String())
+		metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, task.StateFailed.String())
 
-		if err := h.saveTaskStateLog(&types.TaskStateLog{
+		if err := h.persistence.Create(&task.StateLog{
 			TaskID:    s.TaskID,
-			State:     types.TaskStateFailed,
+			State:     task.StateFailed,
 			Comment:   err.Error(),
 			CreatedAt: time.Now(),
 		}, t); err != nil {
@@ -106,13 +98,13 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 		return true
 	}
 
-	metrics.TaskEndTimeMtc(t.ProjectID, t.ID, t.ProjectVersion)
+	metrics.TaskDurationMtc(t.ProjectID, t.ProjectVersion, float64(time.Now().UnixNano())/1e9-float64(dispatchedTime.UnixNano())/1e9)
 	metrics.SucceedTaskNumMtc(t.ProjectID, t.ProjectVersion)
-	metrics.TaskFinalStateMtc(t.ProjectID, t.ID, t.ProjectVersion, types.TaskStateOutputted.String())
+	metrics.TaskFinalStateNumMtc(t.ProjectID, t.ProjectVersion, task.StateOutputted.String())
 
-	if err := h.saveTaskStateLog(&types.TaskStateLog{
+	if err := h.persistence.Create(&task.StateLog{
 		TaskID:    s.TaskID,
-		State:     types.TaskStateOutputted,
+		State:     task.StateOutputted,
 		Comment:   "output type: " + string(c.Output.Type),
 		Result:    []byte(outRes),
 		CreatedAt: time.Now(),
@@ -123,11 +115,11 @@ func (h *TaskStateHandler) Handle(s *types.TaskStateLog, t *types.Task) (finishe
 	return true
 }
 
-func NewTaskStateHandler(saveTaskStateLog SaveTaskStateLog, latestProvers LatestProvers, project Project, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *TaskStateHandler {
-	return &TaskStateHandler{
-		latestProvers:             latestProvers,
-		saveTaskStateLog:          saveTaskStateLog,
-		project:                   project,
+func newTaskStateHandler(persistence Persistence, contract Contract, projectManager ProjectManager, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *taskStateHandler {
+	return &taskStateHandler{
+		contract:                  contract,
+		persistence:               persistence,
+		projectManager:            projectManager,
 		operatorPrivateKeyECDSA:   operatorPrivateKeyECDSA,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
 	}

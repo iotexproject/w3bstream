@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"encoding/json"
+	"sync"
 
 	"github.com/pkg/errors"
 	"gorm.io/datatypes"
@@ -9,7 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/machinefi/sprout/types"
+	tasktype "github.com/machinefi/sprout/task"
 )
 
 type message struct {
@@ -34,7 +35,7 @@ type postgres struct {
 	db *gorm.DB
 }
 
-func (p *postgres) Retrieve(projectID, nextTaskID uint64) (*types.Task, error) {
+func (p *postgres) Retrieve(projectID, nextTaskID uint64) (*tasktype.Task, error) {
 	t := task{}
 	if err := p.db.Where("id >= ? AND project_id = ?", nextTaskID, projectID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -61,7 +62,7 @@ func (p *postgres) Retrieve(projectID, nextTaskID uint64) (*types.Task, error) {
 		ds = append(ds, m.Data)
 	}
 
-	return &types.Task{
+	return &tasktype.Task{
 		ID:             uint64(t.ID),
 		ProjectID:      ms[0].ProjectID,
 		ProjectVersion: ms[0].ProjectVersion,
@@ -71,12 +72,33 @@ func (p *postgres) Retrieve(projectID, nextTaskID uint64) (*types.Task, error) {
 	}, nil
 }
 
-func NewPostgres(dsn string) (Datasource, error) {
+type Postgres struct {
+	mux sync.Mutex
+	ps  map[string]*postgres
+}
+
+func (p *Postgres) New(dsn string) (Datasource, error) {
+	p.mux.Lock()
+	defer p.mux.Unlock()
+
+	d, ok := p.ps[dsn]
+	if ok {
+		return d, nil
+	}
+
 	db, err := gorm.Open(pgdriver.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect postgres")
+		return nil, errors.Wrapf(err, "failed to connect postgres, dsn %s", dsn)
 	}
-	return &postgres{db}, nil
+	d = &postgres{db}
+	p.ps[dsn] = d
+	return d, nil
+}
+
+func NewPostgres() *Postgres {
+	return &Postgres{
+		ps: map[string]*postgres{},
+	}
 }

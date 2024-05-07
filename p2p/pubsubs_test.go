@@ -74,7 +74,7 @@ func TestNewPubSubs(t *testing.T) {
 func TestPubSubs_Add(t *testing.T) {
 	r := require.New(t)
 
-	ps := &PubSubs{pubSubs: map[uint64]*subscriber{1: {}}}
+	ps := &PubSubs{pubSubs: map[uint64]*projectPubSub{1: {}}}
 
 	t.Run("ProjectIDAlreadyExists", func(t *testing.T) {
 		r.Nil(ps.Add(1))
@@ -84,7 +84,7 @@ func TestPubSubs_Add(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(newSubscriber, nil, errors.New(t.Name()))
+		p = p.ApplyFuncReturn(newProjectPubSub, nil, errors.New(t.Name()))
 
 		err := ps.Add(2)
 		r.EqualError(err, t.Name())
@@ -94,7 +94,7 @@ func TestPubSubs_Add(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(newSubscriber, &subscriber{}, nil)
+		p = p.ApplyFuncReturn(newProjectPubSub, &projectPubSub{}, nil)
 
 		err := ps.Add(3)
 		r.NoError(err)
@@ -103,7 +103,7 @@ func TestPubSubs_Add(t *testing.T) {
 
 func TestPubSubs_Delete(t *testing.T) {
 	ps := &PubSubs{
-		pubSubs: map[uint64]*subscriber{1: {}},
+		pubSubs: map[uint64]*projectPubSub{1: {}},
 	}
 
 	t.Run("IDNotExist", func(t *testing.T) {
@@ -114,8 +114,8 @@ func TestPubSubs_Delete(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(newSubscriber, &subscriber{}, nil)
-		p = p.ApplyPrivateMethod(&subscriber{}, "release", func(_ *subscriber) {})
+		p = p.ApplyFuncReturn(newProjectPubSub, &projectPubSub{}, nil)
+		p = p.ApplyPrivateMethod(&projectPubSub{}, "release", func(_ *projectPubSub) {})
 
 		ps.Delete(1)
 	})
@@ -125,7 +125,7 @@ func TestPubSubs_Publish(t *testing.T) {
 	r := require.New(t)
 
 	projectID := uint64(0x1)
-	ps := &PubSubs{pubSubs: map[uint64]*subscriber{1: {}}}
+	ps := &PubSubs{pubSubs: map[uint64]*projectPubSub{1: {}}}
 	d := &Data{}
 
 	t.Run("NotExist", func(t *testing.T) {

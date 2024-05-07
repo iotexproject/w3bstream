@@ -90,7 +90,7 @@ func createProject(client *ethclient.Client, projectInstance *contractproject.Pr
 	}
 	slog.Info("new project created", "project_id", projectID.Uint64())
 
-	switch rand.Intn(3) {
+	switch rand.Intn(2) {
 	case 0:
 		tx, err := projectInstance.UpdateConfig(opts, projectID, halo2ProjectFileURI, halo2ProjectFileHash)
 		if err != nil {
@@ -105,7 +105,7 @@ func createProject(client *ethclient.Client, projectInstance *contractproject.Pr
 			return
 		}
 		slog.Info("project risc0 config updated", "tx_hash", tx.Hash().Hex())
-	case 2:
+	case 2: // will not create zkwasm project
 		tx, err := projectInstance.UpdateConfig(opts, projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
 		if err != nil {
 			slog.Error("failed to update project config", "error", err)
@@ -157,7 +157,8 @@ func sendMessage(contractPersistence *contract.Contract, projectManager *project
 		case vm.Risc0:
 			data = risc0MessageData
 		case vm.ZKwasm:
-			data = zkwasmMessageData
+			// data = zkwasmMessageData
+			continue // skip zkwasm
 		default:
 			slog.Error("unsupported vm type", "project_id", project.ID, "vm_type", defaultVer.VMType)
 			continue
@@ -258,7 +259,7 @@ func main() {
 		}
 	}()
 
-	sendMessageTicker := time.NewTicker(1 * time.Second)
+	sendMessageTicker := time.NewTicker(5 * time.Minute)
 	go func() {
 		for range sendMessageTicker.C {
 			sendMessage(contractPersistence, projectManager, taskCount)

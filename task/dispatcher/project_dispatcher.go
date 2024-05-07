@@ -11,33 +11,24 @@ import (
 	"github.com/machinefi/sprout/metrics"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/task/internal/handler"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
-type NewDatasource func(datasourceURI string) (datasource.Datasource, error)
-
-type Publish func(projectID uint64, data *p2p.Data) error
-
-type FetchProcessedTaskID func(projectID uint64) (uint64, error)
-
-type UpsertProcessedTask func(projectID, taskID uint64) error
-
-type ProjectDispatcher struct {
+type projectDispatcher struct {
 	window          *window
 	waitInterval    time.Duration
 	startTaskID     uint64
 	projectID       uint64
 	datasource      datasource.Datasource
-	publish         Publish
+	pubSubs         *p2p.PubSubs
 	sequencerPubKey []byte
 }
 
-func (d *ProjectDispatcher) Handle(s *types.TaskStateLog) {
+func (d *projectDispatcher) handle(s *task.StateLog) {
 	d.window.consume(s)
 }
 
-func (d *ProjectDispatcher) run() {
+func (d *projectDispatcher) run() {
 	nextTaskID := d.startTaskID
 	for {
 		next, err := d.dispatch(nextTaskID)
@@ -52,7 +43,7 @@ func (d *ProjectDispatcher) run() {
 	}
 }
 
-func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
+func (d *projectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	t, err := d.datasource.Retrieve(d.projectID, nextTaskID)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to retrieve task from data source")
@@ -67,17 +58,16 @@ func (d *ProjectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	d.window.produce(t)
 
 	metrics.DispatchedTaskNumMtc(d.projectID, t.ProjectVersion)
-	metrics.TaskStartTimeMtc(d.projectID, t.ID, t.ProjectVersion)
 
-	if err := d.publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
+	if err := d.pubSubs.Publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
 		return 0, errors.Wrapf(err, "failed to publish data, project_id %v, task_id %v", t.ProjectID, t.ID)
 	}
 	slog.Debug("dispatched a task", "project_id", t.ProjectID, "task_id", t.ID)
 	return t.ID + 1, nil
 }
 
-func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask, datasourceURI string, newDatasource NewDatasource, p *contract.Project, publish Publish, handler *handler.TaskStateHandler, sequencerPubKey []byte) (*ProjectDispatcher, error) {
-	processedTaskID, err := fetch(p.ID)
+func newProjectDispatcher(persistence Persistence, datasourceURI string, newDatasource NewDatasource, p *contract.Project, pubSubs *p2p.PubSubs, handler *taskStateHandler, sequencerPubKey []byte) (*projectDispatcher, error) {
+	processedTaskID, err := persistence.ProcessedTaskID(p.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", p.ID)
 	}
@@ -95,14 +85,14 @@ func NewProjectDispatcher(fetch FetchProcessedTaskID, upsert UpsertProcessedTask
 		proverAmount = n
 	}
 
-	window := newWindow(proverAmount, publish, handler, upsert)
-	d := &ProjectDispatcher{
+	window := newWindow(proverAmount, pubSubs, handler, persistence)
+	d := &projectDispatcher{
 		window:          window,
 		waitInterval:    3 * time.Second,
 		startTaskID:     processedTaskID + 1,
 		datasource:      datasource,
 		projectID:       p.ID,
-		publish:         publish,
+		pubSubs:         pubSubs,
 		sequencerPubKey: sequencerPubKey,
 	}
 	go d.run()

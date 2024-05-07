@@ -21,7 +21,7 @@ import (
 	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/sequencer/persistence"
-	"github.com/machinefi/sprout/types"
+	"github.com/machinefi/sprout/task"
 )
 
 type httpServer struct {
@@ -215,7 +215,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 			return
 		}
 		ss = append(ss, &apitypes.StateLog{
-			State: types.TaskStatePacked.String(),
+			State: task.StatePacked.String(),
 			Time:  ts[0].CreatedAt,
 		})
 		resp, err := http.Get(fmt.Sprintf("http://%s/%s/%d/%d", s.coordinatorAddress, "task", m.ProjectID, ts[0].ID))

@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func newSubscriber(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*subscriber, error) {
+func newProjectPubSub(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptionMessage, selfID peer.ID) (*projectPubSub, error) {
 	topic, err := ps.Join("w3bstream-project-" + strconv.FormatUint(projectID, 10))
 	if err != nil {
 		return nil, errors.Wrapf(err, "join topic %v failed", projectID)
@@ -22,7 +22,7 @@ func newSubscriber(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptio
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	_ps := &subscriber{
+	_ps := &projectPubSub{
 		selfID:       selfID,
 		topic:        topic,
 		subscription: sub,
@@ -35,7 +35,7 @@ func newSubscriber(projectID uint64, ps *pubsub.PubSub, handle HandleSubscriptio
 	return _ps, nil
 }
 
-type subscriber struct {
+type projectPubSub struct {
 	selfID       peer.ID
 	topic        *pubsub.Topic
 	subscription *pubsub.Subscription
@@ -43,7 +43,7 @@ type subscriber struct {
 	cancel       context.CancelFunc
 }
 
-func (p *subscriber) release() {
+func (p *projectPubSub) release() {
 	p.subscription.Cancel()
 	p.cancel()
 	if err := p.topic.Close(); err != nil {
@@ -51,7 +51,7 @@ func (p *subscriber) release() {
 	}
 }
 
-func (p *subscriber) run(ctx context.Context) {
+func (p *projectPubSub) run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():

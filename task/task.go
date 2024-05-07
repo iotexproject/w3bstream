@@ -1,4 +1,4 @@
-package types
+package task
 
 import (
 	"bytes"
@@ -52,23 +52,10 @@ func (t *Task) VerifySignature(pubkey []byte) error {
 	return nil
 }
 
-type TaskState uint8
-
-const (
-	TaskStateInvalid TaskState = iota
-	TaskStatePacked
-	TaskStateDispatched
-	_
-	TaskStateProved
-	_
-	TaskStateOutputted
-	TaskStateFailed
-)
-
-type TaskStateLog struct {
+type StateLog struct {
 	TaskID    uint64
 	ProjectID uint64
-	State     TaskState
+	State     State
 	Comment   string
 	Result    []byte
 	Signature string
@@ -76,7 +63,7 @@ type TaskStateLog struct {
 	CreatedAt time.Time
 }
 
-func (l *TaskStateLog) SignerAddress(task *Task) (common.Address, error) {
+func (l *StateLog) SignerAddress(task *Task) (common.Address, error) {
 	sig, err := hexutil.Decode(task.Signature)
 	if err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to decode task signature")
@@ -113,17 +100,30 @@ func (l *TaskStateLog) SignerAddress(task *Task) (common.Address, error) {
 	return crypto.PubkeyToAddress(*publicKey), nil
 }
 
-func (s TaskState) String() string {
+type State uint8
+
+const (
+	StateInvalid State = iota
+	StatePacked
+	StateDispatched
+	_
+	StateProved
+	_
+	StateOutputted
+	StateFailed
+)
+
+func (s State) String() string {
 	switch s {
-	case TaskStatePacked:
+	case StatePacked:
 		return "packed"
-	case TaskStateDispatched:
+	case StateDispatched:
 		return "dispatched"
-	case TaskStateProved:
+	case StateProved:
 		return "proved"
-	case TaskStateOutputted:
+	case StateOutputted:
 		return "outputted"
-	case TaskStateFailed:
+	case StateFailed:
 		return "failed"
 	default:
 		return "invalid"
