@@ -5,14 +5,14 @@ import (
 	"crypto/ecdsa"
 	"encoding/binary"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
-	"gorm.io/gorm"
 	"reflect"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 func TestNewPersistence(t *testing.T) {
