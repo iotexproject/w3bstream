@@ -27,7 +27,7 @@ func TestProject_Merge(t *testing.T) {
 		Hash:        hash,
 		Attributes:  attr,
 	}
-	np.Merge(diff)
+	np.merge(diff)
 	r.Equal(np, diff)
 }
 
@@ -54,7 +54,7 @@ func TestBlockProject_Merge(t *testing.T) {
 		},
 	}
 
-	np.Merge(diff)
+	np.merge(diff)
 	r.Equal(np, diff)
 }
 

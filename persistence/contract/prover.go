@@ -43,7 +43,7 @@ type blockProver struct {
 	Provers     map[uint64]*Prover
 }
 
-func (p *Prover) Merge(diff *Prover) {
+func (p *Prover) merge(diff *Prover) {
 	if diff.ID != 0 {
 		p.ID = diff.ID
 	}
@@ -61,18 +61,18 @@ func (p *Prover) Merge(diff *Prover) {
 	}
 }
 
-func (ps *blockProver) Merge(diff *blockProver) {
+func (ps *blockProver) merge(diff *blockProver) {
 	ps.BlockNumber = diff.BlockNumber
 	for id, p := range ps.Provers {
 		diffP, ok := diff.Provers[id]
 		if ok {
-			p.Merge(diffP)
+			p.merge(diffP)
 		}
 	}
 	for id, p := range diff.Provers {
 		if _, ok := ps.Provers[id]; !ok {
 			np := &Prover{}
-			np.Merge(p)
+			np.merge(p)
 			ps.Provers[id] = np
 		}
 	}
@@ -108,7 +108,7 @@ func (c *blockProvers) provers(blockNumber uint64) *blockProver {
 		if blockNumber < ep.BlockNumber {
 			break
 		}
-		np.Merge(ep)
+		np.merge(ep)
 	}
 	return np
 }
@@ -122,8 +122,8 @@ func (c *blockProvers) add(diff *blockProver) {
 	if uint64(c.blocks.Len()) > c.capacity {
 		h := c.blocks.Front()
 		np := &blockProver{Provers: map[uint64]*Prover{}}
-		np.Merge(h.Value.(*blockProver))
-		np.Merge(h.Next().Value.(*blockProver))
+		np.merge(h.Value.(*blockProver))
+		np.merge(h.Next().Value.(*blockProver))
 		c.blocks.Remove(h.Next())
 		c.blocks.Remove(h)
 		c.blocks.PushFront(np)

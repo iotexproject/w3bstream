@@ -167,7 +167,7 @@ func (c *Contract) list() (uint64, error) {
 			}
 			ep, ok := ebp.Projects[p.ID]
 			if ok {
-				p.Merge(ep)
+				p.merge(ep)
 			}
 		}
 		p.BlockNumber = minBlockNumber
@@ -186,7 +186,7 @@ func (c *Contract) list() (uint64, error) {
 			}
 			ep, ok := ebp.Provers[p.ID]
 			if ok {
-				p.Merge(ep)
+				p.merge(ep)
 			}
 		}
 		p.BlockNumber = minBlockNumber

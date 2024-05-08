@@ -47,7 +47,7 @@ type blockProject struct {
 	Projects    map[uint64]*Project
 }
 
-func (p *Project) Merge(diff *Project) {
+func (p *Project) merge(diff *Project) {
 	if diff.ID != 0 {
 		p.ID = diff.ID
 	}
@@ -72,18 +72,18 @@ func (p *Project) isEmpty() bool {
 	return p.ID == 0
 }
 
-func (ps *blockProject) Merge(diff *blockProject) {
+func (ps *blockProject) merge(diff *blockProject) {
 	ps.BlockNumber = diff.BlockNumber
 	for id, p := range ps.Projects {
 		diffP, ok := diff.Projects[id]
 		if ok {
-			p.Merge(diffP)
+			p.merge(diffP)
 		}
 	}
 	for id, p := range diff.Projects {
 		if _, ok := ps.Projects[id]; !ok {
 			np := &Project{Attributes: map[common.Hash][]byte{}}
-			np.Merge(p)
+			np.merge(p)
 			ps.Projects[id] = np
 		}
 	}
@@ -111,7 +111,7 @@ func (c *blockProjects) project(projectID, blockNumber uint64) *Project {
 		}
 		p, ok := ep.Projects[projectID]
 		if ok {
-			np.Merge(p)
+			np.merge(p)
 		}
 	}
 	if np.isEmpty() {
@@ -128,7 +128,7 @@ func (c *blockProjects) projects() *blockProject {
 
 	for e := c.blocks.Front(); e != nil; e = e.Next() {
 		ep := e.Value.(*blockProject)
-		np.Merge(ep)
+		np.merge(ep)
 	}
 	return np
 }
@@ -142,8 +142,8 @@ func (c *blockProjects) add(diff *blockProject) {
 	if uint64(c.blocks.Len()) > c.capacity {
 		h := c.blocks.Front()
 		np := &blockProject{Projects: map[uint64]*Project{}}
-		np.Merge(h.Value.(*blockProject))
-		np.Merge(h.Next().Value.(*blockProject))
+		np.merge(h.Value.(*blockProject))
+		np.merge(h.Next().Value.(*blockProject))
 		c.blocks.Remove(h.Next())
 		c.blocks.Remove(h)
 		c.blocks.PushFront(np)
