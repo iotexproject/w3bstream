@@ -50,7 +50,9 @@ func (s *scheduler) schedule() {
 
 			proverIDs := []uint64{}
 			for _, p := range s.contractProvers(blockNumber) {
-				proverIDs = append(proverIDs, p.ID)
+				if !*p.Paused {
+					proverIDs = append(proverIDs, p.ID)
+				}
 			}
 			scheduled := true
 
