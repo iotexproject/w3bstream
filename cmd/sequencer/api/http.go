@@ -230,6 +230,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 		taskStateLog := &apitypes.QueryTaskStateLogRsp{}
 		if err := json.Unmarshal(body, &taskStateLog); err != nil {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+			return
 		}
 		ss = append(ss, taskStateLog.States...)
 	}
