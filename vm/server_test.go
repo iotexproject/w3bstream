@@ -85,7 +85,7 @@ func TestInstance_Execute(t *testing.T) {
 		p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
 		p.ApplyMethodReturn(&MockClient{}, "ExecuteOperator", &proto.ExecuteResponse{Result: []byte("any")}, nil)
 
-		res, err := i.execute(context.Background(), &task.Task{})
+		res, err := i.execute(context.Background(), &task.Task{Data: [][]byte{[]byte("data")}})
 		r.NoError(err, t.Name())
 		r.Equal(res, []byte("any"))
 	})
