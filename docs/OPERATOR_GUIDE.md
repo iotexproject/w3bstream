@@ -82,6 +82,34 @@ To shut down the W3bstream instance:
 docker-compose down
 ```
 
+### Prover Manager
+
+#### Register and query prover
+
+```bash
+# register a new prover and this command will retrieve the prover id
+ioctl ws prover register
+# query prover info with prover id
+ioctl ws prover query --id "prover id"
+# update prover with node type and prover id
+ioctl ws prover update --id "prover id" --node-type "node type"
+```
+
+#### Control prover status
+
+```bash
+# pause or resume prover with the follow commands
+ioctl ws prover pause --id 'prover id'
+ioctl ws prover resume --id 'prover id'
+```
+
+#### Transfer prover operator
+
+```bash
+# transfer prover operator with prover id and new owner address
+ioctl ws prover transfer --id 'prover id' --operator 'operator wallet address'
+```
+
 ### Interacting with the node
 
 Install **ioctl**: The command-line interface for interacting with the IoTeX blockchain.

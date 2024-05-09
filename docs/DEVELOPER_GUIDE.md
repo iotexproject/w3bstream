@@ -81,7 +81,7 @@ Generate the W3bstream project:
 ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID"`
 ```
 
-##### Using RISC0
+#### Using RISC0
 
 More details and options for `Risc0 circuit` are given in [its README](./examples/risc0-circuit/README.md).
 
@@ -120,15 +120,45 @@ ioctl ws code convert -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"
 
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs` file.
 
-##### Upload your project to IPFS
+#### Manager your project to IPFS
+
+##### Set w3bstream sequencer endpoint and contract addresses
 
 ```bash
 # set local w3bstream sequencer as w3bstream endpoint
 ioctl config set wsEndpoint 'localhost:9000'
-# set the default project register contract address
-ioctl config set wsRegisterContract 0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26 
-# use the project config generated above and create project
-ioctl ws project create --project-config-file "path/to/project_config.json"
+# set the default project register and project store contract address
+ioctl config set wsProjectRegisterContract 0x80b49a5788DcE3eAbFcc46780dEA965602f869C9 
+ioctl config set wsProjectStoreContract 0xf9B976C0127BC38E56fb97B0B1e1408e6F2737CE 
+```
+
+##### Register and Upload project 
+
+```bash
+# register a new project, this command will retrieve the project id
+ioctl ws project register
+# use the project config generated above and update project config
+ioctl ws project update --id "your project id" --path "path/to/project_config" --hash "project config hash(optional)"
+# you can retrieve project info by follow command
+ioctl ws project query --id "your project id"
+```
+
+##### Set or get attributes of your project
+
+```bash
+# get attributes
+ioct ws project attributes get --id "your project id" --key "your key name"
+# set attributes
+ioct ws project attributes set --id "your project id" --key "your key name" --val "you key val"
+```
+
+##### Control project status
+
+```bash
+# pause project
+ioctl ws project pause --id 'your project id'
+# resume project
+ioctl ws project resume --id 'your project id'
 ```
 
 ### Testing your project
