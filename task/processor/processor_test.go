@@ -1,9 +1,12 @@
 package processor
 
 import (
+	"bytes"
+	"encoding/binary"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
@@ -197,13 +200,117 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 
 func TestProcessor_signProof(t *testing.T) {
 	r := require.New(t)
-	sk, err := crypto.GenerateKey()
-	r.NoError(err)
-	p := &Processor{
-		proverPrivateKey: sk,
-	}
-	_, err = p.signProof(&task.Task{}, []byte{})
-	r.NoError(err)
+	t.Run("FailedToWriteBinary", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(binary.Write, errors.New(t.Name()))
+
+		pr := &Processor{}
+		_, err := pr.signProof(&task.Task{}, []byte{})
+
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToWriteBinary2", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncSeq(binary.Write, []OutputCell{
+			{
+				Values: Params{nil},
+				Times:  1,
+			},
+			{
+				Values: Params{errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+		pr := &Processor{}
+		_, err := pr.signProof(&task.Task{}, []byte{})
+
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToBufWriteString", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		buf := bytes.NewBuffer(nil)
+		p.ApplyFuncReturn(binary.Write, nil)
+		p.ApplyMethodReturn(buf, "WriteString", int(1), errors.New(t.Name()))
+
+		pr := &Processor{}
+		_, err := pr.signProof(&task.Task{}, []byte{})
+
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToBufWrite", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		buf := bytes.NewBuffer(nil)
+		p.ApplyFuncReturn(hexutil.Decode, nil, nil)
+		p.ApplyFuncReturn(binary.Write, nil)
+		p.ApplyMethodReturn(buf, "WriteString", int(1), nil)
+		p.ApplyMethodReturn(buf, "Write", int(1), errors.New(t.Name()))
+
+		pr := &Processor{}
+		_, err := pr.signProof(&task.Task{}, []byte{})
+
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToBufWrite2", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		buf := bytes.NewBuffer(nil)
+		p.ApplyFuncReturn(hexutil.Decode, nil, nil)
+		p.ApplyFuncReturn(binary.Write, nil)
+		p.ApplyMethodReturn(buf, "WriteString", int(1), nil)
+		p.ApplyMethodSeq(buf, "Write", []OutputCell{
+			{
+				Values: Params{int(1), nil},
+				Times:  1,
+			},
+			{
+				Values: Params{int(1), errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+		pr := &Processor{}
+		_, err := pr.signProof(&task.Task{}, []byte{})
+
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToSign", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		buf := bytes.NewBuffer(nil)
+		p.ApplyFuncReturn(binary.Write, nil)
+		p.ApplyMethodReturn(buf, "WriteString", int(1), nil)
+		p.ApplyMethodReturn(buf, "Write", int(1), nil)
+		p.ApplyFuncReturn(crypto.Sign, nil, errors.New(t.Name()))
+
+		pr := &Processor{}
+		_, err := pr.signProof(&task.Task{}, []byte{})
+
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		buf := bytes.NewBuffer(nil)
+		p.ApplyFuncReturn(binary.Write, nil)
+		p.ApplyMethodReturn(buf, "WriteString", int(1), nil)
+		p.ApplyMethodReturn(buf, "Write", int(1), nil)
+		p.ApplyFuncReturn(crypto.Sign, nil, nil)
+
+		pr := &Processor{}
+		_, err := pr.signProof(&task.Task{}, []byte{})
+
+		r.NoError(err)
+	})
 }
 
 func TestNewProcessor(t *testing.T) {
