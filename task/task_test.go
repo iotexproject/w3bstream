@@ -3,6 +3,8 @@ package task
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/binary"
 	"testing"
 
@@ -258,17 +260,20 @@ func TestStateLog_SignerAddress(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
+		priKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		r.NoError(err)
+
 		buf := bytes.NewBuffer(nil)
 		p.ApplyFuncReturn(hexutil.Decode, nil, nil)
 		p.ApplyFuncReturn(binary.Write, nil)
 		p.ApplyMethodReturn(buf, "WriteString", int(1), nil)
 		p.ApplyMethodReturn(buf, "Write", int(1), nil)
 		p.ApplyFuncReturn(crypto.Ecrecover, nil, nil)
-		p.ApplyFuncReturn(crypto.UnmarshalPubkey, &ecdsa.PublicKey{}, nil)
+		p.ApplyFuncReturn(crypto.UnmarshalPubkey, &priKey.PublicKey, nil)
 
 		tk := &Task{}
 		ts := &StateLog{}
-		_, err := ts.SignerAddress(tk)
+		_, err = ts.SignerAddress(tk)
 		r.NoError(err)
 	})
 }
