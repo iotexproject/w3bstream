@@ -62,8 +62,8 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 		}
 		go d.runWatchdog(ctx)
 		retryChan <- time.Now()
-		time.Sleep(1 * time.Millisecond)
 		cancel()
+		time.Sleep(10 * time.Millisecond)
 	})
 	t.Run("Timeout", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -89,8 +89,8 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 		}
 		go d.runWatchdog(ctx)
 		timeoutChan <- time.Now()
-		time.Sleep(1 * time.Millisecond)
 		cancel()
+		time.Sleep(10 * time.Millisecond)
 	})
 }
 
