@@ -117,7 +117,6 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	// TODO change ok
 	if ok || s.didJWK != nil {
 		payload, err = s.didJWK.DecryptBySenderDID("io", payload, clientID)
-		//payload, err = s.didJWK.DecryptBySenderDID("io", payload, clientID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(errors.Wrap(err, "failed to decrypt didcomm cipher data")))
 			return
@@ -129,8 +128,6 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
 		return
 	}
-
-	fmt.Println(req)
 
 	// validate project permission
 	if clientID != "" {
@@ -233,6 +230,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 		taskStateLog := &apitypes.QueryTaskStateLogRsp{}
 		if err := json.Unmarshal(body, &taskStateLog); err != nil {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+			return
 		}
 		ss = append(ss, taskStateLog.States...)
 	}

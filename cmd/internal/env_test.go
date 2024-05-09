@@ -27,6 +27,7 @@ func TestParseEnv(t *testing.T) {
 			OperatorPrivateKey:        "",
 			OperatorPrivateKeyED25519: "",
 			ProjectFileDirectory:      "/path/to/project/configs",
+			SchedulerEpoch:            uint64(10),
 		}
 
 		_ = os.Setenv("HTTP_SERVICE_ENDPOINT", expected.ServiceEndpoint)
@@ -41,6 +42,7 @@ func TestParseEnv(t *testing.T) {
 		// _ = os.Setenv("OPERATOR_PRIVATE_KEY", expected.OperatorPrivateKey)
 		// _ = os.Setenv("OPERATOR_PRIVATE_KEY_ED25519", expected.OperatorPrivateKeyED25519)
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDirectory)
+		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 
 		c := &config.Config{}
 		r.Nil(c.Init())
