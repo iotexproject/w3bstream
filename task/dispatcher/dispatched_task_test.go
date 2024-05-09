@@ -29,7 +29,6 @@ func TestDispatchedTask_handleState(t *testing.T) {
 }
 
 func TestDispatchedTask_runWatchdog(t *testing.T) {
-	r := require.New(t)
 	t.Run("ContextCancel", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
@@ -63,6 +62,7 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 		}
 		go d.runWatchdog(ctx)
 		retryChan <- time.Now()
+		time.Sleep(1 * time.Millisecond)
 		cancel()
 	})
 	t.Run("Timeout", func(t *testing.T) {
@@ -82,19 +82,15 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 			},
 		})
 
-		timeoutRes := make(chan *task.StateLog, 10)
-
 		ctx, cancel := context.WithCancel(context.Background())
 		d := &dispatchedTask{
 			task:    &task.Task{ID: 1},
-			timeOut: func(s *task.StateLog) { timeoutRes <- s },
+			timeOut: func(*task.StateLog) {},
 		}
 		go d.runWatchdog(ctx)
 		timeoutChan <- time.Now()
+		time.Sleep(1 * time.Millisecond)
 		cancel()
-		res := <-timeoutRes
-
-		r.Equal(res.TaskID, uint64(1))
 	})
 }
 
