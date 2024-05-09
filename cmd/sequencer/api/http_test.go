@@ -26,7 +26,7 @@ import (
 func TestNewHttpServer(t *testing.T) {
 	r := require.New(t)
 
-	s := NewHttpServer(nil, uint(1), "", "", nil, true)
+	s := NewHttpServer(nil, uint(1), "", "", nil, nil)
 	r.Equal(uint(1), s.aggregationAmount)
 }
 

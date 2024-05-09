@@ -36,3 +36,18 @@ images:
 		fi;                                                            \
 		echo "done!";                                                  \
 	done
+
+
+MOD=$(shell cat go.mod | grep ^module -m 1 | awk '{ print $$2; }' || '')
+
+.PHONY: fmt
+fmt:
+	@for item in `find . -type f -name '*.go' -not -path '*.pb.go'` ; \
+    do \
+		if [ -z $$MOD ]; then \
+			goimports -w $$item ; \
+		else \
+			goimports -w -local "${MOD}" $$item ; \
+		fi \
+    done
+

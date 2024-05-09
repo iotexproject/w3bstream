@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -31,10 +30,10 @@ type httpServer struct {
 	aggregationAmount     uint
 	didAuthServerEndpoint string
 	privateKey            *ecdsa.PrivateKey
-	didJWK                *ioconnect.JWK
+	jwk                   *ioconnect.JWK
 }
 
-func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey, did bool) *httpServer {
+func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey, jwk *ioconnect.JWK) *httpServer {
 	s := &httpServer{
 		engine:                gin.Default(),
 		p:                     p,
@@ -42,27 +41,17 @@ func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinat
 		aggregationAmount:     aggregationAmount,
 		didAuthServerEndpoint: didAuthServerEndpoint,
 		privateKey:            sk,
+		jwk:                   jwk,
 	}
 
-	if did {
-		didJWK, err := ioconnect.NewMasterJWK("io", "key")
-		if err != nil {
-			log.Fatal(err)
-		}
-		s.didJWK = didJWK
-
-		slog.Info("server did:io:        " + s.didJWK.DID("io"))
-		slog.Info("server did:io#key:    " + s.didJWK.KID("io"))
-		slog.Info("server ka did:io:     " + s.didJWK.KeyAgreementDID("io"))
-		slog.Info("server ka did:io#key: " + s.didJWK.KeyAgreementKID("io"))
-
-		// generate did doc
-		didDoc, err := s.didJWK.DIDDoc("io")
-		if err != nil {
-			log.Fatal(err)
-		}
-		docContent, _ := json.MarshalIndent(didDoc, "", "  ")
-		slog.Info(string(docContent))
+	if jwk != nil {
+		slog.Debug("jwk information",
+			"did:io", jwk.DID(),
+			"did:io#key", jwk.KID(),
+			"ka did:io", jwk.KeyAgreementDID(),
+			"ka did:io#key", jwk.KeyAgreementKID(),
+			"doc", jwk.Doc(),
+		)
 	}
 
 	s.engine.POST("/issue_vc", s.issueJWTCredential)
@@ -115,8 +104,9 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	// decrypt did comm message
 	clientID, ok := didvc.ClientIDFrom(c.Request.Context())
 	// TODO change ok
-	if ok || s.didJWK != nil {
-		payload, err = s.didJWK.DecryptBySenderDID("io", payload, clientID)
+	if ok || s.jwk != nil {
+		payload, err = s.jwk.DecryptBySenderDID(payload, clientID)
+		//payload, err = s.didJWK.DecryptBySenderDID("io", payload, clientID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(errors.Wrap(err, "failed to decrypt didcomm cipher data")))
 			return
@@ -251,12 +241,11 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 }
 
 func (s *httpServer) didDoc(c *gin.Context) {
-	didDoc, err := s.didJWK.DIDDoc("io")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+	if s.jwk == nil {
+		c.JSON(http.StatusNotAcceptable, apitypes.NewErrRsp(errors.New("jwk is not config")))
 		return
 	}
-	c.JSON(http.StatusOK, didDoc)
+	c.JSON(http.StatusOK, s.jwk.Doc())
 }
 
 func (s *httpServer) issueJWTCredential(c *gin.Context) {

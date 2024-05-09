@@ -221,7 +221,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 	}
 
 	go func() {
-		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk, did).Run(address); err != nil {
+		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk, nil).Run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()

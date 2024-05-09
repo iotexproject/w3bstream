@@ -443,8 +443,8 @@ github.com/libp2p/go-reuseport v0.4.0/go.mod h1:ZtI03j/wO5hZVDFo2jKywN6bYKWLOy8S
 github.com/libp2p/go-yamux/v4 v4.0.1 h1:FfDR4S1wj6Bw2Pqbc8Uz7pCxeRBPbwsBbEdfwiCypkQ=
 github.com/libp2p/go-yamux/v4 v4.0.1/go.mod h1:NWjl8ZTLOGlozrXSOZ/HlfG++39iKNnM5wwmtQP1YB4=
 github.com/lunixbochs/vtclean v1.0.0/go.mod h1:pHhQNgMf3btfWnGBVipUOjRYhoOsdGqdm/+2c2E2WMI=
-github.com/machinefi/ioconnect-go v0.0.3 h1:ENINb2TCuUA7kjBm9X21+z7sP1OxcgHG2mntk6V8iN8=
-github.com/machinefi/ioconnect-go v0.0.3/go.mod h1:J7nsaHy5aB3gyiYrxO5vzulAJQFryivrN0nvD5aVGUw=
+github.com/machinefi/ioconnect-go v0.0.4 h1:vfSfPRaMyM04A2+LKMmEj8NRaJm40DnnUwzuNAUH/EA=
+github.com/machinefi/ioconnect-go v0.0.4/go.mod h1:J7nsaHy5aB3gyiYrxO5vzulAJQFryivrN0nvD5aVGUw=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
 github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
