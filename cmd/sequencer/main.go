@@ -10,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/clients"
@@ -25,7 +26,8 @@ var (
 	databaseDSN        string
 	didAuthServer      string
 	privateKey         string
-	did                bool
+	jwkSecret          string
+	jwk                *ioconnect.JWK
 )
 
 func init() {
@@ -36,13 +38,29 @@ func init() {
 	flag.StringVar(&databaseDSN, "databaseDSN", "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable", "database dsn")
 	flag.StringVar(&didAuthServer, "didAuthServer", "srv-did-vc:9999", "did auth server endpoint")
 	flag.StringVar(&privateKey, "privateKey", "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85", "sequencer private key")
-	flag.BoolVar(&did, "did", true, "did flag")
+	flag.StringVar(&jwkSecret, "jwkSecret", "R3QNJihYLjtcaxALSTsKe1cYSX0pS28wZitFVXE4Y2klf2hxVCczYHw2dVg4fXJdSgdCcnM4PgV1aTo9DwYqEw==", "jwk secret base64 string")
+
+	// initialize jwk context from secrets
+	if jwkSecret != "" {
+		var (
+			secrets = ioconnect.JWKSecrets{}
+			err     error
+		)
+		if err = secrets.UnmarshalText([]byte(jwkSecret)); err != nil {
+			panic(errors.Wrap(err, "invalid jwk secrets from flag"))
+		}
+		if jwk, err = ioconnect.NewJWKBySecret(secrets); err != nil {
+			panic(errors.Wrap(err, "failed to new jwk from secrets"))
+		}
+		return
+	}
 }
 
 func main() {
 	flag.Parse()
 
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(logLevel)})))
+	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(logLevel)}))
+	slog.SetDefault(logger)
 
 	sk, err := crypto.HexToECDSA(privateKey)
 	if err != nil {
@@ -59,7 +77,7 @@ func main() {
 	}
 
 	go func() {
-		if err := api.NewHttpServer(p, aggregationAmount, coordinatorAddress, didAuthServer, sk, did).Run(address); err != nil {
+		if err := api.NewHttpServer(p, aggregationAmount, coordinatorAddress, didAuthServer, sk, jwk).Run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()
