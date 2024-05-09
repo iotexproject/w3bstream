@@ -24,3 +24,9 @@ ignore:
   # e2e test
   - cmd/e2etest
   - cmd/stresstest
+  # metrics
+  - metrics
+  # main
+  - cmd/coordinator/main.go
+  - cmd/prover/main.go
+  - cmd/sequencer/main.go

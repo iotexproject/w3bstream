@@ -119,8 +119,6 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(req)
-
 	// validate project permission
 	if clientID != "" {
 		// TODO consider if project has public attribute
@@ -222,6 +220,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 		taskStateLog := &apitypes.QueryTaskStateLogRsp{}
 		if err := json.Unmarshal(body, &taskStateLog); err != nil {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
+			return
 		}
 		ss = append(ss, taskStateLog.States...)
 	}

@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"encoding/binary"
 	"encoding/json"
-
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
@@ -27,7 +26,7 @@ type Message struct {
 	InternalTaskID string `gorm:"index:internal_task_id,not null,default:''"`
 }
 
-type task struct {
+type Task struct {
 	gorm.Model
 	ProjectID      uint64         `gorm:"index:task_fetch,not null"`
 	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
@@ -35,7 +34,7 @@ type task struct {
 	Signature      string         `gorm:"not null,default:''"`
 }
 
-func (t *task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientID string, messages ...[]byte) (string, error) {
+func (t *Task) sign(sk *ecdsa.PrivateKey, projectID uint64, clientID string, messages ...[]byte) (string, error) {
 	buf := bytes.NewBuffer(nil)
 
 	if err := binary.Write(buf, binary.BigEndian, uint64(t.ID)); err != nil {
@@ -85,7 +84,7 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *Message, sk *e
 		return errors.Wrap(err, "failed to fetch unpacked messages")
 	}
 
-	// no enough message for pack task
+	// no enough message for pack Task
 	if len(messages) < amount {
 		return nil
 	}
@@ -96,21 +95,21 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *Message, sk *e
 		messageIDs = append(messageIDs, v.MessageID)
 	}
 	if err := tx.Model(&Message{}).Where("message_id IN ?", messageIDs).Update("internal_task_id", taskID).Error; err != nil {
-		return errors.Wrap(err, "failed to update message internal task id")
+		return errors.Wrap(err, "failed to update message internal Task id")
 	}
 	messageIDsJson, err := json.Marshal(messageIDs)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal message id array")
 	}
 
-	t := &task{
+	t := &Task{
 		InternalTaskID: taskID,
 		ProjectID:      m.ProjectID,
 		MessageIDs:     messageIDsJson,
 	}
 
 	if err := tx.Create(t).Error; err != nil {
-		return errors.Wrap(err, "failed to create task")
+		return errors.Wrap(err, "failed to create Task")
 	}
 	data := make([][]byte, 0, len(messages))
 	for _, v := range messages {
@@ -119,11 +118,11 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *Message, sk *e
 
 	sig, err := t.sign(sk, m.ProjectID, m.ClientID, data...)
 	if err != nil {
-		return errors.Wrap(err, "failed to sign task")
+		return errors.Wrap(err, "failed to sign Task")
 	}
 
 	if err := tx.Model(t).Update("signature", sig).Where("id = ?", t.ID).Error; err != nil {
-		return errors.Wrap(err, "failed to update task sign")
+		return errors.Wrap(err, "failed to update Task sign")
 	}
 
 	return nil
@@ -150,10 +149,10 @@ func (p *Persistence) FetchMessage(messageID string) ([]*Message, error) {
 	return ms, nil
 }
 
-func (p *Persistence) FetchTask(internalTaskID string) ([]*task, error) {
-	ts := []*task{}
+func (p *Persistence) FetchTask(internalTaskID string) ([]*Task, error) {
+	ts := []*Task{}
 	if err := p.db.Where("internal_task_id = ?", internalTaskID).Find(&ts).Error; err != nil {
-		return nil, errors.Wrapf(err, "query task by internal task id failed, internal_task_id %s", internalTaskID)
+		return nil, errors.Wrapf(err, "query Task by internal Task id failed, internal_task_id %s", internalTaskID)
 	}
 
 	return ts, nil
@@ -166,7 +165,7 @@ func NewPersistence(pgEndpoint string) (*Persistence, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&Message{}, &task{}); err != nil {
+	if err := db.AutoMigrate(&Message{}, &Task{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &Persistence{db}, nil
