@@ -2,9 +2,6 @@ package task
 
 import (
 	"bytes"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"encoding/binary"
 	"testing"
 
@@ -260,7 +257,7 @@ func TestStateLog_SignerAddress(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		priKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		priKey, err := crypto.GenerateKey()
 		r.NoError(err)
 
 		buf := bytes.NewBuffer(nil)
