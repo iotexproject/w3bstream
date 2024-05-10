@@ -382,7 +382,7 @@ func TestListProject(t *testing.T) {
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
+		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil)
 		n := new(big.Int).SetUint64(1)
 		addr := common.Address{}
 		conf := project.W3bstreamProjectProjectConfig{}
@@ -419,7 +419,7 @@ func TestListProject(t *testing.T) {
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
+		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil)
 		n := new(big.Int).SetUint64(1)
 		addr := common.Address{}
 		conf := project.W3bstreamProjectProjectConfig{}
@@ -465,7 +465,7 @@ func TestListProject(t *testing.T) {
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
+		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil)
 		n := new(big.Int).SetUint64(1)
 		addr := common.Address{}
 		conf := project.W3bstreamProjectProjectConfig{}
@@ -522,11 +522,11 @@ func TestListProject(t *testing.T) {
 		caller := &multicall.MulticallCaller{}
 		p.ApplyMethodSeq(caller, "MultiCall", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil},
+				Values: gomonkey.Params{[][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil},
 				Times:  1,
 			},
 			{
-				Values: gomonkey.Params{[][]byte{{}, {}, {}, {}}, nil},
+				Values: gomonkey.Params{[][]byte{{}, {}, {}, {}, {}}, nil},
 				Times:  1,
 			},
 		})
