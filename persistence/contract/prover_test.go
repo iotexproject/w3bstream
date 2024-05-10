@@ -331,6 +331,12 @@ func TestListProver(t *testing.T) {
 				Times:  1,
 			},
 		})
+		p.ApplyFuncSeq(abi.ConvertType, []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+		})
 		addr := common.Address{}
 		_, _, _, err := listProver(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
@@ -355,6 +361,16 @@ func TestListProver(t *testing.T) {
 			},
 			{
 				Values: gomonkey.Params{nil, errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+		p.ApplyFuncSeq(abi.ConvertType, []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&addr},
 				Times:  1,
 			},
 		})
@@ -386,6 +402,20 @@ func TestListProver(t *testing.T) {
 			},
 			{
 				Values: gomonkey.Params{nil, errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+		p.ApplyFuncSeq(abi.ConvertType, []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&addr},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&paused},
 				Times:  1,
 			},
 		})
@@ -426,6 +456,28 @@ func TestListProver(t *testing.T) {
 			},
 			{
 				Values: gomonkey.Params{[]interface{}{&n}, nil},
+				Times:  1,
+			},
+		})
+		p.ApplyFuncSeq(abi.ConvertType, []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&addr},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&paused},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&n},
 				Times:  1,
 			},
 		})
