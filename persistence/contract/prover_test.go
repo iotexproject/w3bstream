@@ -70,7 +70,7 @@ func TestBlockProvers_prover(t *testing.T) {
 
 	bps := &blockProvers{}
 	p.ApplyPrivateMethod(bps, "provers", func(uint64) *blockProver {
-		return nil
+		return &blockProver{}
 	})
 	addr := common.Address{}
 	r.Nil(bps.prover(addr))
