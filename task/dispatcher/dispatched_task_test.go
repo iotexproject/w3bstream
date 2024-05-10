@@ -34,7 +34,8 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 		d := &dispatchedTask{
-			task: &task.Task{},
+			task:     &task.Task{},
+			waitTime: time.Second,
 		}
 		d.runWatchdog(ctx)
 	})

@@ -419,7 +419,7 @@ func TestListProver(t *testing.T) {
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{[]interface{}{new(big.Int).SetUint64(1)}, nil},
-				Times:  1,
+				Times:  2,
 			},
 			{
 				Values: gomonkey.Params{[]interface{}{new(common.Address)}, nil},
