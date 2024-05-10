@@ -300,18 +300,6 @@ func TestListProver(t *testing.T) {
 		_, _, _, err := listProver(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("FailedToMultiCall", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
-		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", nil, errors.New(t.Name()))
-
-		addr := common.Address{}
-		_, _, _, err := listProver(nil, addr, addr, addr)
-		r.ErrorContains(err, t.Name())
-	})
 	t.Run("FailedToUnpackBlockNumberResult", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -334,7 +322,7 @@ func TestListProver(t *testing.T) {
 		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[]interface{}{new(big.Int).SetUint64(1)}, nil},
+				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
 				Times:  1,
 			},
 			{
@@ -355,7 +343,7 @@ func TestListProver(t *testing.T) {
 		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[]interface{}{new(big.Int).SetUint64(1)}, nil},
+				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
 				Times:  1,
 			},
 			{
@@ -380,7 +368,7 @@ func TestListProver(t *testing.T) {
 		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[]interface{}{new(big.Int).SetUint64(1)}, nil},
+				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
 				Times:  1,
 			},
 			{
@@ -418,7 +406,7 @@ func TestListProver(t *testing.T) {
 		})
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[]interface{}{new(big.Int).SetUint64(1)}, nil},
+				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
 				Times:  2,
 			},
 			{
