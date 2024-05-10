@@ -320,9 +320,10 @@ func TestListProver(t *testing.T) {
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
 		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
+		n := new(big.Int).SetUint64(1)
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
+				Values: gomonkey.Params{[]interface{}{&n}, nil},
 				Times:  1,
 			},
 			{
@@ -341,13 +342,15 @@ func TestListProver(t *testing.T) {
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
 		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
+		n := new(big.Int).SetUint64(1)
+		addr := common.Address{}
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
+				Values: gomonkey.Params{[]interface{}{&n}, nil},
 				Times:  1,
 			},
 			{
-				Values: gomonkey.Params{[]interface{}{new(common.Address)}, nil},
+				Values: gomonkey.Params{[]interface{}{&addr}, nil},
 				Times:  1,
 			},
 			{
@@ -355,7 +358,6 @@ func TestListProver(t *testing.T) {
 				Times:  1,
 			},
 		})
-		addr := common.Address{}
 		_, _, _, err := listProver(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
@@ -366,17 +368,20 @@ func TestListProver(t *testing.T) {
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
 		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1")}, nil)
+		n := new(big.Int).SetUint64(1)
+		addr := common.Address{}
+		paused := false
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
+				Values: gomonkey.Params{[]interface{}{&n}, nil},
 				Times:  1,
 			},
 			{
-				Values: gomonkey.Params{[]interface{}{new(common.Address)}, nil},
+				Values: gomonkey.Params{[]interface{}{&addr}, nil},
 				Times:  1,
 			},
 			{
-				Values: gomonkey.Params{[]interface{}{new(bool)}, nil},
+				Values: gomonkey.Params{[]interface{}{&paused}, nil},
 				Times:  1,
 			},
 			{
@@ -384,7 +389,6 @@ func TestListProver(t *testing.T) {
 				Times:  1,
 			},
 		})
-		addr := common.Address{}
 		_, _, _, err := listProver(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
@@ -404,25 +408,27 @@ func TestListProver(t *testing.T) {
 				Times:  1,
 			},
 		})
+		n := new(big.Int).SetUint64(1)
+		addr := common.Address{}
+		paused := false
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
-				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
+				Values: gomonkey.Params{[]interface{}{&n}, nil},
 				Times:  2,
 			},
 			{
-				Values: gomonkey.Params{[]interface{}{new(common.Address)}, nil},
+				Values: gomonkey.Params{[]interface{}{&addr}, nil},
 				Times:  1,
 			},
 			{
-				Values: gomonkey.Params{[]interface{}{new(bool)}, nil},
+				Values: gomonkey.Params{[]interface{}{&paused}, nil},
 				Times:  1,
 			},
 			{
-				Values: gomonkey.Params{[]interface{}{new(*big.Int)}, nil},
+				Values: gomonkey.Params{[]interface{}{&n}, nil},
 				Times:  1,
 			},
 		})
-		addr := common.Address{}
 		_, _, _, err := listProver(nil, addr, addr, addr)
 		r.NoError(err)
 	})
