@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/common"
@@ -27,6 +28,20 @@ func TestProjectDispatcher_handle(t *testing.T) {
 
 	d := &projectDispatcher{}
 	d.handle(nil)
+}
+
+func TestProjectDispatcher_run(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	d := &projectDispatcher{}
+	p.ApplyPrivateMethod(d, "dispatch", func(uint64) (uint64, error) {
+		return 0, nil
+	})
+	p.ApplyFunc(time.Sleep, func(time.Duration) { panic(errors.New(t.Name())) })
+
+	r.Panics(func() { d.run() })
 }
 
 func TestProjectDispatcher_dispatch(t *testing.T) {
