@@ -29,6 +29,7 @@ func TestDispatchedTask_handleState(t *testing.T) {
 }
 
 func TestDispatchedTask_runWatchdog(t *testing.T) {
+	r := require.New(t)
 	t.Run("ContextCancel", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
@@ -45,7 +46,7 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 		timeoutChan := make(chan time.Time, 10)
 		retryChan <- time.Now()
 		pubSubs := &p2p.PubSubs{}
-		p.ApplyMethodReturn(pubSubs, "Publish", errors.New(t.Name()))
+		p.ApplyMethodFunc(pubSubs, "Publish", func(uint64, *p2p.Data) error { panic(errors.New(t.Name())) })
 		p.ApplyFuncSeq(time.After, []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{retryChan},
@@ -57,14 +58,10 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 			},
 		})
 
-		ctx, cancel := context.WithCancel(context.Background())
 		d := &dispatchedTask{
 			task: &task.Task{ProjectID: 1},
 		}
-		go d.runWatchdog(ctx)
-		time.Sleep(1 * time.Millisecond)
-		cancel()
-		time.Sleep(10 * time.Millisecond)
+		r.Panics(func() { d.runWatchdog(context.Background()) })
 	})
 	t.Run("Timeout", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -84,15 +81,11 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 			},
 		})
 
-		ctx, cancel := context.WithCancel(context.Background())
 		d := &dispatchedTask{
 			task:    &task.Task{ID: 1},
-			timeOut: func(*task.StateLog) {},
+			timeOut: func(*task.StateLog) { panic(errors.New(t.Name())) },
 		}
-		go d.runWatchdog(ctx)
-		time.Sleep(1 * time.Millisecond)
-		cancel()
-		time.Sleep(10 * time.Millisecond)
+		r.Panics(func() { d.runWatchdog(context.Background()) })
 	})
 }
 

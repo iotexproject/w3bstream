@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/common"
@@ -27,6 +28,20 @@ func TestProjectDispatcher_handle(t *testing.T) {
 
 	d := &projectDispatcher{}
 	d.handle(nil)
+}
+
+func TestProjectDispatcher_run(t *testing.T) {
+	r := require.New(t)
+	p := gomonkey.NewPatches()
+	defer p.Reset()
+
+	d := &projectDispatcher{}
+	p.ApplyPrivateMethod(d, "dispatch", func(uint64) (uint64, error) {
+		return 0, nil
+	})
+	p.ApplyFunc(time.Sleep, func(time.Duration) { panic(errors.New(t.Name())) })
+
+	r.Panics(func() { d.run() })
 }
 
 func TestProjectDispatcher_dispatch(t *testing.T) {
@@ -143,20 +158,19 @@ func TestNewProjectDispatcher(t *testing.T) {
 		}, nil, nil, nil)
 		r.ErrorContains(err, "failed to parse project required prover amount")
 	})
-	// this cannot work in ci, but can work locally
-	// t.Run("Success", func(t *testing.T) {
-	// 	p := gomonkey.NewPatches()
-	// 	defer p.Reset()
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-	// 	ps := &mockPersistence{}
-	// 	p.ApplyMethodReturn(ps, "ProcessedTaskID", uint64(0), nil)
-	// 	p.ApplyFuncReturn(newWindow, nil)
-	// 	p.ApplyPrivateMethod(&projectDispatcher{}, "run", func() {})
-	// 	nd := func(string) (datasource.Datasource, error) { return nil, nil }
+		ps := &mockPersistence{}
+		p.ApplyMethodReturn(ps, "ProcessedTaskID", uint64(0), nil)
+		p.ApplyFuncReturn(newWindow, nil)
+		p.ApplyPrivateMethod(&projectDispatcher{}, "run", func() {})
+		nd := func(string) (datasource.Datasource, error) { return nil, nil }
 
-	// 	_, err := newProjectDispatcher(ps, "", nd, &contract.Project{
-	// 		Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("1")},
-	// 	}, nil, nil, nil)
-	// 	r.NoError(err)
-	// })
+		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("1")},
+		}, nil, nil, nil)
+		r.NoError(err)
+	})
 }

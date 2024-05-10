@@ -168,52 +168,54 @@ func TestRunLocalDispatcher(t *testing.T) {
 }
 
 func TestSetProjectDispatcher(t *testing.T) {
+	cp := &contract.Project{ID: 1, Uri: "http://test.com"}
+	mp := &mockProjectManager{}
 	t.Run("ProjectExist", func(t *testing.T) {
 		projectDispatchers := &sync.Map{}
 		projectDispatchers.Store(uint64(1), true)
 
-		setProjectDispatcher(nil, nil, projectDispatchers, &contract.Project{ID: 1}, nil, nil, nil, nil)
+		setProjectDispatcher(nil, nil, projectDispatchers, cp, nil, nil, nil, nil)
 	})
 	t.Run("FailedToGetProject", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		projectDispatchers := &sync.Map{}
-		p.ApplyMethodReturn(&mockProjectManager{}, "Project", "", errors.New(t.Name()))
+		p.ApplyMethodReturn(mp, "Project", nil, errors.New(t.Name()))
 
-		setProjectDispatcher(nil, nil, projectDispatchers, &contract.Project{ID: 1}, nil, nil, nil, nil)
+		setProjectDispatcher(nil, nil, projectDispatchers, cp, mp, nil, nil, nil)
 	})
 	t.Run("FailedToAddPubSubs", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		projectDispatchers := &sync.Map{}
-		p.ApplyMethodReturn(&mockProjectManager{}, "Project", "", nil)
+		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 
-		setProjectDispatcher(nil, nil, projectDispatchers, &contract.Project{ID: 1}, nil, &p2p.PubSubs{}, nil, nil)
+		setProjectDispatcher(nil, nil, projectDispatchers, cp, mp, &p2p.PubSubs{}, nil, nil)
 	})
 	t.Run("FailedToNewProjectDispatcher", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		projectDispatchers := &sync.Map{}
-		p.ApplyMethodReturn(&mockProjectManager{}, "Project", "", nil)
+		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
 
-		setProjectDispatcher(nil, nil, projectDispatchers, &contract.Project{ID: 1}, nil, &p2p.PubSubs{}, nil, nil)
+		setProjectDispatcher(nil, nil, projectDispatchers, cp, mp, &p2p.PubSubs{}, nil, nil)
 	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		projectDispatchers := &sync.Map{}
-		p.ApplyMethodReturn(&mockProjectManager{}, "Project", "", nil)
+		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, nil)
 
-		setProjectDispatcher(nil, nil, projectDispatchers, &contract.Project{ID: 1}, nil, &p2p.PubSubs{}, nil, nil)
+		setProjectDispatcher(nil, nil, projectDispatchers, cp, mp, &p2p.PubSubs{}, nil, nil)
 	})
 }
 

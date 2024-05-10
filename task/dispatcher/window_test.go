@@ -38,6 +38,8 @@ func TestWindow(t *testing.T) {
 	w.produce(tk)
 	r.False(w.isEmpty())
 
+	w.consume(&task.StateLog{TaskID: 0})
+	r.False(w.isEmpty())
 	w.consume(&task.StateLog{TaskID: 1})
 	r.False(w.isEmpty())
 }
