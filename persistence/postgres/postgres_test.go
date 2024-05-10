@@ -12,6 +12,74 @@ import (
 	"github.com/machinefi/sprout/testutil"
 )
 
+func TestPostgres_ProcessedTaskID(t *testing.T) {
+	r := require.New(t)
+	p := NewPatches()
+	defer p.Reset()
+
+	v := &Postgres{
+		db: &gorm.DB{
+			Error:     nil,
+			Statement: &gorm.Statement{},
+		},
+	}
+
+	p = testutil.GormDBWhere(p, v.db)
+	p = testutil.GormDBOrder(p, v.db)
+
+	t.Run("FailedToFindDB", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&gorm.DB{}, "First", &gorm.DB{Error: errors.New(t.Name())})
+		_, err := v.ProcessedTaskID(1)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("RecordNotFound", func(t *testing.T) {
+		p = p.ApplyMethodReturn(&gorm.DB{}, "First", &gorm.DB{Error: gorm.ErrRecordNotFound})
+		res, err := v.ProcessedTaskID(1)
+		r.NoError(err)
+		r.Equal(uint64(0), res)
+	})
+
+	p = testutil.GormDBFirst(p, &projectProcessedTask{}, v.db)
+
+	t.Run("Success", func(t *testing.T) {
+		res, err := v.ProcessedTaskID(1)
+		r.NotNil(res)
+		r.NoError(err)
+	})
+}
+
+func TestPostgres_UpsertProcessedTask(t *testing.T) {
+	r := require.New(t)
+	p := NewPatches()
+	defer p.Reset()
+
+	db := &gorm.DB{
+		Error:     nil,
+		Statement: &gorm.Statement{},
+	}
+	p = p.ApplyFuncReturn(New, &Postgres{db: db}, nil)
+	v, err := New("any")
+	r.NoError(err)
+	r.NotNil(v)
+
+	t.Run("FailedToUpsertProcessedTask", func(t *testing.T) {
+		ndb := *db
+		ndb.Error = errors.New(t.Name())
+		p = testutil.GormDBClauses(p, &ndb)
+		p = testutil.GormDBCreate(p, nil, &ndb)
+
+		err := v.UpsertProcessedTask(1, 1)
+		r.ErrorContains(err, t.Name())
+	})
+	p = testutil.GormDBClauses(p, db)
+	p = testutil.GormDBCreate(p, nil, db)
+
+	t.Run("Success", func(t *testing.T) {
+		err := v.UpsertProcessedTask(1, 1)
+		r.NoError(err)
+	})
+}
+
 func TestPostgres_Create(t *testing.T) {
 	r := require.New(t)
 	p := NewPatches()
