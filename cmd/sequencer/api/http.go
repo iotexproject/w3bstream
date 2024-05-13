@@ -12,12 +12,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
-	"github.com/machinefi/ioconnect-go/cmd/srv-did-vc/apis"
 	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/sequencer/persistence"
 	"github.com/machinefi/sprout/task"
@@ -82,12 +80,13 @@ func (s *httpServer) verifyToken(c *gin.Context) {
 	}
 
 	tok = strings.TrimSpace(strings.Replace(tok, "Bearer", " ", 1))
-	clientID, err := didvc.VerifyJWTCredential(s.didAuthServerEndpoint, tok)
+
+	clientID, err := s.jwk.VerifyToken(tok)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrap(err, "invalid credential token")))
 		return
 	}
-	ctx := didvc.WithClientID(c.Request.Context(), clientID)
+	ctx := clients.WithClientID(c.Request.Context(), clientID)
 	c.Request = c.Request.WithContext(ctx)
 }
 
@@ -102,11 +101,9 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	defer c.Request.Body.Close()
 
 	// decrypt did comm message
-	clientID, ok := didvc.ClientIDFrom(c.Request.Context())
-	// TODO change ok
+	clientID, ok := clients.ClientIDFrom(c.Request.Context())
 	if ok || s.jwk != nil {
 		payload, err = s.jwk.DecryptBySenderDID(payload, clientID)
-		//payload, err = s.didJWK.DecryptBySenderDID("io", payload, clientID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(errors.Wrap(err, "failed to decrypt didcomm cipher data")))
 			return
@@ -171,7 +168,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 	}
 	m := ms[0]
 
-	clientID, ok := didvc.ClientIDFrom(c.Request.Context())
+	clientID, ok := clients.ClientIDFrom(c.Request.Context())
 	if ok {
 		// TODO consider if project has public attribute
 		if err = clients.VerifyProjectPermissionByClientDID(clientID, m.ProjectID); err != nil {
@@ -227,6 +224,9 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 
 	response := &apitypes.QueryMessageStateLogRsp{MessageID: messageID, States: ss}
 	//TODO encrypt response and respond
+	// server fetch client did doc parsing and binding
+	// s.jwk.Encrypt(plain, client_ka_kid(need binding))
+	// if encrypt failed need refresh client did doc (ioregistry)and rebinding kakid
 	//if clientID != "" {
 	//	cipher, err := didcomm.EncryptJSON(response)
 	//	if err != nil {
@@ -249,17 +249,23 @@ func (s *httpServer) didDoc(c *gin.Context) {
 }
 
 func (s *httpServer) issueJWTCredential(c *gin.Context) {
-	req := new(apis.IssueTokenReq)
+	req := new(apitypes.IssueTokenReq)
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(err))
 		return
 	}
 
-	rsp, err := didvc.IssueCredential(s.didAuthServerEndpoint, req.ClientID)
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
+	client := clients.ClientByClientID(req.ClientID)
+	if client == nil {
+		c.String(http.StatusForbidden, errors.Errorf("client is not register to ioRegistry").Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, rsp)
+	token, err := s.jwk.SignToken(req.ClientID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, errors.Wrap(err, "failed to sign token").Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, &apitypes.IssueTokenRsp{Token: token})
 }

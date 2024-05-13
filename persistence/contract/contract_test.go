@@ -9,9 +9,10 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stretchr/testify/require"
+
 	"github.com/machinefi/sprout/smartcontracts/go/project"
 	"github.com/machinefi/sprout/smartcontracts/go/prover"
-	"github.com/stretchr/testify/require"
 )
 
 func TestContract_Project(t *testing.T) {

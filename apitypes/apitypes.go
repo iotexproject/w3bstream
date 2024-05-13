@@ -47,3 +47,11 @@ type CoordinatorConfigRsp struct {
 	OperatorETHAddress     string `json:"OperatorETHAddress,omitempty"`
 	OperatorSolanaAddress  string `json:"operatorSolanaAddress,omitempty"`
 }
+
+type IssueTokenReq struct {
+	ClientID string `json:"clientID"`
+}
+
+type IssueTokenRsp struct {
+	Token string `json:"token"`
+}

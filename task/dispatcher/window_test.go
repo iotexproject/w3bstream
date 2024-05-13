@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/machinefi/sprout/task"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/task"
 )
 
 func TestWindow(t *testing.T) {

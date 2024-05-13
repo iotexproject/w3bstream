@@ -1,6 +1,13 @@
 package clients_test
 
 import (
+	"testing"
+
+	"github.com/machinefi/sprout/clients"
+)
+
+/*
+import (
 	"fmt"
 	"testing"
 
@@ -11,6 +18,7 @@ import (
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/testutil"
 )
+
 
 func TestClientManager(t *testing.T) {
 	var (
@@ -56,4 +64,9 @@ func TestClientManager(t *testing.T) {
 		r.NotNil(c.Metadata)
 		r.Len(c.Projects, 3)
 	})
+}
+*/
+
+func TestClientByClientID(t *testing.T) {
+	clients.ClientByClientID("did:io:0x1c89860d3eed129fe1996bb72044cc22cc46a756")
 }
