@@ -68,5 +68,15 @@ func TestClientManager(t *testing.T) {
 */
 
 func TestClientByClientID(t *testing.T) {
-	clients.ClientByClientID("did:io:0x1c89860d3eed129fe1996bb72044cc22cc46a756")
+	mgr, err := clients.NewManager("0xB63e6034361283dc8516480a46EcB9C122c983Bb", "https://babel-api.testnet.iotex.io", "did.iotex.me")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := mgr.ClientByDID("did:io:0x1c89860d3eed129fe1996bb72044cc22cc46a756")
+	if client == nil {
+		t.Log("client is not fetched")
+		return
+	}
+
+	t.Log(client.ClientDID, client.KeyAgreementKID)
 }
