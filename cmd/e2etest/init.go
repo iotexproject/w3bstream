@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
+
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/jmoiron/sqlx"
@@ -35,23 +37,40 @@ var (
 )
 
 type sequencerConf struct {
-	endpoint          string
-	privateKey        string
-	databaseDSN       string
-	coordinatorAddr   string
-	didAuthServerAddr string
-	did               bool
+	endpoint             string
+	privateKey           string
+	databaseDSN          string
+	coordinatorAddr      string
+	didAuthServerAddr    string
+	did                  bool
+	jwkSecret            string
+	jwk                  *ioconnect.JWK
+	ioIDContract         string
+	ioIDContractAddress  string
+	chainEndpoint        string
+	ioIDRegistryEndpoint string
 }
 
 func seqConf(coordinatorEndpoint, didAuthServerAddr string) *sequencerConf {
-	return &sequencerConf{
-		endpoint:          ":19000",
-		privateKey:        "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
-		databaseDSN:       "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
-		coordinatorAddr:   fmt.Sprintf("localhost%s", coordinatorEndpoint),
-		didAuthServerAddr: didAuthServerAddr,
-		did:               false,
+	ret := &sequencerConf{
+		endpoint:             ":19000",
+		privateKey:           "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
+		databaseDSN:          "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
+		coordinatorAddr:      fmt.Sprintf("localhost%s", coordinatorEndpoint),
+		didAuthServerAddr:    didAuthServerAddr,
+		did:                  false,
+		jwkSecret:            "JyBSf1Y9UFIbECdHJRkqZAkfaz16YGwRYyJpXSBwQXJ8RTsZcVMOWStaQxI8bUtafiMtYUE2KkgmI1wBGiQYMw==",
+		ioIDContract:         "0xB63e6034361283dc8516480a46EcB9C122c983Bb",
+		chainEndpoint:        "http://iotex.chainendpoint.io",
+		ioIDRegistryEndpoint: "did.iotex.me",
 	}
+
+	jwk, err := ioconnect.NewJWKBySecretBase64(ret.jwkSecret)
+	if err != nil {
+		panic(errors.Wrap(err, "failed generate jwk from secret"))
+	}
+	ret.jwk = jwk
+	return ret
 }
 
 func init() {
@@ -68,7 +87,7 @@ func init() {
 	}
 
 	conf := seqConf(coordinatorConf.ServiceEndpoint, coordinatorConf.DIDAuthServerEndpoint)
-	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddr, conf.didAuthServerAddr, conf.endpoint, conf.did)
+	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddr, conf.didAuthServerAddr, conf.endpoint, conf.ioIDContractAddress, conf.chainEndpoint, conf.ioIDRegistryEndpoint, conf.jwk)
 	go runProver(proverConf)
 	go runCoordinator(coordinatorConf)
 
@@ -176,8 +195,6 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 		log.Fatal(err)
 	}
 
-	_ = clients.NewManager()
-
 	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
@@ -203,7 +220,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 	slog.Info("coordinator started")
 }
 
-func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address string, did bool) {
+func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address, ioIDContract, chainEndpoint, ioRegistryEndpoint string, key *ioconnect.JWK) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(int(slog.LevelDebug))})))
 
 	sk, err := crypto.HexToECDSA(privateKey)
@@ -213,7 +230,10 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 
 	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
 
-	_ = clients.NewManager()
+	_, err = clients.NewManager(ioIDContract, chainEndpoint, ioRegistryEndpoint)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	p, err := persistence.NewPersistence(databaseDSN)
 	if err != nil {
@@ -221,7 +241,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 	}
 
 	go func() {
-		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk, nil).Run(address); err != nil {
+		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk, key).Run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()

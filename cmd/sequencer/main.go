@@ -19,15 +19,18 @@ import (
 )
 
 var (
-	logLevel           int
-	aggregationAmount  uint
-	address            string
-	coordinatorAddress string
-	databaseDSN        string
-	didAuthServer      string
-	privateKey         string
-	jwkSecret          string
-	jwk                *ioconnect.JWK
+	logLevel             int
+	aggregationAmount    uint
+	address              string
+	coordinatorAddress   string
+	databaseDSN          string
+	didAuthServer        string
+	privateKey           string
+	jwkSecret            string
+	jwk                  *ioconnect.JWK
+	ioIDContractAddress  string
+	chainEndpoint        string
+	ioIDRegistryEndpoint string
 )
 
 func init() {
@@ -39,6 +42,9 @@ func init() {
 	flag.StringVar(&didAuthServer, "didAuthServer", "srv-did-vc:9999", "did auth server endpoint")
 	flag.StringVar(&privateKey, "privateKey", "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85", "sequencer private key")
 	flag.StringVar(&jwkSecret, "jwkSecret", "R3QNJihYLjtcaxALSTsKe1cYSX0pS28wZitFVXE4Y2klf2hxVCczYHw2dVg4fXJdSgdCcnM4PgV1aTo9DwYqEw==", "jwk secret base64 string")
+	flag.StringVar(&ioIDContractAddress, "ioIDContract", "0xB63e6034361283dc8516480a46EcB9C122c983Bb", "ioIDRegistry contract address")
+	flag.StringVar(&chainEndpoint, "chainEndpoint", "http://iotex.chainendpoint.io", "chain endpoint")
+	flag.StringVar(&ioIDRegistryEndpoint, "ioIDRegistryEndpoint", "did.iotex.me", "ioID registry endpoint")
 
 	// initialize jwk context from secrets
 	if jwkSecret != "" {
@@ -69,7 +75,10 @@ func main() {
 
 	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
 
-	_ = clients.NewManager()
+	_, err = clients.NewManager(ioIDContractAddress, chainEndpoint, ioIDRegistryEndpoint, jwk)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new clients manager"))
+	}
 
 	p, err := persistence.NewPersistence(databaseDSN)
 	if err != nil {

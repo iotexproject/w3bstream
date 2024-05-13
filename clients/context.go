@@ -1,4 +1,4 @@
-package didvc
+package clients
 
 import "context"
 

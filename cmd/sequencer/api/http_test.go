@@ -11,14 +11,12 @@ import (
 
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/machinefi/ioconnect-go/cmd/srv-did-vc/apis"
-	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/auth/didvc"
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/sequencer/persistence"
 )
@@ -71,7 +69,7 @@ func TestHttpServer_verifyToken(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
 		c.Request.Header.Set("authorization", "Bearer valid_token")
 
-		p.ApplyFuncReturn(didvc.VerifyJWTCredential, "", errors.New(t.Name()))
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "VerifyToken", "", errors.New(t.Name()))
 		s.verifyToken(c)
 		r.Equal(http.StatusUnauthorized, w.Code)
 
@@ -90,11 +88,11 @@ func TestHttpServer_verifyToken(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
 		c.Request.Header.Set("authorization", "Bearer valid_token")
 
-		p.ApplyFuncReturn(didvc.VerifyJWTCredential, "clientID", nil)
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "VerifyToken", "clientID", nil)
 
 		s.verifyToken(c)
 
-		clientID, ok := didvc.ClientIDFrom(c.Request.Context())
+		clientID, ok := clients.ClientIDFrom(c.Request.Context())
 		r.Equal(true, ok)
 		r.Equal("clientID", clientID)
 	})
@@ -132,7 +130,7 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "", true)
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", nil, errors.New(t.Name()))
 		s.handleMessage(c)
 		r.Equal(http.StatusBadRequest, w.Code)
@@ -152,7 +150,7 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "", true)
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", nil, nil)
 		//p.ApplyFuncReturn(binding.JSON.BindBody, errors.New(t.Name()))
 		s.handleMessage(c)
@@ -168,7 +166,7 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, errors.New(t.Name()))
 		s.handleMessage(c)
@@ -189,7 +187,7 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "Save", errors.New(t.Name()))
@@ -211,7 +209,7 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "Save", nil)
@@ -278,7 +276,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "someClientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "someClientID", true)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, errors.New(t.Name()))
 
 		s.queryStateLogByID(c)
@@ -306,7 +304,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "someClientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "someClientID", true)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 
 		s.queryStateLogByID(c)
@@ -334,7 +332,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", nil, errors.New(t.Name()))
 
@@ -363,7 +361,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{}, nil)
 
@@ -392,7 +390,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{
 			{
@@ -429,7 +427,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{
 			{
@@ -469,7 +467,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{
 			{
@@ -505,7 +503,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(didvc.ClientIDFrom, "clientID", true)
+		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
 		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{
 			{
@@ -556,7 +554,7 @@ func TestHttpServer_issueJWTCredential(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		p.ApplyMethodReturn(&gin.Context{}, "ShouldBindJSON", nil)
-		p.ApplyFuncReturn(didvc.IssueCredential, nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "SignToken", "", errors.New(t.Name()))
 		s.issueJWTCredential(c)
 		r.Equal(http.StatusInternalServerError, w.Code)
 		r.Contains(string(w.Body.Bytes()), t.Name())
@@ -570,7 +568,7 @@ func TestHttpServer_issueJWTCredential(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		p.ApplyMethodReturn(&gin.Context{}, "ShouldBindJSON", nil)
-		p.ApplyFuncReturn(didvc.IssueCredential, &apis.IssueTokenRsp{}, nil)
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "SignToken", "anyToken", nil)
 		s.issueJWTCredential(c)
 		r.Equal(http.StatusOK, w.Code)
 	})

@@ -7,12 +7,13 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+
 	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/task"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 )
 
 type mockDatasource struct{}
