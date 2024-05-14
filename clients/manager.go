@@ -50,7 +50,7 @@ func (c *Client) HasProjectPermission(projectID uint64) bool {
 
 var manager *Manager
 
-func NewManager(address string, chainEndpoint, ioIDRegistryEndpoint string) (*Manager, error) {
+func NewManager(ioIDRegisterAddress, chainEndpoint, ioIDRegistryEndpoint string) (*Manager, error) {
 	if manager != nil {
 		return manager, nil
 	}
@@ -60,7 +60,7 @@ func NewManager(address string, chainEndpoint, ioIDRegistryEndpoint string) (*Ma
 		return nil, errors.Wrapf(err, "failed to dail chain endpiont: %s", chainEndpoint)
 	}
 
-	instance, err := contracts.NewIoIDRegistry(common.HexToAddress(address), cli)
+	instance, err := contracts.NewIoIDRegistry(common.HexToAddress(ioIDRegisterAddress), cli)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new ioIDRegistry")
 	}
@@ -122,7 +122,7 @@ func (mgr *Manager) ClientByDID(clientID string) *Client {
 func (mgr *Manager) fetchClientFromContract(clientID string) (string, error) {
 	l := slog.With("client_id", clientID)
 
-	clientAddress := strings.TrimPrefix(clientID, "did:io")
+	clientAddress := strings.TrimPrefix(clientID, "did:io:")
 	l = l.With("client_address", clientAddress)
 
 	uri, err := mgr.ioIDRegistryInstance.DocumentURI(nil, common.HexToAddress(clientAddress))

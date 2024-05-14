@@ -68,11 +68,24 @@ func TestClientManager(t *testing.T) {
 */
 
 func TestClientByClientID(t *testing.T) {
-	mgr, err := clients.NewManager("0xB63e6034361283dc8516480a46EcB9C122c983Bb", "https://babel-api.testnet.iotex.io", "did.iotex.me")
+	contractAddr := "0xB63e6034361283dc8516480a46EcB9C122c983Bb"
+	chainEndpoint := "https://babel-api.testnet.iotex.io"
+	ioRegistryEndpoint := "did.iotex.me"
+	clientDID := "did:io:0x1c89860d3eed129fe1996bb72044cc22cc46a756"
+	// clientDID := "did:io:0x84a3e41f60ddf056bbcde21ea9253070e4d8ff04"
+	// clientDID := "did:io:0x7D2DfDfbC2F54102e416f8C11234be3D47Ce71Eb"
+
+	t.Log("contract addr:        ", contractAddr)
+	t.Log("chain endpoint:       ", chainEndpoint)
+	t.Log("io registry endpoint: ", ioRegistryEndpoint)
+	t.Log("client did:           ", clientDID)
+
+	mgr, err := clients.NewManager(contractAddr, chainEndpoint, ioRegistryEndpoint)
 	if err != nil {
 		t.Fatal(err)
 	}
-	client := mgr.ClientByDID("did:io:0x1c89860d3eed129fe1996bb72044cc22cc46a756")
+
+	client := mgr.ClientByDID(clientDID)
 	if client == nil {
 		t.Log("client is not fetched")
 		return
