@@ -64,6 +64,7 @@ func (mgr *Manager) ClientByIoID(id string) *Client {
 		slog.Error("fetch client", "error", err)
 		return c
 	}
+	slog.Info("new client fetched from contract", "id", id, "did", c.DID(), "kid", c.KeyAgreementKID(), "client_doc", c.Doc())
 
 	mgr.mux.Lock()
 	defer mgr.mux.Unlock()
