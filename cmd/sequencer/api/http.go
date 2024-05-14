@@ -109,7 +109,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	// decrypt did comm message
 	client := clients.ClientIDFrom(c.Request.Context())
 	if client != nil {
-		payload, err = s.jwk.DecryptBySenderDID(payload, client.DID())
+		payload, err = s.jwk.Decrypt(payload, client.DID())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, apitypes.NewErrRsp(errors.Wrap(err, "failed to decrypt didcomm cipher data")))
 			return

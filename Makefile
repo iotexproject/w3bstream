@@ -25,16 +25,16 @@ contract_test: contract_test_depends
 
 .PHONY: images
 images:
-	@for target in 'sequencer' 'prover' 'coordinator' ;                \
-	do                                                                 \
-		echo build $$target image ;                                    \
-		if [ -e $$target.Dockerfile ]; then                            \
-			echo $$target.Dockerfile ;                                 \
-			docker build -f $$target.Dockerfile . -t $(USER)/$$target; \
-		else                                                           \
-			echo "no entry";                                           \
-		fi;                                                            \
-		echo "done!";                                                  \
+	@for target in 'sequencer' 'prover' 'coordinator' ; \
+	do \
+		echo build $$target image; \
+		if [ -e $$target.Dockerfile ]; then \
+			echo $$target.Dockerfile; \
+			docker build -f $$target.Dockerfile . -t $$target; \
+		else \
+			echo "no entry"; \
+		fi; \
+		echo "done!"; \
 	done
 
 
