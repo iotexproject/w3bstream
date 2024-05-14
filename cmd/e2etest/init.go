@@ -230,7 +230,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 
 	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
 
-	_, err = clients.NewManager(ioIDContract, chainEndpoint, ioRegistryEndpoint)
+	manager, err := clients.NewManager(ioIDContract, chainEndpoint, ioRegistryEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -241,7 +241,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 	}
 
 	go func() {
-		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk, key).Run(address); err != nil {
+		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk, key, manager).Run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()
