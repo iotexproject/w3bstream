@@ -26,4 +26,15 @@ func TestClientByClientID(t *testing.T) {
 	t.Log("client DID:", clientDID)
 	t.Log("client DID:", client.DID())
 	t.Log("client KID:", client.KeyAgreementKID())
+
+	client = mgr.ClientByIoID("did:io:0x5b7902df415485c7e21334ca95ca94667278030e")
+
+	if client == nil {
+		t.Log("client is not fetched")
+		return
+	}
+
+	t.Log("client DID:", clientDID)
+	t.Log("client DID:", client.DID())
+	t.Log("client KID:", client.KeyAgreementKID())
 }
