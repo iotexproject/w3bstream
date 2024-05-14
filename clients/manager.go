@@ -75,6 +75,16 @@ func (mgr *Manager) ClientByIoID(id string) *Client {
 func (mgr *Manager) fetchFromContract(id string) (*Client, error) {
 	address := strings.TrimPrefix(id, "did:io:")
 
+	// NOTE: this did is used for debug
+	if id == "did:io:0x5b7902df415485c7e21334ca95ca94667278030e" {
+		doc := []byte(`{"@context":["https://www.w3.org/ns/did/v1","https://w3id.org/security#keyAgreementMethod"],"id":"did:io:0x5b7902df415485c7e21334ca95ca94667278030e","authentication":["did:io:0x5b7902df415485c7e21334ca95ca94667278030e#Key-secp256k1-1"],"keyAgreement":["did:io:0x05b7e62aab18a50f778aa9ee7fd5cafccff184fa#Key-p256-2"],"verificationMethod":[{"id":"did:io:0x5b7902df415485c7e21334ca95ca94667278030e#Key-secp256k1-1","type":"JsonWebKey2020","controller":"did:io:0x5b7902df415485c7e21334ca95ca94667278030e","publicKeyJwk":{"crv":"secp256k1","x":"Gon1UzQ5nHiBHgfZEZB6Pm8e_jIaEqFZ7ST8u1X2KFY","y":"jRNCdq7MmINchIW_inBuqvrDq1PN0oDmzFuMFxGQj7E","kty":"EC","kid":"Key-secp256k1-1"}},{"id":"did:io:0x05b7e62aab18a50f778aa9ee7fd5cafccff184fa#Key-p256-2","type":"JsonWebKey2020","controller":"did:io:0x5b7902df415485c7e21334ca95ca94667278030e","publicKeyJwk":{"crv":"P-256","x":"BXcP9R0lFxRZ_RZV9LNBztqp3GOPLn2Iri0rq5ptq0Q","y":"jlxF9ZbSRdzmb8DlN33GG8M_AS4bf98-8pWcE6HyBgk","kty":"EC","kid":"Key-p256-2"}}]}`)
+		jwk, err := ioconnect.NewJWKFromDoc(doc)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse did doc")
+		}
+		return &Client{jwk: jwk}, nil
+	}
+
 	uri, err := mgr.ioIDRegistryInstance.DocumentURI(nil, common.HexToAddress(address))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read client document uri")
