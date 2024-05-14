@@ -1,8 +1,7 @@
 [
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": false,
         "internalType": "uint8",
@@ -15,8 +14,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -41,8 +39,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -61,8 +58,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -75,8 +71,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -102,8 +97,7 @@
   {
     "inputs": [],
     "name": "DOMAIN_SEPARATOR",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes32",
         "name": "",
@@ -116,8 +110,7 @@
   {
     "inputs": [],
     "name": "EIP712DOMAIN_TYPEHASH",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes32",
         "name": "",
@@ -130,8 +123,7 @@
   {
     "inputs": [],
     "name": "METHOD",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "string",
         "name": "",
@@ -142,8 +134,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "device",
@@ -151,8 +142,7 @@
       }
     ],
     "name": "deviceTokenId",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -163,8 +153,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "device",
@@ -172,8 +161,7 @@
       }
     ],
     "name": "documentHash",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes32",
         "name": "",
@@ -184,8 +172,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "device",
@@ -193,8 +180,7 @@
       }
     ],
     "name": "documentID",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "string",
         "name": "",
@@ -205,8 +191,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "device",
@@ -214,8 +199,7 @@
       }
     ],
     "name": "documentURI",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "string",
         "name": "",
@@ -226,8 +210,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "device",
@@ -235,8 +218,7 @@
       }
     ],
     "name": "exists",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bool",
         "name": "",
@@ -247,8 +229,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_ioIDStore",
@@ -268,8 +249,7 @@
   {
     "inputs": [],
     "name": "ioID",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -282,8 +262,7 @@
   {
     "inputs": [],
     "name": "ioIDStore",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -294,8 +273,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "device",
@@ -303,8 +281,7 @@
       }
     ],
     "name": "nonces",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -315,8 +292,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "owner",
@@ -329,8 +305,7 @@
       }
     ],
     "name": "permitHash",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes32",
         "name": "",
@@ -341,8 +316,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "deviceContract",
@@ -390,8 +364,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "",
@@ -404,8 +377,7 @@
       }
     ],
     "name": "registeredNFT",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bool",
         "name": "",
@@ -416,8 +388,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "device",
@@ -445,8 +416,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_ioIDStore",
@@ -459,8 +429,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "device",
