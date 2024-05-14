@@ -20,3 +20,7 @@ func (c *Client) KeyAgreementKID() string {
 func (c *Client) DID() string {
 	return c.jwk.DID()
 }
+
+func (c *Client) Doc() *ioconnect.Doc {
+	return c.jwk.Doc()
+}
