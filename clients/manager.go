@@ -2,7 +2,6 @@ package clients
 
 import (
 	_ "embed" // embed mock clients configuration
-	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -18,43 +17,7 @@ import (
 	"github.com/machinefi/sprout/clients/contracts"
 )
 
-var (
-	//go:embed clients
-	mockClientsConfig []byte
-)
-
-type Client struct {
-	ClientDID       string            `json:"clientDID"`
-	Projects        []uint64          `json:"projects"`
-	KeyAgreementKID string            `json:"keyAgreementKID"`
-	Metadata        map[string]string `json:"metadata,omitempty"`
-	projects        map[uint64]struct{}
-}
-
-func (c *Client) init() {
-	if c.Metadata == nil {
-		c.Metadata = make(map[string]string)
-	}
-	if c.projects == nil {
-		c.projects = make(map[uint64]struct{})
-	}
-	for _, v := range c.Projects {
-		c.projects[v] = struct{}{}
-	}
-}
-
-func (c *Client) HasProjectPermission(projectID uint64) bool {
-	_, ok := c.projects[projectID]
-	return ok
-}
-
-var manager *Manager
-
 func NewManager(ioIDRegisterAddress, chainEndpoint, ioIDRegistryEndpoint string) (*Manager, error) {
-	if manager != nil {
-		return manager, nil
-	}
-
 	cli, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to dail chain endpiont: %s", chainEndpoint)
@@ -65,16 +28,13 @@ func NewManager(ioIDRegisterAddress, chainEndpoint, ioIDRegistryEndpoint string)
 		return nil, errors.Wrap(err, "failed to new ioIDRegistry")
 	}
 
-	m := &Manager{
+	return &Manager{
 		mux:                  sync.Mutex{},
 		cli:                  cli,
 		ioIDRegistryInstance: instance,
 		ioIDRegistryEndpoint: ioIDRegistryEndpoint,
 		pool:                 make(map[string]*Client),
-	}
-	m.fillByMockClients()
-	manager = m
-	return manager, nil
+	}, nil
 }
 
 type Manager struct {
@@ -85,98 +45,54 @@ type Manager struct {
 	ioIDRegistryEndpoint string
 }
 
-func (mgr *Manager) clientByDIDFromCache(clientID string) (*Client, bool) {
+// clientByIoID get client from pool
+func (mgr *Manager) clientByIoID(id string) *Client {
 	mgr.mux.Lock()
 	defer mgr.mux.Unlock()
-	c, ok := mgr.pool[clientID]
-	return c, ok
+	return mgr.pool[id]
 }
 
-func (mgr *Manager) ClientByDID(clientID string) *Client {
-	c, ok := mgr.clientByDIDFromCache(clientID)
-	if ok && c.KeyAgreementKID != "" {
+// ClientByIoID get client from pool, if not hit, try fetch client from contract
+func (mgr *Manager) ClientByIoID(id string) *Client {
+	c := mgr.clientByIoID(id)
+	if c != nil {
 		return c
 	}
 
-	kid, err := mgr.fetchClientFromContract(clientID)
+	c, err := mgr.fetchFromContract(id)
 	if err != nil {
+		slog.Error("fetch client", "error", err)
 		return c
 	}
-	c2 := c
-	if c == nil {
-		c2 = &Client{
-			ClientDID: clientID,
-			Projects:  make([]uint64, 0),
-			Metadata:  make(map[string]string),
-		}
-		c2.init()
-	}
-	c2.KeyAgreementKID = kid
 
 	mgr.mux.Lock()
 	defer mgr.mux.Unlock()
-	mgr.pool[clientID] = c2
-	return c2
+	mgr.pool[c.DID()] = c
+	return c
 }
 
-func (mgr *Manager) fetchClientFromContract(clientID string) (string, error) {
-	l := slog.With("client_id", clientID)
+func (mgr *Manager) fetchFromContract(id string) (*Client, error) {
+	address := strings.TrimPrefix(id, "did:io:")
 
-	clientAddress := strings.TrimPrefix(clientID, "did:io:")
-	l = l.With("client_address", clientAddress)
-
-	uri, err := mgr.ioIDRegistryInstance.DocumentURI(nil, common.HexToAddress(clientAddress))
+	uri, err := mgr.ioIDRegistryInstance.DocumentURI(nil, common.HexToAddress(address))
 	if err != nil {
-		err = errors.Wrap(err, "failed to read client document uri from contract")
-		l.Error("read client document uri", "error", err)
-		return "", err
+		return nil, errors.Wrap(err, "failed to read client document uri")
 	}
-	l.With("ipfs_uri", uri)
 
 	url := fmt.Sprintf("https://%s/cid/%s", mgr.ioIDRegistryEndpoint, uri)
 	rsp, err := http.Get(url)
 	if err != nil {
-		err = errors.Wrap(err, "failed to fetch client did doc from io registry")
-		l.Error("fetch client doc from io registry", "error", err)
-		return "", err
+		return nil, errors.Wrap(err, "failed to fetch client did doc from io registry")
 	}
 
 	defer rsp.Body.Close()
 	content, err := io.ReadAll(rsp.Body)
 	if err != nil {
-		err = errors.Wrap(err, "failed to read response")
-		l.Error("read document content from response", "error", err)
-		return "", err
+		return nil, errors.Wrap(err, "failed to read io registry response")
 	}
-	clientJWK, err := ioconnect.NewJWKFromDoc(content)
+	jwk, err := ioconnect.NewJWKFromDoc(content)
 	if err != nil {
-		err = errors.Wrap(err, "failed to parse did doc")
-		l.Error("parse jwk from client doc", "error", err)
-		return "", err
+		return nil, errors.Wrap(err, "failed to parse did doc")
 	}
-	defer clientJWK.Destroy()
-
-	return clientJWK.KeyAgreementKID(), nil
-}
-
-func (mgr *Manager) fetchProjectListByClientIDFromContract() {
-	// TODO update client project binding list
-}
-
-func (mgr *Manager) AddClient(c *Client) {
-	c.init()
-	mgr.mux.Lock()
-	defer mgr.mux.Unlock()
-	mgr.pool[c.ClientDID] = c
-}
-
-func (mgr *Manager) fillByMockClients() {
-	clients := make([]*Client, 0)
-	if err := json.Unmarshal(mockClientsConfig, &clients); err != nil {
-		panic(err)
-	}
-	for _, c := range clients {
-		c.init()
-		mgr.pool[c.ClientDID] = c
-	}
+	return &Client{jwk: jwk}, nil
 }

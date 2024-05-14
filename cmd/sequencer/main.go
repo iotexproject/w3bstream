@@ -75,7 +75,7 @@ func main() {
 
 	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
 
-	_, err = clients.NewManager(ioIDContractAddress, chainEndpoint, ioIDRegistryEndpoint)
+	clientMgr, err := clients.NewManager(ioIDContractAddress, chainEndpoint, ioIDRegistryEndpoint)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new clients manager"))
 	}
@@ -86,7 +86,7 @@ func main() {
 	}
 
 	go func() {
-		if err := api.NewHttpServer(p, aggregationAmount, coordinatorAddress, didAuthServer, sk, jwk).Run(address); err != nil {
+		if err := api.NewHttpServer(p, aggregationAmount, coordinatorAddress, didAuthServer, sk, jwk, clientMgr).Run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()
