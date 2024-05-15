@@ -82,8 +82,16 @@ To shut down the W3bstream instance:
 docker-compose down
 ```
 
-### Prover Manager
+### Install ioctl
+Install **ioctl**: The command-line interface for interacting with the IoTeX blockchain.
 
+```bash
+brew tap iotexproject/ioctl-unstable
+brew install iotexproject/ioctl-unstable/ioctl-unstable
+alias ioctl=`which ioctl-unstable`
+```
+
+### Prover Manager
 #### Register and query prover
 
 ```bash
@@ -111,14 +119,6 @@ ioctl ws prover transfer --id 'prover id' --operator 'operator wallet address'
 ```
 
 ### Interacting with the node
-
-Install **ioctl**: The command-line interface for interacting with the IoTeX blockchain.
-
-```bash
-brew tap iotexproject/ioctl-unstable
-brew install iotexproject/ioctl-unstable/ioctl-unstable
-alias ioctl=`which ioctl-unstable`
-```
 
 set the ioctl's wsEndpoint configuration option to your node endpoint:
 
