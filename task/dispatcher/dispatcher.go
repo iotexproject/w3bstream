@@ -107,28 +107,29 @@ func RunLocalDispatcher(persistence Persistence, newDatasource NewDatasource,
 }
 
 func setProjectDispatcher(persistence Persistence, newDatasource NewDatasource, projectDispatchers *sync.Map, p *contract.Project, projectManager ProjectManager, ps *p2p.PubSubs, handler *taskStateHandler, sequencerPubKey []byte) {
-	if p.Uri != "" {
-		_, ok := projectDispatchers.Load(p.ID)
-		if ok {
-			return
+	ep, ok := projectDispatchers.Load(p.ID)
+	if ok {
+		if p.Paused != nil {
+			ep.(*projectDispatcher).paused.Store(*p.Paused)
 		}
-		pf, err := projectManager.Project(p.ID)
-		if err != nil {
-			slog.Error("failed to get project", "project_id", p.ID, "error", err)
-			return
-		}
-		if err := ps.Add(p.ID); err != nil {
-			slog.Error("failed to add pubsubs", "project_id", p.ID, "error", err)
-			return
-		}
-		pd, err := newProjectDispatcher(persistence, pf.DatasourceURI, newDatasource, p, ps, handler, sequencerPubKey)
-		if err != nil {
-			slog.Error("failed to new project dispatcher", "project_id", p.ID, "error", err)
-			return
-		}
-		projectDispatchers.Store(p.ID, pd)
-		slog.Info("a new project dispatcher started", "project_id", p.ID)
+		return
 	}
+	pf, err := projectManager.Project(p.ID)
+	if err != nil {
+		slog.Error("failed to get project", "project_id", p.ID, "error", err)
+		return
+	}
+	if err := ps.Add(p.ID); err != nil {
+		slog.Error("failed to add pubsubs", "project_id", p.ID, "error", err)
+		return
+	}
+	pd, err := newProjectDispatcher(persistence, pf.DatasourceURI, newDatasource, p, ps, handler, sequencerPubKey)
+	if err != nil {
+		slog.Error("failed to new project dispatcher", "project_id", p.ID, "error", err)
+		return
+	}
+	projectDispatchers.Store(p.ID, pd)
+	slog.Info("a new project dispatcher started", "project_id", p.ID)
 }
 
 func dispatch(persistence Persistence, newDatasource NewDatasource, projectManager ProjectManager,

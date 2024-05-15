@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"log/slog"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -22,6 +23,7 @@ type projectDispatcher struct {
 	datasource      datasource.Datasource
 	pubSubs         *p2p.PubSubs
 	sequencerPubKey []byte
+	paused          *atomic.Bool
 }
 
 func (d *projectDispatcher) handle(s *task.StateLog) {
@@ -31,9 +33,14 @@ func (d *projectDispatcher) handle(s *task.StateLog) {
 func (d *projectDispatcher) run() {
 	nextTaskID := d.startTaskID
 	for {
+		if d.paused.Load() {
+			time.Sleep(d.waitInterval)
+			continue
+		}
 		next, err := d.dispatch(nextTaskID)
 		if err != nil {
 			slog.Error("failed to dispatch task", "error", err, "project_id", d.projectID)
+			time.Sleep(d.waitInterval)
 			continue
 		}
 		if nextTaskID == next {
@@ -86,6 +93,10 @@ func newProjectDispatcher(persistence Persistence, datasourceURI string, newData
 	}
 
 	window := newWindow(proverAmount, pubSubs, handler, persistence)
+	paused := atomic.Bool{}
+	if p.Paused != nil {
+		paused.Store(*p.Paused)
+	}
 	d := &projectDispatcher{
 		window:          window,
 		waitInterval:    3 * time.Second,
@@ -94,6 +105,7 @@ func newProjectDispatcher(persistence Persistence, datasourceURI string, newData
 		projectID:       p.ID,
 		pubSubs:         pubSubs,
 		sequencerPubKey: sequencerPubKey,
+		paused:          &paused,
 	}
 	go d.run()
 	return d, nil

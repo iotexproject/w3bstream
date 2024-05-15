@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -168,11 +169,19 @@ func TestRunLocalDispatcher(t *testing.T) {
 }
 
 func TestSetProjectDispatcher(t *testing.T) {
-	cp := &contract.Project{ID: 1, Uri: "http://test.com"}
+	paused := true
+	cp := &contract.Project{
+		ID:     1,
+		Uri:    "http://test.com",
+		Paused: &paused,
+	}
 	mp := &mockProjectManager{}
 	t.Run("ProjectExist", func(t *testing.T) {
 		projectDispatchers := &sync.Map{}
-		projectDispatchers.Store(uint64(1), true)
+		projectDispatcher := &projectDispatcher{
+			paused: &atomic.Bool{},
+		}
+		projectDispatchers.Store(uint64(1), projectDispatcher)
 
 		setProjectDispatcher(nil, nil, projectDispatchers, cp, nil, nil, nil, nil)
 	})
