@@ -135,8 +135,9 @@ ioctl config set wsProjectRegisterContract 0xEb14B2c6295Ff4b215FBcb85361b495ceC1
 ##### Register and Upload project 
 
 ```bash
-# register a new project, this command will retrieve the project id
-ioctl ws project register
+# register a new project to w3bstream
+# note: this need you had mint a project NFT in ioID, see more: https://github.com/machinefi/ioID-contracts
+ioctl ws project register --id "your project id"
 # use the project config generated above and update project config
 ioctl ws project update --id "your project id" --path "path/to/project_config" --hash "project config hash(optional)"
 # you can retrieve project info by follow command
@@ -147,9 +148,9 @@ ioctl ws project query --id "your project id"
 
 ```bash
 # get attributes
-ioct ws project attributes get --id "your project id" --key "your key name"
+ioctl ws project attributes get --id "your project id" --key "your key name"
 # set attributes
-ioct ws project attributes set --id "your project id" --key "your key name" --val "your key val"
+ioctl ws project attributes set --id "your project id" --key "your key name" --val "your key val"
 ```
 
 ##### Control project status
