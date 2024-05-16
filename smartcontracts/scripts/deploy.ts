@@ -1,6 +1,10 @@
 import { ethers, upgrades } from 'hardhat';
 
 async function main() {
+  if (!process.env.PROJECT_ADDRESS) {
+    console.log(`Please provide project address`);
+    return;
+  }
   if (!process.env.PROJECT_REGISTRATION_FEE) {
     console.log(`Please provide project registration fee`);
     return;
@@ -17,7 +21,7 @@ async function main() {
   const [deployer] = await ethers.getSigners();
 
   const W3bstreamProject = await ethers.getContractFactory('W3bstreamProject');
-  const project = await upgrades.deployProxy(W3bstreamProject, ['W3bstream Project', 'WPN'], {
+  const project = await upgrades.deployProxy(W3bstreamProject, [process.env.PROJECT_ADDRESS], {
     initializer: 'initialize',
   });
   await project.waitForDeployment();
@@ -29,9 +33,9 @@ async function main() {
   });
   await projectRegistrar.waitForDeployment();
   console.log(`ProjectRegistrar deployed to ${projectRegistrar.target}`);
-  let tx = await project.setMinter(projectRegistrar.target);
+  let tx = await project.setBinder(projectRegistrar.target);
   await tx.wait();
-  console.log(`W3bstreamProject minter set to ProjectRegistrar ${projectRegistrar.target}`);
+  console.log(`W3bstreamProject binder set to ProjectRegistrar ${projectRegistrar.target}`);
   tx = await projectRegistrar.setRegistrationFee(ethers.parseEther(process.env.PROJECT_REGISTRATION_FEE));
   await tx.wait();
   console.log(`ProjectRegistrar registration fee set to ${process.env.PROJECT_REGISTRATION_FEE}`);
