@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 interface IProjectStore {
-    function mint(address _owner) external returns (uint256 projectId_);
+    function bind(uint256 _projectId) external;
 }
 
 contract ProjectRegistrar is OwnableUpgradeable {
@@ -25,9 +25,9 @@ contract ProjectRegistrar is OwnableUpgradeable {
         emit RegistrationFeeSet(_fee);
     }
 
-    function register() external payable returns (uint256) {
+    function register(uint256 _projectId) external payable {
         require(msg.value >= registrationFee, "insufficient fee");
-        return projectStore.mint(msg.sender);
+        projectStore.bind(_projectId);
     }
 
     function withdrawFee(address payable _account, uint256 _amount) external onlyOwner {
