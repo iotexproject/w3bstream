@@ -67,12 +67,6 @@ func (d *projectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	metrics.DispatchedTaskNumMtc(d.projectID, t.ProjectVersion)
 
 	if err := d.pubSubs.Publish(t.ProjectID, &p2p.Data{Task: t}); err != nil {
-		d.window.consume(&task.StateLog{
-			TaskID:    t.ID,
-			State:     task.StateFailed,
-			Comment:   "failed to publish p2p data",
-			CreatedAt: time.Now(),
-		})
 		return 0, errors.Wrapf(err, "failed to publish data, project_id %v, task_id %v", t.ProjectID, t.ID)
 	}
 	slog.Debug("dispatched a task", "project_id", t.ProjectID, "task_id", t.ID)

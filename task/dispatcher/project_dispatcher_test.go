@@ -99,7 +99,6 @@ func TestProjectDispatcher_dispatch(t *testing.T) {
 		p.ApplyMethodReturn(ds, "Retrieve", tk, nil)
 		p.ApplyMethodReturn(tk, "VerifySignature", nil)
 		p.ApplyPrivateMethod(&window{}, "produce", func() {})
-		p.ApplyPrivateMethod(&window{}, "consume", func() {})
 		p.ApplyMethodReturn(pubSubs, "Publish", errors.New(t.Name()))
 
 		_, err := d.dispatch(0)
