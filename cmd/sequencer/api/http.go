@@ -130,7 +130,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 			return
 		}
 		if !approved {
-			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrapf(err, "no permission project %d for %s", req.ProjectID, client.DID())))
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Errorf("no permission project %d for %s", req.ProjectID, client.DID())))
 			return
 		}
 	}
@@ -151,6 +151,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	response := &apitypes.HandleMessageRsp{MessageID: id}
 
 	if client != nil {
+		slog.Info("encrypt response task commit", "response", response)
 		cipher, err := s.jwk.EncryptJSON(response, client.KeyAgreementKID())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(errors.Wrap(err, "failed to encrypt response when commit task")))
@@ -189,7 +190,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 			return
 		}
 		if !approved {
-			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrapf(err, "no permission project %d for %s", m.ProjectID, client.DID())))
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Errorf("no permission project %d for %s", m.ProjectID, client.DID())))
 			return
 		}
 	}
@@ -238,6 +239,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 	response := &apitypes.QueryMessageStateLogRsp{MessageID: messageID, States: ss}
 
 	if client != nil {
+		slog.Info("encrypt response task query", "response", response)
 		cipher, err := s.jwk.EncryptJSON(response, client.KeyAgreementKID())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(errors.Wrap(err, "failed to encrypt response when query task")))
@@ -276,6 +278,7 @@ func (s *httpServer) issueJWTCredential(c *gin.Context) {
 		c.String(http.StatusInternalServerError, errors.Wrap(err, "failed to sign token").Error())
 		return
 	}
+	slog.Info("token signed", "token", token)
 
 	cipher, err := s.jwk.Encrypt([]byte(token), client.KeyAgreementKID())
 	if err != nil {
