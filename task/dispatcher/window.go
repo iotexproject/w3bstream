@@ -1,8 +1,10 @@
 package dispatcher
 
 import (
+	"container/list"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/task"
@@ -10,9 +12,8 @@ import (
 
 type window struct {
 	cond        *sync.Cond
-	front       int
-	rear        int
-	tasks       []*dispatchedTask
+	size        *atomic.Uint64
+	tasks       *list.List // []*dispatchedTask
 	pubSubs     *p2p.PubSubs
 	handler     *taskStateHandler
 	persistence Persistence
@@ -45,8 +46,9 @@ func (w *window) produce(t *task.Task) {
 }
 
 func (w *window) getTask(taskID uint64) *dispatchedTask {
-	for _, t := range w.tasks {
-		if t != nil && t.task.ID == taskID {
+	for e := w.tasks.Front(); e != nil; e = e.Next() {
+		t := e.Value.(*dispatchedTask)
+		if t.task.ID == taskID {
 			return t
 		}
 	}
@@ -54,14 +56,13 @@ func (w *window) getTask(taskID uint64) *dispatchedTask {
 }
 
 func (w *window) enQueue(value *dispatchedTask) {
-	w.tasks[w.rear] = value
-	w.rear = (w.rear + 1) % len(w.tasks)
+	w.tasks.PushBack(value)
 }
 
 func (w *window) deQueue() {
 	for !w.isEmpty() {
-		if t := w.tasks[w.front]; t.finished.Load() {
-			w.front = (w.front + 1) % len(w.tasks)
+		if t := w.tasks.Front().Value.(*dispatchedTask); t.finished.Load() {
+			w.tasks.Remove(w.tasks.Front())
 			if err := w.persistence.UpsertProcessedTask(t.task.ProjectID, t.task.ID); err != nil {
 				slog.Error("failed to upsert processed task", "project_id", t.task.ProjectID, "task_id", t.task.ID)
 			}
@@ -72,17 +73,20 @@ func (w *window) deQueue() {
 }
 
 func (w *window) isEmpty() bool {
-	return w.rear == w.front
+	return w.tasks.Len() == 0
 }
 
 func (w *window) isFull() bool {
-	return (w.rear+1)%len(w.tasks) == w.front
+	return uint64(w.tasks.Len()) >= w.size.Load()
 }
 
 func newWindow(size uint64, pubSubs *p2p.PubSubs, handler *taskStateHandler, persistence Persistence) *window {
+	s := &atomic.Uint64{}
+	s.Store(size)
 	return &window{
 		cond:        sync.NewCond(&sync.Mutex{}),
-		tasks:       make([]*dispatchedTask, size+1),
+		size:        s,
+		tasks:       list.New(),
 		pubSubs:     pubSubs,
 		handler:     handler,
 		persistence: persistence,
