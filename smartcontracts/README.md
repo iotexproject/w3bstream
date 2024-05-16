@@ -23,4 +23,6 @@ W3bstreamProver deployed to 0xAD480a9c1B9fA8dD118c26Ac26880727160D0448
 W3bstreamCredit deployed to 0x0ad7d4bBC1c839b33404Cd32fB8FB65D9ec5d5b6
 FleetManagement deployed to 0xDBA78C8eCaeE2DB9DDE0c4168f7E8626d4Ff0010
 W3bstreamRouter deployed to 0x90A27ab74E790Cef6e258aabee1B361a9c993e8b
+
+ProjectDevice deployed to 0xF4d6282C5dDD474663eF9e70c927c0d4926d1CEb
 ```

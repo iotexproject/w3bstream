@@ -121,4 +121,8 @@ contract W3bstreamProject is OwnableUpgradeable {
 
         emit BinderSet(_binder);
     }
+
+    function isValidProject(uint256 _projectId) external view returns (bool) {
+        return projects[_projectId];
+    }
 }
