@@ -128,15 +128,16 @@ The values of `image_id` and `elf` are variable names, and will be found in the 
 # set local w3bstream sequencer as w3bstream endpoint
 ioctl config set wsEndpoint 'localhost:9000'
 # set the default project register and project store contract address
-ioctl config set wsProjectRegisterContract 0x80b49a5788DcE3eAbFcc46780dEA965602f869C9 
-ioctl config set wsProjectStoreContract 0xf9B976C0127BC38E56fb97B0B1e1408e6F2737CE 
+ioctl config set wsProjectStoreContract 0xeBe885c939c98cEa51083c65f95038aE930a552f
+ioctl config set wsProjectRegisterContract 0xEb14B2c6295Ff4b215FBcb85361b495ceC141569
 ```
 
 ##### Register and Upload project 
 
 ```bash
-# register a new project, this command will retrieve the project id
-ioctl ws project register
+# register a new project to w3bstream
+# note: this need you had mint a project NFT in ioID, see more: https://github.com/machinefi/ioID-contracts
+ioctl ws project register --id "your project id"
 # use the project config generated above and update project config
 ioctl ws project update --id "your project id" --path "path/to/project_config" --hash "project config hash(optional)"
 # you can retrieve project info by follow command
@@ -147,9 +148,9 @@ ioctl ws project query --id "your project id"
 
 ```bash
 # get attributes
-ioct ws project attributes get --id "your project id" --key "your key name"
+ioctl ws project attributes get --id "your project id" --key "your key name"
 # set attributes
-ioct ws project attributes set --id "your project id" --key "your key name" --val "you key val"
+ioctl ws project attributes set --id "your project id" --key "your key name" --val "your key val"
 ```
 
 ##### Control project status

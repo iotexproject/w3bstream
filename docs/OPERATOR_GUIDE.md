@@ -91,7 +91,16 @@ brew install iotexproject/ioctl-unstable/ioctl-unstable
 alias ioctl=`which ioctl-unstable`
 ```
 
+#### Set contract addresses
+
+```bash
+# set the default prover register and prover store contract address
+ioctl config set wsFleetManagementContract 0xf0394c90063f8e39C766fC69f45630787DB2a5e3
+ioctl config set wsProverStoreContract 0xf9c2106a50394aE38FD962D5e536e9512A0666F6
+```
+
 ### Prover Manager
+
 #### Register and query prover
 
 ```bash
