@@ -1,6 +1,7 @@
 package dispatcher
 
 import (
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -35,7 +36,9 @@ func TestProjectDispatcher_run(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	d := &projectDispatcher{}
+	d := &projectDispatcher{
+		paused: &atomic.Bool{},
+	}
 	p.ApplyPrivateMethod(d, "dispatch", func(uint64) (uint64, error) {
 		return 0, nil
 	})
@@ -168,8 +171,10 @@ func TestNewProjectDispatcher(t *testing.T) {
 		p.ApplyPrivateMethod(&projectDispatcher{}, "run", func() {})
 		nd := func(string) (datasource.Datasource, error) { return nil, nil }
 
+		paused := true
 		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("1")},
+			Paused:     &paused,
 		}, nil, nil, nil)
 		time.Sleep(10 * time.Millisecond)
 		r.NoError(err)

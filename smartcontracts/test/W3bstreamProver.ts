@@ -3,7 +3,7 @@ import { ethers } from 'hardhat';
 
 describe('W3bstream Prover', function () {
   let w3bstreamProver;
-  beforeEach(async function() {
+  beforeEach(async function () {
     w3bstreamProver = await ethers.deployContract('W3bstreamProver');
   });
   it('register prover and update operator', async function () {
