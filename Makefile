@@ -37,6 +37,17 @@ images:
 		echo "done!"; \
 	done
 
+.PHONY: prover_image
+prover_image:
+	@docker build -f prover.Dockerfile . -t prover
+
+.PHONY: sequencer_image
+sequencer_image:
+	@docker build -f sequencer.Dockerfile . -t sequencer
+
+.PHONY: coordinator_image
+coordinator_image:
+	@docker build -f coordinator.Dockerfile . -t coordinator
 
 MOD=$(shell cat go.mod | grep ^module -m 1 | awk '{ print $$2; }' || '')
 
@@ -44,11 +55,11 @@ MOD=$(shell cat go.mod | grep ^module -m 1 | awk '{ print $$2; }' || '')
 fmt:
 	@echo ${MOD}
 	@for item in `find . -type f -name '*.go' -not -path '*.pb.go'` ; \
-    do \
+	do \
 		if [ -z ${MOD} ]; then \
 			goimports -w $$item ; \
 		else \
 			goimports -w -local "${MOD}" $$item ; \
 		fi \
-    done
+	done
 

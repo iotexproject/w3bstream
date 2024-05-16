@@ -40,3 +40,5 @@ project_cache
 smartcontracts/contracts/artifacts/
 smartcontracts/contracts/interfaces/artifacts/
 smartcontracts/.deps
+
+clients/contracts/ioid

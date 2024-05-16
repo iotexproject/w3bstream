@@ -124,9 +124,13 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 
 	// validate project permission
 	if client != nil {
-		// TODO consider if project has public attribute
-		if !client.HasProjectPermission(req.ProjectID) {
-			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Errorf("client %s has no permission in project %d", client.DID(), req.ProjectID)))
+		approved, err := s.clients.HasProjectPermission(client.DID(), req.ProjectID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrapf(err, "failed to check project %d permission for %s", req.ProjectID, client.DID())))
+			return
+		}
+		if !approved {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrapf(err, "no permission project %d for %s", req.ProjectID, client.DID())))
 			return
 		}
 	}
@@ -175,13 +179,17 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 
 	client := clients.ClientIDFrom(c.Request.Context())
 	if client != nil {
-		// TODO consider if project has public attribute
-		if !client.HasProjectPermission(m.ProjectID) {
-			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Errorf("client %s has no permission in project %d", client.DID(), m.ProjectID)))
-			return
-		}
 		if m.ClientID != client.DID() {
 			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.New("unmatched client DID")))
+			return
+		}
+		approved, err := s.clients.HasProjectPermission(client.DID(), m.ProjectID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrapf(err, "failed to check project %d permission for %s", m.ProjectID, client.DID())))
+			return
+		}
+		if !approved {
+			c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrapf(err, "no permission project %d for %s", m.ProjectID, client.DID())))
 			return
 		}
 	}
@@ -269,5 +277,11 @@ func (s *httpServer) issueJWTCredential(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, &apitypes.IssueTokenRsp{Token: token})
+	cipher, err := s.jwk.Encrypt([]byte(token), client.KeyAgreementKID())
+	if err != nil {
+		c.String(http.StatusInternalServerError, errors.Wrap(err, "failed to encrypt").Error())
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", cipher)
 }

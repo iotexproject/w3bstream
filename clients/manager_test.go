@@ -1,40 +1,52 @@
 package clients_test
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/machinefi/sprout/clients"
 )
 
 func TestClientByClientID(t *testing.T) {
-	contractAddr := "0xB63e6034361283dc8516480a46EcB9C122c983Bb"
+	projectClientContractAddr := "0xF4d6282C5dDD474663eF9e70c927c0d4926d1CEb"
+	ioIDContractAddr := "0x06b3Fcda51e01EE96e8E8873F0302381c955Fddd"
 	chainEndpoint := "https://babel-api.testnet.iotex.io"
 	ioRegistryEndpoint := "did.iotex.me"
-	clientDID := "did:io:0x1c89860d3eed129fe1996bb72044cc22cc46a756"
 
-	mgr, err := clients.NewManager(contractAddr, chainEndpoint, ioRegistryEndpoint)
+	mgr, err := clients.NewManager(projectClientContractAddr, ioIDContractAddr, ioRegistryEndpoint, chainEndpoint)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	client := mgr.ClientByIoID(clientDID)
-	if client == nil {
-		t.Log("client is not fetched")
-		return
+	t.Log("ioID contract address:           ", ioIDContractAddr)
+	t.Log("project device contract address: ", projectClientContractAddr)
+	t.Log("chain endpoint:                  ", chainEndpoint)
+	t.Log("io registry:                     ", ioRegistryEndpoint)
+
+	clientDIDs := []string{
+		"did:io:0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73",
+		// "did:io:0x1c89860d3eed129fe1996bb72044cc22cc46a756",
+		// "did:io:0x5b7902df415485c7e21334ca95ca94667278030e",
 	}
+	for _, id := range clientDIDs {
+		client := mgr.ClientByIoID(id)
+		if client == nil {
+			t.Logf("client is not fetched: %s ", id)
+			continue
+		}
 
-	t.Log("client DID:", clientDID)
-	t.Log("client DID:", client.DID())
-	t.Log("client KID:", client.KeyAgreementKID())
+		address := strings.TrimPrefix(id, "did:io:")
+		t.Log(common.HexToAddress(address).String())
 
-	client = mgr.ClientByIoID("did:io:0x5b7902df415485c7e21334ca95ca94667278030e")
+		approved, err := mgr.HasProjectPermission(id, 21)
+		if err != nil {
+			t.Logf("permission is not validated: %v", err)
+			continue
+		}
 
-	if client == nil {
-		t.Log("client is not fetched")
-		return
+		t.Log("client DID: ", id)
+		t.Log("project permission: ", approved)
 	}
-
-	t.Log("client DID:", clientDID)
-	t.Log("client DID:", client.DID())
-	t.Log("client KID:", client.KeyAgreementKID())
 }

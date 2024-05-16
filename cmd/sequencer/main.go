@@ -19,18 +19,19 @@ import (
 )
 
 var (
-	logLevel             int
-	aggregationAmount    uint
-	address              string
-	coordinatorAddress   string
-	databaseDSN          string
-	didAuthServer        string
-	privateKey           string
-	jwkSecret            string
-	jwk                  *ioconnect.JWK
-	ioIDContractAddress  string
-	chainEndpoint        string
-	ioIDRegistryEndpoint string
+	logLevel                     int
+	aggregationAmount            uint
+	address                      string
+	coordinatorAddress           string
+	databaseDSN                  string
+	didAuthServer                string
+	privateKey                   string
+	jwkSecret                    string
+	jwk                          *ioconnect.JWK
+	ioIDRegistryEndpoint         string
+	ioIDRegistryContractAddress  string
+	projectClientContractAddress string
+	chainEndpoint                string
 )
 
 func init() {
@@ -42,7 +43,8 @@ func init() {
 	flag.StringVar(&didAuthServer, "didAuthServer", "srv-did-vc:9999", "did auth server endpoint")
 	flag.StringVar(&privateKey, "privateKey", "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85", "sequencer private key")
 	flag.StringVar(&jwkSecret, "jwkSecret", "R3QNJihYLjtcaxALSTsKe1cYSX0pS28wZitFVXE4Y2klf2hxVCczYHw2dVg4fXJdSgdCcnM4PgV1aTo9DwYqEw==", "jwk secret base64 string")
-	flag.StringVar(&ioIDContractAddress, "ioIDContract", "0xB63e6034361283dc8516480a46EcB9C122c983Bb", "ioIDRegistry contract address")
+	flag.StringVar(&projectClientContractAddress, "projectClientContract", "0xF4d6282C5dDD474663eF9e70c927c0d4926d1CEb", "projectClient contract address")
+	flag.StringVar(&ioIDRegistryContractAddress, "ioIDRegistryContract", "0x06b3Fcda51e01EE96e8E8873F0302381c955Fddd", "ioIDRegistry contract address")
 	flag.StringVar(&chainEndpoint, "chainEndpoint", "https://babel-api.testnet.iotex.io", "chain endpoint")
 	flag.StringVar(&ioIDRegistryEndpoint, "ioIDRegistryEndpoint", "did.iotex.me", "ioID registry endpoint")
 
@@ -75,7 +77,7 @@ func main() {
 
 	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
 
-	clientMgr, err := clients.NewManager(ioIDContractAddress, chainEndpoint, ioIDRegistryEndpoint)
+	clientMgr, err := clients.NewManager(projectClientContractAddress, ioIDRegistryContractAddress, ioIDRegistryEndpoint, chainEndpoint)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new clients manager"))
 	}

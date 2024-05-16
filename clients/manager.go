@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"strings"
 	"sync"
@@ -17,32 +18,44 @@ import (
 	"github.com/machinefi/sprout/clients/contracts"
 )
 
-func NewManager(ioIDRegisterAddress, chainEndpoint, ioIDRegistryEndpoint string) (*Manager, error) {
+func NewManager(
+	projectClientContractAddress string,
+	ioIDRegisterContractAddress string,
+	ioIDRegistryServiceEndpoint string,
+	chainEndpoint string,
+) (*Manager, error) {
 	cli, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to dail chain endpiont: %s", chainEndpoint)
 	}
 
-	instance, err := contracts.NewIoIDRegistry(common.HexToAddress(ioIDRegisterAddress), cli)
+	instanceIoID, err := contracts.NewIoIDRegistry(common.HexToAddress(ioIDRegisterContractAddress), cli)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to new ioIDRegistry")
+	}
+
+	instanceProjectClient, err := contracts.NewProjectDevice(common.HexToAddress(projectClientContractAddress), cli)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new ioIDRegistry")
 	}
 
 	return &Manager{
-		mux:                  sync.Mutex{},
-		cli:                  cli,
-		ioIDRegistryInstance: instance,
-		ioIDRegistryEndpoint: ioIDRegistryEndpoint,
-		pool:                 make(map[string]*Client),
+		mux:                   sync.Mutex{},
+		cli:                   cli,
+		ioIDRegistryInstance:  instanceIoID,
+		projectClientInstance: instanceProjectClient,
+		ioIDRegistryEndpoint:  ioIDRegistryServiceEndpoint,
+		pool:                  make(map[string]*Client),
 	}, nil
 }
 
 type Manager struct {
-	mux                  sync.Mutex
-	pool                 map[string]*Client
-	cli                  *ethclient.Client
-	ioIDRegistryInstance *contracts.IoIDRegistry
-	ioIDRegistryEndpoint string
+	mux                   sync.Mutex
+	pool                  map[string]*Client
+	cli                   *ethclient.Client
+	ioIDRegistryInstance  *contracts.IoIDRegistry
+	projectClientInstance *contracts.ProjectDevice
+	ioIDRegistryEndpoint  string
 }
 
 // clientByIoID get client from pool
@@ -75,16 +88,6 @@ func (mgr *Manager) ClientByIoID(id string) *Client {
 func (mgr *Manager) fetchFromContract(id string) (*Client, error) {
 	address := strings.TrimPrefix(id, "did:io:")
 
-	// NOTE: this did is used for debug
-	if id == "did:io:0x5b7902df415485c7e21334ca95ca94667278030e" {
-		doc := []byte(`{"@context":["https://www.w3.org/ns/did/v1","https://w3id.org/security#keyAgreementMethod"],"id":"did:io:0x5b7902df415485c7e21334ca95ca94667278030e","authentication":["did:io:0x5b7902df415485c7e21334ca95ca94667278030e#Key-secp256k1-1"],"keyAgreement":["did:io:0x05b7e62aab18a50f778aa9ee7fd5cafccff184fa#Key-p256-2"],"verificationMethod":[{"id":"did:io:0x5b7902df415485c7e21334ca95ca94667278030e#Key-secp256k1-1","type":"JsonWebKey2020","controller":"did:io:0x5b7902df415485c7e21334ca95ca94667278030e","publicKeyJwk":{"crv":"secp256k1","x":"Gon1UzQ5nHiBHgfZEZB6Pm8e_jIaEqFZ7ST8u1X2KFY","y":"jRNCdq7MmINchIW_inBuqvrDq1PN0oDmzFuMFxGQj7E","kty":"EC","kid":"Key-secp256k1-1"}},{"id":"did:io:0x05b7e62aab18a50f778aa9ee7fd5cafccff184fa#Key-p256-2","type":"JsonWebKey2020","controller":"did:io:0x5b7902df415485c7e21334ca95ca94667278030e","publicKeyJwk":{"crv":"P-256","x":"BXcP9R0lFxRZ_RZV9LNBztqp3GOPLn2Iri0rq5ptq0Q","y":"jlxF9ZbSRdzmb8DlN33GG8M_AS4bf98-8pWcE6HyBgk","kty":"EC","kid":"Key-p256-2"}}]}`)
-		jwk, err := ioconnect.NewJWKFromDoc(doc)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse did doc")
-		}
-		return &Client{jwk: jwk}, nil
-	}
-
 	uri, err := mgr.ioIDRegistryInstance.DocumentURI(nil, common.HexToAddress(address))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read client document uri")
@@ -106,4 +109,19 @@ func (mgr *Manager) fetchFromContract(id string) (*Client, error) {
 		return nil, errors.Wrap(err, "failed to parse did doc")
 	}
 	return &Client{jwk: jwk}, nil
+}
+
+func (mgr *Manager) HasProjectPermission(clientID string, projectID uint64) (bool, error) {
+	if c := mgr.clientByIoID(clientID); c == nil {
+		return false, nil
+	}
+
+	clientAddress := strings.TrimPrefix(clientID, "did:io:")
+
+	approved, err := mgr.projectClientInstance.Approved(nil, big.NewInt(int64(projectID)), common.HexToAddress(clientAddress))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to read ProjectClient contract")
+	}
+	return approved, nil
+
 }

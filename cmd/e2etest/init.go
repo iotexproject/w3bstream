@@ -37,18 +37,19 @@ var (
 )
 
 type sequencerConf struct {
-	endpoint             string
-	privateKey           string
-	databaseDSN          string
-	coordinatorAddr      string
-	didAuthServerAddr    string
-	did                  bool
-	jwkSecret            string
-	jwk                  *ioconnect.JWK
-	ioIDContract         string
-	ioIDContractAddress  string
-	chainEndpoint        string
-	ioIDRegistryEndpoint string
+	endpoint              string
+	privateKey            string
+	databaseDSN           string
+	coordinatorAddr       string
+	didAuthServerAddr     string
+	did                   bool
+	jwkSecret             string
+	jwk                   *ioconnect.JWK
+	projectClientContract string
+	ioIDContract          string
+	ioIDContractAddress   string
+	chainEndpoint         string
+	ioIDRegistryEndpoint  string
 }
 
 func seqConf(coordinatorEndpoint, didAuthServerAddr string) *sequencerConf {
@@ -87,7 +88,7 @@ func init() {
 	}
 
 	conf := seqConf(coordinatorConf.ServiceEndpoint, coordinatorConf.DIDAuthServerEndpoint)
-	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddr, conf.didAuthServerAddr, conf.endpoint, conf.ioIDContractAddress, conf.chainEndpoint, conf.ioIDRegistryEndpoint, conf.jwk)
+	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddr, conf.didAuthServerAddr, conf.endpoint, conf.projectClientContract, conf.ioIDContractAddress, conf.chainEndpoint, conf.ioIDRegistryEndpoint, conf.jwk)
 	go runProver(proverConf)
 	go runCoordinator(coordinatorConf)
 
@@ -220,7 +221,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 	slog.Info("coordinator started")
 }
 
-func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address, ioIDContract, chainEndpoint, ioRegistryEndpoint string, key *ioconnect.JWK) {
+func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address, projectClientContract, ioIDContract, chainEndpoint, ioRegistryEndpoint string, key *ioconnect.JWK) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(int(slog.LevelDebug))})))
 
 	sk, err := crypto.HexToECDSA(privateKey)
@@ -230,7 +231,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 
 	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
 
-	manager, err := clients.NewManager(ioIDContract, chainEndpoint, ioRegistryEndpoint)
+	manager, err := clients.NewManager(projectClientContract, ioIDContract, chainEndpoint, ioRegistryEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
