@@ -2,7 +2,10 @@
 pragma solidity ^0.8.19;
 
 contract MultiCall {
-    function multiCall(address[] calldata _targets, bytes[] calldata _data) external view returns (bytes[] memory results_) {
+    function multiCall(
+        address[] calldata _targets,
+        bytes[] calldata _data
+    ) external view returns (bytes[] memory results_) {
         require(_targets.length == _data.length, "target length != data length");
 
         results_ = new bytes[](_data.length);

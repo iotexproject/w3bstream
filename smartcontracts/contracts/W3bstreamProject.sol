@@ -2,45 +2,56 @@
 pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
+contract W3bstreamProject is OwnableUpgradeable {
     struct ProjectConfig {
         string uri;
         bytes32 hash;
     }
 
+    event ProjectBinded(uint256 indexed projectId);
     event AttributeSet(uint256 indexed projectId, bytes32 indexed key, bytes value);
     event ProjectPaused(uint256 indexed projectId);
     event ProjectResumed(uint256 indexed projectId);
     event ProjectConfigUpdated(uint256 indexed projectId, string uri, bytes32 hash);
-    event MinterSet(address indexed minter);
+    event BinderSet(address indexed binder);
 
+    mapping(uint256 => bool) projects;
     mapping(uint256 => ProjectConfig) projectConfigs;
     mapping(uint256 => bool) paused;
     mapping(uint256 => mapping(bytes32 => bytes)) public attributes;
 
-    address public minter;
-    uint256 nextProjectId;
+    IERC721 public project;
+    address public binder;
+    uint256 public count;
 
     modifier onlyProjectOwner(uint256 _projectId) {
-        require(ownerOf(_projectId) == msg.sender, "not owner");
+        require(project.ownerOf(_projectId) == msg.sender, "not owner");
         _;
     }
 
-    function initialize(string calldata _name, string calldata _symbol) public initializer {
+    function requireProjectRegister(uint256 _projectId) internal view virtual {
+        require(project.ownerOf(_projectId) != address(0), "invalid project");
+    }
+
+    function ownerOf(uint256 _projectId) external view returns (address) {
+        return project.ownerOf(_projectId);
+    }
+
+    function initialize(address _project) public initializer {
         __Ownable_init();
-        __ERC721_init(_name, _symbol);
-        setMinter(msg.sender);
+        project = IERC721(_project);
+        setBinder(msg.sender);
     }
 
     function isPaused(uint256 _projectId) external view returns (bool) {
-        _requireMinted(_projectId);
+        requireProjectRegister(_projectId);
         return paused[_projectId];
     }
 
     function config(uint256 _projectId) external view returns (ProjectConfig memory) {
-        _requireMinted(_projectId);
+        requireProjectRegister(_projectId);
         return projectConfigs[_projectId];
     }
 
@@ -49,7 +60,7 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
     }
 
     function attributesOf(uint256 _projectId, bytes32[] memory _keys) external view returns (bytes[] memory values_) {
-        _requireMinted(_projectId);
+        requireProjectRegister(_projectId);
 
         values_ = new bytes[](_keys.length);
         mapping(bytes32 => bytes) storage attrs = attributes[_projectId];
@@ -58,13 +69,14 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
         }
     }
 
-    function mint(address _owner) external returns (uint256 projectId_) {
-        require(msg.sender == minter, "not minter");
+    function bind(uint256 _projectId) external {
+        require(msg.sender == binder, "not binder");
+        require(!projects[_projectId], "already bind");
 
-        projectId_ = ++nextProjectId;
-
-        _mint(_owner, projectId_);
-        paused[projectId_] = true;
+        count++;
+        paused[_projectId] = true;
+        projects[_projectId] = true;
+        emit ProjectBinded(_projectId);
     }
 
     function setAttributes(
@@ -79,10 +91,6 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
             _attributes[_keys[i]] = _values[i];
             emit AttributeSet(_projectId, _keys[i], _values[i]);
         }
-    }
-
-    function count() external view returns (uint256) {
-        return nextProjectId;
     }
 
     function updateConfig(uint256 _projectId, string memory _uri, bytes32 _hash) external onlyProjectOwner(_projectId) {
@@ -108,9 +116,13 @@ contract W3bstreamProject is OwnableUpgradeable, ERC721Upgradeable {
         emit ProjectResumed(_projectId);
     }
 
-    function setMinter(address _minter) public onlyOwner {
-        minter = _minter;
+    function setBinder(address _binder) public onlyOwner {
+        binder = _binder;
 
-        emit MinterSet(_minter);
+        emit BinderSet(_binder);
+    }
+
+    function isValidProject(uint256 _projectId) external view returns (bool) {
+        return projects[_projectId];
     }
 }
