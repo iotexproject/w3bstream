@@ -72,6 +72,7 @@ contract W3bstreamProject is OwnableUpgradeable {
     function bind(uint256 _projectId) external {
         require(msg.sender == binder, "not binder");
         require(!projects[_projectId], "already bind");
+        requireProjectRegister(_projectId);
 
         count++;
         paused[_projectId] = true;
