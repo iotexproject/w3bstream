@@ -13,7 +13,7 @@ import (
 type window struct {
 	cond        *sync.Cond
 	size        *atomic.Uint64
-	tasks       *list.List // []*dispatchedTask
+	tasks       *list.List
 	pubSubs     *p2p.PubSubs
 	handler     *taskStateHandler
 	persistence Persistence
