@@ -15,8 +15,9 @@ describe('W3bstream Project', function () {
 
     await w3bstreamProject.initialize(project.target);
     await w3bstreamProject.setBinder(binder.address);
-    await w3bstreamProject.connect(binder).bind(projectOwner.address);
     const projectId = 1;
+
+    await w3bstreamProject.connect(binder).bind(projectId);
     // TODO: read project id from event
     expect(await w3bstreamProject.ownerOf(projectId)).to.equal(projectOwner.address);
     it('update config successfully', async function () {
