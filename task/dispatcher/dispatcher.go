@@ -177,22 +177,30 @@ func (d *Dispatcher) setProjectDispatcher(p *contract.Project) {
 		}
 		return
 	}
-	pf, err := d.projectManager.Project(p.ID)
+	if p.Uri == "" {
+		return
+	}
+	cp := d.contract.Project(p.ID, p.BlockNumber)
+	if cp == nil {
+		slog.Error("the contract project not exist", "project_id", p.ID)
+		return
+	}
+	pf, err := d.projectManager.Project(cp.ID)
 	if err != nil {
-		slog.Error("failed to get project", "project_id", p.ID, "error", err)
+		slog.Error("failed to get project", "project_id", cp.ID, "error", err)
 		return
 	}
-	if err := d.pubSubs.Add(p.ID); err != nil {
-		slog.Error("failed to add pubsubs", "project_id", p.ID, "error", err)
+	if err := d.pubSubs.Add(cp.ID); err != nil {
+		slog.Error("failed to add pubsubs", "project_id", cp.ID, "error", err)
 		return
 	}
-	pd, err := newProjectDispatcher(d.persistence, pf.DatasourceURI, d.newDatasource, p, d.pubSubs, d.taskStateHandler, d.sequencerPubKey)
+	pd, err := newProjectDispatcher(d.persistence, pf.DatasourceURI, d.newDatasource, cp, d.pubSubs, d.taskStateHandler, d.sequencerPubKey)
 	if err != nil {
-		slog.Error("failed to new project dispatcher", "project_id", p.ID, "error", err)
+		slog.Error("failed to new project dispatcher", "project_id", cp.ID, "error", err)
 		return
 	}
-	d.projectDispatchers.Store(p.ID, pd)
-	slog.Info("a new project dispatcher started", "project_id", p.ID)
+	d.projectDispatchers.Store(cp.ID, pd)
+	slog.Info("a new project dispatcher started", "project_id", cp.ID)
 }
 
 func (d *Dispatcher) Run() {

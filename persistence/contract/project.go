@@ -22,8 +22,9 @@ import (
 )
 
 var (
-	RequiredProverAmountHash = crypto.Keccak256Hash([]byte("RequiredProverAmount"))
-	VmTypeHash               = crypto.Keccak256Hash([]byte("VmType"))
+	RequiredProverAmountHash            = crypto.Keccak256Hash([]byte("RequiredProverAmount"))
+	VmTypeHash                          = crypto.Keccak256Hash([]byte("VmType"))
+	ClientManagementContractAddressHash = crypto.Keccak256Hash([]byte("ClientManagementContractAddress"))
 
 	attributeSetTopicHash         = crypto.Keccak256Hash([]byte("AttributeSet(uint256,bytes32,bytes)"))
 	projectPausedTopicHash        = crypto.Keccak256Hash([]byte("ProjectPaused(uint256)"))
@@ -171,6 +172,10 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 	minBlockNumber := uint64(math.MaxUint64)
 	maxBlockNumber := uint64(0)
 	for projectID := uint64(1); ; projectID++ {
+		isValidProjectCallData, err := projectABI.Pack("isValidProject", new(big.Int).SetUint64(projectID))
+		if err != nil {
+			return nil, 0, 0, errors.Wrap(err, "failed to pack is valid project call data")
+		}
 		configCallData, err := projectABI.Pack("config", new(big.Int).SetUint64(projectID))
 		if err != nil {
 			return nil, 0, 0, errors.Wrap(err, "failed to pack project config call data")
@@ -187,6 +192,10 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 		if err != nil {
 			return nil, 0, 0, errors.Wrap(err, "failed to pack project attributes call data")
 		}
+		managementAddressCallData, err := projectABI.Pack("attributes", new(big.Int).SetUint64(projectID), ClientManagementContractAddressHash)
+		if err != nil {
+			return nil, 0, 0, errors.Wrap(err, "failed to pack project attributes call data")
+		}
 
 		result, err := multiCallInstance.MultiCall(
 			nil,
@@ -196,13 +205,17 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 				projectContractAddress,
 				projectContractAddress,
 				projectContractAddress,
+				projectContractAddress,
+				projectContractAddress,
 			},
 			[][]byte{
 				blockNumberCallData,
+				isValidProjectCallData,
 				configCallData,
 				isPausedCallData,
 				requiredProverAmountCallData,
 				vmTypeCallData,
+				managementAddressCallData,
 			},
 		)
 		if err != nil {
@@ -219,33 +232,45 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 		minBlockNumber = min(minBlockNumber, blockNumber)
 		maxBlockNumber = max(maxBlockNumber, blockNumber)
 
-		if len(result[1]) == 0 || len(result[2]) == 0 || len(result[3]) == 0 || len(result[4]) == 0 {
+		out, err = projectABI.Unpack("isValidProject", result[1])
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to unpack is valid project result, project_id %v", projectID)
+		}
+		isValidProject := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+		if !isValidProject {
 			break
 		}
 
-		out, err = projectABI.Unpack("config", result[1])
+		out, err = projectABI.Unpack("config", result[2])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project config result, project_id %v", projectID)
 		}
 		config := *abi.ConvertType(out[0], new(project.W3bstreamProjectProjectConfig)).(*project.W3bstreamProjectProjectConfig)
 
-		out, err = projectABI.Unpack("isPaused", result[2])
+		out, err = projectABI.Unpack("isPaused", result[3])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project is paused result, project_id %v", projectID)
 		}
 		isPaused := *abi.ConvertType(out[0], new(bool)).(*bool)
 
-		out, err = projectABI.Unpack("attributes", result[3])
+		out, err = projectABI.Unpack("attributes", result[4])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project attributes result, project_id %v", projectID)
 		}
 		proverAmt := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
 
-		out, err = projectABI.Unpack("attributes", result[4])
+		out, err = projectABI.Unpack("attributes", result[5])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project attributes result, project_id %v", projectID)
 		}
 		vmType := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+		out, err = projectABI.Unpack("attributes", result[6])
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project attributes result, project_id %v", projectID)
+		}
+		managementAddress := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
 
 		attributes := map[common.Hash][]byte{}
 		if len(proverAmt) != 0 {
@@ -253,6 +278,9 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 		}
 		if len(vmType) != 0 {
 			attributes[VmTypeHash] = vmType
+		}
+		if len(managementAddress) != 0 {
+			attributes[ClientManagementContractAddressHash] = managementAddress
 		}
 
 		ps = append(ps, &Project{
