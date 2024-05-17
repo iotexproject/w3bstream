@@ -232,6 +232,16 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		d.projectDispatchers.Store(uint64(1), projectDispatcher)
 		d.setProjectDispatcher(cp)
 	})
+	t.Run("ProjectURIIsEmpty", func(t *testing.T) {
+		d := &Dispatcher{
+			projectManager:     mp,
+			projectDispatchers: &sync.Map{},
+		}
+		ncp := *cp
+		ncp.Uri = ""
+
+		d.setProjectDispatcher(&ncp)
+	})
 	t.Run("FailedToGetProject", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()

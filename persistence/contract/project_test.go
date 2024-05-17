@@ -223,7 +223,7 @@ func TestListProject(t *testing.T) {
 		_, _, _, err := listProject(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("FailedToPackProjectConfigCallData", func(t *testing.T) {
+	t.Run("FailedToPackIsValidProjectCallData", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
@@ -232,6 +232,25 @@ func TestListProject(t *testing.T) {
 			{
 				Values: gomonkey.Params{[]byte{}, nil},
 				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{nil, errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+		addr := common.Address{}
+		_, _, _, err := listProject(nil, addr, addr, addr)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToPackProjectConfigCallData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(multicall.NewMulticall, nil, nil)
+		p.ApplyMethodSeq(abi.ABI{}, "Pack", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{[]byte{}, nil},
+				Times:  2,
 			},
 			{
 				Values: gomonkey.Params{nil, errors.New(t.Name())},
@@ -250,11 +269,7 @@ func TestListProject(t *testing.T) {
 		p.ApplyMethodSeq(abi.ABI{}, "Pack", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
-			},
-			{
-				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
+				Times:  3,
 			},
 			{
 				Values: gomonkey.Params{nil, errors.New(t.Name())},
@@ -273,15 +288,7 @@ func TestListProject(t *testing.T) {
 		p.ApplyMethodSeq(abi.ABI{}, "Pack", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
-			},
-			{
-				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
-			},
-			{
-				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
+				Times:  4,
 			},
 			{
 				Values: gomonkey.Params{nil, errors.New(t.Name())},
@@ -300,19 +307,7 @@ func TestListProject(t *testing.T) {
 		p.ApplyMethodSeq(abi.ABI{}, "Pack", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
-			},
-			{
-				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
-			},
-			{
-				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
-			},
-			{
-				Values: gomonkey.Params{[]byte{}, nil},
-				Times:  1,
+				Times:  5,
 			},
 			{
 				Values: gomonkey.Params{nil, errors.New(t.Name())},
@@ -335,26 +330,27 @@ func TestListProject(t *testing.T) {
 		_, _, _, err := listProject(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
+	multiCallRes := [][]byte{{}, {}, {}, {}, {}, {}}
 	t.Run("FailedToUnpackBlockNumberResult", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, {}, {}, {}, {}}, nil)
+		p.ApplyMethodReturn(caller, "MultiCall", multiCallRes, nil)
 		p.ApplyMethodReturn(abi.ABI{}, "Unpack", nil, errors.New(t.Name()))
 
 		addr := common.Address{}
 		_, _, _, err := listProject(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("FailedToUnpackProjectConfigResult", func(t *testing.T) {
+	t.Run("FailedToUnpackIsValidProjectResult", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil)
+		p.ApplyMethodReturn(caller, "MultiCall", multiCallRes, nil)
 		n := new(big.Int).SetUint64(1)
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
@@ -376,19 +372,61 @@ func TestListProject(t *testing.T) {
 		_, _, _, err := listProject(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
+	t.Run("FailedToUnpackProjectConfigResult", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
+		caller := &multicall.MulticallCaller{}
+		p.ApplyMethodReturn(caller, "MultiCall", multiCallRes, nil)
+		n := new(big.Int).SetUint64(1)
+		isValidProject := true
+		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{[]interface{}{&n}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&isValidProject}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{nil, errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+		p.ApplyFuncSeq(abi.ConvertType, []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&isValidProject},
+				Times:  1,
+			},
+		})
+		addr := common.Address{}
+		_, _, _, err := listProject(nil, addr, addr, addr)
+		r.ErrorContains(err, t.Name())
+	})
 	t.Run("FailedToUnpackProverIsPausedResult", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil)
+		p.ApplyMethodReturn(caller, "MultiCall", multiCallRes, nil)
 		n := new(big.Int).SetUint64(1)
+		isValidProject := true
 		addr := common.Address{}
 		conf := project.W3bstreamProjectProjectConfig{}
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{[]interface{}{&n}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&isValidProject}, nil},
 				Times:  1,
 			},
 			{
@@ -406,6 +444,10 @@ func TestListProject(t *testing.T) {
 				Times:  1,
 			},
 			{
+				Values: gomonkey.Params{&isValidProject},
+				Times:  1,
+			},
+			{
 				Values: gomonkey.Params{&conf},
 				Times:  1,
 			},
@@ -419,14 +461,19 @@ func TestListProject(t *testing.T) {
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil)
+		p.ApplyMethodReturn(caller, "MultiCall", multiCallRes, nil)
 		n := new(big.Int).SetUint64(1)
+		isValidProject := true
 		addr := common.Address{}
 		conf := project.W3bstreamProjectProjectConfig{}
 		paused := false
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{[]interface{}{&n}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&isValidProject}, nil},
 				Times:  1,
 			},
 			{
@@ -448,6 +495,10 @@ func TestListProject(t *testing.T) {
 				Times:  1,
 			},
 			{
+				Values: gomonkey.Params{&isValidProject},
+				Times:  1,
+			},
+			{
 				Values: gomonkey.Params{&conf},
 				Times:  1,
 			},
@@ -465,8 +516,9 @@ func TestListProject(t *testing.T) {
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodReturn(caller, "MultiCall", [][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil)
+		p.ApplyMethodReturn(caller, "MultiCall", multiCallRes, nil)
 		n := new(big.Int).SetUint64(1)
+		isValidProject := true
 		addr := common.Address{}
 		conf := project.W3bstreamProjectProjectConfig{}
 		paused := false
@@ -474,6 +526,10 @@ func TestListProject(t *testing.T) {
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{[]interface{}{&n}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&isValidProject}, nil},
 				Times:  1,
 			},
 			{
@@ -496,6 +552,10 @@ func TestListProject(t *testing.T) {
 		p.ApplyFuncSeq(abi.ConvertType, []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&isValidProject},
 				Times:  1,
 			},
 			{
@@ -520,17 +580,10 @@ func TestListProject(t *testing.T) {
 
 		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
 		caller := &multicall.MulticallCaller{}
-		p.ApplyMethodSeq(caller, "MultiCall", []gomonkey.OutputCell{
-			{
-				Values: gomonkey.Params{[][]byte{{}, []byte("1"), []byte("1"), []byte("1"), []byte("1")}, nil},
-				Times:  1,
-			},
-			{
-				Values: gomonkey.Params{[][]byte{{}, {}, {}, {}, {}}, nil},
-				Times:  1,
-			},
-		})
+		p.ApplyMethodReturn(caller, "MultiCall", multiCallRes, nil)
 		n := new(big.Int).SetUint64(1)
+		isValidProject := true
+		isInValidProject := false
 		addr := common.Address{}
 		conf := project.W3bstreamProjectProjectConfig{}
 		paused := false
@@ -538,7 +591,11 @@ func TestListProject(t *testing.T) {
 		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{[]interface{}{&n}, nil},
-				Times:  2,
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&isValidProject}, nil},
+				Times:  1,
 			},
 			{
 				Values: gomonkey.Params{[]interface{}{&conf}, nil},
@@ -556,10 +613,22 @@ func TestListProject(t *testing.T) {
 				Values: gomonkey.Params{[]interface{}{&attr}, nil},
 				Times:  1,
 			},
+			{
+				Values: gomonkey.Params{[]interface{}{&n}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&isInValidProject}, nil},
+				Times:  1,
+			},
 		})
 		p.ApplyFuncSeq(abi.ConvertType, []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&isValidProject},
 				Times:  1,
 			},
 			{
@@ -580,6 +649,10 @@ func TestListProject(t *testing.T) {
 			},
 			{
 				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&isInValidProject},
 				Times:  1,
 			},
 		})

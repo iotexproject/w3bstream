@@ -177,6 +177,9 @@ func (d *Dispatcher) setProjectDispatcher(p *contract.Project) {
 		}
 		return
 	}
+	if p.Uri == "" {
+		return
+	}
 	pf, err := d.projectManager.Project(p.ID)
 	if err != nil {
 		slog.Error("failed to get project", "project_id", p.ID, "error", err)
