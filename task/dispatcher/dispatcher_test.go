@@ -220,6 +220,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		Uri:    "http://test.com",
 		Paused: &paused,
 	}
+	pc := &contract.Contract{}
 	mp := &mockProjectManager{}
 	ps := &p2p.PubSubs{}
 	t.Run("ProjectExist", func(t *testing.T) {
@@ -242,14 +243,29 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 
 		d.setProjectDispatcher(&ncp)
 	})
+	t.Run("FailedToGetContractProject", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		d := &Dispatcher{
+			contract:           pc,
+			projectManager:     mp,
+			projectDispatchers: &sync.Map{},
+		}
+		p.ApplyMethodReturn(pc, "Project", nil)
+
+		d.setProjectDispatcher(cp)
+	})
 	t.Run("FailedToGetProject", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		d := &Dispatcher{
+			contract:           pc,
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
+		p.ApplyMethodReturn(pc, "Project", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", nil, errors.New(t.Name()))
 
 		d.setProjectDispatcher(cp)
@@ -259,10 +275,12 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		defer p.Reset()
 
 		d := &Dispatcher{
+			contract:           pc,
 			pubSubs:            ps,
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
+		p.ApplyMethodReturn(pc, "Project", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 
@@ -273,10 +291,12 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		defer p.Reset()
 
 		d := &Dispatcher{
+			contract:           pc,
 			pubSubs:            ps,
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
+		p.ApplyMethodReturn(pc, "Project", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
@@ -288,10 +308,12 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		defer p.Reset()
 
 		d := &Dispatcher{
+			contract:           pc,
 			pubSubs:            ps,
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
+		p.ApplyMethodReturn(pc, "Project", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, nil)
