@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"log/slog"
+	"strconv"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -12,6 +13,7 @@ import (
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/scheduler"
 	"github.com/machinefi/sprout/task"
 )
 
@@ -20,6 +22,7 @@ type NewDatasource func(datasourceURI string) (datasource.Datasource, error)
 type Contract interface {
 	LatestProjects() []*contract.Project
 	LatestProvers() []*contract.Prover
+	Project(projectID, blockNumber uint64) *contract.Project
 }
 
 type ProjectManager interface {
@@ -35,6 +38,7 @@ type Persistence interface {
 
 type dispatcher struct {
 	projectDispatchers *sync.Map // projectID(uint64) -> *ProjectDispatcher
+	projectOffsets     *scheduler.ProjectEpochOffsets
 }
 
 func (d *dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
@@ -51,11 +55,43 @@ func (d *dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	pd.(*projectDispatcher).handle(s)
 }
 
+func (d *dispatcher) setWindowSize(chainHead <-chan uint64, c Contract) {
+	for head := range chainHead {
+		ps := d.projectOffsets.Projects(head)
+		for _, p := range ps {
+			cp := c.Project(p.ID, head)
+			if cp == nil {
+				slog.Error("the contract project not exist when set window size", "project_id", p.ID, "block_number", head)
+				continue
+			}
+			pd, ok := d.projectDispatchers.Load(p.ID)
+			if !ok {
+				slog.Error("the project dispatcher not exist when set window size", "project_id", p.ID)
+				continue
+			}
+
+			proverAmount := uint64(1)
+			if v, ok := cp.Attributes[contract.RequiredProverAmountHash]; ok {
+				n, err := strconv.ParseUint(string(v), 10, 64)
+				if err != nil {
+					slog.Error("failed to parse project required prover amount when set window size", "project_id", p.ID)
+					continue
+				}
+				proverAmount = n
+			}
+			pd.(*projectDispatcher).window.size.Store(proverAmount)
+		}
+	}
+}
+
 func RunDispatcher(persistence Persistence, newDatasource NewDatasource,
 	projectManager ProjectManager, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string, sequencerPubKey []byte,
-	iotexChainID int, projectNotification <-chan *contract.Project, contract Contract) error {
+	iotexChainID int, projectNotification <-chan *contract.Project, chainHead <-chan uint64, contract Contract, projectOffsets *scheduler.ProjectEpochOffsets) error {
 	projectDispatchers := &sync.Map{}
-	d := &dispatcher{projectDispatchers: projectDispatchers}
+	d := &dispatcher{
+		projectDispatchers: projectDispatchers,
+		projectOffsets:     projectOffsets,
+	}
 
 	ps, err := p2p.NewPubSubs(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
 	if err != nil {
