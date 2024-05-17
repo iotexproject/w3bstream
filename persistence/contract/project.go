@@ -22,8 +22,9 @@ import (
 )
 
 var (
-	RequiredProverAmountHash = crypto.Keccak256Hash([]byte("RequiredProverAmount"))
-	VmTypeHash               = crypto.Keccak256Hash([]byte("VmType"))
+	RequiredProverAmountHash            = crypto.Keccak256Hash([]byte("RequiredProverAmount"))
+	VmTypeHash                          = crypto.Keccak256Hash([]byte("VmType"))
+	ClientManagementContractAddressHash = crypto.Keccak256Hash([]byte("ClientManagementContractAddress"))
 
 	attributeSetTopicHash         = crypto.Keccak256Hash([]byte("AttributeSet(uint256,bytes32,bytes)"))
 	projectPausedTopicHash        = crypto.Keccak256Hash([]byte("ProjectPaused(uint256)"))
@@ -191,11 +192,16 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 		if err != nil {
 			return nil, 0, 0, errors.Wrap(err, "failed to pack project attributes call data")
 		}
+		managementAddressCallData, err := projectABI.Pack("attributes", new(big.Int).SetUint64(projectID), ClientManagementContractAddressHash)
+		if err != nil {
+			return nil, 0, 0, errors.Wrap(err, "failed to pack project attributes call data")
+		}
 
 		result, err := multiCallInstance.MultiCall(
 			nil,
 			[]common.Address{
 				blockNumberContractAddress,
+				projectContractAddress,
 				projectContractAddress,
 				projectContractAddress,
 				projectContractAddress,
@@ -209,6 +215,7 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 				isPausedCallData,
 				requiredProverAmountCallData,
 				vmTypeCallData,
+				managementAddressCallData,
 			},
 		)
 		if err != nil {
@@ -259,12 +266,21 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 		}
 		vmType := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
 
+		out, err = projectABI.Unpack("attributes", result[6])
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project attributes result, project_id %v", projectID)
+		}
+		managementAddress := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
 		attributes := map[common.Hash][]byte{}
 		if len(proverAmt) != 0 {
 			attributes[RequiredProverAmountHash] = proverAmt
 		}
 		if len(vmType) != 0 {
 			attributes[VmTypeHash] = vmType
+		}
+		if len(managementAddress) != 0 {
+			attributes[ClientManagementContractAddressHash] = managementAddress
 		}
 
 		ps = append(ps, &Project{

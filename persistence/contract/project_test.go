@@ -318,6 +318,25 @@ func TestListProject(t *testing.T) {
 		_, _, _, err := listProject(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
+	t.Run("FailedToPackProjectAttributesManagementAddressCallData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(multicall.NewMulticall, nil, nil)
+		p.ApplyMethodSeq(abi.ABI{}, "Pack", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{[]byte{}, nil},
+				Times:  6,
+			},
+			{
+				Values: gomonkey.Params{nil, errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+		addr := common.Address{}
+		_, _, _, err := listProject(nil, addr, addr, addr)
+		r.ErrorContains(err, t.Name())
+	})
 	t.Run("FailedToMultiCall", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -330,7 +349,7 @@ func TestListProject(t *testing.T) {
 		_, _, _, err := listProject(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
-	multiCallRes := [][]byte{{}, {}, {}, {}, {}, {}}
+	multiCallRes := [][]byte{{}, {}, {}, {}, {}, {}, {}}
 	t.Run("FailedToUnpackBlockNumberResult", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -574,6 +593,78 @@ func TestListProject(t *testing.T) {
 		_, _, _, err := listProject(nil, addr, addr, addr)
 		r.ErrorContains(err, t.Name())
 	})
+	t.Run("FailedToUnpackManagementAddressResult", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(multicall.NewMulticall, &multicall.Multicall{}, nil)
+		caller := &multicall.MulticallCaller{}
+		p.ApplyMethodReturn(caller, "MultiCall", multiCallRes, nil)
+		n := new(big.Int).SetUint64(1)
+		isValidProject := true
+		addr := common.Address{}
+		conf := project.W3bstreamProjectProjectConfig{}
+		paused := false
+		attr := []byte{}
+		p.ApplyMethodSeq(abi.ABI{}, "Unpack", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{[]interface{}{&n}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&isValidProject}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&conf}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&paused}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&attr}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]interface{}{&attr}, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{nil, errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+		p.ApplyFuncSeq(abi.ConvertType, []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{&n},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&isValidProject},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&conf},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&paused},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&attr},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&attr},
+				Times:  1,
+			},
+		})
+		_, _, _, err := listProject(nil, addr, addr, addr)
+		r.ErrorContains(err, t.Name())
+	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -614,6 +705,10 @@ func TestListProject(t *testing.T) {
 				Times:  1,
 			},
 			{
+				Values: gomonkey.Params{[]interface{}{&attr}, nil},
+				Times:  1,
+			},
+			{
 				Values: gomonkey.Params{[]interface{}{&n}, nil},
 				Times:  1,
 			},
@@ -637,6 +732,10 @@ func TestListProject(t *testing.T) {
 			},
 			{
 				Values: gomonkey.Params{&paused},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{&attr},
 				Times:  1,
 			},
 			{
