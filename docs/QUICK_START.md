@@ -7,9 +7,12 @@ brew install jq
 Install **ioctl**: The command-line interface for interacting with the IoTeX blockchain.
 
 ```bash
-brew tap iotexproject/ioctl-unstable
-brew install iotexproject/ioctl-unstable/ioctl-unstable
-alias ioctl=`which ioctl-unstable`
+## clone or pull the latest iotex-core respository
+git clone -b feat/ioctl_ws_step_commit git@github.com:iotexproject/iotex-core.git
+cd iotex-core && git pull origin feat/ioctl_ws_step_commit  
+
+## make ioctl and move the CLI tool to you system PATH
+make ioctl && mv bin/ioctl __YOUR_SYSTEM_PATH__
 ```
 
 [More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
