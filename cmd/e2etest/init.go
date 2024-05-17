@@ -208,9 +208,11 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 
 	datasourcePG := datasource.NewPostgres()
 
-	if err := dispatcher.RunLocalDispatcher(pg, datasourcePG.New, projectManager, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
+	taskDispatcher, err := dispatcher.NewLocal(pg, datasourcePG.New, projectManager, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new local dispatcher"))
 	}
+	taskDispatcher.Run()
 
 	go func() {
 		if err := api.NewHttpServer(pg, conf).Run(conf.ServiceEndpoint); err != nil {
