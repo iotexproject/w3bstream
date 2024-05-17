@@ -66,53 +66,53 @@ func init() {
 }
 
 func createProject(client *ethclient.Client, projectInstance *contractproject.Project, opts *bind.TransactOpts) {
-	tx, err := projectInstance.Mint(opts, opts.From)
-	if err != nil {
-		slog.Error("failed to mint project", "error", err)
-		return
-	}
-	slog.Info("new project created", "tx_hash", tx.Hash().Hex())
-	for {
-		_, isPending, err := client.TransactionByHash(context.Background(), tx.Hash())
-		if err != nil {
-			slog.Error("failed to query tx hash", "error", err, "tx_hash", tx.Hash().Hex())
-			continue
-		}
-		if !isPending {
-			break
-		}
-		time.Sleep(3 * time.Second)
-	}
-	projectID, err := projectInstance.Count(nil)
-	if err != nil {
-		slog.Error("failed to query project id", "error", err)
-		return
-	}
-	slog.Info("new project created", "project_id", projectID.Uint64())
+	// tx, err := projectInstance.Mint(opts, opts.From) // TODO use new project contract logic
+	// if err != nil {
+	// 	slog.Error("failed to mint project", "error", err)
+	// 	return
+	// }
+	// slog.Info("new project created", "tx_hash", tx.Hash().Hex())
+	// for {
+	// 	_, isPending, err := client.TransactionByHash(context.Background(), tx.Hash())
+	// 	if err != nil {
+	// 		slog.Error("failed to query tx hash", "error", err, "tx_hash", tx.Hash().Hex())
+	// 		continue
+	// 	}
+	// 	if !isPending {
+	// 		break
+	// 	}
+	// 	time.Sleep(3 * time.Second)
+	// }
+	// projectID, err := projectInstance.Count(nil)
+	// if err != nil {
+	// 	slog.Error("failed to query project id", "error", err)
+	// 	return
+	// }
+	// slog.Info("new project created", "project_id", projectID.Uint64())
 
-	switch rand.Intn(2) {
-	case 0:
-		tx, err := projectInstance.UpdateConfig(opts, projectID, halo2ProjectFileURI, halo2ProjectFileHash)
-		if err != nil {
-			slog.Error("failed to update project config", "error", err)
-			return
-		}
-		slog.Info("project halo2 config updated", "tx_hash", tx.Hash().Hex())
-	case 1:
-		tx, err := projectInstance.UpdateConfig(opts, projectID, risc0ProjectFileURI, risc0ProjectFileHash)
-		if err != nil {
-			slog.Error("failed to update project config", "error", err)
-			return
-		}
-		slog.Info("project risc0 config updated", "tx_hash", tx.Hash().Hex())
-	case 2: // will not create zkwasm project
-		tx, err := projectInstance.UpdateConfig(opts, projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
-		if err != nil {
-			slog.Error("failed to update project config", "error", err)
-			return
-		}
-		slog.Info("project zkwasm config updated", "tx_hash", tx.Hash().Hex())
-	}
+	// switch rand.Intn(2) {
+	// case 0:
+	// 	tx, err := projectInstance.UpdateConfig(opts, projectID, halo2ProjectFileURI, halo2ProjectFileHash)
+	// 	if err != nil {
+	// 		slog.Error("failed to update project config", "error", err)
+	// 		return
+	// 	}
+	// 	slog.Info("project halo2 config updated", "tx_hash", tx.Hash().Hex())
+	// case 1:
+	// 	tx, err := projectInstance.UpdateConfig(opts, projectID, risc0ProjectFileURI, risc0ProjectFileHash)
+	// 	if err != nil {
+	// 		slog.Error("failed to update project config", "error", err)
+	// 		return
+	// 	}
+	// 	slog.Info("project risc0 config updated", "tx_hash", tx.Hash().Hex())
+	// case 2: // will not create zkwasm project
+	// 	tx, err := projectInstance.UpdateConfig(opts, projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
+	// 	if err != nil {
+	// 		slog.Error("failed to update project config", "error", err)
+	// 		return
+	// 	}
+	// 	slog.Info("project zkwasm config updated", "tx_hash", tx.Hash().Hex())
+	// }
 }
 
 func updateProjectRequiredProver(contractPersistence *contract.Contract, projectInstance *contractproject.Project, opts *bind.TransactOpts) {
