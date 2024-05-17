@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/machinefi/sprout/p2p"
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/scheduler"
 	"github.com/machinefi/sprout/task"
 )
 
@@ -38,7 +40,7 @@ func (m *mockProjectManager) Project(projectID uint64) (*project.Project, error)
 }
 
 func TestDispatcher_handleP2PData(t *testing.T) {
-	d := &dispatcher{projectDispatchers: &sync.Map{}}
+	d := &Dispatcher{projectDispatchers: &sync.Map{}}
 	t.Run("TaskStateLogNil", func(t *testing.T) {
 		d.handleP2PData(&p2p.Data{}, nil)
 	})
@@ -63,49 +65,100 @@ func TestDispatcher_handleP2PData(t *testing.T) {
 	})
 }
 
-func TestRunDispatcher(t *testing.T) {
+func TestDispatcher_setWindowSize(t *testing.T) {
 	r := require.New(t)
+	po := &scheduler.ProjectEpochOffsets{}
+	c := &contract.Contract{}
+	d := &Dispatcher{
+		projectDispatchers: &sync.Map{},
+		projectOffsets:     po,
+		contract:           c,
+	}
+	t.Run("ProjectNotExist", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
+		p.ApplyMethodReturn(po, "Projects", nil)
+		d.setWindowSize(1)
+	})
+	t.Run("ContractProjectNotExist", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyMethodReturn(po, "Projects", []*scheduler.ScheduledProject{{ID: 1, ScheduledBlockNumber: 0}})
+		p.ApplyMethodReturn(c, "Project", nil)
+		d.setWindowSize(1)
+	})
+	t.Run("ProjectDispatcherNotExist", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyMethodReturn(po, "Projects", []*scheduler.ScheduledProject{{ID: 1, ScheduledBlockNumber: 0}})
+		p.ApplyMethodReturn(c, "Project", &contract.Project{ID: 1})
+		d.setWindowSize(1)
+	})
+	t.Run("FailedToParseProjectRequiredProverAmount", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyMethodReturn(po, "Projects", []*scheduler.ScheduledProject{{ID: 1, ScheduledBlockNumber: 0}})
+		p.ApplyMethodReturn(c, "Project", &contract.Project{
+			ID:         1,
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("err")},
+		})
+		d.projectDispatchers.Store(uint64(1), &projectDispatcher{})
+		d.setWindowSize(1)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyMethodReturn(po, "Projects", []*scheduler.ScheduledProject{{ID: 1, ScheduledBlockNumber: 0}})
+		p.ApplyMethodReturn(c, "Project", &contract.Project{
+			ID:         1,
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("2")},
+		})
+		size := atomic.Uint64{}
+		d.projectDispatchers.Store(uint64(1), &projectDispatcher{
+			window: &window{size: &size},
+		})
+		d.setWindowSize(1)
+		r.Equal(size.Load(), uint64(2))
+	})
+}
+
+func TestNew(t *testing.T) {
+	r := require.New(t)
 	t.Run("FailedToNewPubSubs", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 
-		err := RunDispatcher(&mockPersistence{}, nil, nil,
-			"", "", "", []byte(""), 0,
-			nil, nil)
-
+		_, err := New(&mockPersistence{}, nil, nil, "", "", "", []byte(""), 0, nil, nil, nil, nil)
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 		p.ApplyFuncReturn(newTaskStateHandler, nil)
-		p.ApplyFuncReturn(dispatch, nil)
 
-		err := RunDispatcher(&mockPersistence{}, nil, nil,
-			"", "", "", []byte(""), 0,
-			nil, nil)
+		_, err := New(&mockPersistence{}, nil, nil, "", "", "", []byte(""), 0, nil, nil, nil, nil)
 		r.NoError(err)
 	})
 }
 
-func TestRunLocalDispatcher(t *testing.T) {
+func TestNewLocal(t *testing.T) {
 	r := require.New(t)
-
 	t.Run("FailedToNewPubSubs", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, nil,
-			"", "", "", []byte(""), 0)
-
+		_, err := NewLocal(&mockPersistence{}, nil, nil, "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToGetProject", func(t *testing.T) {
@@ -116,9 +169,7 @@ func TestRunLocalDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(pm, "Project", nil, errors.New(t.Name()))
 		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
-			"", "", "", []byte(""), 0)
-
+		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToAddPubSubs", func(t *testing.T) {
@@ -130,9 +181,7 @@ func TestRunLocalDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 		p.ApplyMethodReturn(pm, "Project", nil, nil)
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
-			"", "", "", []byte(""), 0)
-
+		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToNewProjectDispatch", func(t *testing.T) {
@@ -145,9 +194,7 @@ func TestRunLocalDispatcher(t *testing.T) {
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
-			"", "", "", []byte(""), 0)
-
+		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
@@ -161,14 +208,12 @@ func TestRunLocalDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{0, 0})
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
 
-		err := RunLocalDispatcher(&mockPersistence{}, nil, pm,
-			"", "", "", []byte(""), 0)
-
+		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", []byte(""), 0)
 		r.NoError(err)
 	})
 }
 
-func TestSetProjectDispatcher(t *testing.T) {
+func TestDispatcher_setProjectDispatcher(t *testing.T) {
 	paused := true
 	cp := &contract.Project{
 		ID:     1,
@@ -176,69 +221,99 @@ func TestSetProjectDispatcher(t *testing.T) {
 		Paused: &paused,
 	}
 	mp := &mockProjectManager{}
+	ps := &p2p.PubSubs{}
 	t.Run("ProjectExist", func(t *testing.T) {
-		projectDispatchers := &sync.Map{}
+		d := &Dispatcher{
+			projectDispatchers: &sync.Map{},
+		}
 		projectDispatcher := &projectDispatcher{
 			paused: &atomic.Bool{},
 		}
-		projectDispatchers.Store(uint64(1), projectDispatcher)
-
-		setProjectDispatcher(nil, nil, projectDispatchers, cp, nil, nil, nil, nil)
+		d.projectDispatchers.Store(uint64(1), projectDispatcher)
+		d.setProjectDispatcher(cp)
 	})
 	t.Run("FailedToGetProject", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		projectDispatchers := &sync.Map{}
+		d := &Dispatcher{
+			projectManager:     mp,
+			projectDispatchers: &sync.Map{},
+		}
 		p.ApplyMethodReturn(mp, "Project", nil, errors.New(t.Name()))
 
-		setProjectDispatcher(nil, nil, projectDispatchers, cp, mp, nil, nil, nil)
+		d.setProjectDispatcher(cp)
 	})
 	t.Run("FailedToAddPubSubs", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		projectDispatchers := &sync.Map{}
+		d := &Dispatcher{
+			pubSubs:            ps,
+			projectManager:     mp,
+			projectDispatchers: &sync.Map{},
+		}
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 
-		setProjectDispatcher(nil, nil, projectDispatchers, cp, mp, &p2p.PubSubs{}, nil, nil)
+		d.setProjectDispatcher(cp)
 	})
 	t.Run("FailedToNewProjectDispatcher", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		projectDispatchers := &sync.Map{}
+		d := &Dispatcher{
+			pubSubs:            ps,
+			projectManager:     mp,
+			projectDispatchers: &sync.Map{},
+		}
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
 
-		setProjectDispatcher(nil, nil, projectDispatchers, cp, mp, &p2p.PubSubs{}, nil, nil)
+		d.setProjectDispatcher(cp)
 	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		projectDispatchers := &sync.Map{}
+		d := &Dispatcher{
+			pubSubs:            ps,
+			projectManager:     mp,
+			projectDispatchers: &sync.Map{},
+		}
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, nil)
 
-		setProjectDispatcher(nil, nil, projectDispatchers, cp, mp, &p2p.PubSubs{}, nil, nil)
+		d.setProjectDispatcher(cp)
 	})
 }
 
-func TestDispatch(t *testing.T) {
+func TestDispatcher_Run(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
+	d := &Dispatcher{
+		local: true,
+	}
+	d.Run()
+
 	projectNotification := make(chan *contract.Project, 10)
 	projectNotification <- &contract.Project{}
+	chainHeadNotification := make(chan uint64, 10)
+	chainHeadNotification <- 1
+	d = &Dispatcher{
+		projectNotification:   projectNotification,
+		chainHeadNotification: chainHeadNotification,
+		contract:              &contract.Contract{},
+		projectDispatchers:    &sync.Map{},
+	}
 
-	projectDispatchers := &sync.Map{}
-	p.ApplyFuncReturn(setProjectDispatcher)
-	p.ApplyMethodReturn(&contract.Contract{}, "LatestProjects", []*contract.Project{{}})
+	p.ApplyMethodReturn(d.contract, "LatestProjects", []*contract.Project{{}})
+	p.ApplyPrivateMethod(d, "setProjectDispatcher", func(*contract.Project) {})
+	p.ApplyPrivateMethod(d, "setWindowSize", func(head uint64) {})
 
-	dispatch(nil, nil, nil, projectDispatchers, nil, nil, projectNotification, &contract.Contract{}, nil)
+	d.Run()
 	time.Sleep(10 * time.Millisecond)
 }

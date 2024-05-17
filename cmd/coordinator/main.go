@@ -17,6 +17,7 @@ import (
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/persistence/postgres"
 	"github.com/machinefi/sprout/project"
+	"github.com/machinefi/sprout/scheduler"
 	"github.com/machinefi/sprout/task/dispatcher"
 )
 
@@ -39,9 +40,12 @@ func main() {
 	}
 
 	projectManagerNotification := make(chan *contract.Project, 10)
+	schedulerNotification := make(chan *contract.Project, 10)
 	dispatcherNotification := make(chan *contract.Project, 10)
+	chainHeadNotification := make(chan uint64, 10)
 
-	projectNotifications := []chan<- *contract.Project{projectManagerNotification, dispatcherNotification}
+	projectNotifications := []chan<- *contract.Project{projectManagerNotification, dispatcherNotification, schedulerNotification}
+	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
 
 	local := conf.ProjectFileDirectory != ""
 
@@ -49,7 +53,7 @@ func main() {
 	if !local {
 		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddress),
 			common.HexToAddress(conf.ProjectContractAddress), common.HexToAddress(conf.BlockNumberContractAddress),
-			common.HexToAddress(conf.MultiCallContractAddress), nil, projectNotifications)
+			common.HexToAddress(conf.MultiCallContractAddress), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}
@@ -66,18 +70,21 @@ func main() {
 	}
 
 	datasourcePG := datasource.NewPostgres()
-
+	var taskDispatcher *dispatcher.Dispatcher
 	if local {
-		err = dispatcher.RunLocalDispatcher(persistence, datasourcePG.New, projectManager,
+		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager,
 			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
 	} else {
-		err = dispatcher.RunDispatcher(persistence, datasourcePG.New, projectManager, conf.BootNodeMultiAddr,
+		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
+
+		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, conf.BootNodeMultiAddr,
 			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, sequencerPubKey, conf.IoTeXChainID,
-			dispatcherNotification, contractPersistence)
+			dispatcherNotification, chainHeadNotification, contractPersistence, projectOffsets)
 	}
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to run dispatcher"))
+		log.Fatal(errors.Wrap(err, "failed to new dispatcher"))
 	}
+	taskDispatcher.Run()
 
 	go func() {
 		if err := api.NewHttpServer(persistence, conf).Run(conf.ServiceEndpoint); err != nil {
