@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -23,12 +22,18 @@ func TestScheduler_schedule(t *testing.T) {
 		scheduledProverID.Store(proverIDs[0])
 	}
 	t.Run("NoProject", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		pes := &ProjectEpochOffsets{}
+		p.ApplyMethodReturn(pes, "Projects", nil)
+
 		chainHead := make(chan uint64, 10)
 		chainHead <- 1
 		close(chainHead)
 		s := &scheduler{
 			chainHead:            chainHead,
-			projectOffsets:       &sync.Map{},
+			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
 		}
@@ -36,18 +41,24 @@ func TestScheduler_schedule(t *testing.T) {
 		r.Equal(uint64(0), scheduledProverID.Load())
 	})
 	t.Run("ProjectAlreadyScheduled", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		pes := &ProjectEpochOffsets{}
+		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 1}})
+
 		chainHead := make(chan uint64, 10)
 		chainHead <- 1
 		close(chainHead)
 		s := &scheduler{
 			chainHead:            chainHead,
-			projectOffsets:       &sync.Map{},
+			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
 		}
-		p := &projectOffset{}
-		p.scheduledBlockNumber.Store(1)
-		s.projectOffsets.Store(uint64(0), p)
+		pe := &projectEpochOffset{}
+		pe.projectIDs.Store(uint64(1), uint64(1))
+		s.projectOffsets.projects.Store(uint64(0), pe)
 		s.schedule()
 		r.Equal(uint64(0), scheduledProverID.Load())
 	})
@@ -57,6 +68,8 @@ func TestScheduler_schedule(t *testing.T) {
 
 		paused := false
 		pm := &contract.Contract{}
+		pes := &ProjectEpochOffsets{}
+		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: &paused}})
 		p.ApplyMethodReturn(pm, "Project", nil)
 
@@ -67,13 +80,13 @@ func TestScheduler_schedule(t *testing.T) {
 			contractProvers:      pm.Provers,
 			contractProject:      pm.Project,
 			chainHead:            chainHead,
-			projectOffsets:       &sync.Map{},
+			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
 		}
-		po := &projectOffset{}
-		po.projectIDs.Store(uint64(1), true)
-		s.projectOffsets.Store(uint64(0), po)
+		pe := &projectEpochOffset{}
+		pe.projectIDs.Store(uint64(1), uint64(1))
+		s.projectOffsets.projects.Store(uint64(0), pe)
 		s.schedule()
 		r.Equal(uint64(0), scheduledProverID.Load())
 	})
@@ -83,6 +96,8 @@ func TestScheduler_schedule(t *testing.T) {
 
 		paused := false
 		pm := &contract.Contract{}
+		pes := &ProjectEpochOffsets{}
+		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: &paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("err")},
@@ -95,13 +110,13 @@ func TestScheduler_schedule(t *testing.T) {
 			contractProvers:      pm.Provers,
 			contractProject:      pm.Project,
 			chainHead:            chainHead,
-			projectOffsets:       &sync.Map{},
+			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
 		}
-		po := &projectOffset{}
-		po.projectIDs.Store(uint64(1), true)
-		s.projectOffsets.Store(uint64(0), po)
+		pe := &projectEpochOffset{}
+		pe.projectIDs.Store(uint64(1), uint64(1))
+		s.projectOffsets.projects.Store(uint64(0), pe)
 		s.schedule()
 		r.Equal(uint64(0), scheduledProverID.Load())
 	})
@@ -111,6 +126,8 @@ func TestScheduler_schedule(t *testing.T) {
 
 		paused := false
 		pm := &contract.Contract{}
+		pes := &ProjectEpochOffsets{}
+		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: &paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("10")},
@@ -123,13 +140,13 @@ func TestScheduler_schedule(t *testing.T) {
 			contractProvers:      pm.Provers,
 			contractProject:      pm.Project,
 			chainHead:            chainHead,
-			projectOffsets:       &sync.Map{},
+			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
 		}
-		po := &projectOffset{}
-		po.projectIDs.Store(uint64(1), true)
-		s.projectOffsets.Store(uint64(0), po)
+		pe := &projectEpochOffset{}
+		pe.projectIDs.Store(uint64(1), uint64(1))
+		s.projectOffsets.projects.Store(uint64(0), pe)
 		s.schedule()
 		r.Equal(uint64(0), scheduledProverID.Load())
 	})
@@ -139,6 +156,8 @@ func TestScheduler_schedule(t *testing.T) {
 
 		paused := false
 		pm := &contract.Contract{}
+		pes := &ProjectEpochOffsets{}
+		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: &paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyFuncReturn(distance.Sort, []uint64{100})
@@ -151,13 +170,13 @@ func TestScheduler_schedule(t *testing.T) {
 			contractProvers:      pm.Provers,
 			contractProject:      pm.Project,
 			chainHead:            chainHead,
-			projectOffsets:       &sync.Map{},
+			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
 		}
-		po := &projectOffset{}
-		po.projectIDs.Store(uint64(1), true)
-		s.projectOffsets.Store(uint64(0), po)
+		pe := &projectEpochOffset{}
+		pe.projectIDs.Store(uint64(1), uint64(1))
+		s.projectOffsets.projects.Store(uint64(0), pe)
 		s.schedule()
 		r.Equal(uint64(0), scheduledProverID.Load())
 	})
@@ -167,6 +186,8 @@ func TestScheduler_schedule(t *testing.T) {
 
 		paused := false
 		pm := &contract.Contract{}
+		pes := &ProjectEpochOffsets{}
+		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: &paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
@@ -179,13 +200,13 @@ func TestScheduler_schedule(t *testing.T) {
 			contractProvers:      pm.Provers,
 			contractProject:      pm.Project,
 			chainHead:            chainHead,
-			projectOffsets:       &sync.Map{},
+			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
 		}
-		po := &projectOffset{}
-		po.projectIDs.Store(uint64(1), true)
-		s.projectOffsets.Store(uint64(0), po)
+		pe := &projectEpochOffset{}
+		pe.projectIDs.Store(uint64(1), uint64(1))
+		s.projectOffsets.projects.Store(uint64(0), pe)
 		s.schedule()
 		r.Equal(uint64(1), scheduledProverID.Load())
 	})
@@ -195,6 +216,8 @@ func TestScheduler_schedule(t *testing.T) {
 
 		paused := false
 		pm := &contract.Contract{}
+		pes := &ProjectEpochOffsets{epoch: 1}
+		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: &paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
@@ -207,16 +230,17 @@ func TestScheduler_schedule(t *testing.T) {
 			contractProvers:      pm.Provers,
 			contractProject:      pm.Project,
 			chainHead:            chainHead,
-			projectOffsets:       &sync.Map{},
+			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
 		}
-		po := &projectOffset{}
-		po.projectIDs.Store(uint64(1), true)
-		s.projectOffsets.Store(uint64(0), po)
+		pe := &projectEpochOffset{}
+		pe.projectIDs.Store(uint64(1), uint64(1))
+		s.projectOffsets.projects.Store(uint64(0), pe)
 		s.schedule()
 		r.Equal(uint64(1), scheduledProverID.Load())
-		r.Equal(po.scheduledBlockNumber.Load(), uint64(1))
+		k, _ := pe.projectIDs.Load(uint64(1))
+		r.Equal(k.(uint64), uint64(1))
 	})
 }
 
@@ -225,15 +249,9 @@ func TestRun(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	pm := &contract.Contract{}
-	p.ApplyMethodReturn(pm, "LatestProjects", []*contract.Project{{ID: 1}})
 	p.ApplyPrivateMethod(&scheduler{}, "schedule", func() {})
 
-	notification := make(chan *contract.Project, 10)
-	notification <- &contract.Project{ID: 2}
-	close(notification)
-
-	err := Run(10, 1, nil, nil, nil, notification, nil, pm.LatestProjects, nil)
+	err := Run(10, 1, nil, nil, nil, nil, nil, &ProjectEpochOffsets{})
 	r.NoError(err)
 }
 
