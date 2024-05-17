@@ -128,8 +128,8 @@ The values of `image_id` and `elf` are variable names, and will be found in the 
 # set local w3bstream sequencer as w3bstream endpoint
 ioctl config set wsEndpoint 'localhost:9000'
 # set the default project register and project store contract address
-ioctl config set wsProjectStoreContract 0xeBe885c939c98cEa51083c65f95038aE930a552f
-ioctl config set wsProjectRegisterContract 0xEb14B2c6295Ff4b215FBcb85361b495ceC141569
+ioctl config set wsProjectStoreContract 0x6AfCB0EB71B7246A68Bb9c0bFbe5cD7c11c4839f
+ioctl config set wsProjectRegisterContract 0x4888bfbf39Dc83C19cbBcb307ccE8F7F93b72E38
 ```
 
 ##### Register and Upload project 
