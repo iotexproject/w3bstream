@@ -12,18 +12,20 @@ import (
 func TestClientByClientID(t *testing.T) {
 	projectClientContractAddr := "0xF4d6282C5dDD474663eF9e70c927c0d4926d1CEb"
 	ioIDContractAddr := "0x06b3Fcda51e01EE96e8E8873F0302381c955Fddd"
+	w3bstreamProjectContractAddr := "0x6AfCB0EB71B7246A68Bb9c0bFbe5cD7c11c4839f"
 	chainEndpoint := "https://babel-api.testnet.iotex.io"
 	ioRegistryEndpoint := "did.iotex.me"
 
-	mgr, err := clients.NewManager(projectClientContractAddr, ioIDContractAddr, ioRegistryEndpoint, chainEndpoint)
+	mgr, err := clients.NewManager(projectClientContractAddr, ioIDContractAddr, w3bstreamProjectContractAddr, ioRegistryEndpoint, chainEndpoint)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Log("ioID contract address:           ", ioIDContractAddr)
-	t.Log("project device contract address: ", projectClientContractAddr)
-	t.Log("chain endpoint:                  ", chainEndpoint)
-	t.Log("io registry:                     ", ioRegistryEndpoint)
+	t.Log("ioID contract address:              ", ioIDContractAddr)
+	t.Log("project device contract address:    ", projectClientContractAddr)
+	t.Log("w3bstream project contract address: ", projectClientContractAddr)
+	t.Log("chain endpoint:                     ", chainEndpoint)
+	t.Log("io registry:                        ", ioRegistryEndpoint)
 
 	clientDIDs := []string{
 		"did:io:0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73",
@@ -48,5 +50,10 @@ func TestClientByClientID(t *testing.T) {
 
 		t.Log("client DID: ", id)
 		t.Log("project permission: ", approved)
+	}
+
+	_, err = mgr.HasProjectPermission("did:io:0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73", 23)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

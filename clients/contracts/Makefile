@@ -28,6 +28,7 @@ generate_abi_project_device:
 	@echo "#### generate abis of ProjectDevice from latest contracts..."
 	@cd ../../smartcontracts && yarn install > /dev/null 2>&1 && yarn hardhat compile > /dev/null 2>&1
 	@cat ../../smartcontracts/artifacts/contracts/examples/ProjectDevice.sol/ProjectDevice.json | jq .abi > ProjectDevice.json
+	@cat ../../smartcontracts/artifacts/contracts/W3bstreamProject.sol/W3bstreamProject.json | jq .abi > W3bstreamProject.json
 	@echo DONE
 
 .PHONY: clean

@@ -38,6 +38,7 @@ func NewInstance(name, address, endpoint string, abi abi.ABI) (Instance, error) 
 
 	_address := common.HexToAddress(address)
 	i := &instance{
+		abi:      abi,
 		name:     name,
 		key:      key,
 		backend:  backend,
@@ -78,6 +79,7 @@ type Instance interface {
 	Key() string
 	Address() common.Address
 	Client() Client
+	ABI() abi.ABI
 	Counter
 
 	ReadContext(ctx context.Context, method string, args ...any) (any, error)
@@ -87,6 +89,7 @@ type Instance interface {
 }
 
 type instance struct {
+	abi      abi.ABI
 	name     string
 	key      string
 	address  common.Address
@@ -109,6 +112,10 @@ func (i *instance) Address() common.Address {
 
 func (i *instance) Client() Client {
 	return i.backend
+}
+
+func (i *instance) ABI() abi.ABI {
+	return i.abi
 }
 
 func (i *instance) Read(method string, args ...any) (any, error) {
