@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"reflect"
@@ -49,6 +50,14 @@ func NewInstance(name, address, endpoint string, abi abi.ABI) (Instance, error) 
 	return i, nil
 }
 
+func NewInstanceByABI(name, address, endpoint string, content []byte) (Instance, error) {
+	_abi, err := abi.JSON(bytes.NewReader(content))
+	if err != nil {
+		return nil, err
+	}
+	return NewInstance(name, address, endpoint, _abi)
+}
+
 func ReleaseInstance(i Instance) {
 	gMtxInstances.Lock()
 	defer gMtxInstances.Unlock()
@@ -71,8 +80,10 @@ type Instance interface {
 	Client() Client
 	Counter
 
-	Read(ctx context.Context, method string, args ...any) (any, error)
-	ReadResult(ctx context.Context, method string, res any, args ...any) error
+	ReadContext(ctx context.Context, method string, args ...any) (any, error)
+	Read(method string, args ...any) (any, error)
+	ReadResultContext(ctx context.Context, method string, res any, args ...any) error
+	ReadResult(method string, res any, args ...any) error
 }
 
 type instance struct {
@@ -100,7 +111,11 @@ func (i *instance) Client() Client {
 	return i.backend
 }
 
-func (i *instance) Read(ctx context.Context, method string, args ...any) (any, error) {
+func (i *instance) Read(method string, args ...any) (any, error) {
+	return i.ReadContext(context.Background(), method, args...)
+}
+
+func (i *instance) ReadContext(ctx context.Context, method string, args ...any) (any, error) {
 	out := make([]any, 0)
 	err := i.contract.Call(&bind.CallOpts{Context: ctx}, &out, method, args...)
 	if err != nil {
@@ -109,7 +124,11 @@ func (i *instance) Read(ctx context.Context, method string, args ...any) (any, e
 	return out[0], nil
 }
 
-func (i *instance) ReadResult(ctx context.Context, method string, res any, args ...any) (err error) {
+func (i *instance) ReadResult(method string, res any, args ...any) (err error) {
+	return i.ReadResultContext(context.Background(), method, res, args...)
+}
+
+func (i *instance) ReadResultContext(ctx context.Context, method string, res any, args ...any) (err error) {
 	rv, ok := res.(reflect.Value)
 	if !ok {
 		rv = reflect.ValueOf(res)
@@ -124,13 +143,13 @@ func (i *instance) ReadResult(ctx context.Context, method string, res any, args 
 		if rv.IsNil() && rv.CanSet() {
 			rv.Set(reflect.New(rt.Elem()))
 		}
-		return i.ReadResult(ctx, method, rv.Elem(), args...)
+		return i.ReadResultContext(ctx, method, rv.Elem(), args...)
 	}
 	if !rv.CanSet() {
 		return errors.Errorf("expect result can be set, but got: %s", rt)
 	}
 
-	out, err := i.Read(ctx, method, args...)
+	out, err := i.ReadContext(ctx, method, args...)
 	if err != nil {
 		return err
 	}

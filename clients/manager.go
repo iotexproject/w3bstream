@@ -10,12 +10,18 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/machinefi/sprout/util/contract"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/pkg/errors"
+)
 
-	"github.com/machinefi/sprout/clients/contracts"
+var (
+	//go:embed contracts/ioIDRegistry.json
+	abiIoIDRegistry []byte
+	//go:embed contracts/ProjectDevice.json
+	abiProjectClient []byte
 )
 
 func NewManager(
@@ -24,37 +30,38 @@ func NewManager(
 	ioIDRegistryServiceEndpoint string,
 	chainEndpoint string,
 ) (*Manager, error) {
-	cli, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to dail chain endpiont: %s", chainEndpoint)
+	manager := &Manager{
+		mux:                  sync.Mutex{},
+		pool:                 make(map[string]*Client),
+		ioIDRegistryEndpoint: ioIDRegistryServiceEndpoint,
 	}
 
-	instanceIoID, err := contracts.NewIoIDRegistry(common.HexToAddress(ioIDRegisterContractAddress), cli)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to new ioIDRegistry")
+	{
+		name := "IoIDRegistry"
+		instance, err := contract.NewInstanceByABI(name, ioIDRegisterContractAddress, chainEndpoint, abiIoIDRegistry)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to new contract instance: %s", name)
+		}
+		manager.ioIDRegistryInstance = instance
 	}
 
-	instanceProjectClient, err := contracts.NewProjectDevice(common.HexToAddress(projectClientContractAddress), cli)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to new ioIDRegistry")
+	{
+		name := "ProjectClient"
+		instance, err := contract.NewInstanceByABI(name, projectClientContractAddress, chainEndpoint, abiProjectClient)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to new contract instance: %s", name)
+		}
+		manager.projectClientInstance = instance
 	}
 
-	return &Manager{
-		mux:                   sync.Mutex{},
-		cli:                   cli,
-		ioIDRegistryInstance:  instanceIoID,
-		projectClientInstance: instanceProjectClient,
-		ioIDRegistryEndpoint:  ioIDRegistryServiceEndpoint,
-		pool:                  make(map[string]*Client),
-	}, nil
+	return manager, nil
 }
 
 type Manager struct {
 	mux                   sync.Mutex
 	pool                  map[string]*Client
-	cli                   *ethclient.Client
-	ioIDRegistryInstance  *contracts.IoIDRegistry
-	projectClientInstance *contracts.ProjectDevice
+	ioIDRegistryInstance  contract.Instance
+	projectClientInstance contract.Instance
 	ioIDRegistryEndpoint  string
 }
 
@@ -86,10 +93,12 @@ func (mgr *Manager) ClientByIoID(id string) *Client {
 }
 
 func (mgr *Manager) fetchFromContract(id string) (*Client, error) {
-	address := strings.TrimPrefix(id, "did:io:")
+	var (
+		address = common.HexToAddress(strings.TrimPrefix(id, "did:io:"))
+		uri     string
+	)
 
-	uri, err := mgr.ioIDRegistryInstance.DocumentURI(nil, common.HexToAddress(address))
-	if err != nil {
+	if err := mgr.ioIDRegistryInstance.ReadResult("documentURI", &uri, address); err != nil {
 		return nil, errors.Wrap(err, "failed to read client document uri")
 	}
 
@@ -116,10 +125,12 @@ func (mgr *Manager) HasProjectPermission(clientID string, projectID uint64) (boo
 		return false, nil
 	}
 
-	clientAddress := strings.TrimPrefix(clientID, "did:io:")
+	var (
+		address  = common.HexToAddress(strings.TrimPrefix(clientID, "did:io:"))
+		approved bool
+	)
 
-	approved, err := mgr.projectClientInstance.Approved(nil, big.NewInt(int64(projectID)), common.HexToAddress(clientAddress))
-	if err != nil {
+	if err := mgr.projectClientInstance.ReadResult("approved", &approved, big.NewInt(int64(projectID)), address); err != nil {
 		return false, errors.Wrap(err, "failed to read ProjectClient contract")
 	}
 	return approved, nil
