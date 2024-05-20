@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/task"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/p2p"
+	"github.com/machinefi/sprout/task"
 )
 
 func TestDispatchedTask_handleState(t *testing.T) {
