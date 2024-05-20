@@ -41,4 +41,6 @@ smartcontracts/contracts/artifacts/
 smartcontracts/contracts/interfaces/artifacts/
 smartcontracts/.deps
 
+# tmp
 clients/contracts/ioid
+node_modules
