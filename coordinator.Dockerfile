@@ -1,5 +1,5 @@
 # ghcr.io/machinefi/coordinator:latest
-FROM golang:1.22 AS builder
+FROM golang:1.22-alpine AS builder
 
 ENV GO111MODULE=on
 
