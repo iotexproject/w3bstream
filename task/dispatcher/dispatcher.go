@@ -23,6 +23,7 @@ type Contract interface {
 	LatestProjects() []*contract.Project
 	LatestProvers() []*contract.Prover
 	Project(projectID, blockNumber uint64) *contract.Project
+	LatestProject(projectID uint64) *contract.Project
 }
 
 type ProjectManager interface {
@@ -180,7 +181,7 @@ func (d *Dispatcher) setProjectDispatcher(p *contract.Project) {
 	if p.Uri == "" {
 		return
 	}
-	cp := d.contract.Project(p.ID, p.BlockNumber)
+	cp := d.contract.LatestProject(p.ID)
 	if cp == nil {
 		slog.Error("the contract project not exist", "project_id", p.ID)
 		return
