@@ -135,11 +135,16 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		}
 	}
 
+	clientDID := ""
+	if client != nil {
+		clientDID = client.DID()
+	}
+
 	// execute task committing
 	id := uuid.NewString()
 	if err := s.p.Save(&persistence.Message{
 		MessageID:      id,
-		ClientID:       client.DID(),
+		ClientID:       clientDID,
 		ProjectID:      req.ProjectID,
 		ProjectVersion: req.ProjectVersion,
 		Data:           []byte(req.Data),
