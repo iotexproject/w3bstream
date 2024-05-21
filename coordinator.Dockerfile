@@ -3,8 +3,6 @@ FROM golang:1.22-alpine AS builder
 
 ENV GO111MODULE=on
 
-RUN apk update && apk upgrade && apk add --no-cache ca-certificates && update-ca-certificates
-
 WORKDIR /go/src
 COPY ./ ./
 
