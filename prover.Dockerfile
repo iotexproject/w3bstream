@@ -10,6 +10,7 @@ RUN cd ./cmd/prover && CGO_ENABLED=0 go build -ldflags "-s -w -extldflags '-stat
 
 FROM scratch AS runtime
 
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/cmd/prover/prover /go/bin/prover
 COPY --from=builder /go/src/test/contract/Store.abi /go/bin/test/contract/Store.abi
 EXPOSE 9002
