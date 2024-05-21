@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/stretchr/testify/require"
+
+	"github.com/machinefi/sprout/persistence/contract"
 )
 
 func TestProjectEpochOffsets_storeProject(t *testing.T) {
