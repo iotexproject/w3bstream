@@ -25,29 +25,41 @@ contract_test: contract_test_depends
 
 .PHONY: images
 images:
-	@for target in 'sequencer' 'prover' 'coordinator' ;                \
-	do                                                                 \
-		echo build $$target image ;                                    \
-		if [ -e $$target.Dockerfile ]; then                            \
-			echo $$target.Dockerfile ;                                 \
-			docker build -f $$target.Dockerfile . -t $(USER)/$$target; \
-		else                                                           \
-			echo "no entry";                                           \
-		fi;                                                            \
-		echo "done!";                                                  \
+	@for target in 'sequencer' 'prover' 'coordinator' ; \
+	do \
+		echo build $$target image; \
+		if [ -e $$target.Dockerfile ]; then \
+			echo $$target.Dockerfile; \
+			docker build -f $$target.Dockerfile . -t $$target; \
+		else \
+			echo "no entry"; \
+		fi; \
+		echo "done!"; \
 	done
 
+.PHONY: prover_image
+prover_image:
+	@docker build -f prover.Dockerfile . -t prover
+
+.PHONY: sequencer_image
+sequencer_image:
+	@docker build -f sequencer.Dockerfile . -t sequencer
+
+.PHONY: coordinator_image
+coordinator_image:
+	@docker build -f coordinator.Dockerfile . -t coordinator
 
 MOD=$(shell cat go.mod | grep ^module -m 1 | awk '{ print $$2; }' || '')
 
 .PHONY: fmt
 fmt:
+	@echo ${MOD}
 	@for item in `find . -type f -name '*.go' -not -path '*.pb.go'` ; \
-    do \
-		if [ -z $$MOD ]; then \
+	do \
+		if [ -z ${MOD} ]; then \
 			goimports -w $$item ; \
 		else \
 			goimports -w -local "${MOD}" $$item ; \
 		fi \
-    done
+	done
 

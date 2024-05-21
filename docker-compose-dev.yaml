@@ -56,11 +56,3 @@ services:
       - ./postgres:/var/lib/postgresql/data
     ports:
      - "5432:5432"
-
-  srv-did-vc:
-    image: ghcr.io/machinefi/ioconnect-go:v0.0.1
-    platform: linux/amd64
-    container_name: srv-did-vc
-    restart: always
-    ports:
-      - "9999:9999"
