@@ -252,7 +252,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
-		p.ApplyMethodReturn(pc, "Project", nil)
+		p.ApplyMethodReturn(pc, "LatestProject", nil)
 
 		d.setProjectDispatcher(cp)
 	})
@@ -265,7 +265,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
-		p.ApplyMethodReturn(pc, "Project", &contract.Project{})
+		p.ApplyMethodReturn(pc, "LatestProject", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", nil, errors.New(t.Name()))
 
 		d.setProjectDispatcher(cp)
@@ -280,7 +280,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
-		p.ApplyMethodReturn(pc, "Project", &contract.Project{})
+		p.ApplyMethodReturn(pc, "LatestProject", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 
@@ -296,7 +296,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
-		p.ApplyMethodReturn(pc, "Project", &contract.Project{})
+		p.ApplyMethodReturn(pc, "LatestProject", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
@@ -313,7 +313,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}
-		p.ApplyMethodReturn(pc, "Project", &contract.Project{})
+		p.ApplyMethodReturn(pc, "LatestProject", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, nil)
