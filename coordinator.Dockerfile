@@ -10,6 +10,8 @@ RUN cd ./cmd/coordinator && CGO_ENABLED=0 go build -ldflags "-s -w -extldflags '
 
 FROM --platform=linux/amd64 scratch AS runtime
 
+RUN apk update && apk upgrade && apk add --no-cache ca-certificates && update-ca-certificates
+
 COPY --from=builder /go/src/cmd/coordinator/coordinator /go/bin/coordinator
 EXPOSE 9001
 
