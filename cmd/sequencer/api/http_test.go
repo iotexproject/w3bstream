@@ -24,7 +24,7 @@ import (
 func TestNewHttpServer(t *testing.T) {
 	r := require.New(t)
 
-	s := NewHttpServer(nil, uint(1), "", "", nil, nil)
+	s := NewHttpServer(nil, uint(1), "", "", nil, nil, nil)
 	r.Equal(uint(1), s.aggregationAmount)
 }
 
@@ -79,6 +79,27 @@ func TestHttpServer_verifyToken(t *testing.T) {
 		r.Contains(actualResponse.Error, t.Name())
 	})
 
+	t.Run("FailedToGetClient", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
+		c.Request.Header.Set("authorization", "Bearer valid_token")
+
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "VerifyToken", "clientID", nil)
+		p.ApplyMethodReturn(&clients.Manager{}, "ClientByIoID", nil)
+
+		s.verifyToken(c)
+		r.Equal(http.StatusUnauthorized, w.Code)
+
+		actualResponse := &apitypes.ErrRsp{}
+		err := json.Unmarshal(w.Body.Bytes(), &actualResponse)
+		r.NoError(err)
+		r.Contains(actualResponse.Error, "invalid credential token")
+	})
+
 	t.Run("Success", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
@@ -89,12 +110,12 @@ func TestHttpServer_verifyToken(t *testing.T) {
 		c.Request.Header.Set("authorization", "Bearer valid_token")
 
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "VerifyToken", "clientID", nil)
+		p.ApplyMethodReturn(&clients.Manager{}, "ClientByIoID", &clients.Client{})
 
 		s.verifyToken(c)
 
-		clientID, ok := clients.ClientIDFrom(c.Request.Context())
-		r.Equal(true, ok)
-		r.Equal("clientID", clientID)
+		client := clients.ClientIDFrom(c.Request.Context())
+		r.Nil(client)
 	})
 }
 
@@ -130,8 +151,9 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "", true)
-		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "")
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "Decrypt", nil, errors.New(t.Name()))
 		s.handleMessage(c)
 		r.Equal(http.StatusBadRequest, w.Code)
 
@@ -150,14 +172,15 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "", true)
-		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", nil, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "")
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "Decrypt", nil, nil)
 		//p.ApplyFuncReturn(binding.JSON.BindBody, errors.New(t.Name()))
 		s.handleMessage(c)
 		r.Equal(http.StatusBadRequest, w.Code)
 	})
 
-	t.Run("FailedToVerify", func(t *testing.T) {
+	t.Run("FailedToCheckProject", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
@@ -166,9 +189,10 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, errors.New(t.Name()))
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "")
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "Decrypt", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", false, errors.New(t.Name()))
 		s.handleMessage(c)
 		r.Equal(http.StatusUnauthorized, w.Code)
 
@@ -176,6 +200,28 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &actualResponse)
 		r.NoError(err)
 		r.Contains(actualResponse.Error, t.Name())
+	})
+
+	t.Run("NoPermissionProject", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
+
+		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "")
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "Decrypt", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", false, nil)
+		s.handleMessage(c)
+		r.Equal(http.StatusUnauthorized, w.Code)
+
+		actualResponse := &apitypes.ErrRsp{}
+		err := json.Unmarshal(w.Body.Bytes(), &actualResponse)
+		r.NoError(err)
+		r.Contains(actualResponse.Error, "no permission project")
 	})
 
 	t.Run("FailedToSave", func(t *testing.T) {
@@ -187,9 +233,10 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "")
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "Decrypt", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "Save", errors.New(t.Name()))
 		s.handleMessage(c)
 		r.Equal(http.StatusInternalServerError, w.Code)
@@ -209,9 +256,10 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`)))
 
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyMethodReturn(&ioconnect.JWK{}, "DecryptBySenderDID", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "")
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "Decrypt", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "Save", nil)
 		s.handleMessage(c)
 		r.Equal(http.StatusOK, w.Code)
@@ -276,8 +324,9 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "someClientID", true)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, errors.New(t.Name()))
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "clientID")
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", false, errors.New(t.Name()))
 
 		s.queryStateLogByID(c)
 		r.Equal(http.StatusUnauthorized, w.Code)
@@ -304,8 +353,8 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "someClientID", true)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "")
 
 		s.queryStateLogByID(c)
 		r.Equal(http.StatusUnauthorized, w.Code)
@@ -314,6 +363,35 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &actualResponse)
 		r.NoError(err)
 		r.Contains(actualResponse.Error, "unmatched client DID")
+	})
+
+	t.Run("NoPermissionProject", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = append(c.Params, gin.Param{Key: "id", Value: "some_message_id"})
+		c.Request, _ = http.NewRequest(http.MethodPost, "/", nil)
+
+		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchMessage", []*persistence.Message{
+			{
+				ClientID:       "clientID",
+				ProjectID:      0,
+				InternalTaskID: "internalTaskID",
+			},
+		}, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "clientID")
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", false, nil)
+
+		s.queryStateLogByID(c)
+		r.Equal(http.StatusUnauthorized, w.Code)
+
+		actualResponse := &apitypes.ErrRsp{}
+		err := json.Unmarshal(w.Body.Bytes(), &actualResponse)
+		r.NoError(err)
+		r.Contains(actualResponse.Error, "no permission project")
 	})
 
 	t.Run("FailedToFetchTask", func(t *testing.T) {
@@ -332,8 +410,9 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "clientID")
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", nil, errors.New(t.Name()))
 
 		s.queryStateLogByID(c)
@@ -361,8 +440,9 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "clientID")
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{}, nil)
 
 		s.queryStateLogByID(c)
@@ -390,8 +470,9 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "clientID")
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{
 			{
 				Model: gorm.Model{
@@ -427,8 +508,9 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "clientID")
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{
 			{
 				Model: gorm.Model{
@@ -467,8 +549,9 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "clientID")
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{
 			{
 				Model: gorm.Model{
@@ -503,8 +586,9 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 				InternalTaskID: "internalTaskID",
 			},
 		}, nil)
-		p.ApplyFuncReturn(clients.ClientIDFrom, "clientID", true)
-		p.ApplyFuncReturn(clients.VerifyProjectPermissionByClientDID, nil)
+		p.ApplyFuncReturn(clients.ClientIDFrom, &clients.Client{})
+		p.ApplyMethodReturn(&clients.Client{}, "DID", "clientID")
+		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "FetchTask", []*persistence.Task{
 			{
 				Model: gorm.Model{
@@ -518,6 +602,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 		}, nil)
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
 		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "EncryptJSON", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
 
 		s.queryStateLogByID(c)
 		r.Equal(http.StatusOK, w.Code)
@@ -569,6 +654,7 @@ func TestHttpServer_issueJWTCredential(t *testing.T) {
 
 		p.ApplyMethodReturn(&gin.Context{}, "ShouldBindJSON", nil)
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "SignToken", "anyToken", nil)
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "Encrypt", []byte("anyToken"), nil)
 		s.issueJWTCredential(c)
 		r.Equal(http.StatusOK, w.Code)
 	})
