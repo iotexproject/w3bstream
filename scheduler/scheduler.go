@@ -91,15 +91,15 @@ func (s *scheduler) schedule() {
 				if !isMy {
 					slog.Info("the project not scheduled to this prover", "project_id", projectID)
 					s.pubSubs.Delete(projectID)
-					continue
-				}
-				s.handleProjectProvers(projectID, projectProverIDs)
-				if err := s.pubSubs.Add(projectID); err != nil {
-					slog.Error("failed to add pubsubs", "project_id", projectID, "error", err)
-					continue
+				} else {
+					slog.Info("the project scheduled to this prover", "project_id", projectID)
+					s.handleProjectProvers(projectID, projectProverIDs)
+					if err := s.pubSubs.Add(projectID); err != nil {
+						slog.Error("failed to add pubsubs", "project_id", projectID, "error", err)
+						continue
+					}
 				}
 				s.projectOffsets.setBlockNumber(projectID, blockNumber)
-				slog.Info("the project scheduled to this prover", "project_id", projectID)
 			}
 		}
 	}
