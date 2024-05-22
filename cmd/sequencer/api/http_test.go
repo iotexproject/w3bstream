@@ -23,6 +23,14 @@ import (
 
 func TestNewHttpServer(t *testing.T) {
 	r := require.New(t)
+	p := NewPatches()
+	defer p.Reset()
+
+	p.ApplyMethodReturn(&ioconnect.JWK{}, "DID", "DID")
+	p.ApplyMethodReturn(&ioconnect.JWK{}, "KID", "KID")
+	p.ApplyMethodReturn(&ioconnect.JWK{}, "KeyAgreementDID", "KeyAgreementDID")
+	p.ApplyMethodReturn(&ioconnect.JWK{}, "KeyAgreementKID", "KeyAgreementKID")
+	p.ApplyMethodReturn(&ioconnect.JWK{}, "Doc", nil)
 
 	s := NewHttpServer(nil, uint(1), "", "", nil, nil, nil)
 	r.Equal(uint(1), s.aggregationAmount)
@@ -110,12 +118,13 @@ func TestHttpServer_verifyToken(t *testing.T) {
 		c.Request.Header.Set("authorization", "Bearer valid_token")
 
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "VerifyToken", "clientID", nil)
-		p.ApplyMethodReturn(&clients.Manager{}, "ClientByIoID", &clients.Client{})
+		expected := &clients.Client{}
+		p.ApplyMethodReturn(&clients.Manager{}, "ClientByIoID", expected)
 
 		s.verifyToken(c)
 
 		client := clients.ClientIDFrom(c.Request.Context())
-		r.Nil(client)
+		r.Equal(expected, client)
 	})
 }
 
@@ -261,6 +270,8 @@ func TestHttpServer_handleMessage(t *testing.T) {
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "Decrypt", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
 		p.ApplyMethodReturn(&clients.Manager{}, "HasProjectPermission", true, nil)
 		p.ApplyMethodReturn(&persistence.Persistence{}, "Save", nil)
+		p.ApplyMethodReturn(&clients.Client{}, "KeyAgreementKID", "")
+		p.ApplyMethodReturn(&ioconnect.JWK{}, "EncryptJSON", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
 		s.handleMessage(c)
 		r.Equal(http.StatusOK, w.Code)
 	})
@@ -602,6 +613,7 @@ func TestHttpServer_queryStateLogByID(t *testing.T) {
 		}, nil)
 		p.ApplyFuncReturn(io.ReadAll, []byte("body"), nil)
 		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(&clients.Client{}, "KeyAgreementKID", "")
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "EncryptJSON", []byte(`{"projectID": 123, "projectVersion": "v1", "data": "some data"}`), nil)
 
 		s.queryStateLogByID(c)
@@ -639,6 +651,7 @@ func TestHttpServer_issueJWTCredential(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		p.ApplyMethodReturn(&gin.Context{}, "ShouldBindJSON", nil)
+		p.ApplyMethodReturn(&clients.Manager{}, "ClientByIoID", &clients.Client{})
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "SignToken", "", errors.New(t.Name()))
 		s.issueJWTCredential(c)
 		r.Equal(http.StatusInternalServerError, w.Code)
@@ -653,7 +666,9 @@ func TestHttpServer_issueJWTCredential(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		p.ApplyMethodReturn(&gin.Context{}, "ShouldBindJSON", nil)
+		p.ApplyMethodReturn(&clients.Manager{}, "ClientByIoID", &clients.Client{})
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "SignToken", "anyToken", nil)
+		p.ApplyMethodReturn(&clients.Client{}, "KeyAgreementKID", "")
 		p.ApplyMethodReturn(&ioconnect.JWK{}, "Encrypt", []byte("anyToken"), nil)
 		s.issueJWTCredential(c)
 		r.Equal(http.StatusOK, w.Code)
