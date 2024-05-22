@@ -74,18 +74,18 @@ func (s *scheduler) schedule() {
 					amount = n
 				}
 
+				isMy := false
+				var projectProverIDs []uint64
 				if amount > uint64(len(proverIDs)) {
 					slog.Error("no enough resource for the project", "project_id", projectID, "required_prover_amount", amount, "current_prover_amount", len(proverIDs))
-					continue
-				}
+				} else {
+					projectProverIDs = distance.Sort(proverIDs, projectID)
+					projectProverIDs = projectProverIDs[:amount]
 
-				projectProverIDs := distance.Sort(proverIDs, projectID)
-				projectProverIDs = projectProverIDs[:amount]
-
-				isMy := false
-				for _, p := range projectProverIDs {
-					if p == s.proverID {
-						isMy = true
+					for _, p := range projectProverIDs {
+						if p == s.proverID {
+							isMy = true
+						}
 					}
 				}
 				if !isMy {
