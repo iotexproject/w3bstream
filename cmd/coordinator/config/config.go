@@ -63,7 +63,7 @@ var (
 		ServiceEndpoint:        ":19001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
-		BootNodeMultiAddr:      "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
+		BootNodeMultiAddr:      "/ip4/bootnode/tcp/18000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML",
 		IoTeXChainID:           2,
 		ProjectContractAddress: "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		IPFSEndpoint:           "ipfs.mainnet.iotex.io",
