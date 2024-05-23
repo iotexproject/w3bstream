@@ -21,11 +21,13 @@ import (
 )
 
 var (
-	privateKey string
+	privateKey   string
+	ioTeXChainID int
 )
 
 func init() {
 	flag.StringVar(&privateKey, "privateKey", "975da455cedd5c64a151594358e66b445d703d08cd560ff452cd8c9f02d94b1284c6f964e8e4497876c811f8590d4a4f7e9fac9f77252d37f5cb8ac5478ea5a7", "bootnode private key")
+	flag.IntVar(&ioTeXChainID, "ioTeXChainID", 2, "iotex chain id")
 }
 
 func main() {
@@ -49,7 +51,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	dht, err := dht.New(ctx, h, dht.ProtocolPrefix(protocol.ID("/iotex"+strconv.Itoa(2))), dht.Mode(dht.ModeServer))
+	dht, err := dht.New(ctx, h, dht.ProtocolPrefix(protocol.ID("/iotex"+strconv.Itoa(ioTeXChainID))), dht.Mode(dht.ModeServer))
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new dht"))
 	}
