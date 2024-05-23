@@ -30,6 +30,11 @@
       "address": "0x90A27ab74E790Cef6e258aabee1B361a9c993e8b",
       "txHash": "0x66f19d81e300065426a42eb3c49277d87e31a365a7644dc8c0efacd523fc4527",
       "kind": "transparent"
+    },
+    {
+      "address": "0x3d6b6c7bDB72e8BF73780f433342759d8b329Ca5",
+      "txHash": "0x64fee39bfd45e54449cee8a146271982fc2f9adff7e3c6003a608b9230efaf0a",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -1266,6 +1271,91 @@
               }
             ],
             "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "9099e226a8eb73d7bc4d083a8695b7304839c140d4586c639673ce8e4cb1fe30": {
+      "address": "0x6bf6A24F24D713981D71718c088639636B2Dd5F4",
+      "txHash": "0xb87154108e2683580eb2389d44559edff2733a8da7071bbcb9f72e8f4109a690",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "ioIDRegistry",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IioIDRegistry)523",
+            "contract": "ProjectDevice",
+            "src": "contracts/ProjectDevice.sol:24"
+          },
+          {
+            "label": "w3bstreamProject",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IW3bstreamProject)538",
+            "contract": "ProjectDevice",
+            "src": "contracts/ProjectDevice.sol:25"
+          },
+          {
+            "label": "devices",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
+            "contract": "ProjectDevice",
+            "src": "contracts/ProjectDevice.sol:27"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IW3bstreamProject)538": {
+            "label": "contract IW3bstreamProject",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IioIDRegistry)523": {
+            "label": "contract IioIDRegistry",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
+            "label": "mapping(uint256 => mapping(address => bool))",
+            "numberOfBytes": "32"
           },
           "t_uint256": {
             "label": "uint256",
