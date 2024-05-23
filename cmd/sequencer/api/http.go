@@ -88,7 +88,7 @@ func (s *httpServer) verifyToken(c *gin.Context) {
 	}
 	client := s.clients.ClientByIoID(clientID)
 	if client == nil {
-		c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.Wrap(err, "invalid credential token")))
+		c.JSON(http.StatusUnauthorized, apitypes.NewErrRsp(errors.New("invalid credential token")))
 		return
 	}
 
