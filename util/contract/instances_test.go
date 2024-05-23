@@ -2,7 +2,6 @@ package contract_test
 
 import (
 	"bytes"
-	"context"
 	_ "embed"
 	"testing"
 
@@ -77,7 +76,6 @@ func TestInstance_ReadResult(t *testing.T) {
 
 	t.Run("InvalidValue", func(t *testing.T) {
 		err = i.ReadResult(
-			context.Background(),
 			"documentURI",
 			nil,
 			common.HexToAddress("0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73"),
@@ -88,7 +86,6 @@ func TestInstance_ReadResult(t *testing.T) {
 
 	t.Run("CannotSetValue", func(t *testing.T) {
 		err = i.ReadResult(
-			context.Background(),
 			"documentURI",
 			1,
 			common.HexToAddress("0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73"),
@@ -99,7 +96,6 @@ func TestInstance_ReadResult(t *testing.T) {
 
 	t.Run("FailedToReadContract", func(t *testing.T) {
 		err = i.ReadResult(
-			context.Background(),
 			"CannotFoundMethod",
 			new(string),
 			common.HexToAddress("0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73"),
@@ -111,7 +107,6 @@ func TestInstance_ReadResult(t *testing.T) {
 	t.Run("ReflectPanic", func(t *testing.T) {
 		res := new(int)
 		err = i.ReadResult(
-			context.Background(),
 			"documentURI",
 			res,
 			common.HexToAddress("0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73"),
@@ -123,7 +118,6 @@ func TestInstance_ReadResult(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		res := (*string)(nil)
 		err = i.ReadResult(
-			context.Background(),
 			"documentURI",
 			&res,
 			common.HexToAddress("0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73"),

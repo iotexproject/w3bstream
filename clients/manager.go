@@ -114,7 +114,7 @@ func (mgr *Manager) fetchFromContract(id string) (*Client, error) {
 	)
 
 	if err := mgr.ioIDRegistryInstance.ReadResult("documentURI", &uri, address); err != nil {
-		return nil, errors.Wrap(err, "failed to read client document uri")
+		return nil, errors.Wrapf(err, "failed to read client document uri: %s %s", id, address.String())
 	}
 
 	url := fmt.Sprintf("https://%s/cid/%s", mgr.ioIDRegistryEndpoint, uri)
