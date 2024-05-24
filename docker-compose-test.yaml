@@ -1,6 +1,14 @@
 version: "3.6"
 
 services:
+  bootnode:
+    image: huangzhiran/bootnode:v1.0.0
+    container_name: w3bstream-bootnode
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - 18000:8000
+
   halo2:
     image: wangweixiaohao2944/halo2server:v0.0.6
     container_name: halo2-service

@@ -1,6 +1,14 @@
 version: "3.6"
 
 services:
+  bootnode:
+    image: huangzhiran/bootnode:v1.0.0
+    container_name: w3bstream-bootnode
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - "8000:8000"
+
   sequencer:
     image: ghcr.io/machinefi/sequencer:v0.10.1
     depends_on:
@@ -17,6 +25,7 @@ services:
     image: ghcr.io/machinefi/coordinator:v0.10.1
     depends_on:
       - "postgres"
+      - "bootnode"
     container_name: w3bstream-coordinator
     platform: linux/x86_64
     restart: always
@@ -25,6 +34,7 @@ services:
     environment:
       COORDINATOR_ENV: PROD
       PROJECT_FILE_DIRECTORY: "/data"
+      BOOTNODE_MULTIADDR: "/ip4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
       OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
       OPERATOR_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
     volumes:
@@ -38,12 +48,14 @@ services:
       - "zkwasm"
       - "wasm"
       - "postgres"
+      - "bootnode"
     container_name: w3bstream-prover
     platform: linux/x86_64
     restart: always
     environment:
       PROVER_ENV: PROD
       PROJECT_FILE_DIRECTORY: "/data"
+      BOOTNODE_MULTIADDR: "/ip4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
     volumes:
       - ./test/container_model:/data
 
