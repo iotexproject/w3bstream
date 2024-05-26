@@ -126,12 +126,13 @@ func TestScheduler_schedule(t *testing.T) {
 
 		paused := false
 		pm := &contract.Contract{}
-		pes := &ProjectEpochOffsets{}
+		pes := &ProjectEpochOffsets{epoch: 1}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: &paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("10")},
 		})
+		p.ApplyMethodReturn(&p2p.PubSubs{}, "Delete")
 
 		chainHead := make(chan uint64, 10)
 		chainHead <- 1
@@ -156,7 +157,7 @@ func TestScheduler_schedule(t *testing.T) {
 
 		paused := false
 		pm := &contract.Contract{}
-		pes := &ProjectEpochOffsets{}
+		pes := &ProjectEpochOffsets{epoch: 1}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: &paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
