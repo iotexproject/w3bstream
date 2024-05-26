@@ -10,6 +10,7 @@ import (
 type Config struct {
 	ServiceEndpoint            string `env:"HTTP_SERVICE_ENDPOINT"`
 	DatabaseDSN                string `env:"DATABASE_DSN"`
+	DefaultDatasourceURI       string `env:"DEFAULT_DATASOURCE_URI"`
 	BootNodeMultiAddr          string `env:"BOOTNODE_MULTIADDR"`
 	IoTeXChainID               int    `env:"IOTEX_CHAINID"`
 	ChainEndpoint              string `env:"CHAIN_ENDPOINT,optional"`
@@ -34,6 +35,7 @@ var (
 	defaultConfig = &Config{
 		ServiceEndpoint:            ":9001",
 		DatabaseDSN:                "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
+		DefaultDatasourceURI:       "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		BootNodeMultiAddr:          "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:               2,
 		ChainEndpoint:              "https://babel-api.testnet.iotex.io",
@@ -51,6 +53,7 @@ var (
 	defaultDebugConfig = &Config{
 		ServiceEndpoint:       ":9001",
 		DatabaseDSN:           "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
+		DefaultDatasourceURI:  "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
 		BootNodeMultiAddr:     "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:          2,
 		IPFSEndpoint:          "ipfs.mainnet.iotex.io",
@@ -63,6 +66,7 @@ var (
 		ServiceEndpoint:        ":19001",
 		ChainEndpoint:          "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:            "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
+		DefaultDatasourceURI:   "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		BootNodeMultiAddr:      "/ip4/bootnode/tcp/18000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML",
 		IoTeXChainID:           2,
 		ProjectContractAddress: "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",

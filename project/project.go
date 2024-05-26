@@ -23,7 +23,7 @@ var (
 )
 
 type Project struct {
-	DatasourceURI  string    `json:"datasourceURI"`
+	DatasourceURI  string    `json:"datasourceURI,omitempty"`
 	DefaultVersion string    `json:"defaultVersion"`
 	Versions       []*Config `json:"versions"`
 }
