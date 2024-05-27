@@ -72,12 +72,12 @@ func main() {
 	datasourcePG := datasource.NewPostgres()
 	var taskDispatcher *dispatcher.Dispatcher
 	if local {
-		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager,
+		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI,
 			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
 	} else {
 		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
 
-		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, conf.BootNodeMultiAddr,
+		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI, conf.BootNodeMultiAddr,
 			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, sequencerPubKey, conf.IoTeXChainID,
 			dispatcherNotification, chainHeadNotification, contractPersistence, projectOffsets)
 	}

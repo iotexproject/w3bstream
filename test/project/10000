@@ -1,5 +1,4 @@
 {
-  "datasourceURI": "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
   "defaultVersion": "0.1",
   "versions": [
     {

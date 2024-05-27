@@ -45,6 +45,7 @@ type Dispatcher struct {
 	persistence               Persistence
 	newDatasource             NewDatasource
 	projectManager            ProjectManager
+	defaultDatasourceURI      string
 	bootNodeMultiaddr         string
 	operatorPrivateKey        string
 	operatorPrivateKeyED25519 string
@@ -98,7 +99,7 @@ func (d *Dispatcher) setWindowSize(head uint64) {
 }
 
 func New(persistence Persistence, newDatasource NewDatasource,
-	projectManager ProjectManager, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string,
+	projectManager ProjectManager, defaultDatasourceURI, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string,
 	sequencerPubKey []byte, iotexChainID int, projectNotification <-chan *contract.Project, chainHeadNotification <-chan uint64,
 	contract Contract, projectOffsets *scheduler.ProjectEpochOffsets) (*Dispatcher, error) {
 
@@ -109,6 +110,7 @@ func New(persistence Persistence, newDatasource NewDatasource,
 		persistence:               persistence,
 		newDatasource:             newDatasource,
 		projectManager:            projectManager,
+		defaultDatasourceURI:      defaultDatasourceURI,
 		bootNodeMultiaddr:         bootNodeMultiaddr,
 		operatorPrivateKey:        operatorPrivateKey,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
@@ -130,7 +132,7 @@ func New(persistence Persistence, newDatasource NewDatasource,
 }
 
 func NewLocal(persistence Persistence, newDatasource NewDatasource,
-	projectManager ProjectManager, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr string,
+	projectManager ProjectManager, defaultDatasourceURI, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr string,
 	sequencerPubKey []byte, iotexChainID int) (*Dispatcher, error) {
 
 	projectDispatchers := &sync.Map{}
@@ -161,7 +163,11 @@ func NewLocal(persistence Persistence, newDatasource NewDatasource,
 			ID:         id,
 			Attributes: map[common.Hash][]byte{},
 		}
-		pd, err := newProjectDispatcher(persistence, p.DatasourceURI, newDatasource, cp, ps, taskStateHandler, sequencerPubKey)
+		uri := p.DatasourceURI
+		if uri == "" {
+			uri = defaultDatasourceURI
+		}
+		pd, err := newProjectDispatcher(persistence, uri, newDatasource, cp, ps, taskStateHandler, sequencerPubKey)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to new project dispatcher, project_id %v", id)
 		}
@@ -195,7 +201,11 @@ func (d *Dispatcher) setProjectDispatcher(p *contract.Project) {
 		slog.Error("failed to add pubsubs", "project_id", cp.ID, "error", err)
 		return
 	}
-	pd, err := newProjectDispatcher(d.persistence, pf.DatasourceURI, d.newDatasource, cp, d.pubSubs, d.taskStateHandler, d.sequencerPubKey)
+	uri := pf.DatasourceURI
+	if uri == "" {
+		uri = d.defaultDatasourceURI
+	}
+	pd, err := newProjectDispatcher(d.persistence, uri, d.newDatasource, cp, d.pubSubs, d.taskStateHandler, d.sequencerPubKey)
 	if err != nil {
 		slog.Error("failed to new project dispatcher", "project_id", cp.ID, "error", err)
 		return
