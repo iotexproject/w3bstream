@@ -168,9 +168,14 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 	if err != nil {
 		return nil, 0, 0, errors.Wrap(err, "failed to pack block number call data")
 	}
+	projectCountCallData, err := projectABI.Pack("count")
+	if err != nil {
+		return nil, 0, 0, errors.Wrap(err, "failed to pack project count call data")
+	}
 	ps := []*Project{}
 	minBlockNumber := uint64(math.MaxUint64)
 	maxBlockNumber := uint64(0)
+	listedCount := uint64(0)
 	for projectID := uint64(1); ; projectID++ {
 		isValidProjectCallData, err := projectABI.Pack("isValidProject", new(big.Int).SetUint64(projectID))
 		if err != nil {
@@ -207,9 +212,11 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 				projectContractAddress,
 				projectContractAddress,
 				projectContractAddress,
+				projectContractAddress,
 			},
 			[][]byte{
 				blockNumberCallData,
+				projectCountCallData,
 				isValidProjectCallData,
 				configCallData,
 				isPausedCallData,
@@ -232,41 +239,47 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 		minBlockNumber = min(minBlockNumber, blockNumber)
 		maxBlockNumber = max(maxBlockNumber, blockNumber)
 
-		out, err = projectABI.Unpack("isValidProject", result[1])
+		out, err = projectABI.Unpack("count", result[1])
+		if err != nil {
+			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project count result, project_id %v", projectID)
+		}
+		projectCount := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+		out, err = projectABI.Unpack("isValidProject", result[2])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack is valid project result, project_id %v", projectID)
 		}
 		isValidProject := *abi.ConvertType(out[0], new(bool)).(*bool)
 
 		if !isValidProject {
-			break
+			continue
 		}
 
-		out, err = projectABI.Unpack("config", result[2])
+		out, err = projectABI.Unpack("config", result[3])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project config result, project_id %v", projectID)
 		}
 		config := *abi.ConvertType(out[0], new(project.W3bstreamProjectProjectConfig)).(*project.W3bstreamProjectProjectConfig)
 
-		out, err = projectABI.Unpack("isPaused", result[3])
+		out, err = projectABI.Unpack("isPaused", result[4])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project is paused result, project_id %v", projectID)
 		}
 		isPaused := *abi.ConvertType(out[0], new(bool)).(*bool)
 
-		out, err = projectABI.Unpack("attributes", result[4])
+		out, err = projectABI.Unpack("attributes", result[5])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project attributes result, project_id %v", projectID)
 		}
 		proverAmt := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
 
-		out, err = projectABI.Unpack("attributes", result[5])
+		out, err = projectABI.Unpack("attributes", result[6])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project attributes result, project_id %v", projectID)
 		}
 		vmType := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
 
-		out, err = projectABI.Unpack("attributes", result[6])
+		out, err = projectABI.Unpack("attributes", result[7])
 		if err != nil {
 			return nil, 0, 0, errors.Wrapf(err, "failed to unpack project attributes result, project_id %v", projectID)
 		}
@@ -291,6 +304,11 @@ func listProject(client *ethclient.Client, projectContractAddress, blockNumberCo
 			Hash:        config.Hash,
 			Attributes:  attributes,
 		})
+
+		listedCount++
+		if listedCount >= projectCount.Uint64() {
+			break
+		}
 	}
 	return ps, minBlockNumber, maxBlockNumber, nil
 }
