@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := update
 
 .PHONY: update
-update: fetch generate_abi generate_go
+update: fetch generate_abi
 
 .PHONY: fetch
 fetch:
@@ -20,20 +20,15 @@ generate_abi: generate_abi_ioid generate_abi_project_device
 generate_abi_ioid:
 	@echo "#### generate abis of ioID from latest contracts..."
 	@cd ioid && yarn install > /dev/null 2>&1 && yarn hardhat compile > /dev/null 2>&1
-	@cat ioid/artifacts/contracts/ioIDRegistry.sol/ioIDRegistry.json | jq .abi > abis/ioIDRegistry.json
+	@cat ioid/artifacts/contracts/ioIDRegistry.sol/ioIDRegistry.json | jq .abi > ioIDRegistry.json
 	@echo DONE
 
 .PHONY: generate_abi_project_device
 generate_abi_project_device:
 	@echo "#### generate abis of ProjectDevice from latest contracts..."
 	@cd ../../smartcontracts && yarn install > /dev/null 2>&1 && yarn hardhat compile > /dev/null 2>&1
-	@cat ../../smartcontracts/artifacts/contracts/examples/ProjectDevice.sol/ProjectDevice.json | jq .abi > abis/ProjectDevice.json
-	@echo DONE
-
-.PHONY: generate_go
-generate_go:
-	@echo "#### generate go code by abis"
-	@go generate .
+	@cat ../../smartcontracts/artifacts/contracts/examples/ProjectDevice.sol/ProjectDevice.json | jq .abi > ProjectDevice.json
+	@cat ../../smartcontracts/artifacts/contracts/W3bstreamProject.sol/W3bstreamProject.json | jq .abi > W3bstreamProject.json
 	@echo DONE
 
 .PHONY: clean
