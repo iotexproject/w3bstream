@@ -10,7 +10,7 @@ services:
       - "8000:8000"
 
   sequencer:
-    image: ghcr.io/machinefi/sequencer:v0.10.1
+    image: ghcr.io/machinefi/sequencer:v0.11.1
     depends_on:
       - "postgres"
       - "coordinator"
@@ -22,7 +22,7 @@ services:
     command: [ "-coordinatorAddress", "coordinator:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
 
   coordinator:
-    image: ghcr.io/machinefi/coordinator:v0.10.1
+    image: ghcr.io/machinefi/coordinator:v0.11.1
     depends_on:
       - "postgres"
       - "bootnode"
@@ -34,14 +34,14 @@ services:
     environment:
       COORDINATOR_ENV: PROD
       PROJECT_FILE_DIRECTORY: "/data"
-      BOOTNODE_MULTIADDR: "/ip4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
+      BOOTNODE_MULTIADDR: "/dns4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
       OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
       OPERATOR_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
     volumes:
       - ./test/project:/data
 
   prover:
-    image: ghcr.io/machinefi/prover:v0.10.1
+    image: ghcr.io/machinefi/prover:v0.11.1
     depends_on:
       - "risc0"
       - "halo2"
@@ -55,7 +55,7 @@ services:
     environment:
       PROVER_ENV: PROD
       PROJECT_FILE_DIRECTORY: "/data"
-      BOOTNODE_MULTIADDR: "/ip4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
+      BOOTNODE_MULTIADDR: "/dns4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
     volumes:
       - ./test/project:/data
 
