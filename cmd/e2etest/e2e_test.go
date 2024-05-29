@@ -31,7 +31,7 @@ func TestHttpApi(t *testing.T) {
 		})
 		r.NoError(err)
 
-		resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.endpoint), "application/json", bytes.NewBuffer(reqbody))
+		resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.address), "application/json", bytes.NewBuffer(reqbody))
 		r.NoError(err)
 		r.Equal(400, resp.StatusCode)
 		defer resp.Body.Close()
@@ -50,7 +50,7 @@ func TestHttpApi(t *testing.T) {
 			})
 			r.NoError(err)
 
-			resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.endpoint), "application/json", bytes.NewBuffer(reqbody))
+			resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.address), "application/json", bytes.NewBuffer(reqbody))
 			r.NoError(err)
 			r.Equal(200, resp.StatusCode)
 			defer resp.Body.Close()
@@ -68,7 +68,7 @@ func TestHttpApi(t *testing.T) {
 			defer ticker.Stop()
 
 			for range ticker.C {
-				resp, err := http.Get(fmt.Sprintf("http://localhost%s/message/%s", conf.endpoint, messageID))
+				resp, err := http.Get(fmt.Sprintf("http://localhost%s/message/%s", conf.address, messageID))
 				r.NoError(err)
 				r.Equal(200, resp.StatusCode)
 				body, err := io.ReadAll(resp.Body)
@@ -110,7 +110,7 @@ func TestHttpApi(t *testing.T) {
 			})
 			r.NoError(err)
 
-			resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.endpoint), "application/json", bytes.NewBuffer(reqbody))
+			resp, err := http.Post(fmt.Sprintf("http://localhost%s/message", conf.address), "application/json", bytes.NewBuffer(reqbody))
 			r.NoError(err)
 			r.Equal(200, resp.StatusCode)
 			defer resp.Body.Close()
@@ -128,7 +128,7 @@ func TestHttpApi(t *testing.T) {
 			defer ticker.Stop()
 
 			for range ticker.C {
-				resp, err := http.Get(fmt.Sprintf("http://localhost%s/message/%s", conf.endpoint, messageID))
+				resp, err := http.Get(fmt.Sprintf("http://localhost%s/message/%s", conf.address, messageID))
 				r.NoError(err)
 				r.Equal(200, resp.StatusCode)
 				body, err := io.ReadAll(resp.Body)

@@ -8,14 +8,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
-
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/machinefi/sprout/clients"
 	"github.com/machinefi/sprout/cmd/coordinator/api"
 	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
@@ -37,40 +36,52 @@ var (
 )
 
 type sequencerConf struct {
-	endpoint              string
-	privateKey            string
-	databaseDSN           string
-	coordinatorAddr       string
-	didAuthServerAddr     string
-	did                   bool
-	jwkSecret             string
-	jwk                   *ioconnect.JWK
-	projectClientContract string
-	ioIDContract          string
-	ioIDContractAddress   string
-	chainEndpoint         string
-	ioIDRegistryEndpoint  string
+	aggregationAmount               uint
+	address                         string
+	coordinatorAddress              string
+	databaseDSN                     string
+	didAuthServer                   string
+	privateKey                      string
+	jwkSecret                       string
+	jwk                             *ioconnect.JWK
+	ioIDRegistryEndpoint            string
+	ioIDRegistryContractAddress     string
+	projectClientContractAddress    string
+	w3bstreamProjectContractAddress string
+	chainEndpoint                   string
 }
 
 func seqConf(coordinatorEndpoint, didAuthServerAddr string) *sequencerConf {
 	ret := &sequencerConf{
-		endpoint:             ":19000",
-		privateKey:           "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
-		databaseDSN:          "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
-		coordinatorAddr:      fmt.Sprintf("localhost%s", coordinatorEndpoint),
-		didAuthServerAddr:    didAuthServerAddr,
-		did:                  false,
-		jwkSecret:            "JyBSf1Y9UFIbECdHJRkqZAkfaz16YGwRYyJpXSBwQXJ8RTsZcVMOWStaQxI8bUtafiMtYUE2KkgmI1wBGiQYMw==",
-		ioIDContract:         "0xB63e6034361283dc8516480a46EcB9C122c983Bb",
-		chainEndpoint:        "http://iotex.chainendpoint.io",
-		ioIDRegistryEndpoint: "did.iotex.me",
+		aggregationAmount:               uint(1),
+		address:                         ":19000",
+		coordinatorAddress:              coordinatorEndpoint,
+		databaseDSN:                     "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
+		didAuthServer:                   didAuthServerAddr,
+		privateKey:                      "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
+		jwkSecret:                       "R3QNJihYLjtcaxALSTsKe1cYSX0pS28wZitFVXE4Y2klf2hxVCczYHw2dVg4fXJdSgdCcnM4PgV1aTo9DwYqEw",
+		ioIDRegistryContractAddress:     "0x06b3Fcda51e01EE96e8E8873F0302381c955Fddd",
+		projectClientContractAddress:    "0xF4d6282C5dDD474663eF9e70c927c0d4926d1CEb",
+		w3bstreamProjectContractAddress: "0x6AfCB0EB71B7246A68Bb9c0bFbe5cD7c11c4839f",
+		chainEndpoint:                   "http://iotex.chainendpoint.io",
+		ioIDRegistryEndpoint:            "did.iotex.me",
 	}
 
-	jwk, err := ioconnect.NewJWKBySecretBase64(ret.jwkSecret)
-	if err != nil {
-		panic(errors.Wrap(err, "failed generate jwk from secret"))
+	if ret.jwkSecret != "" {
+		var (
+			secrets = ioconnect.JWKSecrets{}
+			jwk     *ioconnect.JWK
+			err     error
+		)
+		if err = secrets.UnmarshalText([]byte(ret.jwkSecret)); err != nil {
+			panic(errors.Wrap(err, "invalid jwk secrets from flag"))
+		}
+		if jwk, err = ioconnect.NewJWKBySecret(secrets); err != nil {
+			panic(errors.Wrap(err, "failed to new jwk from secrets"))
+		}
+		ret.jwk = jwk
 	}
-	ret.jwk = jwk
+
 	return ret
 }
 
@@ -88,7 +99,9 @@ func init() {
 	}
 
 	conf := seqConf(coordinatorConf.ServiceEndpoint, coordinatorConf.DIDAuthServerEndpoint)
-	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddr, conf.didAuthServerAddr, conf.endpoint, conf.projectClientContract, conf.ioIDContractAddress, conf.chainEndpoint, conf.ioIDRegistryEndpoint, conf.jwk)
+	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddress, conf.didAuthServer, conf.address,
+		conf.projectClientContractAddress, conf.ioIDRegistryContractAddress, conf.w3bstreamProjectContractAddress,
+		conf.ioIDRegistryEndpoint, conf.chainEndpoint, conf.jwk)
 	go runProver(proverConf)
 	go runCoordinator(coordinatorConf)
 
@@ -223,7 +236,8 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 	slog.Info("coordinator started")
 }
 
-func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address, projectClientContract, ioIDContract, chainEndpoint, ioRegistryEndpoint string, key *ioconnect.JWK) {
+func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address, projectClientContractAddress,
+	ioIDRegistryContractAddress, w3bstreamProjectContractAddress, ioIDRegistryEndpoint, chainEndpoint string, key *ioconnect.JWK) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(int(slog.LevelDebug))})))
 
 	sk, err := crypto.HexToECDSA(privateKey)
@@ -233,7 +247,8 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 
 	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
 
-	manager, err := clients.NewManager(projectClientContract, ioIDContract, chainEndpoint, ioRegistryEndpoint)
+	manager, err := clients.NewManager(projectClientContractAddress, ioIDRegistryContractAddress,
+		w3bstreamProjectContractAddress, ioIDRegistryEndpoint, chainEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
