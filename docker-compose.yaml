@@ -56,7 +56,7 @@ services:
       PROVER_ENV: PROD
       PROJECT_FILE_DIRECTORY: "/data"
       BOOTNODE_MULTIADDR: "/dns4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
-      volumes:
+    volumes:
       - ./test/project:/data
 
   halo2:
