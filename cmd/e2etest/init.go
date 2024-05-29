@@ -59,7 +59,7 @@ func seqConf(coordinatorEndpoint, didAuthServerAddr string) *sequencerConf {
 		databaseDSN:                     "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		didAuthServer:                   didAuthServerAddr,
 		privateKey:                      "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
-		jwkSecret:                       "R3QNJihYLjtcaxALSTsKe1cYSX0pS28wZitFVXE4Y2klf2hxVCczYHw2dVg4fXJdSgdCcnM4PgV1aTo9DwYqEw",
+		jwkSecret:                       "R3QNJihYLjtcaxALSTsKe1cYSX0pS28wZitFVXE4Y2klf2hxVCczYHw2dVg4fXJdSgdCcnM4PgV1aTo9DwYqEw==",
 		ioIDRegistryContractAddress:     "0x06b3Fcda51e01EE96e8E8873F0302381c955Fddd",
 		projectClientContractAddress:    "0xF4d6282C5dDD474663eF9e70c927c0d4926d1CEb",
 		w3bstreamProjectContractAddress: "0x6AfCB0EB71B7246A68Bb9c0bFbe5cD7c11c4839f",
