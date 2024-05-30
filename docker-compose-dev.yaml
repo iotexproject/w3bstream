@@ -18,7 +18,7 @@ services:
       - 4002:4001
 
   zkwasm:
-    image: iotexdev/zkwasmserver:v0.0.3
+    image: wangweixiaohao2944/zkwasmserver:v0.0.4
     container_name: zkwasm-service
     platform: linux/x86_64
     restart: always
