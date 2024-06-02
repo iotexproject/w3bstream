@@ -11,8 +11,8 @@ Install **didctl**: The command-line used for encrypting and decrypting did-comm
 
 ```bash
 ## clone or pull the latest iotex-core respository
-git clone -b feat/ioctl_ws_step_commit git@github.com:iotexproject/iotex-core.git
-cd iotex-core && git pull origin feat/ioctl_ws_step_commit
+git clone -b master git@github.com:iotexproject/iotex-core.git
+cd iotex-core && git pull origin master
 
 ## make ioctl and move the CLI tool to you system PATH
 make ioctl && mv bin/ioctl __YOUR_SYSTEM_PATH__
