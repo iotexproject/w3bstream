@@ -34,14 +34,14 @@ import (
 var (
 	projectMinterPrivateKey string
 
-	projectCacheDirectory      = "./project_cache"
-	chainEndpoint              = "https://babel-api.testnet.iotex.io"
-	projectContractAddress     = common.HexToAddress("0xCBb7a80983Fd3405972F700101A82DB6304C6547")
-	proverContractAddress      = common.HexToAddress("0x6B544a7603cead52AdfD99AA64B3d798083cc4CC")
-	blockNumberContractAddress = common.HexToAddress("0x8fEa35A413A49c07f7ccDd03c6CE8AD751334aA4")
-	multiCallContractAddress   = common.HexToAddress("0xDa3CF8a30F4dD85f5E8A92478e150EAD210f4458")
-	ipfsEndpoint               = "ipfs.mainnet.iotex.io"
-	schedulerEpoch             = uint64(20)
+	projectCacheDir        = "./project_cache"
+	localDBDir             = "./local_db"
+	beginningBlockNumber   = uint64(20000000)
+	chainEndpoint          = "https://babel-api.testnet.iotex.io"
+	projectContractAddress = common.HexToAddress("0xCBb7a80983Fd3405972F700101A82DB6304C6547")
+	proverContractAddress  = common.HexToAddress("0x6B544a7603cead52AdfD99AA64B3d798083cc4CC")
+	ipfsEndpoint           = "ipfs.mainnet.iotex.io"
+	schedulerEpoch         = uint64(20)
 )
 
 var (
@@ -228,16 +228,16 @@ func main() {
 		}
 	}()
 
-	projectManagerNotification := make(chan *contract.Project, 10)
+	projectManagerNotification := make(chan uint64, 10)
 
-	projectNotifications := []chan<- *contract.Project{projectManagerNotification}
+	projectNotifications := []chan<- uint64{projectManagerNotification}
 
-	contractPersistence, err := contract.New(schedulerEpoch, chainEndpoint, proverContractAddress,
-		projectContractAddress, blockNumberContractAddress,
-		multiCallContractAddress, nil, projectNotifications)
+	contractPersistence, err := contract.New(schedulerEpoch, beginningBlockNumber, localDBDir, chainEndpoint, proverContractAddress,
+		projectContractAddress, nil, projectNotifications)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 	}
+	defer contractPersistence.Release()
 
 	updateProjectRequiredProverTicker := time.NewTicker(1 * time.Hour)
 	go func() {
@@ -246,7 +246,7 @@ func main() {
 		}
 	}()
 
-	projectManager, err := project.NewManager(projectCacheDirectory, ipfsEndpoint, contractPersistence.LatestProject, projectManagerNotification)
+	projectManager, err := project.NewManager(projectCacheDir, ipfsEndpoint, contractPersistence.LatestProject, projectManagerNotification)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}

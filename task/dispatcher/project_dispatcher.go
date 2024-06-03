@@ -94,9 +94,7 @@ func newProjectDispatcher(persistence Persistence, datasourceURI string, newData
 
 	window := newWindow(proverAmount, pubSubs, handler, persistence)
 	paused := atomic.Bool{}
-	if p.Paused != nil {
-		paused.Store(*p.Paused)
-	}
+	paused.Store(p.Paused)
 	d := &projectDispatcher{
 		window:          window,
 		waitInterval:    3 * time.Second,

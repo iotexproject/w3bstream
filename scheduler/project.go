@@ -24,11 +24,11 @@ type ProjectEpochOffsets struct {
 	projects sync.Map // project offset in epoch (uint64) -> *projectEpochOffset
 }
 
-func (pe *ProjectEpochOffsets) storeProject(p *contract.Project) {
-	offset := hash.Keccak256Uint64(p.ID).Big().Uint64() % pe.epoch
+func (pe *ProjectEpochOffsets) storeProject(pid uint64) {
+	offset := hash.Keccak256Uint64(pid).Big().Uint64() % pe.epoch
 
 	projects, _ := pe.projects.LoadOrStore(offset, &projectEpochOffset{})
-	projects.(*projectEpochOffset).projectIDs.LoadOrStore(p.ID, uint64(0))
+	projects.(*projectEpochOffset).projectIDs.LoadOrStore(pid, uint64(0))
 }
 
 func (pe *ProjectEpochOffsets) offset(blockNumber uint64) uint64 {
@@ -59,19 +59,19 @@ func (pe *ProjectEpochOffsets) Projects(blockNumber uint64) []*ScheduledProject 
 	return ps
 }
 
-func NewProjectEpochOffsets(epoch uint64, latestProjects LatestProjects, projectNotification <-chan *contract.Project) *ProjectEpochOffsets {
+func NewProjectEpochOffsets(epoch uint64, latestProjects LatestProjects, projectNotification <-chan uint64) *ProjectEpochOffsets {
 	pe := &ProjectEpochOffsets{
 		epoch: epoch,
 	}
 
 	ps := latestProjects()
 	for _, p := range ps {
-		pe.storeProject(p)
+		pe.storeProject(p.ID)
 	}
 	go func() {
-		for p := range projectNotification {
-			slog.Info("get new project contract events", "block_number", p.BlockNumber, "project_id", p.ID)
-			pe.storeProject(p)
+		for pid := range projectNotification {
+			slog.Info("get new project contract events", "project_id", pid)
+			pe.storeProject(pid)
 		}
 	}()
 	return pe

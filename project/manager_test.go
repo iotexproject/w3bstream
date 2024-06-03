@@ -128,7 +128,16 @@ func TestManager_load(t *testing.T) {
 	}
 
 	t.Run("NotExist", func(t *testing.T) {
-		m1 := *m
+		m1 := &Manager{
+			contractProject: func(projectID uint64) *contract.Project {
+				return &contract.Project{
+					Uri:  "",
+					Hash: common.Hash{},
+				}
+			},
+			ipfsEndpoint: "https://ipfs.com",
+			cache:        &cache{},
+		}
 		m1.contractProject = func(projectID uint64) *contract.Project {
 			return nil
 		}
@@ -190,11 +199,11 @@ func TestManager_watchProject(t *testing.T) {
 	m := &Manager{}
 	m.projects.Store(uint64(0), &Project{})
 
-	projectNotification := make(chan *contract.Project)
+	projectNotification := make(chan uint64)
 	defer close(projectNotification)
 
 	go m.watchProject(projectNotification)
-	projectNotification <- &contract.Project{ID: 0}
+	projectNotification <- 0
 
 	<-time.After(100 * time.Millisecond)
 

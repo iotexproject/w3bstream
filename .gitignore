@@ -36,6 +36,7 @@ examples/*/pkg/
 .vscode
 bin
 
+local_db
 project_cache
 smartcontracts/contracts/artifacts/
 smartcontracts/contracts/interfaces/artifacts/
