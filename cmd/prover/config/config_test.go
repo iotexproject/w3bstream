@@ -33,6 +33,7 @@ func TestConfig_Init(t *testing.T) {
 			IPFSEndpoint:             "abc.ipfs.net",
 			ProverOperatorPrivateKey: "private key",
 			ProjectFileDirectory:     "/path/to/project/configs",
+			ContractDataDirectory:    "./test",
 		}
 
 		_ = os.Setenv("RISC0_SERVER_ENDPOINT", expected.Risc0ServerEndpoint)
@@ -49,6 +50,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
 		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPrivateKey)
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDirectory)
+		_ = os.Setenv("CONTRACT_DATA_DIRECTORY", expected.ContractDataDirectory)
 
 		c := &config.Config{}
 		r.Nil(c.Init())

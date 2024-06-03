@@ -230,6 +230,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(pc, "LatestProject", cp)
 
 		d := &Dispatcher{
+			contract:           pc,
 			projectDispatchers: &sync.Map{},
 		}
 		projectDispatcher := &projectDispatcher{
@@ -243,6 +244,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		defer p.Reset()
 
 		d := &Dispatcher{
+			contract:           pc,
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
 		}

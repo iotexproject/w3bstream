@@ -33,6 +33,7 @@ func TestConfig_Init(t *testing.T) {
 			OperatorPrivateKeyED25519: "",
 			ProjectFileDirectory:      "/path/to/project/configs",
 			SchedulerEpoch:            10,
+			ContractDataDirectory:     "./test",
 		}
 
 		_ = os.Setenv("HTTP_SERVICE_ENDPOINT", expected.ServiceEndpoint)
@@ -45,6 +46,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
 		_ = os.Setenv("DIDAUTH_SERVER_ENDPOINT", expected.DIDAuthServerEndpoint)
 		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddress)
+		_ = os.Setenv("CONTRACT_DATA_DIRECTORY", expected.ContractDataDirectory)
 		// missing some env
 		// _ = os.Setenv("OPERATOR_PRIVATE_KEY", expected.OperatorPrivateKey)
 		// _ = os.Setenv("OPERATOR_PRIVATE_KEY_ED25519", expected.OperatorPrivateKeyED25519)
