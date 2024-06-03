@@ -175,7 +175,7 @@ func TestNewProjectDispatcher(t *testing.T) {
 		paused := true
 		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("1")},
-			Paused:     &paused,
+			Paused:     paused,
 		}, nil, nil, nil)
 		time.Sleep(10 * time.Millisecond)
 		r.NoError(err)

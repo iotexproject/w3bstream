@@ -1,13 +1,17 @@
 package contract
 
 import (
-	"container/list"
 	"context"
+	"encoding/binary"
+	"encoding/json"
 	"log/slog"
 	"math/big"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/cockroachdb/pebble"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -16,6 +20,11 @@ import (
 
 	"github.com/machinefi/sprout/smartcontracts/go/project"
 	"github.com/machinefi/sprout/smartcontracts/go/prover"
+)
+
+const (
+	chainHead   = "chain_head"
+	blockPrefix = "block_"
 )
 
 var (
@@ -33,50 +42,144 @@ var (
 )
 
 type Contract struct {
-	epoch                      uint64
-	proverContractAddress      common.Address
-	projectContractAddress     common.Address
-	blockNumberContractAddress common.Address
-	multiCallContractAddress   common.Address
-	chainHeadNotifications     []chan<- uint64
-	projectNotifications       []chan<- *Project
-	blockProjects              *blockProjects
-	blockProvers               *blockProvers
-	scanInterval               time.Duration
-	client                     *ethclient.Client
-	proverInstance             *prover.Prover
-	projectInstance            *project.Project
+	db                     *pebble.DB
+	epoch                  uint64
+	beginningBlockNumber   uint64
+	proverContractAddr     common.Address
+	projectContractAddr    common.Address
+	chainHeadNotifications []chan<- uint64
+	projectNotifications   []chan<- uint64
+	listStepSize           uint64
+	watchInterval          time.Duration
+	client                 *ethclient.Client
+	proverInstance         *prover.Prover
+	projectInstance        *project.Project
+}
+
+type block struct {
+	blockProject
+	blockProver
 }
 
 func (c *Contract) Project(projectID, blockNumber uint64) *Project {
-	return c.blockProjects.project(projectID, blockNumber)
+	dataBytes, closer, err := c.db.Get(c.dbKey(blockNumber))
+	if err != nil {
+		if err != pebble.ErrNotFound {
+			slog.Error("failed to get db block data", "block_number", blockNumber, "error", err)
+		}
+		return nil
+	}
+	dst := make([]byte, len(dataBytes))
+	copy(dst, dataBytes)
+	blockData := &block{}
+	if err := json.Unmarshal(dst, blockData); err != nil {
+		slog.Error("failed to unmarshal block data", "block_number", blockNumber, "error", err)
+		return nil
+	}
+	if err := closer.Close(); err != nil {
+		slog.Error("failed to close result of block data", "block_number", blockNumber, "error", err)
+		return nil
+	}
+	return blockData.blockProject.Projects[projectID]
 }
 
 func (c *Contract) LatestProject(projectID uint64) *Project {
-	return c.blockProjects.project(projectID, 0)
+	bp := c.latestProjects()
+	if bp == nil {
+		return nil
+	}
+	return bp.Projects[projectID]
 }
 
 func (c *Contract) LatestProjects() []*Project {
-	bp := c.blockProjects.projects()
-	ps := make([]*Project, 0, len(bp.Projects))
+	bp := c.latestProjects()
+	if bp == nil {
+		return nil
+	}
+	ps := []*Project{}
 	for _, p := range bp.Projects {
 		ps = append(ps, p)
 	}
 	return ps
 }
 
+func (c *Contract) latestProjects() *blockProject {
+	batch := c.db.NewBatch()
+	defer batch.Close()
+
+	headBytes, closer, err := batch.Get(c.dbHead())
+	if err != nil {
+		slog.Error("failed to get chain head data", "error", err)
+		return nil
+	}
+	dst := make([]byte, len(headBytes))
+	copy(dst, headBytes)
+	head := binary.LittleEndian.Uint64(dst)
+	if err := closer.Close(); err != nil {
+		slog.Error("failed to close result of chain head", "error", err)
+		return nil
+	}
+
+	dataBytes, closer, err := batch.Get(c.dbKey(head))
+	if err != nil {
+		if err != pebble.ErrNotFound {
+			slog.Error("failed to get db block data", "block_number", head, "error", err)
+		}
+		return nil
+	}
+	dst = make([]byte, len(dataBytes))
+	copy(dst, dataBytes)
+	blockData := &block{}
+	if err := json.Unmarshal(dst, blockData); err != nil {
+		slog.Error("failed to unmarshal block data", "block_number", head, "error", err)
+		return nil
+	}
+	if err := closer.Close(); err != nil {
+		slog.Error("failed to close result of block data", "block_number", head, "error", err)
+		return nil
+	}
+
+	if err := batch.Commit(pebble.Sync); err != nil {
+		slog.Error("failed to commit batch", "error", err)
+		return nil
+	}
+
+	return &blockData.blockProject
+}
+
 func (c *Contract) Provers(blockNumber uint64) []*Prover {
-	bp := c.blockProvers.provers(blockNumber)
-	ps := make([]*Prover, 0, len(bp.Provers))
-	for _, p := range bp.Provers {
+	dataBytes, closer, err := c.db.Get(c.dbKey(blockNumber))
+	if err != nil {
+		if err != pebble.ErrNotFound {
+			slog.Error("failed to get db block data", "block_number", blockNumber, "error", err)
+		}
+		return nil
+	}
+	dst := make([]byte, len(dataBytes))
+	copy(dst, dataBytes)
+	blockData := &block{}
+	if err := json.Unmarshal(dst, blockData); err != nil {
+		slog.Error("failed to unmarshal block data", "block_number", blockNumber, "error", err)
+		return nil
+	}
+	if err := closer.Close(); err != nil {
+		slog.Error("failed to close result of block data", "block_number", blockNumber, "error", err)
+		return nil
+	}
+
+	ps := []*Prover{}
+	for _, p := range blockData.blockProver.Provers {
 		ps = append(ps, p)
 	}
 	return ps
 }
 
 func (c *Contract) LatestProvers() []*Prover {
-	bp := c.blockProvers.provers(0)
-	ps := make([]*Prover, 0, len(bp.Provers))
+	bp := c.latestProvers()
+	if bp == nil {
+		return nil
+	}
+	ps := []*Prover{}
 	for _, p := range bp.Provers {
 		ps = append(ps, p)
 	}
@@ -84,13 +187,66 @@ func (c *Contract) LatestProvers() []*Prover {
 }
 
 func (c *Contract) Prover(operator common.Address) *Prover {
-	return c.blockProvers.prover(operator)
+	bp := c.latestProvers()
+	if bp == nil {
+		return nil
+	}
+	for _, p := range bp.Provers {
+		if p.OperatorAddress == operator {
+			return p
+		}
+	}
+	return nil
 }
 
-func (c *Contract) notifyProject(bp *blockProject) {
-	for _, p := range bp.Projects {
+func (c *Contract) latestProvers() *blockProver {
+	batch := c.db.NewBatch()
+	defer batch.Close()
+
+	headBytes, closer, err := batch.Get(c.dbHead())
+	if err != nil {
+		slog.Error("failed to get chain head data", "error", err)
+		return nil
+	}
+	dst := make([]byte, len(headBytes))
+	copy(dst, headBytes)
+	head := binary.LittleEndian.Uint64(dst)
+	if err := closer.Close(); err != nil {
+		slog.Error("failed to close result of chain head", "error", err)
+		return nil
+	}
+
+	dataBytes, closer, err := batch.Get(c.dbKey(head))
+	if err != nil {
+		if err != pebble.ErrNotFound {
+			slog.Error("failed to get db block data", "block_number", head, "error", err)
+		}
+		return nil
+	}
+	dst = make([]byte, len(dataBytes))
+	copy(dst, dataBytes)
+	blockData := &block{}
+	if err := json.Unmarshal(dst, blockData); err != nil {
+		slog.Error("failed to unmarshal block data", "block_number", head, "error", err)
+		return nil
+	}
+	if err := closer.Close(); err != nil {
+		slog.Error("failed to close result of block data", "block_number", head, "error", err)
+		return nil
+	}
+
+	if err := batch.Commit(pebble.Sync); err != nil {
+		slog.Error("failed to commit batch", "error", err)
+		return nil
+	}
+
+	return &blockData.blockProver
+}
+
+func (c *Contract) notifyProject(bp *blockProjectDiff) {
+	for _, p := range bp.diffs {
 		for _, n := range c.projectNotifications {
-			n <- p
+			n <- p.id
 		}
 	}
 }
@@ -101,135 +257,162 @@ func (c *Contract) notifyChainHead(chainHead uint64) {
 	}
 }
 
-func (c *Contract) addBlockProject(bp *blockProject) {
-	c.blockProjects.add(bp)
-	c.notifyProject(bp)
+func (c *Contract) dbKey(blockNumber uint64) []byte {
+	return []byte(blockPrefix + strconv.FormatUint(blockNumber, 10))
+}
+
+func (c *Contract) dbHead() []byte {
+	return []byte(chainHead)
+}
+
+func (c *Contract) updateDB(blockNumber uint64, projectDiff *blockProjectDiff, proverDiff *blockProverDiff) error {
+	batch := c.db.NewBatch()
+	defer batch.Close()
+
+	preBlock := blockNumber - 1
+	if blockNumber == 0 {
+		preBlock = blockNumber
+	}
+
+	preBlockBytes, closer, err := batch.Get(c.dbKey(preBlock))
+	if err != nil && err != pebble.ErrNotFound {
+		return errors.Wrap(err, "failed to get pre block data")
+	}
+	var preBlockData *block
+	if err == nil {
+		dst := make([]byte, len(preBlockBytes))
+		copy(dst, preBlockBytes)
+		if err := json.Unmarshal(dst, preBlockData); err != nil {
+			return errors.Wrap(err, "failed to unmarshal pre block data")
+		}
+		if err := closer.Close(); err != nil {
+			return errors.Wrap(err, "failed to close result of pre block data")
+		}
+	} else {
+		preBlockData = &block{
+			blockProject: blockProject{
+				Projects: map[uint64]*Project{},
+			},
+			blockProver: blockProver{
+				Provers: map[uint64]*Prover{},
+			},
+		}
+	}
+	if projectDiff != nil {
+		preBlockData.blockProject.merge(projectDiff)
+	}
+	if proverDiff != nil {
+		preBlockData.blockProver.merge(proverDiff)
+	}
+	currBlockBytes, err := json.Marshal(preBlockData)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal block data")
+	}
+
+	numberBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(numberBytes, blockNumber)
+
+	if err := batch.Set(c.dbHead(), numberBytes, nil); err != nil {
+		return errors.Wrap(err, "failed to set chain head")
+	}
+	if err := batch.Set(c.dbKey(blockNumber), currBlockBytes, nil); err != nil {
+		return errors.Wrap(err, "failed to set current block")
+	}
+	if blockNumber-c.beginningBlockNumber+1 > c.epoch {
+		if err := batch.Delete(c.dbKey(blockNumber-c.epoch), nil); err != nil {
+			return errors.Wrap(err, "failed to delete expired block")
+		}
+	}
+
+	if err := batch.Commit(pebble.Sync); err != nil {
+		return errors.Wrap(err, "failed to commit batch")
+	}
+	return nil
+}
+
+func (c *Contract) processLogs(from, to uint64, logs []types.Log, notify bool) error {
+	sort.Slice(logs, func(i, j int) bool {
+		if logs[i].BlockNumber != logs[j].BlockNumber {
+			return logs[i].BlockNumber < logs[j].BlockNumber
+		}
+		return logs[i].TxIndex < logs[j].TxIndex
+	})
+
+	projectMap, err := c.processProjectLogs(logs)
+	if err != nil {
+		return err
+	}
+	proverMap, err := c.processProverLogs(logs)
+	if err != nil {
+		return err
+	}
+	for blockNumber := from; blockNumber <= to; blockNumber++ {
+		projects, ok := projectMap[blockNumber]
+		if ok && notify {
+			c.notifyProject(projects)
+		}
+		if err := c.updateDB(blockNumber, projects, proverMap[blockNumber]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Contract) list() (uint64, error) {
-	projects, projectMinBlockNumber, projectMaxBlockNumber, err := listProject(c.client, c.projectContractAddress, c.blockNumberContractAddress, c.multiCallContractAddress)
-	if err != nil {
-		return 0, err
+	headBytes, closer, err := c.db.Get(c.dbHead())
+	if err != nil && err != pebble.ErrNotFound {
+		return 0, errors.Wrap(err, "failed to get db chain head")
 	}
-	provers, proverMinBlockNumber, proverMaxBlockNumber, err := listProver(c.client, c.proverContractAddress, c.blockNumberContractAddress, c.multiCallContractAddress)
-	if err != nil {
-		return 0, err
+	head := c.beginningBlockNumber
+	if err == nil {
+		dst := make([]byte, len(headBytes))
+		copy(dst, headBytes)
+		head = binary.LittleEndian.Uint64(dst)
+		head++
+		if err := closer.Close(); err != nil {
+			return 0, errors.Wrap(err, "failed to close result of chain head")
+		}
 	}
-	minBlockNumber := min(projectMinBlockNumber, proverMinBlockNumber)
-	maxBlockNumber := max(projectMaxBlockNumber, proverMaxBlockNumber)
-	minBlockNumber = minBlockNumber - c.epoch
-
 	query := ethereum.FilterQuery{
-		Addresses: []common.Address{c.proverContractAddress, c.projectContractAddress},
+		Addresses: []common.Address{c.proverContractAddr, c.projectContractAddr},
 		Topics:    [][]common.Hash{allTopicHash},
-		FromBlock: new(big.Int).SetUint64(minBlockNumber),
-		ToBlock:   new(big.Int).SetUint64(maxBlockNumber),
 	}
-	logs, err := c.client.FilterLogs(context.Background(), query)
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to filter contract logs")
-	}
-
-	if len(logs) == 0 {
-		logs = []types.Log{{
-			Topics:      []common.Hash{emptyHash},
-			BlockNumber: maxBlockNumber,
-		}}
-	}
-
-	blockProjects := list.New()
-	blockProjectMap := map[uint64]*blockProject{}
-	blockProvers := list.New()
-	blockProverMap := map[uint64]*blockProver{}
-
-	if err := processProjectLogs(func(p *blockProject) {
-		blockProjects.PushBack(p)
-		blockProjectMap[p.BlockNumber] = p
-	}, logs, c.projectInstance); err != nil {
-		return 0, errors.Wrap(err, "failed to process project logs")
-	}
-	if err := processProverLogs(func(p *blockProver) {
-		blockProvers.PushBack(p)
-		blockProverMap[p.BlockNumber] = p
-	}, logs, c.proverInstance); err != nil {
-		return 0, errors.Wrap(err, "failed to process prover logs")
-	}
-
-	minBlockProject := &blockProject{
-		BlockNumber: minBlockNumber,
-		Projects:    map[uint64]*Project{},
-	}
-	for _, p := range projects {
-		for e := blockProjects.Back(); e != nil; e = e.Prev() {
-			ebp := e.Value.(*blockProject)
-			if ebp.BlockNumber >= p.BlockNumber {
-				continue
-			}
-			ep, ok := ebp.Projects[p.ID]
-			if ok {
-				p.merge(ep)
-			}
+	from := head
+	to := from
+	for {
+		header, err := c.client.HeaderByNumber(context.Background(), nil)
+		if err != nil {
+			return 0, errors.Wrap(err, "failed to retrieve latest block header")
 		}
-		p.BlockNumber = minBlockNumber
-		minBlockProject.Projects[p.ID] = p
-	}
-
-	minBlockProver := &blockProver{
-		BlockNumber: minBlockNumber,
-		Provers:     map[uint64]*Prover{},
-	}
-	for _, p := range provers {
-		for e := blockProvers.Back(); e != nil; e = e.Prev() {
-			ebp := e.Value.(*blockProver)
-			if ebp.BlockNumber >= p.BlockNumber {
-				continue
-			}
-			ep, ok := ebp.Provers[p.ID]
-			if ok {
-				p.merge(ep)
-			}
+		currentHead := header.Number.Uint64()
+		to = from + c.listStepSize
+		if to > currentHead {
+			to = currentHead
 		}
-		p.BlockNumber = minBlockNumber
-		minBlockProver.Provers[p.ID] = p
-	}
-
-	c.blockProjects.add(minBlockProject)
-	c.blockProvers.add(minBlockProver)
-
-	for n := minBlockNumber + 1; n <= maxBlockNumber; n++ {
-		p, ok := blockProjectMap[n]
-		if ok {
-			c.blockProjects.add(p)
-		} else {
-			c.blockProjects.add(&blockProject{
-				BlockNumber: n,
-				Projects:    map[uint64]*Project{},
-			})
+		if from > to {
+			break
 		}
-	}
-
-	for n := minBlockNumber + 1; n <= maxBlockNumber; n++ {
-		p, ok := blockProverMap[n]
-		if ok {
-			c.blockProvers.add(p)
-		} else {
-			c.blockProvers.add(&blockProver{
-				BlockNumber: n,
-				Provers:     map[uint64]*Prover{},
-			})
+		query.FromBlock = new(big.Int).SetUint64(from)
+		query.ToBlock = new(big.Int).SetUint64(to)
+		logs, err := c.client.FilterLogs(context.Background(), query)
+		if err != nil {
+			return 0, errors.Wrap(err, "failed to filter contract logs")
 		}
+		if err := c.processLogs(from, to, logs, false); err != nil {
+			return 0, err
+		}
+		from = to + 1
 	}
-
-	return maxBlockNumber, nil
+	return to, nil
 }
 
 func (c *Contract) watch(listedBlockNumber uint64) {
 	queriedBlockNumber := listedBlockNumber
 	query := ethereum.FilterQuery{
-		Addresses: []common.Address{c.proverContractAddress, c.projectContractAddress},
+		Addresses: []common.Address{c.proverContractAddr, c.projectContractAddr},
 		Topics:    [][]common.Hash{allTopicHash},
 	}
-	ticker := time.NewTicker(c.scanInterval)
+	ticker := time.NewTicker(c.watchInterval)
 
 	go func() {
 		for range ticker.C {
@@ -245,19 +428,8 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 				continue
 			}
 
-			if len(logs) == 0 {
-				logs = []types.Log{{
-					Topics:      []common.Hash{emptyHash},
-					BlockNumber: target,
-				}}
-			}
-
-			if err := processProjectLogs(c.addBlockProject, logs, c.projectInstance); err != nil {
-				slog.Error("failed to process project logs", "error", err)
-				continue
-			}
-			if err := processProverLogs(c.blockProvers.add, logs, c.proverInstance); err != nil {
-				slog.Error("failed to process prover logs", "error", err)
+			if err := c.processLogs(target, target, logs, true); err != nil {
+				slog.Error("failed to process logs", "error", err)
 				continue
 			}
 
@@ -268,43 +440,44 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 	}()
 }
 
-func New(epoch uint64, chainEndpoint string, proverContractAddress, projectContractAddress, blockNumberContractAddress, multiCallContractAddress common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- *Project) (*Contract, error) {
-	blockProjects := &blockProjects{
-		capacity: epoch,
-		blocks:   list.New(),
+func (c *Contract) Release() {
+	if err := c.db.Close(); err != nil {
+		slog.Error("failed to close pebble db", "error", err)
 	}
-	blockProvers := &blockProvers{
-		capacity: epoch,
-		blocks:   list.New(),
+}
+
+func New(epoch, beginningBlockNumber uint64, contractDataDir, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
+	db, err := pebble.Open(contractDataDir, &pebble.Options{})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open pebble db")
 	}
 
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial chain endpoint")
 	}
-	projectInstance, err := project.NewProject(projectContractAddress, client)
+	projectInstance, err := project.NewProject(projectContractAddr, client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new project contract instance")
 	}
-	proverInstance, err := prover.NewProver(proverContractAddress, client)
+	proverInstance, err := prover.NewProver(proverContractAddr, client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new prover contract instance")
 	}
 
 	c := &Contract{
-		epoch:                      epoch,
-		proverContractAddress:      proverContractAddress,
-		projectContractAddress:     projectContractAddress,
-		blockNumberContractAddress: blockNumberContractAddress,
-		multiCallContractAddress:   multiCallContractAddress,
-		chainHeadNotifications:     chainHeadNotifications,
-		projectNotifications:       projectNotifications,
-		blockProjects:              blockProjects,
-		blockProvers:               blockProvers,
-		scanInterval:               1 * time.Second,
-		client:                     client,
-		proverInstance:             proverInstance,
-		projectInstance:            projectInstance,
+		db:                     db,
+		epoch:                  epoch,
+		beginningBlockNumber:   beginningBlockNumber,
+		proverContractAddr:     proverContractAddr,
+		projectContractAddr:    projectContractAddr,
+		chainHeadNotifications: chainHeadNotifications,
+		projectNotifications:   projectNotifications,
+		listStepSize:           1000,
+		watchInterval:          1 * time.Second,
+		client:                 client,
+		proverInstance:         proverInstance,
+		projectInstance:        projectInstance,
 	}
 
 	listedBlockNumber, err := c.list()

@@ -51,7 +51,7 @@ type Dispatcher struct {
 	operatorPrivateKeyED25519 string
 	sequencerPubKey           []byte
 	iotexChainID              int
-	projectNotification       <-chan *contract.Project
+	projectNotification       <-chan uint64
 	chainHeadNotification     <-chan uint64
 	contract                  Contract
 	taskStateHandler          *taskStateHandler
@@ -100,7 +100,7 @@ func (d *Dispatcher) setWindowSize(head uint64) {
 
 func New(persistence Persistence, newDatasource NewDatasource,
 	projectManager ProjectManager, defaultDatasourceURI, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string,
-	sequencerPubKey []byte, iotexChainID int, projectNotification <-chan *contract.Project, chainHeadNotification <-chan uint64,
+	sequencerPubKey []byte, iotexChainID int, projectNotification <-chan uint64, chainHeadNotification <-chan uint64,
 	contract Contract, projectOffsets *scheduler.ProjectEpochOffsets) (*Dispatcher, error) {
 
 	projectDispatchers := &sync.Map{}
@@ -176,22 +176,21 @@ func NewLocal(persistence Persistence, newDatasource NewDatasource,
 	return d, nil
 }
 
-func (d *Dispatcher) setProjectDispatcher(p *contract.Project) {
-	ep, ok := d.projectDispatchers.Load(p.ID)
-	if ok {
-		if p.Paused != nil {
-			ep.(*projectDispatcher).paused.Store(*p.Paused)
-		}
-		return
-	}
-	if p.Uri == "" {
-		return
-	}
-	cp := d.contract.LatestProject(p.ID)
+func (d *Dispatcher) setProjectDispatcher(pid uint64) {
+	cp := d.contract.LatestProject(pid)
 	if cp == nil {
-		slog.Error("the contract project not exist", "project_id", p.ID)
+		slog.Error("the contract project not exist", "project_id", pid)
 		return
 	}
+	ep, ok := d.projectDispatchers.Load(pid)
+	if ok {
+		ep.(*projectDispatcher).paused.Store(cp.Paused)
+		return
+	}
+	if cp.Uri == "" {
+		return
+	}
+
 	pf, err := d.projectManager.Project(cp.ID)
 	if err != nil {
 		slog.Error("failed to get project", "project_id", cp.ID, "error", err)
@@ -220,13 +219,13 @@ func (d *Dispatcher) Run() {
 	}
 	projects := d.contract.LatestProjects()
 	for _, p := range projects {
-		d.setProjectDispatcher(p)
+		d.setProjectDispatcher(p.ID)
 	}
 
 	go func() {
-		for p := range d.projectNotification {
-			slog.Info("get new project contract event", "project_id", p.ID, "block_number", p.BlockNumber)
-			d.setProjectDispatcher(p)
+		for pid := range d.projectNotification {
+			slog.Info("get new project contract event", "project_id", pid)
+			d.setProjectDispatcher(pid)
 		}
 	}()
 	go func() {

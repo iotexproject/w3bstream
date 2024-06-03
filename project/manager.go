@@ -110,13 +110,13 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 	return nil
 }
 
-func (m *Manager) watchProject(projectNotification <-chan *contract.Project) {
-	for p := range projectNotification {
-		m.projects.Delete(p.ID)
+func (m *Manager) watchProject(projectNotification <-chan uint64) {
+	for pid := range projectNotification {
+		m.projects.Delete(pid)
 	}
 }
 
-func NewManager(projectCacheDir, ipfsEndpoint string, contractProject ContractProject, projectNotification <-chan *contract.Project) (*Manager, error) {
+func NewManager(projectCacheDir, ipfsEndpoint string, contractProject ContractProject, projectNotification <-chan uint64) (*Manager, error) {
 	var (
 		c   *cache
 		err error

@@ -39,21 +39,21 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new postgres persistence"))
 	}
 
-	projectManagerNotification := make(chan *contract.Project, 10)
-	schedulerNotification := make(chan *contract.Project, 10)
-	dispatcherNotification := make(chan *contract.Project, 10)
+	projectManagerNotification := make(chan uint64, 10)
+	schedulerNotification := make(chan uint64, 10)
+	dispatcherNotification := make(chan uint64, 10)
 	chainHeadNotification := make(chan uint64, 10)
 
-	projectNotifications := []chan<- *contract.Project{projectManagerNotification, dispatcherNotification, schedulerNotification}
+	projectNotifications := []chan<- uint64{projectManagerNotification, dispatcherNotification, schedulerNotification}
 	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
 
 	local := conf.ProjectFileDirectory != ""
 
 	var contractPersistence *contract.Contract
 	if !local {
-		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddress),
-			common.HexToAddress(conf.ProjectContractAddress), common.HexToAddress(conf.BlockNumberContractAddress),
-			common.HexToAddress(conf.MultiCallContractAddress), chainHeadNotifications, projectNotifications)
+		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.BeginningBlockNumber, conf.ContractDataDirectory,
+			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddress),
+			common.HexToAddress(conf.ProjectContractAddress), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}

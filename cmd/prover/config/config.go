@@ -22,9 +22,11 @@ type Config struct {
 	ProverOperatorPrivateKey   string `env:"PROVER_OPERATOR_PRIVATE_KEY,optional"`
 	IoTeXChainID               int    `env:"IOTEX_CHAINID"`
 	SchedulerEpoch             uint64 `env:"SCHEDULER_EPOCH,optional"`
+	BeginningBlockNumber       uint64 `env:"BEGINNING_BLOCK_NUMBER,optional"`
 	IPFSEndpoint               string `env:"IPFS_ENDPOINT"`
 	ProjectFileDirectory       string `env:"PROJECT_FILE_DIRECTORY,optional"`
 	ProjectCacheDirectory      string `env:"PROJECT_CACHE_DIRECTORY,optional"`
+	ContractDataDirectory      string `env:"CONTRACT_DATA_DIRECTORY"`
 	LogLevel                   int    `env:"LOG_LEVEL,optional"`
 	SequencerPubKey            string `env:"SEQUENCER_PUBKEY,optional"`
 	env                        string `env:"-"`
@@ -46,6 +48,8 @@ var (
 		ProverOperatorPrivateKey:   "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
 		IoTeXChainID:               2,
 		SchedulerEpoch:             720,
+		BeginningBlockNumber:       20000000,
+		ContractDataDirectory:      "./contract_data",
 		IPFSEndpoint:               "ipfs.mainnet.iotex.io",
 		LogLevel:                   int(slog.LevelDebug),
 		SequencerPubKey:            "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",

@@ -218,12 +218,17 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 	cp := &contract.Project{
 		ID:     1,
 		Uri:    "http://test.com",
-		Paused: &paused,
+		Paused: paused,
 	}
 	pc := &contract.Contract{}
 	mp := &mockProjectManager{}
 	ps := &p2p.PubSubs{}
 	t.Run("ProjectExist", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyMethodReturn(pc, "LatestProject", cp)
+
 		d := &Dispatcher{
 			projectDispatchers: &sync.Map{},
 		}
@@ -231,9 +236,12 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 			paused: &atomic.Bool{},
 		}
 		d.projectDispatchers.Store(uint64(1), projectDispatcher)
-		d.setProjectDispatcher(cp)
+		d.setProjectDispatcher(1)
 	})
 	t.Run("ProjectURIIsEmpty", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
 		d := &Dispatcher{
 			projectManager:     mp,
 			projectDispatchers: &sync.Map{},
@@ -241,7 +249,9 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		ncp := *cp
 		ncp.Uri = ""
 
-		d.setProjectDispatcher(&ncp)
+		p.ApplyMethodReturn(pc, "LatestProject", &ncp)
+
+		d.setProjectDispatcher(1)
 	})
 	t.Run("FailedToGetContractProject", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -254,7 +264,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		}
 		p.ApplyMethodReturn(pc, "LatestProject", nil)
 
-		d.setProjectDispatcher(cp)
+		d.setProjectDispatcher(1)
 	})
 	t.Run("FailedToGetProject", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -268,7 +278,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(pc, "LatestProject", &contract.Project{})
 		p.ApplyMethodReturn(mp, "Project", nil, errors.New(t.Name()))
 
-		d.setProjectDispatcher(cp)
+		d.setProjectDispatcher(1)
 	})
 	t.Run("FailedToAddPubSubs", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -284,7 +294,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(mp, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 
-		d.setProjectDispatcher(cp)
+		d.setProjectDispatcher(1)
 	})
 	t.Run("FailedToNewProjectDispatcher", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -301,7 +311,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
 
-		d.setProjectDispatcher(cp)
+		d.setProjectDispatcher(1)
 	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -318,7 +328,7 @@ func TestDispatcher_setProjectDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, nil)
 
-		d.setProjectDispatcher(cp)
+		d.setProjectDispatcher(1)
 	})
 }
 
@@ -331,8 +341,8 @@ func TestDispatcher_Run(t *testing.T) {
 	}
 	d.Run()
 
-	projectNotification := make(chan *contract.Project, 10)
-	projectNotification <- &contract.Project{}
+	projectNotification := make(chan uint64, 10)
+	projectNotification <- 1
 	chainHeadNotification := make(chan uint64, 10)
 	chainHeadNotification <- 1
 	d = &Dispatcher{
