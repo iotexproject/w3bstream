@@ -51,12 +51,13 @@ func main() {
 
 	var contractPersistence *contract.Contract
 	if !local {
-		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.BeginningBlockNumber, conf.ContractDataDirectory,
+		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.BeginningBlockNumber, conf.LocalDBDirectory,
 			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddress),
 			common.HexToAddress(conf.ProjectContractAddress), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}
+		defer contractPersistence.Release()
 	}
 
 	var projectManager *project.Manager

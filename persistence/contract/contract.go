@@ -446,8 +446,8 @@ func (c *Contract) Release() {
 	}
 }
 
-func New(size, beginningBlockNumber uint64, contractDataDir, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
-	db, err := pebble.Open(contractDataDir, &pebble.Options{})
+func New(size, beginningBlockNumber uint64, localDBDir, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
+	db, err := pebble.Open(localDBDir, &pebble.Options{})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open pebble db")
 	}

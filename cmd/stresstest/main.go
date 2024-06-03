@@ -34,8 +34,8 @@ import (
 var (
 	projectMinterPrivateKey string
 
-	projectCacheDirectory  = "./project_cache"
-	contractDataDirectory  = "./contract_data"
+	projectCacheDir        = "./project_cache"
+	localDBDir             = "./local_db"
 	beginningBlockNumber   = uint64(20000000)
 	chainEndpoint          = "https://babel-api.testnet.iotex.io"
 	projectContractAddress = common.HexToAddress("0xCBb7a80983Fd3405972F700101A82DB6304C6547")
@@ -232,11 +232,12 @@ func main() {
 
 	projectNotifications := []chan<- uint64{projectManagerNotification}
 
-	contractPersistence, err := contract.New(schedulerEpoch, beginningBlockNumber, contractDataDirectory, chainEndpoint, proverContractAddress,
+	contractPersistence, err := contract.New(schedulerEpoch, beginningBlockNumber, localDBDir, chainEndpoint, proverContractAddress,
 		projectContractAddress, nil, projectNotifications)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 	}
+	defer contractPersistence.Release()
 
 	updateProjectRequiredProverTicker := time.NewTicker(1 * time.Hour)
 	go func() {
@@ -245,7 +246,7 @@ func main() {
 		}
 	}()
 
-	projectManager, err := project.NewManager(projectCacheDirectory, ipfsEndpoint, contractPersistence.LatestProject, projectManagerNotification)
+	projectManager, err := project.NewManager(projectCacheDir, ipfsEndpoint, contractPersistence.LatestProject, projectManagerNotification)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}

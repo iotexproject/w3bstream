@@ -22,7 +22,7 @@ type Config struct {
 	OperatorPrivateKeyED25519 string `env:"OPERATOR_PRIVATE_KEY_ED25519,optional"`
 	ProjectFileDirectory      string `env:"PROJECT_FILE_DIRECTORY,optional"`
 	ProjectCacheDirectory     string `env:"PROJECT_CACHE_DIRECTORY,optional"`
-	ContractDataDirectory     string `env:"CONTRACT_DATA_DIRECTORY"`
+	LocalDBDirectory          string `env:"LOCAL_DB_DIRECTORY,optional"`
 	SchedulerEpoch            uint64 `env:"SCHEDULER_EPOCH,optional"`
 	BeginningBlockNumber      uint64 `env:"BEGINNING_BLOCK_NUMBER,optional"`
 	LogLevel                  int    `env:"LOG_LEVEL,optional"`
@@ -45,7 +45,7 @@ var (
 		DIDAuthServerEndpoint:  "didkit:9999",
 		SequencerPubKey:        "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
 		LogLevel:               int(slog.LevelDebug),
-		ContractDataDirectory:  "./contract_data",
+		LocalDBDirectory:       "./local_db",
 		SchedulerEpoch:         720,
 		BeginningBlockNumber:   20000000,
 	}
