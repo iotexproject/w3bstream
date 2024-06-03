@@ -43,7 +43,7 @@ var (
 
 type Contract struct {
 	db                     *pebble.DB
-	epoch                  uint64
+	size                   uint64
 	beginningBlockNumber   uint64
 	proverContractAddr     common.Address
 	projectContractAddr    common.Address
@@ -318,8 +318,8 @@ func (c *Contract) updateDB(blockNumber uint64, projectDiff *blockProjectDiff, p
 	if err := batch.Set(c.dbKey(blockNumber), currBlockBytes, nil); err != nil {
 		return errors.Wrap(err, "failed to set current block")
 	}
-	if blockNumber-c.beginningBlockNumber+1 > c.epoch {
-		if err := batch.Delete(c.dbKey(blockNumber-c.epoch), nil); err != nil {
+	if blockNumber-c.beginningBlockNumber+1 > c.size {
+		if err := batch.Delete(c.dbKey(blockNumber-c.size), nil); err != nil {
 			return errors.Wrap(err, "failed to delete expired block")
 		}
 	}
@@ -446,7 +446,7 @@ func (c *Contract) Release() {
 	}
 }
 
-func New(epoch, beginningBlockNumber uint64, contractDataDir, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
+func New(size, beginningBlockNumber uint64, contractDataDir, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
 	db, err := pebble.Open(contractDataDir, &pebble.Options{})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open pebble db")
@@ -467,7 +467,7 @@ func New(epoch, beginningBlockNumber uint64, contractDataDir, chainEndpoint stri
 
 	c := &Contract{
 		db:                     db,
-		epoch:                  epoch,
+		size:                   size,
 		beginningBlockNumber:   beginningBlockNumber,
 		proverContractAddr:     proverContractAddr,
 		projectContractAddr:    projectContractAddr,
