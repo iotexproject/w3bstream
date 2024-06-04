@@ -28,8 +28,8 @@ func TestNewHttpServer(t *testing.T) {
 	r := require.New(t)
 
 	conf := &config.Config{
-		OperatorPrivateKey:        "privateKey",
-		OperatorPrivateKeyED25519: "PrivateKeyED25519",
+		OperatorPriKey:        "privateKey",
+		OperatorPriKeyED25519: "PrivateKeyED25519",
 	}
 	t.Run("InvalidSolanaAddress", func(t *testing.T) {
 		p := NewPatches()

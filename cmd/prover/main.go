@@ -33,7 +33,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to migrate database"))
 	}
 
-	sk, err := crypto.HexToECDSA(conf.ProverOperatorPrivateKey)
+	sk, err := crypto.HexToECDSA(conf.ProverOperatorPriKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}
@@ -60,13 +60,13 @@ func main() {
 	projectNotifications := []chan<- uint64{projectManagerNotification, schedulerNotification}
 	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
 
-	local := conf.ProjectFileDirectory != ""
+	local := conf.ProjectFileDir != ""
 
 	var contractPersistence *contract.Contract
 	if !local {
-		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.BeginningBlockNumber, conf.LocalDBDirectory,
-			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddress),
-			common.HexToAddress(conf.ProjectContractAddress), chainHeadNotifications, projectNotifications)
+		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.BeginningBlockNumber, conf.LocalDBDir,
+			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddr),
+			common.HexToAddress(conf.ProjectContractAddr), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}
@@ -85,9 +85,9 @@ func main() {
 
 	var projectManager *project.Manager
 	if local {
-		projectManager, err = project.NewLocalManager(conf.ProjectFileDirectory)
+		projectManager, err = project.NewLocalManager(conf.ProjectFileDir)
 	} else {
-		projectManager, err = project.NewManager(conf.ProjectCacheDirectory, conf.IPFSEndpoint, contractPersistence.LatestProject, projectManagerNotification)
+		projectManager, err = project.NewManager(conf.ProjectCacheDir, conf.IPFSEndpoint, contractPersistence.LatestProject, projectManagerNotification)
 	}
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))

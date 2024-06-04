@@ -31,17 +31,17 @@ func NewHttpServer(persistence *postgres.Postgres, conf *config.Config) *HttpSer
 	}
 
 	s.coordinatorConf = &apitypes.CoordinatorConfigRsp{
-		ProjectContractAddress: s.conf.ProjectContractAddress,
+		ProjectContractAddress: s.conf.ProjectContractAddr,
 	}
 
-	if len(s.conf.OperatorPrivateKey) > 0 {
-		pk := crypto.ToECDSAUnsafe(common.FromHex(s.conf.OperatorPrivateKey))
+	if len(s.conf.OperatorPriKey) > 0 {
+		pk := crypto.ToECDSAUnsafe(common.FromHex(s.conf.OperatorPriKey))
 		sender := crypto.PubkeyToAddress(pk.PublicKey)
 		s.coordinatorConf.OperatorETHAddress = sender.String()
 	}
 
-	if len(s.conf.OperatorPrivateKeyED25519) > 0 {
-		wallet, err := solanatypes.AccountFromHex(s.conf.OperatorPrivateKeyED25519)
+	if len(s.conf.OperatorPriKeyED25519) > 0 {
+		wallet, err := solanatypes.AccountFromHex(s.conf.OperatorPriKeyED25519)
 		if err != nil {
 			panic(errors.Wrapf(err, "invalid solana wallet address"))
 		}

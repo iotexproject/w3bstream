@@ -22,26 +22,24 @@ import (
 )
 
 type httpServer struct {
-	engine                *gin.Engine
-	p                     *persistence.Persistence
-	coordinatorAddress    string
-	aggregationAmount     uint
-	didAuthServerEndpoint string
-	privateKey            *ecdsa.PrivateKey
-	jwk                   *ioconnect.JWK
-	clients               *clients.Manager
+	engine             *gin.Engine
+	p                  *persistence.Persistence
+	coordinatorAddress string
+	aggregationAmount  uint
+	privateKey         *ecdsa.PrivateKey
+	jwk                *ioconnect.JWK
+	clients            *clients.Manager
 }
 
-func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinatorAddress, didAuthServerEndpoint string, sk *ecdsa.PrivateKey, jwk *ioconnect.JWK, clientMgr *clients.Manager) *httpServer {
+func NewHttpServer(p *persistence.Persistence, aggregationAmount uint, coordinatorAddress string, sk *ecdsa.PrivateKey, jwk *ioconnect.JWK, clientMgr *clients.Manager) *httpServer {
 	s := &httpServer{
-		engine:                gin.Default(),
-		p:                     p,
-		coordinatorAddress:    coordinatorAddress,
-		aggregationAmount:     aggregationAmount,
-		didAuthServerEndpoint: didAuthServerEndpoint,
-		privateKey:            sk,
-		jwk:                   jwk,
-		clients:               clientMgr,
+		engine:             gin.Default(),
+		p:                  p,
+		coordinatorAddress: coordinatorAddress,
+		aggregationAmount:  aggregationAmount,
+		privateKey:         sk,
+		jwk:                jwk,
+		clients:            clientMgr,
 	}
 
 	slog.Debug("jwk information",
