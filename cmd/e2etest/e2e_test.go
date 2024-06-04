@@ -22,7 +22,7 @@ func TestHttpApi(t *testing.T) {
 
 	coordinatorConf, err := coordinatorconfig.Get()
 	r.NoError(err)
-	conf := seqConf(coordinatorConf.ServiceEndpoint, coordinatorConf.DIDAuthServerEndpoint)
+	conf := seqConf(coordinatorConf.ServiceEndpoint)
 
 	t.Run("BadRequest", func(t *testing.T) {
 		reqbody, err := json.Marshal(map[string]interface{}{

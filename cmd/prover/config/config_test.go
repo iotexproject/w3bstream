@@ -19,21 +19,21 @@ func TestConfig_Init(t *testing.T) {
 	t.Run("UseEnvConfig", func(t *testing.T) {
 		os.Clearenv()
 		expected := config.Config{
-			Risc0ServerEndpoint:      "risc0:1111",
-			Halo2ServerEndpoint:      "halo2:2222",
-			ZKWasmServerEndpoint:     "zkwasm:3333",
-			WasmServerEndpoint:       "wasm:4444",
-			ChainEndpoint:            "http://abc.def.com",
-			ProjectContractAddress:   "0x123",
-			DatabaseDSN:              "postgres://root@localhost/abc?ext=666",
-			BootNodeMultiAddr:        "/dsn4/abc/123",
-			ProverContractAddress:    "0x456",
-			IoTeXChainID:             5,
-			SchedulerEpoch:           720,
-			IPFSEndpoint:             "abc.ipfs.net",
-			ProverOperatorPrivateKey: "private key",
-			ProjectFileDirectory:     "/path/to/project/configs",
-			LocalDBDirectory:         "./test",
+			Risc0ServerEndpoint:  "risc0:1111",
+			Halo2ServerEndpoint:  "halo2:2222",
+			ZKWasmServerEndpoint: "zkwasm:3333",
+			WasmServerEndpoint:   "wasm:4444",
+			ChainEndpoint:        "http://abc.def.com",
+			ProjectContractAddr:  "0x123",
+			DatabaseDSN:          "postgres://root@localhost/abc?ext=666",
+			BootNodeMultiAddr:    "/dsn4/abc/123",
+			ProverContractAddr:   "0x456",
+			IoTeXChainID:         5,
+			SchedulerEpoch:       720,
+			IPFSEndpoint:         "abc.ipfs.net",
+			ProverOperatorPriKey: "private key",
+			ProjectFileDir:       "/path/to/project/configs",
+			LocalDBDir:           "./test",
 		}
 
 		_ = os.Setenv("RISC0_SERVER_ENDPOINT", expected.Risc0ServerEndpoint)
@@ -43,14 +43,14 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATABASE_DSN", expected.DatabaseDSN)
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
-		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddress)
+		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddr)
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
 		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
-		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddress)
+		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
 		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
-		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPrivateKey)
-		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDirectory)
-		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDirectory)
+		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPriKey)
+		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDir)
+		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
 
 		c := &config.Config{}
 		r.Nil(c.Init())

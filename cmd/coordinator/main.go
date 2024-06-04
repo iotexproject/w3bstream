@@ -47,13 +47,13 @@ func main() {
 	projectNotifications := []chan<- uint64{projectManagerNotification, dispatcherNotification, schedulerNotification}
 	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
 
-	local := conf.ProjectFileDirectory != ""
+	local := conf.ProjectFileDir != ""
 
 	var contractPersistence *contract.Contract
 	if !local {
-		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.BeginningBlockNumber, conf.LocalDBDirectory,
-			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddress),
-			common.HexToAddress(conf.ProjectContractAddress), chainHeadNotifications, projectNotifications)
+		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.BeginningBlockNumber, conf.LocalDBDir,
+			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddr),
+			common.HexToAddress(conf.ProjectContractAddr), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}
@@ -62,9 +62,9 @@ func main() {
 
 	var projectManager *project.Manager
 	if local {
-		projectManager, err = project.NewLocalManager(conf.ProjectFileDirectory)
+		projectManager, err = project.NewLocalManager(conf.ProjectFileDir)
 	} else {
-		projectManager, err = project.NewManager(conf.ProjectCacheDirectory, conf.IPFSEndpoint, contractPersistence.LatestProject, projectManagerNotification)
+		projectManager, err = project.NewManager(conf.ProjectCacheDir, conf.IPFSEndpoint, contractPersistence.LatestProject, projectManagerNotification)
 	}
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
@@ -74,12 +74,12 @@ func main() {
 	var taskDispatcher *dispatcher.Dispatcher
 	if local {
 		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI,
-			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
+			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
 	} else {
 		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
 
 		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI, conf.BootNodeMultiAddr,
-			conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, sequencerPubKey, conf.IoTeXChainID,
+			conf.OperatorPriKey, conf.OperatorPriKeyED25519, sequencerPubKey, conf.IoTeXChainID,
 			dispatcherNotification, chainHeadNotification, contractPersistence, projectOffsets)
 	}
 	if err != nil {

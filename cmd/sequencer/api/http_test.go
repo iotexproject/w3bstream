@@ -32,7 +32,7 @@ func TestNewHttpServer(t *testing.T) {
 	p.ApplyMethodReturn(&ioconnect.JWK{}, "KeyAgreementKID", "KeyAgreementKID")
 	p.ApplyMethodReturn(&ioconnect.JWK{}, "Doc", nil)
 
-	s := NewHttpServer(nil, uint(1), "", "", nil, nil, nil)
+	s := NewHttpServer(nil, uint(1), "", nil, nil, nil)
 	r.Equal(uint(1), s.aggregationAmount)
 }
 

@@ -40,7 +40,6 @@ type sequencerConf struct {
 	address                         string
 	coordinatorAddress              string
 	databaseDSN                     string
-	didAuthServer                   string
 	privateKey                      string
 	jwkSecret                       string
 	jwk                             *ioconnect.JWK
@@ -51,13 +50,12 @@ type sequencerConf struct {
 	chainEndpoint                   string
 }
 
-func seqConf(coordinatorEndpoint, didAuthServerAddr string) *sequencerConf {
+func seqConf(coordinatorEndpoint string) *sequencerConf {
 	ret := &sequencerConf{
 		aggregationAmount:               uint(1),
 		address:                         ":19000",
 		coordinatorAddress:              coordinatorEndpoint,
 		databaseDSN:                     "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
-		didAuthServer:                   didAuthServerAddr,
 		privateKey:                      "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
 		jwkSecret:                       "R3QNJihYLjtcaxALSTsKe1cYSX0pS28wZitFVXE4Y2klf2hxVCczYHw2dVg4fXJdSgdCcnM4PgV1aTo9DwYqEw==",
 		ioIDRegistryContractAddress:     "0x06b3Fcda51e01EE96e8E8873F0302381c955Fddd",
@@ -98,8 +96,8 @@ func init() {
 		os.Exit(-1)
 	}
 
-	conf := seqConf(coordinatorConf.ServiceEndpoint, coordinatorConf.DIDAuthServerEndpoint)
-	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddress, conf.didAuthServer, conf.address,
+	conf := seqConf(coordinatorConf.ServiceEndpoint)
+	go runSequencer(conf.privateKey, conf.databaseDSN, conf.coordinatorAddress, conf.address,
 		conf.projectClientContractAddress, conf.ioIDRegistryContractAddress, conf.w3bstreamProjectContractAddress,
 		conf.ioIDRegistryEndpoint, conf.chainEndpoint, conf.jwk)
 	go runProver(proverConf)
@@ -176,12 +174,12 @@ func runProver(conf *proverconfig.Config) {
 		},
 	)
 
-	projectManager, err := project.NewLocalManager(conf.ProjectFileDirectory)
+	projectManager, err := project.NewLocalManager(conf.ProjectFileDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	sk, err := crypto.HexToECDSA(conf.ProverOperatorPrivateKey)
+	sk, err := crypto.HexToECDSA(conf.ProverOperatorPriKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed parse prover private key"))
 	}
@@ -214,14 +212,14 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	projectManager, err := project.NewLocalManager(conf.ProjectFileDirectory)
+	projectManager, err := project.NewLocalManager(conf.ProjectFileDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	datasourcePG := datasource.NewPostgres()
 
-	taskDispatcher, err := dispatcher.NewLocal(pg, datasourcePG.New, projectManager, conf.DefaultDatasourceURI, conf.OperatorPrivateKey, conf.OperatorPrivateKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
+	taskDispatcher, err := dispatcher.NewLocal(pg, datasourcePG.New, projectManager, conf.DefaultDatasourceURI, conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new local dispatcher"))
 	}
@@ -236,7 +234,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 	slog.Info("coordinator started")
 }
 
-func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, address, projectClientContractAddress,
+func runSequencer(privateKey, databaseDSN, coordinatorAddress, address, projectClientContractAddress,
 	ioIDRegistryContractAddress, w3bstreamProjectContractAddress, ioIDRegistryEndpoint, chainEndpoint string, key *ioconnect.JWK) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(int(slog.LevelDebug))})))
 
@@ -259,7 +257,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, didAuthServer, ad
 	}
 
 	go func() {
-		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, didAuthServer, sk, key, manager).Run(address); err != nil {
+		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, sk, key, manager).Run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()
