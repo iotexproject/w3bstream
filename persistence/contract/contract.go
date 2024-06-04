@@ -440,18 +440,7 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 	}()
 }
 
-func (c *Contract) Release() {
-	if err := c.db.Close(); err != nil {
-		slog.Error("failed to close pebble db", "error", err)
-	}
-}
-
-func New(size, beginningBlockNumber uint64, localDBDir, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
-	db, err := pebble.Open(localDBDir, &pebble.Options{})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to open pebble db")
-	}
-
+func New(db *pebble.DB, size, beginningBlockNumber uint64, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial chain endpoint")
