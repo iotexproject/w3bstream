@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cockroachdb/pebble"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -232,12 +233,17 @@ func main() {
 
 	projectNotifications := []chan<- uint64{projectManagerNotification}
 
-	contractPersistence, err := contract.New(schedulerEpoch, beginningBlockNumber, localDBDir, chainEndpoint, proverContractAddress,
+	db, err := pebble.Open(localDBDir, &pebble.Options{})
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to open pebble db"))
+	}
+	defer db.Close()
+
+	contractPersistence, err := contract.New(db, schedulerEpoch, beginningBlockNumber, chainEndpoint, proverContractAddress,
 		projectContractAddress, nil, projectNotifications)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 	}
-	defer contractPersistence.Release()
 
 	updateProjectRequiredProverTicker := time.NewTicker(1 * time.Hour)
 	go func() {

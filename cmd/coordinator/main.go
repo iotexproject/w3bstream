@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/cockroachdb/pebble"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
@@ -51,13 +52,18 @@ func main() {
 
 	var contractPersistence *contract.Contract
 	if !local {
-		contractPersistence, err = contract.New(conf.SchedulerEpoch, conf.BeginningBlockNumber, conf.LocalDBDir,
+		db, err := pebble.Open(conf.LocalDBDir, &pebble.Options{})
+		if err != nil {
+			log.Fatal(errors.Wrap(err, "failed to open pebble db"))
+		}
+		defer db.Close()
+
+		contractPersistence, err = contract.New(db, conf.SchedulerEpoch, conf.BeginningBlockNumber,
 			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddr),
 			common.HexToAddress(conf.ProjectContractAddr), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}
-		defer contractPersistence.Release()
 	}
 
 	var projectManager *project.Manager
