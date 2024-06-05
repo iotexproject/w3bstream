@@ -120,7 +120,7 @@ func TestDispatcher_setRequiredProverAmount(t *testing.T) {
 		})
 		size := atomic.Uint64{}
 		d.projectDispatchers.Store(uint64(1), &projectDispatcher{
-			window: &window{size: &size},
+			requiredProverAmount: &size,
 		})
 		d.setRequiredProverAmount(1)
 		r.Equal(size.Load(), uint64(2))
