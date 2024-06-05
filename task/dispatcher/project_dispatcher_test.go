@@ -55,7 +55,8 @@ func TestProjectDispatcher_dispatch(t *testing.T) {
 		defer p.Reset()
 
 		ds := &mockDatasource{}
-		d := &projectDispatcher{datasource: ds}
+		i := atomic.Bool{}
+		d := &projectDispatcher{datasource: ds, idle: &i}
 		p.ApplyMethodReturn(ds, "Retrieve", nil, errors.New(t.Name()))
 
 		_, err := d.dispatch(0)
@@ -66,7 +67,8 @@ func TestProjectDispatcher_dispatch(t *testing.T) {
 		defer p.Reset()
 
 		ds := &mockDatasource{}
-		d := &projectDispatcher{datasource: ds}
+		i := atomic.Bool{}
+		d := &projectDispatcher{datasource: ds, idle: &i}
 		p.ApplyMethodReturn(ds, "Retrieve", nil, nil)
 
 		id, err := d.dispatch(0)
@@ -78,7 +80,8 @@ func TestProjectDispatcher_dispatch(t *testing.T) {
 		defer p.Reset()
 
 		ds := &mockDatasource{}
-		d := &projectDispatcher{datasource: ds}
+		i := atomic.Bool{}
+		d := &projectDispatcher{datasource: ds, idle: &i}
 		tk := &task.Task{}
 		p.ApplyMethodReturn(ds, "Retrieve", tk, nil)
 		p.ApplyMethodReturn(tk, "VerifySignature", errors.New(t.Name()))
@@ -92,9 +95,11 @@ func TestProjectDispatcher_dispatch(t *testing.T) {
 
 		ds := &mockDatasource{}
 		pubSubs := &p2p.PubSubs{}
+		i := atomic.Bool{}
 		d := &projectDispatcher{
 			datasource: ds,
 			pubSubs:    pubSubs,
+			idle:       &i,
 		}
 		tk := &task.Task{}
 		p.ApplyMethodReturn(ds, "Retrieve", tk, nil)
@@ -111,9 +116,11 @@ func TestProjectDispatcher_dispatch(t *testing.T) {
 
 		ds := &mockDatasource{}
 		pubSubs := &p2p.PubSubs{}
+		i := atomic.Bool{}
 		d := &projectDispatcher{
 			datasource: ds,
 			pubSubs:    pubSubs,
+			idle:       &i,
 		}
 		tk := &task.Task{}
 		p.ApplyMethodReturn(ds, "Retrieve", tk, nil)
