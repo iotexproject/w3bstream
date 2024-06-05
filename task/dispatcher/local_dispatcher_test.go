@@ -1,6 +1,7 @@
 package dispatcher
 
 import (
+	"sync/atomic"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -63,11 +64,14 @@ func TestNewLocal(t *testing.T) {
 		defer p.Reset()
 
 		pm := &mockProjectManager{}
+		w := &window{}
+		a := atomic.Uint64{}
 		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
-		p.ApplyFuncReturn(newProjectDispatcher, &projectDispatcher{}, nil)
+		p.ApplyFuncReturn(newProjectDispatcher, &projectDispatcher{window: w, requiredProverAmount: &a}, nil)
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{0, 0})
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
+		p.ApplyPrivateMethod(w, "setSize", func(uint64) {})
 
 		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", []byte(""), 0)
 		r.NoError(err)
