@@ -1,6 +1,13 @@
 # Changelog
 
 ---
+## [0.12.0] - 2024-06-06
+
+### Changed
+- Now dispatch window will perceive prover amount
+- The project & prover contract history data will store in local db
+
+---
 ## [0.10.1] - 2024-04-26
 
 ### Changed
