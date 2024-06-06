@@ -8,16 +8,14 @@ import (
 )
 
 var (
-	RequiredProverAmountHash            = crypto.Keccak256Hash([]byte("RequiredProverAmount"))
-	VmTypeHash                          = crypto.Keccak256Hash([]byte("VmType"))
-	ClientManagementContractAddressHash = crypto.Keccak256Hash([]byte("ClientManagementContractAddress"))
+	RequiredProverAmount         = crypto.Keccak256Hash([]byte("RequiredProverAmount"))
+	VmType                       = crypto.Keccak256Hash([]byte("VmType"))
+	ClientManagementContractAddr = crypto.Keccak256Hash([]byte("ClientManagementContractAddress"))
 
-	attributeSetTopicHash         = crypto.Keccak256Hash([]byte("AttributeSet(uint256,bytes32,bytes)"))
-	projectPausedTopicHash        = crypto.Keccak256Hash([]byte("ProjectPaused(uint256)"))
-	projectResumedTopicHash       = crypto.Keccak256Hash([]byte("ProjectResumed(uint256)"))
-	projectConfigUpdatedTopicHash = crypto.Keccak256Hash([]byte("ProjectConfigUpdated(uint256,string,bytes32)"))
-
-	emptyHash = common.Hash{}
+	attributeSetTopic         = crypto.Keccak256Hash([]byte("AttributeSet(uint256,bytes32,bytes)"))
+	projectPausedTopic        = crypto.Keccak256Hash([]byte("ProjectPaused(uint256)"))
+	projectResumedTopic       = crypto.Keccak256Hash([]byte("ProjectResumed(uint256)"))
+	projectConfigUpdatedTopic = crypto.Keccak256Hash([]byte("ProjectConfigUpdated(uint256,string,bytes32)"))
 )
 
 type Project struct {
@@ -97,7 +95,7 @@ func (c *Contract) processProjectLogs(logs []types.Log) (map[uint64]*blockProjec
 			}
 		}
 		switch l.Topics[0] {
-		case attributeSetTopicHash:
+		case attributeSetTopic:
 			e, err := c.projectInstance.ParseAttributeSet(l)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse project attribute set event")
@@ -113,7 +111,7 @@ func (c *Contract) processProjectLogs(logs []types.Log) (map[uint64]*blockProjec
 			p.attributes[e.Key] = e.Value
 			ps.diffs[e.ProjectId.Uint64()] = p
 
-		case projectPausedTopicHash:
+		case projectPausedTopic:
 			e, err := c.projectInstance.ParseProjectPaused(l)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse project paused event")
@@ -130,7 +128,7 @@ func (c *Contract) processProjectLogs(logs []types.Log) (map[uint64]*blockProjec
 			p.paused = &paused
 			ps.diffs[e.ProjectId.Uint64()] = p
 
-		case projectResumedTopicHash:
+		case projectResumedTopic:
 			e, err := c.projectInstance.ParseProjectResumed(l)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse project resumed event")
@@ -147,7 +145,7 @@ func (c *Contract) processProjectLogs(logs []types.Log) (map[uint64]*blockProjec
 			p.paused = &paused
 			ps.diffs[e.ProjectId.Uint64()] = p
 
-		case projectConfigUpdatedTopicHash:
+		case projectConfigUpdatedTopic:
 			e, err := c.projectInstance.ParseProjectConfigUpdated(l)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse project config updated event")

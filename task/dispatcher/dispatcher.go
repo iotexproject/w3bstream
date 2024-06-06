@@ -85,7 +85,7 @@ func (d *Dispatcher) setRequiredProverAmount(head uint64) {
 		}
 
 		proverAmount := uint64(1)
-		if v, ok := cp.Attributes[contract.RequiredProverAmountHash]; ok {
+		if v, ok := cp.Attributes[contract.RequiredProverAmount]; ok {
 			n, err := strconv.ParseUint(string(v), 10, 64)
 			if err != nil {
 				slog.Error("failed to parse project required prover amount when set window size", "project_id", p.ID)

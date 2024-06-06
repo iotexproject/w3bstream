@@ -28,16 +28,16 @@ const (
 )
 
 var (
-	allTopicHash = []common.Hash{
-		attributeSetTopicHash,
-		projectPausedTopicHash,
-		projectResumedTopicHash,
-		projectConfigUpdatedTopicHash,
+	allTopic = []common.Hash{
+		attributeSetTopic,
+		projectPausedTopic,
+		projectResumedTopic,
+		projectConfigUpdatedTopic,
 
-		operatorSetTopicHash,
-		nodeTypeUpdatedTopicHash,
-		proverPausedTopicHash,
-		proverResumedTopicHash,
+		operatorSetTopic,
+		nodeTypeUpdatedTopic,
+		proverPausedTopic,
+		proverResumedTopic,
 	}
 )
 
@@ -375,7 +375,7 @@ func (c *Contract) list() (uint64, error) {
 	}
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{c.proverContractAddr, c.projectContractAddr},
-		Topics:    [][]common.Hash{allTopicHash},
+		Topics:    [][]common.Hash{allTopic},
 	}
 	from := head
 	to := from
@@ -410,7 +410,7 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 	queriedBlockNumber := listedBlockNumber
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{c.proverContractAddr, c.projectContractAddr},
-		Topics:    [][]common.Hash{allTopicHash},
+		Topics:    [][]common.Hash{allTopic},
 	}
 	ticker := time.NewTicker(c.watchInterval)
 

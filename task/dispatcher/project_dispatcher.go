@@ -92,7 +92,7 @@ func newProjectDispatcher(persistence Persistence, datasourceURI string, newData
 
 	proverAmount := &atomic.Uint64{}
 	proverAmount.Store(1)
-	if v, ok := p.Attributes[contract.RequiredProverAmountHash]; ok {
+	if v, ok := p.Attributes[contract.RequiredProverAmount]; ok {
 		n, err := strconv.ParseUint(string(v), 10, 64)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse project required prover amount, project_id %v", p.ID)

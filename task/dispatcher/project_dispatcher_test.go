@@ -165,7 +165,7 @@ func TestNewProjectDispatcher(t *testing.T) {
 		nd := func(string) (datasource.Datasource, error) { return nil, nil }
 
 		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{
-			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("err")},
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("err")},
 		}, nil, nil, nil)
 		r.ErrorContains(err, "failed to parse project required prover amount")
 	})
@@ -181,7 +181,7 @@ func TestNewProjectDispatcher(t *testing.T) {
 
 		paused := true
 		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{
-			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("1")},
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("1")},
 			Paused:     paused,
 		}, nil, nil, nil)
 		time.Sleep(10 * time.Millisecond)

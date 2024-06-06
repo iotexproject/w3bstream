@@ -65,7 +65,7 @@ func (s *scheduler) schedule() {
 				}
 
 				amount := uint64(1)
-				if v, ok := cp.Attributes[contract.RequiredProverAmountHash]; ok {
+				if v, ok := cp.Attributes[contract.RequiredProverAmount]; ok {
 					n, err := strconv.ParseUint(string(v), 10, 64)
 					if err != nil {
 						slog.Error("failed to parse project required prover amount", "project_id", projectID)
