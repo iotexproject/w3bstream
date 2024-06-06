@@ -10,7 +10,7 @@ services:
       - "8000:8000"
 
   sequencer:
-    image: ghcr.io/machinefi/sequencer:v0.11.1
+    image: ghcr.io/machinefi/sequencer:v0.12.0
     depends_on:
       - "postgres"
       - "coordinator"
@@ -22,7 +22,7 @@ services:
     command: [ "-coordinatorAddress", "coordinator:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
 
   coordinator:
-    image: ghcr.io/machinefi/coordinator:v0.11.1
+    image: ghcr.io/machinefi/coordinator:v0.12.0
     depends_on:
       - "postgres"
       - "bootnode"
@@ -41,7 +41,7 @@ services:
       - ./test/project:/data
 
   prover:
-    image: ghcr.io/machinefi/prover:v0.11.1
+    image: ghcr.io/machinefi/prover:v0.12.0
     depends_on:
       - "risc0"
       - "halo2"
