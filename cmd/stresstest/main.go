@@ -128,7 +128,7 @@ func updateProjectRequiredProver(contractPersistence *contract.Contract, project
 	project := projects[index]
 	expectProvers := rand.Intn(len(provers)) + 1
 
-	tx, err := projectInstance.SetAttributes(opts, new(big.Int).SetUint64(project.ID), [][32]byte{contract.RequiredProverAmountHash}, [][]byte{[]byte(strconv.Itoa(expectProvers))})
+	tx, err := projectInstance.SetAttributes(opts, new(big.Int).SetUint64(project.ID), [][32]byte{contract.RequiredProverAmount}, [][]byte{[]byte(strconv.Itoa(expectProvers))})
 	if err != nil {
 		slog.Error("failed to set project attributes", "error", err)
 		return

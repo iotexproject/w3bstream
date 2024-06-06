@@ -100,7 +100,7 @@ func TestScheduler_schedule(t *testing.T) {
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{
-			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("err")},
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("err")},
 		})
 
 		chainHead := make(chan uint64, 10)
@@ -130,7 +130,7 @@ func TestScheduler_schedule(t *testing.T) {
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{
-			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("10")},
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("10")},
 		})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Delete")
 

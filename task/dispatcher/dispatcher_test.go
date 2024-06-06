@@ -104,7 +104,7 @@ func TestDispatcher_setRequiredProverAmount(t *testing.T) {
 		p.ApplyMethodReturn(po, "Projects", []*scheduler.ScheduledProject{{ID: 1, ScheduledBlockNumber: 0}})
 		p.ApplyMethodReturn(c, "Project", &contract.Project{
 			ID:         1,
-			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("err")},
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("err")},
 		})
 		d.projectDispatchers.Store(uint64(1), &projectDispatcher{})
 		d.setRequiredProverAmount(1)
@@ -116,7 +116,7 @@ func TestDispatcher_setRequiredProverAmount(t *testing.T) {
 		p.ApplyMethodReturn(po, "Projects", []*scheduler.ScheduledProject{{ID: 1, ScheduledBlockNumber: 0}})
 		p.ApplyMethodReturn(c, "Project", &contract.Project{
 			ID:         1,
-			Attributes: map[common.Hash][]byte{contract.RequiredProverAmountHash: []byte("2")},
+			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("2")},
 		})
 		size := atomic.Uint64{}
 		d.projectDispatchers.Store(uint64(1), &projectDispatcher{

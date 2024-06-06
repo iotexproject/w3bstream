@@ -8,12 +8,10 @@ import (
 )
 
 var (
-	operatorSetTopicHash     = crypto.Keccak256Hash([]byte("OperatorSet(uint256,address)"))
-	nodeTypeUpdatedTopicHash = crypto.Keccak256Hash([]byte("NodeTypeUpdated(uint256,uint256)"))
-	proverPausedTopicHash    = crypto.Keccak256Hash([]byte("ProverPaused(uint256)"))
-	proverResumedTopicHash   = crypto.Keccak256Hash([]byte("ProverResumed(uint256)"))
-
-	emptyAddress = common.Address{}
+	operatorSetTopic     = crypto.Keccak256Hash([]byte("OperatorSet(uint256,address)"))
+	nodeTypeUpdatedTopic = crypto.Keccak256Hash([]byte("NodeTypeUpdated(uint256,uint256)"))
+	proverPausedTopic    = crypto.Keccak256Hash([]byte("ProverPaused(uint256)"))
+	proverResumedTopic   = crypto.Keccak256Hash([]byte("ProverResumed(uint256)"))
 )
 
 type Prover struct {
@@ -87,7 +85,7 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 			}
 		}
 		switch l.Topics[0] {
-		case operatorSetTopicHash:
+		case operatorSetTopic:
 			e, err := c.proverInstance.ParseOperatorSet(l)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse prover operator set event")
@@ -100,7 +98,7 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 			p.operatorAddress = &e.Operator
 			ps.diffs[e.Id.Uint64()] = p
 
-		case nodeTypeUpdatedTopicHash:
+		case nodeTypeUpdatedTopic:
 			e, err := c.proverInstance.ParseNodeTypeUpdated(l)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse prover node type updated event")
@@ -114,7 +112,7 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 			p.nodeTypes = &nt
 			ps.diffs[e.Id.Uint64()] = p
 
-		case proverPausedTopicHash:
+		case proverPausedTopic:
 			e, err := c.proverInstance.ParseProverPaused(l)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse prover paused event")
@@ -128,7 +126,7 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 			p.paused = &paused
 			ps.diffs[e.Id.Uint64()] = p
 
-		case proverResumedTopicHash:
+		case proverResumedTopic:
 			e, err := c.proverInstance.ParseProverResumed(l)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse prover resumed event")
