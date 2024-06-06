@@ -104,7 +104,7 @@ func (c *Contract) LatestProjects() []*Project {
 }
 
 func (c *Contract) latestProjects() *blockProject {
-	batch := c.db.NewBatch()
+	batch := c.db.NewIndexedBatch()
 	defer batch.Close()
 
 	headBytes, closer, err := batch.Get(c.dbHead())
@@ -200,7 +200,7 @@ func (c *Contract) Prover(operator common.Address) *Prover {
 }
 
 func (c *Contract) latestProvers() *blockProver {
-	batch := c.db.NewBatch()
+	batch := c.db.NewIndexedBatch()
 	defer batch.Close()
 
 	headBytes, closer, err := batch.Get(c.dbHead())
@@ -266,7 +266,7 @@ func (c *Contract) dbHead() []byte {
 }
 
 func (c *Contract) updateDB(blockNumber uint64, projectDiff *blockProjectDiff, proverDiff *blockProverDiff) error {
-	batch := c.db.NewBatch()
+	batch := c.db.NewIndexedBatch()
 	defer batch.Close()
 
 	preBlock := blockNumber - 1
@@ -278,7 +278,7 @@ func (c *Contract) updateDB(blockNumber uint64, projectDiff *blockProjectDiff, p
 	if err != nil && err != pebble.ErrNotFound {
 		return errors.Wrap(err, "failed to get pre block data")
 	}
-	var preBlockData *block
+	preBlockData := &block{}
 	if err == nil {
 		dst := make([]byte, len(preBlockBytes))
 		copy(dst, preBlockBytes)
@@ -348,11 +348,11 @@ func (c *Contract) processLogs(from, to uint64, logs []types.Log, notify bool) e
 	}
 	for blockNumber := from; blockNumber <= to; blockNumber++ {
 		projects, ok := projectMap[blockNumber]
-		if ok && notify {
-			c.notifyProject(projects)
-		}
 		if err := c.updateDB(blockNumber, projects, proverMap[blockNumber]); err != nil {
 			return err
+		}
+		if ok && notify {
+			c.notifyProject(projects)
 		}
 	}
 	return nil
@@ -462,7 +462,7 @@ func New(db *pebble.DB, size, beginningBlockNumber uint64, chainEndpoint string,
 		projectContractAddr:    projectContractAddr,
 		chainHeadNotifications: chainHeadNotifications,
 		projectNotifications:   projectNotifications,
-		listStepSize:           1000,
+		listStepSize:           10000,
 		watchInterval:          1 * time.Second,
 		client:                 client,
 		proverInstance:         proverInstance,
