@@ -4,10 +4,9 @@ import (
 	"log/slog"
 	"strconv"
 	"sync"
+	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/datasource"
 	"github.com/machinefi/sprout/p2p"
@@ -55,6 +54,7 @@ type Dispatcher struct {
 	chainHeadNotification     <-chan uint64
 	contract                  Contract
 	taskStateHandler          *taskStateHandler
+	windowSizeSetInterval     time.Duration
 }
 
 func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
@@ -71,7 +71,7 @@ func (d *Dispatcher) handleP2PData(data *p2p.Data, topic *pubsub.Topic) {
 	pd.(*projectDispatcher).handle(s)
 }
 
-func (d *Dispatcher) setWindowSize(head uint64) {
+func (d *Dispatcher) setRequiredProverAmount(head uint64) {
 	ps := d.projectOffsets.Projects(head)
 	for _, p := range ps {
 		cp := d.contract.Project(p.ID, head)
@@ -81,7 +81,6 @@ func (d *Dispatcher) setWindowSize(head uint64) {
 		}
 		pd, ok := d.projectDispatchers.Load(p.ID)
 		if !ok {
-			slog.Error("the project dispatcher not exist when set window size", "project_id", p.ID)
 			continue
 		}
 
@@ -94,86 +93,8 @@ func (d *Dispatcher) setWindowSize(head uint64) {
 			}
 			proverAmount = n
 		}
-		pd.(*projectDispatcher).window.size.Store(proverAmount)
+		pd.(*projectDispatcher).requiredProverAmount.Store(proverAmount)
 	}
-}
-
-func New(persistence Persistence, newDatasource NewDatasource,
-	projectManager ProjectManager, defaultDatasourceURI, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string,
-	sequencerPubKey []byte, iotexChainID int, projectNotification <-chan uint64, chainHeadNotification <-chan uint64,
-	contract Contract, projectOffsets *scheduler.ProjectEpochOffsets) (*Dispatcher, error) {
-
-	projectDispatchers := &sync.Map{}
-	taskStateHandler := newTaskStateHandler(persistence, contract, projectManager, operatorPrivateKey, operatorPrivateKeyED25519)
-	d := &Dispatcher{
-		local:                     false,
-		persistence:               persistence,
-		newDatasource:             newDatasource,
-		projectManager:            projectManager,
-		defaultDatasourceURI:      defaultDatasourceURI,
-		bootNodeMultiaddr:         bootNodeMultiaddr,
-		operatorPrivateKey:        operatorPrivateKey,
-		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
-		sequencerPubKey:           sequencerPubKey,
-		iotexChainID:              iotexChainID,
-		projectNotification:       projectNotification,
-		chainHeadNotification:     chainHeadNotification,
-		contract:                  contract,
-		projectOffsets:            projectOffsets,
-		projectDispatchers:        projectDispatchers,
-		taskStateHandler:          taskStateHandler,
-	}
-	ps, err := p2p.NewPubSubs(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
-	if err != nil {
-		return nil, err
-	}
-	d.pubSubs = ps
-	return d, nil
-}
-
-func NewLocal(persistence Persistence, newDatasource NewDatasource,
-	projectManager ProjectManager, defaultDatasourceURI, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr string,
-	sequencerPubKey []byte, iotexChainID int) (*Dispatcher, error) {
-
-	projectDispatchers := &sync.Map{}
-	taskStateHandler := newTaskStateHandler(persistence, nil, projectManager, operatorPrivateKey, operatorPrivateKeyED25519)
-	d := &Dispatcher{
-		local:              true,
-		projectDispatchers: projectDispatchers,
-	}
-	ps, err := p2p.NewPubSubs(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
-	if err != nil {
-		return nil, err
-	}
-
-	projectIDs := projectManager.ProjectIDs()
-	for _, id := range projectIDs {
-		_, ok := projectDispatchers.Load(id)
-		if ok {
-			continue
-		}
-		p, err := projectManager.Project(id)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get project, project_id %v", id)
-		}
-		if err := ps.Add(id); err != nil {
-			return nil, errors.Wrapf(err, "failed to add pubsubs, project_id %v", id)
-		}
-		cp := &contract.Project{
-			ID:         id,
-			Attributes: map[common.Hash][]byte{},
-		}
-		uri := p.DatasourceURI
-		if uri == "" {
-			uri = defaultDatasourceURI
-		}
-		pd, err := newProjectDispatcher(persistence, uri, newDatasource, cp, ps, taskStateHandler, sequencerPubKey)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to new project dispatcher, project_id %v", id)
-		}
-		projectDispatchers.Store(id, pd)
-	}
-	return d, nil
 }
 
 func (d *Dispatcher) setProjectDispatcher(pid uint64) {
@@ -213,6 +134,34 @@ func (d *Dispatcher) setProjectDispatcher(pid uint64) {
 	slog.Info("a new project dispatcher started", "project_id", cp.ID)
 }
 
+func (d *Dispatcher) setWindowSize() {
+	ticker := time.NewTicker(d.windowSizeSetInterval)
+	for range ticker.C {
+		provers := d.contract.LatestProvers()
+		proverAmount := uint64(0)
+		for _, p := range provers {
+			if p.Paused {
+				continue
+			}
+			proverAmount++
+		}
+		d.projectDispatchers.Range(func(k, v interface{}) bool {
+			pd := v.(*projectDispatcher)
+			if pd.idle.Load() || proverAmount == 0 {
+				pd.window.setSize(0)
+				return true
+			}
+			size := proverAmount
+			if size > pd.requiredProverAmount.Load() {
+				size = pd.requiredProverAmount.Load()
+			}
+			proverAmount -= size
+			pd.window.setSize(size)
+			return true
+		})
+	}
+}
+
 func (d *Dispatcher) Run() {
 	if d.local {
 		return
@@ -230,7 +179,42 @@ func (d *Dispatcher) Run() {
 	}()
 	go func() {
 		for head := range d.chainHeadNotification {
-			d.setWindowSize(head)
+			d.setRequiredProverAmount(head)
 		}
 	}()
+	go d.setWindowSize()
+}
+
+func New(persistence Persistence, newDatasource NewDatasource,
+	projectManager ProjectManager, defaultDatasourceURI, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string,
+	sequencerPubKey []byte, iotexChainID int, projectNotification <-chan uint64, chainHeadNotification <-chan uint64,
+	contract Contract, projectOffsets *scheduler.ProjectEpochOffsets) (*Dispatcher, error) {
+
+	projectDispatchers := &sync.Map{}
+	taskStateHandler := newTaskStateHandler(persistence, contract, projectManager, operatorPrivateKey, operatorPrivateKeyED25519)
+	d := &Dispatcher{
+		local:                     false,
+		persistence:               persistence,
+		newDatasource:             newDatasource,
+		projectManager:            projectManager,
+		defaultDatasourceURI:      defaultDatasourceURI,
+		bootNodeMultiaddr:         bootNodeMultiaddr,
+		operatorPrivateKey:        operatorPrivateKey,
+		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
+		sequencerPubKey:           sequencerPubKey,
+		iotexChainID:              iotexChainID,
+		projectNotification:       projectNotification,
+		chainHeadNotification:     chainHeadNotification,
+		contract:                  contract,
+		projectOffsets:            projectOffsets,
+		projectDispatchers:        projectDispatchers,
+		taskStateHandler:          taskStateHandler,
+		windowSizeSetInterval:     5 * time.Second,
+	}
+	ps, err := p2p.NewPubSubs(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
+	if err != nil {
+		return nil, err
+	}
+	d.pubSubs = ps
+	return d, nil
 }

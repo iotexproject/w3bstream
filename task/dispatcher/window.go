@@ -45,6 +45,11 @@ func (w *window) produce(t *task.Task) {
 	w.cond.L.Unlock()
 }
 
+func (w *window) setSize(size uint64) {
+	w.size.Store(size)
+	w.cond.Broadcast()
+}
+
 func (w *window) getTask(taskID uint64) *dispatchedTask {
 	for e := w.tasks.Front(); e != nil; e = e.Next() {
 		t := e.Value.(*dispatchedTask)

@@ -16,14 +16,16 @@ import (
 )
 
 type projectDispatcher struct {
-	window          *window
-	waitInterval    time.Duration
-	startTaskID     uint64
-	projectID       uint64
-	datasource      datasource.Datasource
-	pubSubs         *p2p.PubSubs
-	sequencerPubKey []byte
-	paused          *atomic.Bool
+	window               *window
+	waitInterval         time.Duration
+	startTaskID          uint64
+	projectID            uint64
+	datasource           datasource.Datasource
+	pubSubs              *p2p.PubSubs
+	sequencerPubKey      []byte
+	requiredProverAmount *atomic.Uint64
+	paused               *atomic.Bool
+	idle                 *atomic.Bool
 }
 
 func (d *projectDispatcher) handle(s *task.StateLog) {
@@ -34,6 +36,7 @@ func (d *projectDispatcher) run() {
 	nextTaskID := d.startTaskID
 	for {
 		if d.paused.Load() {
+			d.idle.Store(true)
 			time.Sleep(d.waitInterval)
 			continue
 		}
@@ -53,14 +56,18 @@ func (d *projectDispatcher) run() {
 func (d *projectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	t, err := d.datasource.Retrieve(d.projectID, nextTaskID)
 	if err != nil {
+		d.idle.Store(true)
 		return 0, errors.Wrap(err, "failed to retrieve task from data source")
 	}
 	if t == nil {
+		d.idle.Store(true)
 		return nextTaskID, nil
 	}
 	if err := t.VerifySignature(d.sequencerPubKey); err != nil {
+		d.idle.Store(true)
 		return 0, errors.Wrap(err, "failed to verify task signature")
 	}
+	d.idle.Store(false)
 
 	d.window.produce(t)
 
@@ -83,27 +90,32 @@ func newProjectDispatcher(persistence Persistence, datasourceURI string, newData
 		return nil, errors.Wrap(err, "failed to new task retriever")
 	}
 
-	proverAmount := uint64(1)
+	proverAmount := &atomic.Uint64{}
+	proverAmount.Store(1)
 	if v, ok := p.Attributes[contract.RequiredProverAmountHash]; ok {
 		n, err := strconv.ParseUint(string(v), 10, 64)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse project required prover amount, project_id %v", p.ID)
 		}
-		proverAmount = n
+		proverAmount.Store(n)
 	}
 
-	window := newWindow(proverAmount, pubSubs, handler, persistence)
+	window := newWindow(0, pubSubs, handler, persistence)
 	paused := atomic.Bool{}
 	paused.Store(p.Paused)
+	idle := atomic.Bool{}
+	idle.Store(true)
 	d := &projectDispatcher{
-		window:          window,
-		waitInterval:    3 * time.Second,
-		startTaskID:     processedTaskID + 1,
-		datasource:      datasource,
-		projectID:       p.ID,
-		pubSubs:         pubSubs,
-		sequencerPubKey: sequencerPubKey,
-		paused:          &paused,
+		window:               window,
+		waitInterval:         3 * time.Second,
+		startTaskID:          processedTaskID + 1,
+		datasource:           datasource,
+		projectID:            p.ID,
+		pubSubs:              pubSubs,
+		sequencerPubKey:      sequencerPubKey,
+		requiredProverAmount: proverAmount,
+		paused:               &paused,
+		idle:                 &idle,
 	}
 	go d.run()
 	return d, nil
