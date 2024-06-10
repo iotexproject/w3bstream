@@ -1,18 +1,103 @@
-## Interacting with W3bstream node
+## Interacting with W3bstream
 
-Install **jq**:
+### Prerequisites
+
+- jq:
+  [installation instructions →](https://jqlang.github.io/jq/)
+
+- curl:
+  [installation instructions →](https://curl.se/)
+
+### Send messages use curl
+
+Examples of sending messages to pre-created projects:
+
+Send a message to a RISC0-based test project (ID 91):
 
 ```bash
-brew install jq
+curl -X POST -H "Content-Type: application/json" -d '{"projectID": 91,"projectVersion": "0.1","data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"}' https://sprout-testnet.w3bstream.com/message
 ```
+
+Send a message to the Halo2-based test project (ID 92):
+
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"projectID": 92,"projectVersion": "0.1","data": "{\"private_a\": 3, \"private_b\": 4}"}' https://sprout-testnet.w3bstream.com/message
+```
+
+Send a message to a zkWasm-based test project (ID 93):
+
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"projectID": 93,"projectVersion": "0.1","data": "{\"private_input\": [1, 1] , \"public_input\": [] }"}' https://sprout-testnet.w3bstream.com/message
+```
+
+### Query the status of a proof request
+
+After sending a message, you'll receive a message ID as a response from the node, e.g.,
+
+```json
+{
+  "messageID": "8785a42c-9d6c-4780-910c-de0147aea243"
+}
+```
+
+you can query the status of the message request with:
+
+```bash
+curl https://sprout-testnet.w3bstream.com/message/8785a42c-9d6c-4780-910c-de0147aea243 | jq -r '.'
+```
+
+example result:
+
+```json
+{
+  "messageID": "8785a42c-9d6c-4780-910c-de0147aea243",
+  "states": [
+    {
+      "state": "received",
+      "time": "2024-06-10T09:30:05.790151Z",
+      "comment": "",
+      "result": ""
+    },
+    {
+      "state": "packed",
+      "time": "2024-06-10T09:30:05.793218Z",
+      "comment": "",
+      "result": ""
+    },
+    {
+      "state": "dispatched",
+      "time": "2024-06-10T09:30:10.87987Z",
+      "comment": "",
+      "result": ""
+    },
+    {
+      "state": "proved",
+      "time": "2024-06-10T09:30:11.193027Z",
+      "comment": "",
+      "result": "proof result"
+    },
+    {
+      "state": "outputted",
+      "time": "2024-06-10T09:30:11.20942Z",
+      "comment": "output type: stdout",
+      "result": ""
+    }
+  ]
+}
+```
+
+When the request is in "proved" state, you can check out the comment to find out the hash of the blockchain transaction
+that wrote the proof to the destination chain.
+
+### Send messages with ioID (Experimental)
 
 Install **ioctl**: The command-line interface for interacting with the IoTeX blockchain.
 Install **didctl**: The command-line used for encrypting and decrypting did-comm message
 
 ```bash
 ## clone or pull the latest iotex-core respository
-git clone -b feat/ioctl_ws_step_commit git@github.com:iotexproject/iotex-core.git
-cd iotex-core && git pull origin feat/ioctl_ws_step_commit
+git clone -b master git@github.com:iotexproject/iotex-core.git
+cd iotex-core && git pull origin master
 
 ## make ioctl and move the CLI tool to you system PATH
 make ioctl && mv bin/ioctl __YOUR_SYSTEM_PATH__
@@ -23,121 +108,6 @@ make targets && mv cmd/didctl __YOUR_SYSTEM_PATH__
 
 [More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
 
-### Send messages use ioctl
-
-Examples of sending messages to pre-created projects:
-
-Send a message to a RISC0-based test project (ID 1):
-
-```bash
-ioctl ws message send --project-id 1 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
-```
-
-Send a message to the Halo2-based test project (ID 2):
-
-```bash
-ioctl ws message send --project-id 2 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
-```
-
-Send a message to a zkWasm-based test project (ID 3):
-
-```bash
-ioctl ws message send --project-id 3 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
-```
-
-### Send messages use curl and didctl
-
-before this you need have a simulated client secret for generate JWK to encrypt or decrypt data
-
-1. fetch server's did doc and did
- 
-```bash
-curl http://{sprout_endpoint}/didDoc
-```
-
-2. export server's did doc, server's did, client key agreement JWK secret and client did to env
-
-```bash
-export SERVER_DOC=...
-export SERVER_DID=...
-export CLIENT_SEC=...
-export CLIENT_DID=...
-```
-
-3. request encrypted token from server
-
-```bash
-export $CIPHER_TOKEN=`curl -X POST -d '{"clientID":"'$clientdid'"}' http://127.0.0.1:9000/issue_vc`
-```
-
-4. try to decrypt token
-
-```bash
-didctl decrypt --recipient $CLIENT_SEC --encryptor $SERVER_DID --cipher $CIPHER_TOKEN
-export PLAIN_TOKEN=...
-```
-
-5. encrypt your task commit request body
-
-```bash
-export PLAIN_TASK='{"projectID": 21, "projectVersion": "0.1", "data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"}'
-didctl encrypt --recipient $SERVER_DOC --encryptor $CLIENT_DID --plain $PLAIN_TASK
-export CIPHER_TASK=...
-curl -X POST -d $CIPHER_TASK --header "Authorization: Bearer $PLAIN_TOKEN"  http://127.0.0.1:9000/message
-export CIPHER_RESPONSE=...
-```
-
-6. decrypt server's response
-
-```bash
-didctl decrypt --recipient $CLIENT_SEC --encryptor $SERVER_DID --cipher $CIPHER_RESPONSE
-```
-
-
-### Query the status of a proof request
-
-After sending a message, you'll receive a message ID as a response from the node, e.g.,
-
-```json
-{
-  "messageID": "4abbc43a-798f-49e8-bc05-b6baeafec630"
-}
-```
-
-you can query the status of the message request with:
-
-```bash
-ioctl ws message query --message-id "4abbc43a-798f-49e8-bc05-b6baeafec630"
-```
-
-example result:
-
-```json
-{
-  "messageID": "4abbc43a-798f-49e8-bc05-b6baeafec630",
-  "states": [
-    {
-      "state": "received",
-      "time": "2023-12-06T16:11:03.498785+08:00",
-      "comment": ""
-    },
-    {
-      "state": "fetched",
-      "time": "2023-12-06T16:11:04.663608+08:00",
-      "comment": ""
-    },
-    {
-      "state": "proving",
-      "time": "2023-12-06T16:11:04.664008+08:00",
-      "comment": ""
-    }
-  ]
-}
-```
-
-When the request is in "proved" state, you can check out the comment to find out the hash of the blockchain transaction
-that wrote the proof to the destination chain.
-
 ### Get verifiable credential token (WIP)
 
 > NOTE: The following mock client DID, which have already been binded to existing projects, as $CLIENT_ID to get a VC
@@ -147,7 +117,7 @@ that wrote the proof to the destination chain.
 > > did:ethr:0x9d9250fb4e08ba7a858fe7196a6ba946c6083ff0
 
 Assuming that we are going to interact with W3bstream Sprout Staging
-server (`SERVER=http://sprout-staging.w3bstream.com`), and env `CLIENT_DID` has been set, the following command is used
+server (`SERVER=https://sprout-testnet.w3bstream.com`), and env `CLIENT_DID` has been set, the following command is used
 to exchange a DID token with server:
 
 ```bash
@@ -169,5 +139,53 @@ export DID_TOKEN=`echo '{
     "proofPurpose": "assertionMethod",
     "proofFormat": "jwt"
   }
-}' | http post $SERVER:9000/sign_credential | jq -r '.verifiableCredential'`
+}' | http post $SERVER/sign_credential | jq -r '.verifiableCredential'`
+```
+
+### Send messages use curl and didctl
+
+before this you need have a simulated client secret for generate JWK to encrypt or decrypt data
+
+1. fetch server's did doc and did
+ 
+```bash
+curl https://sprout-testnet.w3bstream.com/didDoc
+```
+
+2. export server's did doc, server's did, client key agreement JWK secret and client did to env
+
+```bash
+export SERVER_DOC=...
+export SERVER_DID=...
+export CLIENT_SEC=...
+export CLIENT_DID=...
+```
+
+3. request encrypted token from server
+
+```bash
+export $CIPHER_TOKEN=`curl -X POST -d '{"clientID":"'$clientdid'"}' https://sprout-testnet.w3bstream.com/issue_vc`
+```
+
+4. try to decrypt token
+
+```bash
+didctl decrypt --recipient $CLIENT_SEC --encryptor $SERVER_DID --cipher $CIPHER_TOKEN
+export PLAIN_TOKEN=...
+```
+
+5. encrypt your task commit request body
+
+```bash
+export PLAIN_TASK='{"projectID": 21, "projectVersion": "0.1", "data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"}'
+didctl encrypt --recipient $SERVER_DOC --encryptor $CLIENT_DID --plain $PLAIN_TASK
+export CIPHER_TASK=...
+curl -X POST -d $CIPHER_TASK --header "Authorization: Bearer $PLAIN_TOKEN"  https://sprout-testnet.w3bstream.com/message
+export CIPHER_RESPONSE=...
+```
+
+6. decrypt server's response
+
+```bash
+didctl decrypt --recipient $CLIENT_SEC --encryptor $SERVER_DID --cipher $CIPHER_RESPONSE
 ```
