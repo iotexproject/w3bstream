@@ -2,58 +2,46 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"flag"
 	"log"
 	"log/slog"
-	"math/big"
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/cockroachdb/pebble"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/apitypes"
 	"github.com/machinefi/sprout/persistence/contract"
 	"github.com/machinefi/sprout/project"
-	contractproject "github.com/machinefi/sprout/smartcontracts/go/project"
 	"github.com/machinefi/sprout/vm"
 )
 
 var (
-	projectMinterPrivateKey string
-
 	projectCacheDir        = "./project_cache"
 	localDBDir             = "./local_db"
-	beginningBlockNumber   = uint64(20000000)
+	beginningBlockNumber   = uint64(26000000)
 	chainEndpoint          = "https://babel-api.testnet.iotex.io"
-	projectContractAddress = common.HexToAddress("0xCBb7a80983Fd3405972F700101A82DB6304C6547")
-	proverContractAddress  = common.HexToAddress("0x6B544a7603cead52AdfD99AA64B3d798083cc4CC")
+	projectContractAddress = common.HexToAddress("0x2faBD8F8667158Ff8B0523f7BA8fC0CD0df3d0eA")
+	proverContractAddress  = common.HexToAddress("0x0764e9c021F140d3A8CAb6EDd59904E584378D19")
 	ipfsEndpoint           = "ipfs.mainnet.iotex.io"
 	schedulerEpoch         = uint64(20)
 )
 
 var (
-	halo2ProjectFileURI  = "ipfs://ipfs.mainnet.iotex.io/QmX3utHdGsPUmgouwnvCMQrE7RSJydpouEJQhqirbJepsf"
-	halo2ProjectFileHash = common.HexToHash("0x5cb6a61aa744f9b3b8350e95ab04dda5f15876ea02b3bcdaf05912e6bfe17c0a")
-
-	risc0ProjectFileURI  = "ipfs://ipfs.mainnet.iotex.io/QmZqwTe8yHSCLA61GkiR7qSzeMcBVSECiPjFEFZVT2R6tN"
-	risc0ProjectFileHash = common.HexToHash("0x0a81cbc0463524fdcb48ecd9951b5d34ecd996ad1efbf3019465ada3dc6cc89a")
-
-	zkwasmProjectFileURI  = "ipfs://ipfs.mainnet.iotex.io/QmWhzXMGrNusDY6axpmzV7sEmoUMdmZTa8ZqvKUK9N34af"
-	zkwasmProjectFileHash = common.HexToHash("0x1e6779061e0004cb63366596f17e46272afd6ac6556933b1493dae3710c7ce88")
+	halo2ProjectFile  = "./project_file/10001"
+	risc0ProjectFile  = "./project_file/10000"
+	zkwasmProjectFile = "./project_file/10001"
 )
 
 var (
@@ -62,61 +50,58 @@ var (
 	zkwasmMessageData = "{\"private_input\": [1, 1] , \"public_input\": [] }"
 )
 
-func init() {
-	flag.StringVar(&projectMinterPrivateKey, "projectMinterPrivateKey", "", "project minter private key")
+func createProject() {
+	cmd := exec.Command("./ioctl", "ioid", "register", uuid.New().String())
+	o, err := cmd.CombinedOutput()
+	if err != nil {
+		slog.Error("failed to register project", "error", err, "output", string(o))
+		return
+	}
+
+	pidStr := strings.TrimSpace(strings.TrimPrefix(string(o), "Registerd ioID project id is"))
+	slog.Info("currently project id", "project_id", pidStr)
+
+	cmd = exec.Command("./ioctl", "ws", "project", "register", "--id", pidStr)
+	o, err = cmd.CombinedOutput()
+	if err != nil {
+		slog.Error("failed to register project", "error", err, "output", string(o))
+		return
+	}
+
+	switch rand.Intn(2) {
+	case 0:
+		cmd = exec.Command("./ioctl", "ws", "project", "update", "--id", pidStr, "--path", halo2ProjectFile)
+		o, err = cmd.CombinedOutput()
+		if err != nil {
+			slog.Error("failed to update halo2 project", "project_id", pidStr, "error", err, "output", string(o))
+			return
+		}
+		slog.Info("project halo2 config updated", "project_id", pidStr)
+	case 1:
+		cmd = exec.Command("./ioctl", "ws", "project", "update", "--id", pidStr, "--path", risc0ProjectFile)
+		o, err = cmd.CombinedOutput()
+		if err != nil {
+			slog.Error("failed to update risc0 project", "project_id", pidStr, "error", err, "output", string(o))
+			return
+		}
+		slog.Info("project risc0 config updated", "project_id", pidStr)
+		// case 2: // will not create zkwasm project
+		// 	tx, err := projectInstance.UpdateConfig(opts, projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
+		// 	if err != nil {
+		// 		slog.Error("failed to update project config", "error", err)
+		// 		return
+		// 	}
+		// 	slog.Info("project zkwasm config updated", "tx_hash", tx.Hash().Hex())
+	}
+	cmd = exec.Command("./ioctl", "ws", "project", "resume", "--id", pidStr)
+	o, err = cmd.CombinedOutput()
+	if err != nil {
+		slog.Error("failed to resume project", "error", err, "output", string(o))
+		return
+	}
 }
 
-func createProject(client *ethclient.Client, projectInstance *contractproject.Project, opts *bind.TransactOpts) {
-	// tx, err := projectInstance.Mint(opts, opts.From) // TODO use new project contract logic
-	// if err != nil {
-	// 	slog.Error("failed to mint project", "error", err)
-	// 	return
-	// }
-	// slog.Info("new project created", "tx_hash", tx.Hash().Hex())
-	// for {
-	// 	_, isPending, err := client.TransactionByHash(context.Background(), tx.Hash())
-	// 	if err != nil {
-	// 		slog.Error("failed to query tx hash", "error", err, "tx_hash", tx.Hash().Hex())
-	// 		continue
-	// 	}
-	// 	if !isPending {
-	// 		break
-	// 	}
-	// 	time.Sleep(3 * time.Second)
-	// }
-	// projectID, err := projectInstance.Count(nil)
-	// if err != nil {
-	// 	slog.Error("failed to query project id", "error", err)
-	// 	return
-	// }
-	// slog.Info("new project created", "project_id", projectID.Uint64())
-
-	// switch rand.Intn(2) {
-	// case 0:
-	// 	tx, err := projectInstance.UpdateConfig(opts, projectID, halo2ProjectFileURI, halo2ProjectFileHash)
-	// 	if err != nil {
-	// 		slog.Error("failed to update project config", "error", err)
-	// 		return
-	// 	}
-	// 	slog.Info("project halo2 config updated", "tx_hash", tx.Hash().Hex())
-	// case 1:
-	// 	tx, err := projectInstance.UpdateConfig(opts, projectID, risc0ProjectFileURI, risc0ProjectFileHash)
-	// 	if err != nil {
-	// 		slog.Error("failed to update project config", "error", err)
-	// 		return
-	// 	}
-	// 	slog.Info("project risc0 config updated", "tx_hash", tx.Hash().Hex())
-	// case 2: // will not create zkwasm project
-	// 	tx, err := projectInstance.UpdateConfig(opts, projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
-	// 	if err != nil {
-	// 		slog.Error("failed to update project config", "error", err)
-	// 		return
-	// 	}
-	// 	slog.Info("project zkwasm config updated", "tx_hash", tx.Hash().Hex())
-	// }
-}
-
-func updateProjectRequiredProver(contractPersistence *contract.Contract, projectInstance *contractproject.Project, opts *bind.TransactOpts) {
+func updateProjectRequiredProver(contractPersistence *contract.Contract) {
 	projects := contractPersistence.LatestProjects()
 	provers := contractPersistence.LatestProvers()
 	if len(provers) == 0 {
@@ -128,19 +113,34 @@ func updateProjectRequiredProver(contractPersistence *contract.Contract, project
 	project := projects[index]
 	expectProvers := rand.Intn(len(provers)) + 1
 
-	tx, err := projectInstance.SetAttributes(opts, new(big.Int).SetUint64(project.ID), [][32]byte{contract.RequiredProverAmount}, [][]byte{[]byte(strconv.Itoa(expectProvers))})
+	pidStr := strconv.FormatUint(project.ID, 10)
+
+	cmd := exec.Command("./ioctl", "ws", "project", "attributes", "set", "--id", pidStr, "--key", "RequiredProverAmount", "--val", strconv.Itoa(expectProvers))
+	var stdin bytes.Buffer
+	stdin.Write([]byte("\n"))
+	cmd.Stdin = &stdin
+	o, err := cmd.CombinedOutput()
 	if err != nil {
-		slog.Error("failed to set project attributes", "error", err)
+		slog.Error("failed to update project attributes", "project_id", pidStr, "error", err, "output", string(o))
 		return
 	}
-	slog.Info("project attributes setted", "project_id", project.ID, "tx_hash", tx.Hash().Hex())
+	slog.Info("project attributes setted", "project_id", project.ID, "prover_amount", expectProvers)
 }
 
 func sendMessage(contractPersistence *contract.Contract, projectManager *project.Manager, taskCount *atomic.Uint64) {
 	projects := contractPersistence.LatestProjects()
+
+	//slog.Info("send message", "project_len", len(projects))
+
 	for i := 0; i < 3; i++ {
 		index := rand.Intn(len(projects))
 		project := projects[index]
+		if project.Paused {
+			continue
+		}
+		if project.Uri == "" {
+			continue
+		}
 		projectFile, err := projectManager.Project(project.ID)
 		if err != nil {
 			slog.Error("failed to get project data", "project_id", project.ID, "error", err)
@@ -176,7 +176,7 @@ func sendMessage(contractPersistence *contract.Contract, projectManager *project
 			continue
 		}
 
-		response, err := http.Post("http://sprout-staging.w3bstream.com:9000/message", "application/json", bytes.NewReader(j))
+		response, err := http.Post("https://sprout-stress.w3bstream.com/message", "application/json", bytes.NewReader(j))
 		if err != nil {
 			slog.Error("failed to send message", "project_id", project.ID, "error", err)
 			continue
@@ -192,40 +192,12 @@ func sendMessage(contractPersistence *contract.Contract, projectManager *project
 }
 
 func main() {
-	flag.Parse()
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})))
 
-	priKey, err := crypto.HexToECDSA(projectMinterPrivateKey)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed parse project minter private key"))
-	}
-	slog.Info("project minter address", "address", crypto.PubkeyToAddress(priKey.PublicKey).String())
-
-	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to dial chain endpoint"))
-	}
-	projectInstance, err := contractproject.NewProject(projectContractAddress, client)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new project contract instance"))
-	}
-
-	chainID, err := client.ChainID(context.Background())
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to get chain id"))
-	}
-
-	opts := &bind.TransactOpts{
-		From: crypto.PubkeyToAddress(priKey.PublicKey),
-		Signer: func(a common.Address, tx *types.Transaction) (*types.Transaction, error) {
-			return types.SignTx(tx, types.NewLondonSigner(chainID), priKey)
-		},
-	}
-
-	createProjectTicker := time.NewTicker(10 * time.Minute)
+	createProjectTicker := time.NewTicker(1 * time.Minute)
 	go func() {
 		for range createProjectTicker.C {
-			createProject(client, projectInstance, opts)
+			createProject()
 		}
 	}()
 
@@ -248,7 +220,7 @@ func main() {
 	updateProjectRequiredProverTicker := time.NewTicker(1 * time.Hour)
 	go func() {
 		for range updateProjectRequiredProverTicker.C {
-			updateProjectRequiredProver(contractPersistence, projectInstance, opts)
+			updateProjectRequiredProver(contractPersistence)
 		}
 	}()
 
@@ -265,7 +237,7 @@ func main() {
 		}
 	}()
 
-	sendMessageTicker := time.NewTicker(5 * time.Minute)
+	sendMessageTicker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range sendMessageTicker.C {
 			sendMessage(contractPersistence, projectManager, taskCount)
