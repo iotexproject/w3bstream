@@ -27,11 +27,9 @@ The diagram represents the main components of the software and how they interact
 
 ## Running
 
-For users who just want to give it a try, please refer to [Quick Start →](./docs/QUICK_START.md), which will guide you through how to interact with existing projects deployed on staging.
+For users who just want to give it a try, please refer to [Quick Start →](./docs/QUICK_START.md), which will guide you through how to interact with existing projects deployed on testnet.
 
 Developers looking to build circuits and deploy W3bstream projects should consult the [DEVELOPER_GUIDE →](./docs/DEVELOPER_GUIDE.md)
-
-Developers who want to run a Sprout node could refer to the [OPERATOR_GUIDE →](./docs/OPERATOR_GUIDE.md)
 
 ## Sandbox
 The DePIN Sandbox is an initial deployment of Layer 1 contracts that facilitate the deployment od DePIN Projects on IoTeX using W3bstream
