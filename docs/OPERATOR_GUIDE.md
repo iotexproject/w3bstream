@@ -1,6 +1,6 @@
 # IoTeX W3bstream Sprout Node Operator Guide
 
-W3bstream is a permissionless, decentralized protocol within the IoTeX Network, where node operators contribute computing power to support verifiable computations for blockchain applications. These applications rely on insights from real-world data to trigger their token economies. Anyone can become a W3bstream Node Operator in the IoTeX Network, choosing which dApps to support in processing data and generating ZK (Zero Knowledge) Proofs. This guide covers how to operate a W3bstream node, register it in the IoTeX Network, join specific projects, and claim rewards.
+W3bstream is a permissionless, decentralized protocol within the IoTeX Network, where node operators contribute computing power to support verifiable computations for blockchain applications. These applications rely on insights from real-world data to trigger their token economies. Anyone can become a W3bstream Node Operator in the IoTeX Network, choosing which dApps to support in processing data and generating ZK (Zero Knowledge) Proofs.
 
 ## Run a W3bstream Node
 
@@ -62,6 +62,11 @@ export BONSAI_KEY=${your bonsai key}
 
 Refer to the W3bstream project documentation for the dApp you are joining to determine if Risc Zero proofs are required.
 
+### Manage the project file
+
+You can move your project file to a directory, and mount it to W3bstream node container. The environment variable used to indicate a directory is **PROJECT_FILE_DIRECTORY**  
+The default project directory is **./test/project**
+
 ### Manage the node
 
 To start W3bstream, run the following command in the directory containing `docker-compose.yaml`:
@@ -82,72 +87,24 @@ To shut down the W3bstream instance:
 docker-compose down
 ```
 
-#### Set contract addresses
-
-```bash
-# set the default prover register and prover store contract address
-ioctl config set wsFleetManagementContract 0xDBA78C8eCaeE2DB9DDE0c4168f7E8626d4Ff0010
-ioctl config set wsProverStoreContract 0xAD480a9c1B9fA8dD118c26Ac26880727160D0448
-```
-
-### Prover Manager
-
-#### Register and query prover
-
-```bash
-# register a new prover and this command will retrieve the prover id
-ioctl ws prover register
-# query prover info with prover id
-ioctl ws prover query --id "prover id"
-# update prover with node type and prover id
-ioctl ws prover update --id "prover id" --node-type "node type"
-```
-
-#### Control prover status
-
-```bash
-# pause or resume prover with the follow commands
-ioctl ws prover pause --id 'prover id'
-ioctl ws prover resume --id 'prover id'
-```
-
-#### Transfer prover operator
-
-```bash
-# transfer prover operator with prover id and new owner address
-ioctl ws prover transfer --id 'prover id' --operator 'operator wallet address'
-```
-
-### Interacting with the node
-
-set the ioctl's wsEndpoint configuration option to your node endpoint:
-
-```bash
-ioctl config set wsEndpoint localhost:9000
-```
-
-[More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
-
-Test W3bstream projects are already registered into project contract.
-
 #### Sending messages to the node
 
-Send a message to a RISC0-based test project (ID 1):
+Send a message to a RISC0-based test project (ID 10000):
 
 ```bash
-ioctl ws message send --project-id 1 --project-version "0.1" --data "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"
+curl -X POST -H "Content-Type: application/json" -d '{"projectID": 10000,"projectVersion": "0.1","data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"}' http://localhost:9000/message
 ```
 
-Send a message to the Halo2-based test project (ID 2):
+Send a message to the Halo2-based test project (ID 10001):
 
 ```bash
-ioctl ws message send --project-id 2 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"
+curl -X POST -H "Content-Type: application/json" -d '{"projectID": 10001,"projectVersion": "0.1","data": "{\"private_a\": 3, \"private_b\": 4}"}' http://localhost:9000/message
 ```
 
-Send a message to a zkWasm-based test project (ID 3):
+Send a message to a zkWasm-based test project (ID 10002):
 
 ```bash
-ioctl ws message send --project-id 3 --project-version "0.1" --data "{\"private_input\": [1, 1] , \"public_input\": [] }"
+curl -X POST -H "Content-Type: application/json" -d '{"projectID": 10002,"projectVersion": "0.1","data": "{\"private_input\": [1, 1] , \"public_input\": [] }"}' http://localhost:9000/message
 ```
 
 #### Query the status of a proof request
@@ -156,37 +113,53 @@ After sending a message, you'll receive a message ID as a response from the node
 
 ```json
 {
- "messageID": "4abbc43a-798f-49e8-bc05-b6baeafec630"
+ "messageID": "8785a42c-9d6c-4780-910c-de0147aea243"
 }
 ```
 
 you can quesry the history of the proof request with:
 
 ```bash
-ioctl ws message query --message-id "4abbc43a-798f-49e8-bc05-b6baeafec630"
+curl http://localhost:9000/message/8785a42c-9d6c-4780-910c-de0147aea243 | jq -r '.'
 ```
 
 example result:
 
 ```json
 {
- "messageID": "4abbc43a-798f-49e8-bc05-b6baeafec630",
- "states": [{
-   "state": "received",
-   "time": "2023-12-06T16:11:03.498785+08:00",
-   "comment": ""
-  },
-  {
-   "state": "fetched",
-   "time": "2023-12-06T16:11:04.663608+08:00",
-   "comment": ""
-  },
-  {
-   "state": "proving",
-   "time": "2023-12-06T16:11:04.664008+08:00",
-   "comment": ""
-  }
- ]
+  "messageID": "8785a42c-9d6c-4780-910c-de0147aea243",
+  "states": [
+    {
+      "state": "received",
+      "time": "2024-06-10T09:30:05.790151Z",
+      "comment": "",
+      "result": ""
+    },
+    {
+      "state": "packed",
+      "time": "2024-06-10T09:30:05.793218Z",
+      "comment": "",
+      "result": ""
+    },
+    {
+      "state": "dispatched",
+      "time": "2024-06-10T09:30:10.87987Z",
+      "comment": "",
+      "result": ""
+    },
+    {
+      "state": "proved",
+      "time": "2024-06-10T09:30:11.193027Z",
+      "comment": "",
+      "result": "proof result"
+    },
+    {
+      "state": "outputted",
+      "time": "2024-06-10T09:30:11.20942Z",
+      "comment": "output type: stdout",
+      "result": ""
+    }
+  ]
 }
 ```
 

@@ -8,7 +8,19 @@ Dapps looking to utilize W3bstream capabilities should:
 
 1. [Create a W3bstream project](#create-a-w3bstream-project)
 2. [Test the project](#test-your-w3bstream-project)
-3. [Register it on the IoTeX blockchain](#register-your-project)
+3. [Register it on the IoTeX blockchain](#registering-your-project)
+
+### Prerequisites
+
+- ioctl: The command-line interface for interacting with the IoTeX blockchain.
+
+```bash
+git clone https://github.com/iotexproject/iotex-core.git
+cd iotex-core
+make ioctl && mv bin/ioctl __YOUR_SYSTEM_PATH__
+```
+
+[More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
 
 ### Create a W3bstream Project
 
@@ -51,7 +63,7 @@ Create the blockchain verifier (Solidity)
 
 target/release/halo2-circuit solidity -f path/filename.sol
 
-#### Create a ZK Circuit Using zkWASM
+#### Create a W3bstream Project Using zkWASM
 
 For more details on zkWASM circuits see the [zkWASM README](./examples/zkwasm-circuit/README.md).
 
@@ -81,7 +93,7 @@ Generate the W3bstream project:
 ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID"`
 ```
 
-#### Using RISC0
+#### Create a W3bstream Project Using RISC0
 
 More details and options for `Risc0 circuit` are given in [its README](./examples/risc0-circuit/README.md).
 
@@ -120,49 +132,7 @@ ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test
 
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs` file.
 
-#### Manager your project to IPFS
-
-##### Set w3bstream sequencer endpoint and contract addresses
-
-```bash
-# set local w3bstream sequencer as w3bstream endpoint
-ioctl config set wsEndpoint 'localhost:9000'
-# set the default project register and project store contract address
-ioctl config set wsProjectStoreContract 0x6AfCB0EB71B7246A68Bb9c0bFbe5cD7c11c4839f
-ioctl config set wsProjectRegisterContract 0x4888bfbf39Dc83C19cbBcb307ccE8F7F93b72E38
-```
-
-##### Register and Upload project 
-
-```bash
-# register a new project to w3bstream
-# note: this need you had mint a project NFT in ioID, see more: https://github.com/machinefi/ioID-contracts
-ioctl ws project register --id "your project id"
-# use the project config generated above and update project config
-ioctl ws project update --id "your project id" --path "path/to/project_config" --hash "project config hash(optional)"
-# you can retrieve project info by follow command
-ioctl ws project query --id "your project id"
-```
-
-##### Set or get attributes of your project
-
-```bash
-# get attributes
-ioctl ws project attributes get --id "your project id" --key "your key name"
-# set attributes
-ioctl ws project attributes set --id "your project id" --key "your key name" --val "your key val"
-```
-
-##### Control project status
-
-```bash
-# pause project
-ioctl ws project pause --id 'your project id'
-# resume project
-ioctl ws project resume --id 'your project id'
-```
-
-### Testing your project
+### Test Your W3bstream Project
 
 Once you have generated a W3bstream project file that includes a custom prover for your dApp, you might want to test it.
 
@@ -172,14 +142,52 @@ Please refer to the [OPERATOR GUIDE](./OPERATOR_GUIDE.md) for instructions on ho
 2. Copy the W3bstream project file into the node's project directory (default location is ./test/project).
 3. Run the node and send your test messages.
 
-### Registering your project
+### Registering Your Project
 
 To allow W3bstream node operators to download your project and compute ZK proofs for your dApp, you must register your W3bstream project on the IoTeX blockchain:
 
-[Register your project here → This is still WIP](WIP)
+#### Acquire a Project ID
 
-The projects registration contract address on IoTeX is:
+```bash
+ioctl ioid register "your project name"
+```
 
-- Mainnet: `To be determined`
-- Testnet: `To be determined`
-- ABI: `To be determined`
+#### Register Project
+
+```bash
+ioctl ws project register --id "your project id"
+```
+
+#### Use the Project File Generated above and Update Project Config
+
+```bash
+ioctl ws project update --id "your project id" --path "path/to/project_file"
+```
+
+#### Start the Project
+
+```bash
+ioctl ws project resume --id "your project id"
+```
+
+#### Retrieve Project Info
+
+```bash
+ioctl ws project query --id "your project id"
+```
+
+#### Set Required Prover Amount of the Project
+
+The default prover amount will process the project's tasks is one. And we can customize it by
+
+```bash
+ioctl ws project attributes set --id "your project id" --key "RequiredProverAmount" --val "your expected amount"
+```
+
+#### Stop the Project
+
+If you want to stop the project's task process, can use this cmd
+
+```bash
+ioctl ws project pause --id "your project id"
+```
