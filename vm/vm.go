@@ -2,7 +2,6 @@ package vm
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/pkg/errors"
@@ -21,7 +20,6 @@ const (
 
 type Handler struct {
 	vmServerEndpoints map[Type]string
-	instanceManager   *manager
 }
 
 func (r *Handler) Handle(task *task.Task, vmtype Type, code string, expParam string) ([]byte, error) {
@@ -30,12 +28,12 @@ func (r *Handler) Handle(task *task.Task, vmtype Type, code string, expParam str
 		return nil, errors.New("unsupported vm type")
 	}
 
-	ins, err := r.instanceManager.acquire(task.ProjectID, endpoint, code, expParam)
+	ins, err := newInstance(context.Background(), task.ProjectID, endpoint, code, expParam)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get instance")
+		return nil, errors.Wrap(err, "failed to new instance")
 	}
-	slog.Debug(fmt.Sprintf("acquire %s instance success", vmtype))
-	defer r.instanceManager.release(task.ProjectID, ins)
+	defer ins.release()
+	slog.Debug("acquire vm instance success", "vm_type", vmtype)
 
 	res, err := ins.execute(context.Background(), task)
 	if err != nil {
@@ -47,6 +45,5 @@ func (r *Handler) Handle(task *task.Task, vmtype Type, code string, expParam str
 func NewHandler(vmServerEndpoints map[Type]string) *Handler {
 	return &Handler{
 		vmServerEndpoints: vmServerEndpoints,
-		instanceManager:   newManager(),
 	}
 }

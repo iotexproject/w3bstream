@@ -33,13 +33,11 @@ func TestHandler_Handle(t *testing.T) {
 		r.Error(err)
 	})
 
-	t.Run("FailedToAcquireVmInstance", func(t *testing.T) {
+	t.Run("FailedToNewVmInstance", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyPrivateMethod(&manager{}, "acquire", func(uint64, string, string, string) (*instance, error) {
-			return nil, errors.New(t.Name())
-		})
+		p.ApplyFuncReturn(newInstance, nil, errors.New(t.Name()))
 		_, err := h.Handle(&task.Task{}, ZKwasm, "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
@@ -48,10 +46,8 @@ func TestHandler_Handle(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyPrivateMethod(&manager{}, "acquire", func(uint64, string, string, string) (*instance, error) {
-			return &instance{}, nil
-		})
-		p.ApplyPrivateMethod(&manager{}, "release", func(uint64, *instance) {})
+		p.ApplyFuncReturn(newInstance, &instance{}, nil)
+		p.ApplyPrivateMethod(&instance{}, "release", func() {})
 		p.ApplyPrivateMethod(&instance{}, "execute", func(context.Context, *task.Task) ([]byte, error) {
 			return nil, errors.New(t.Name())
 		})
@@ -64,10 +60,8 @@ func TestHandler_Handle(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyPrivateMethod(&manager{}, "acquire", func(uint64, string, string, string) (*instance, error) {
-			return &instance{}, nil
-		})
-		p.ApplyPrivateMethod(&manager{}, "release", func(uint64, *instance) {})
+		p.ApplyFuncReturn(newInstance, &instance{}, nil)
+		p.ApplyPrivateMethod(&instance{}, "release", func() {})
 		p.ApplyPrivateMethod(&instance{}, "execute", func(context.Context, *task.Task) ([]byte, error) {
 			return []byte("any"), nil
 		})
