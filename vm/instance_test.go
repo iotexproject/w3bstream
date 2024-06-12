@@ -31,7 +31,7 @@ func TestNewInstance(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyFuncReturn(grpc.Dial, nil, errors.New(t.Name()))
-		_, err := newInstance(context.Background(), "any", 100, "any", "any")
+		_, err := newInstance(context.Background(), 100, "any", "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -43,7 +43,7 @@ func TestNewInstance(t *testing.T) {
 		p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
 		p.ApplyMethodReturn(&MockClient{}, "Create", nil, errors.New(t.Name()))
 
-		_, err := newInstance(context.Background(), "any", 100, "any", "any")
+		_, err := newInstance(context.Background(), 100, "any", "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
 
@@ -56,7 +56,7 @@ func TestNewInstance(t *testing.T) {
 		p.ApplyMethodReturn(&MockClient{}, "Create", &proto.CreateResponse{}, nil)
 		p.ApplyMethodReturn(&grpc.ClientConn{}, "Close", nil)
 
-		i, err := newInstance(context.Background(), "any", 100, "any", "any")
+		i, err := newInstance(context.Background(), 100, "any", "any", "any")
 		r.NoError(err, t.Name())
 		r.NotNil(i)
 		i.release()

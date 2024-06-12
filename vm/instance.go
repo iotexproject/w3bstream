@@ -14,10 +14,9 @@ import (
 
 type instance struct {
 	conn *grpc.ClientConn
-	resp *proto.CreateResponse
 }
 
-func newInstance(ctx context.Context, endpoint string, projectID uint64, executeBinary string, expParam string) (*instance, error) {
+func newInstance(ctx context.Context, projectID uint64, endpoint, executeBinary, expParam string) (*instance, error) {
 	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial vm server")
@@ -29,11 +28,10 @@ func newInstance(ctx context.Context, endpoint string, projectID uint64, execute
 		Content:   executeBinary,
 		ExpParam:  expParam,
 	}
-	resp, err := cli.Create(ctx, req)
-	if err != nil {
+	if _, err := cli.Create(ctx, req); err != nil {
 		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
-	return &instance{conn: conn, resp: resp}, nil
+	return &instance{conn: conn}, nil
 }
 
 func (i *instance) execute(ctx context.Context, task *task.Task) ([]byte, error) {
@@ -51,12 +49,13 @@ func (i *instance) execute(ctx context.Context, task *task.Task) ([]byte, error)
 	cli := proto.NewVmRuntimeClient(i.conn)
 	resp, err := cli.ExecuteOperator(ctx, req)
 	if err != nil {
-		slog.Debug("request", "body", req)
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
 	return resp.Result, nil
 }
 
 func (i *instance) release() {
-	i.conn.Close()
+	if err := i.conn.Close(); err != nil {
+		slog.Error("failed to close grpc conn", "error", err)
+	}
 }
