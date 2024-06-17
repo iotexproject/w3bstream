@@ -50,7 +50,7 @@ cd examples/halo2-circuit/
 wasm-pack build --target nodejs --out-dir pkg
 ```
 
-The `halo2_wasm_bg.wasm` will be located under the `pkg` folder.
+The `halo2_simple_bg.wasm` will be located under the `pkg` folder.
 
 Generate the W3bstream project file:
 
@@ -61,7 +61,9 @@ ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test
 
 Create the blockchain verifier (Solidity)
 
-target/release/halo2-circuit solidity -f path/filename.sol
+``` shell
+target/release/halo2-simple-circuit solidity -f path/filename.sol
+```
 
 #### Create a W3bstream Project Using zkWASM
 
