@@ -21,6 +21,33 @@ pub enum Subcommands {
         file: String,
     },
 
+    #[clap(name = "proof")]
+    #[clap(about = "Generate proof.")]
+    Proof {
+        #[clap(
+            long,
+            value_name = "private_a",
+            default_value = "3"
+        )]
+        private_a: u64,
+        #[clap(
+            long,
+            value_name = "private_b",
+            default_value = "4"
+        )]
+        private_b: u64,
+        #[clap(
+            long,
+            value_name = "project_id",
+        )]
+        project_id: u64,
+        #[clap(
+            long,
+            value_name = "task_id",
+        )]
+        task_id: u64,
+    },
+
     #[clap(name = "verify")]
     #[clap(about = "Local verify proof.")]
     Verfiy {
