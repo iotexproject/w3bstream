@@ -56,8 +56,11 @@ Then you can deploy the smart contract to IoTeX chain or other ETH-compatible ch
 if you can send messages to prover successfully, then you can execute `ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"` to obtain a halo2 proof, then put it in a file, like `halo2-simple-proof.json`.
 
 2. verify
-`--proof` is proof file, and `--public` is the public input
+`--proof` is proof file,  
+`--public` is the public input
+`--project` is the project id
+`--task` is the task id
 
 ``` shell
-target/release/halo2-simple-circuit verify --proof halo2-simple-proof.json --public 900
+target/release/halo2-simple-circuit verify --proof halo2-simple-proof.json --public 567 --project 92 --task 35
 ```
