@@ -5,7 +5,7 @@ use std::{fs, io::BufReader};
 use clap::Parser;
 use halo2_simple_circuit::{
     circuits::simple::SimpleCircuit,
-    generator::{gen_pk, gen_sol_verifier},
+    generator::{gen_pk, gen_proof, gen_sol_verifier},
 };
 use halo2_curves::bn256::{Bn256, Fr, G1Affine};
 use halo2_proofs::{
@@ -21,7 +21,7 @@ use halo2_proofs::{
 use itertools::Itertools;
 use opts::{Opts, Subcommands};
 use serde_derive::{Deserialize, Serialize};
-use snark_verifier::{loader::evm, system::halo2::transcript::evm::EvmTranscript};
+use snark_verifier::{loader::evm::{self, encode_calldata}, system::halo2::transcript::evm::EvmTranscript};
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Proof {
@@ -49,13 +49,36 @@ fn main() {
 
     match opts.sub {
         Subcommands::Solidity { file } => {
-            let sol_code = gen_sol_verifier(&params, empty_circuit, vec![1])
+            let sol_code = gen_sol_verifier(&params, empty_circuit, vec![3])
                 .expect("generate solidity file error");
             println!(
                 "Generated verifier contract size: {}",
                 evm::compile_solidity(sol_code.as_str()).len()
             );
             fs::write(file, sol_code).expect("write verifier solidity error");
+        }
+
+        Subcommands::Proof { private_a, private_b, project_id, task_id } => {
+            let private_a = Fr::from(private_a);
+            let private_b = Fr::from(private_b);
+        
+            let constant = Fr::from(4);
+
+            let pk = gen_pk(&params, &empty_circuit);
+
+            // TODO instance circuit
+            let circuit = SimpleCircuit {
+                constant,
+                a: Value::known(private_a),
+                b: Value::known(private_b),
+            };
+            // TODO public info
+            let c = constant * private_a.square() * private_b.square();
+            let instances = vec![vec![c, Fr::from(project_id), Fr::from(task_id)]];
+        
+            let proof = gen_proof(&params, &pk, circuit.clone(), &instances);
+        
+            println!("the proof is {:?}", hex::encode(&proof))
         }
 
         Subcommands::Verfiy { proof, public, project, task } => {
@@ -68,6 +91,8 @@ fn main() {
             let pk = gen_pk(&params, &empty_circuit);
 
             let instances = vec![vec![Fr::from(public), Fr::from(project), Fr::from(task)]];
+
+            let calldata = encode_calldata(&instances, &proof);
             let accept = {
                 let instances = instances
                     .iter()
@@ -87,6 +112,7 @@ fn main() {
             };
 
             println!("the proof is {:?}", accept);
+            println!("calldata is {:?}", hex::encode(&calldata))
         }
     }
 }
