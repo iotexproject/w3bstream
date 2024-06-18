@@ -92,7 +92,7 @@ Generate the W3bstream project:
 
 ```bash
 # Customize the output project file name "$ID" with a unique number
-ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID"`
+ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable" -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID""
 ```
 
 #### Create a W3bstream Project Using RISC0
