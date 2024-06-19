@@ -32,7 +32,7 @@ Here, we use `ioctl` command, please [install](https://github.com/iotexproject/i
 
 1. convert circuit to project config file
 ```shell
-ioctl ws code convert -t "halo2" -i "halo2_simple_bg.wasm"
+ioctl ws project config -t "halo2" -i "halo2_wasm_bg.wasm"
 ```
 This command will generate a file named `halo2-config.json` in the current folder.
 
@@ -73,10 +73,13 @@ After this command is successful, a `halo2-simple-circuit` executable file(execu
    if you can send messages to prover successfully, then you can execute `ioctl ws message send --project-id 10001 --project-version "0.1" --data "{\"private_a\": 3, \"private_b\": 4}"` to obtain a halo2 proof, then put it in a file, like `halo2-simple-proof.json`.
 
 3. verify
-   `--proof` is proof file, and `--public` is the public input
+   `--proof` is proof file,  
+   `--public` is the public input
+   `--project` is the project id
+   `--task` is the task id
 
 ``` shell
-target/release/halo2-simple-circuit verify --proof halo2-simple-proof.json --public 900
+target/release/halo2-simple-circuit verify --proof halo2-simple-proof.json --public 567 --project 92 --task 35
 ```
 
 More details and options for `Halo2 circuit` are given in [its README](./halo2-circuit/README.md).
@@ -102,7 +105,7 @@ Here, we use `ioctl` command, please [install](https://github.com/iotexproject/i
 
 1. convert circuit to project config file
 ```shell
-ioctl ws code convert -t "risc0" -i "methods.rs"  -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
+ioctl ws project config -t "risc0" -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}
 ```
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs`.
 
@@ -117,7 +120,7 @@ After sending data to w3bstream, you can get a proof. Then you can verify the pr
 The proof can be validated through smart contracts, or can be verified locally.
 
 ### Verified by smart contract
-The RISC0 verify proof has been deployed on the IoTeX mainnet, the address is [io108ecwt37dxmfd4ltltcjdygnpmapy2g7630lcz](https://iotexscan.io/address/io108ecwt37dxmfd4ltltcjdygnpmapy2g7630lcz?format=io#code)
+The RISC0 verify proof has been deployed on the IoTeX mainnet, the address is [io16mz3eracd788kpg6k54namwhq3nn0qqkpa00uw](https://iotexscan.io/address/io16mz3eracd788kpg6k54namwhq3nn0qqkpa00uw?format=io#code)
 
 The contract source code is [here](./risc0-circuit/contract).
 
@@ -152,7 +155,7 @@ Here, we use `ioctl` command, please [install](https://github.com/iotexproject/i
 
 1. convert circuit to project config file
 ```shell
-ioctl ws code convert -t "zkwasm" -i "add.wasm"
+ioctl ws project config -t "zkwasm" -i "add.wasm"
 ```
 This command will generate a file named `zkwasm-config.json` in the current folder.
 

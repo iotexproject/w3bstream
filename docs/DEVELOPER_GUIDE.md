@@ -56,7 +56,7 @@ Generate the W3bstream project file:
 
 ```bash
 # Customize the output project file name "$ID" with a unique number
-ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable" -t "halo2" -i "halo2_wasm_bg.wasm" -c "path/$ID"
+ioctl ws project config -t "halo2" -i "halo2_wasm_bg.wasm" -c "path/$ID"
 ```
 
 Create the blockchain verifier (Solidity)
@@ -92,7 +92,7 @@ Generate the W3bstream project:
 
 ```bash
 # Customize the output project file name "$ID" with a unique number
-ioctl ws code convert -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID"`
+ioctl ws project config -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID""
 ```
 
 #### Create a W3bstream Project Using RISC0
@@ -129,7 +129,7 @@ warning: methods_path is: "sprout/examples/risc0-circuits/target/release/build/r
 Generate the W3bstream Project
 
 ```bash
-ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable" -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}
+ioctl ws project config -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}
 ```
 
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs` file.
