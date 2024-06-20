@@ -13,7 +13,7 @@ COPY ./ ./
 
 RUN cd ./cmd/sequencer && CGO_ENABLED=1 CGO_LDFLAGS='-L./lib/linux-x86_64 -lioConnectCore' go build -ldflags "-s -w -extldflags '-static'" -o sequencer
 
-FROM --platform=linux/amd64 scratch AS runtime
+FROM --platform=linux/amd64 golang:1.22-alpine AS runtime
 
 ENV LANG en_US.UTF-8
 

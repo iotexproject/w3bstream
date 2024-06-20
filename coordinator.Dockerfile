@@ -8,7 +8,7 @@ COPY ./ ./
 
 RUN cd ./cmd/coordinator && CGO_ENABLED=0 go build -ldflags "-s -w -extldflags '-static'" -o coordinator
 
-FROM --platform=linux/amd64 scratch AS runtime
+FROM --platform=linux/amd64 golang:1.22-alpine AS runtime
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/cmd/coordinator/coordinator /go/bin/coordinator

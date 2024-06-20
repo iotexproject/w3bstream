@@ -8,7 +8,7 @@ COPY ./ ./
 
 RUN cd ./cmd/prover && CGO_ENABLED=0 go build -ldflags "-s -w -extldflags '-static'" -o prover
 
-FROM scratch AS runtime
+FROM golang:1.22-alpine AS runtime
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/cmd/prover/prover /go/bin/prover
