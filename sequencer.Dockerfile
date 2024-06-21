@@ -17,7 +17,7 @@ FROM --platform=linux/amd64 alpine:3.20 AS runtime
 
 ENV LANG en_US.UTF-8
 
-apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata
 
 COPY --from=builder /go/src/cmd/sequencer/sequencer /go/bin/sequencer
 EXPOSE 9000
