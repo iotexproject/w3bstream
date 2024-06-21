@@ -3,7 +3,6 @@ package output
 import (
 	"context"
 	"crypto/ecdsa"
-	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum"
@@ -12,10 +11,8 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pkg/errors"
-	"github.com/tidwall/gjson"
-
 	"github.com/machinefi/sprout/task"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -36,76 +33,76 @@ type ethereumContract struct {
 }
 
 func (e *ethereumContract) Output(task *task.Task, proof []byte) (string, error) {
-	params := []interface{}{}
-	for _, a := range e.contractMethod.Inputs {
-		switch a.Name {
-		case "proof", "_proof":
-			params = append(params, proof)
+	//params := []interface{}{}
+	//for _, a := range e.contractMethod.Inputs {
+	//	switch a.Name {
+	//	case "proof", "_proof":
+	//		params = append(params, proof)
+	//
+	//	case "projectId", "_projectId":
+	//		i := new(big.Int).SetUint64(task.ProjectID)
+	//		params = append(params, i)
+	//
+	//	case "receiver", "_receiver":
+	//		if e.receiverAddress == "" {
+	//			return "", errMissingReceiverParam
+	//		}
+	//		params = append(params, common.HexToAddress(e.receiverAddress))
+	//
+	//	case "data_snark", "_data_snark":
+	//		valueSeal := gjson.GetBytes(proof, "Snark.snark").String()
+	//		if valueSeal == "" {
+	//			return "", errSnarkProofDataMissingFieldSnark
+	//		}
+	//		valueDigest := gjson.GetBytes(proof, "Snark.post_state_digest").String()
+	//		if valueDigest == "" {
+	//			return "", errSnarkProofDataMissingFieldPostStateDigest
+	//		}
+	//		valueJournal := gjson.GetBytes(proof, "Snark.journal").String()
+	//		if valueJournal == "" {
+	//			return "", errSnarkProofDataMissingFieldJournal
+	//		}
+	//
+	//		abiBytes, err := abi.NewType("bytes", "", nil)
+	//		if err != nil {
+	//			return "", errors.Wrap(err, "new ethereum accounts abi pack failed")
+	//		}
+	//		args := abi.Arguments{
+	//			{Type: abiBytes, Name: "proof_snark_seal"},
+	//			{Type: abiBytes, Name: "proof_snark_post_state_digest"},
+	//			{Type: abiBytes, Name: "proof_snark_journal"},
+	//		}
+	//
+	//		packed, err := args.Pack([]byte(valueSeal), []byte(valueDigest), []byte(valueJournal))
+	//		if err != nil {
+	//			return "", errors.Wrap(err, "ethereum accounts abi pack failed")
+	//		}
+	//		params = append(params, packed)
+	//
+	//	default:
+	//		value := gjson.GetBytes(task.Data[0], a.Name)
+	//		param := value.String()
+	//		if param == "" {
+	//			return "", errors.Errorf("miss param %s for contract abi", a.Name)
+	//		}
+	//		switch a.Type.String() {
+	//		case "address":
+	//			params = append(params, common.HexToAddress(param))
+	//		case "uint256":
+	//			i := new(big.Int)
+	//			i.SetString(strings.TrimPrefix(param, "0x"), 16)
+	//			params = append(params, i)
+	//		default:
+	//			params = append(params, param)
+	//		}
+	//	}
+	//}
+	//calldata, err := e.contractABI.Pack(e.contractMethod.Name, params...)
+	//if err != nil {
+	//	return "", errors.Wrap(err, "failed to pack by contract abi")
+	//}
 
-		case "projectId", "_projectId":
-			i := new(big.Int).SetUint64(task.ProjectID)
-			params = append(params, i)
-
-		case "receiver", "_receiver":
-			if e.receiverAddress == "" {
-				return "", errMissingReceiverParam
-			}
-			params = append(params, common.HexToAddress(e.receiverAddress))
-
-		case "data_snark", "_data_snark":
-			valueSeal := gjson.GetBytes(proof, "Snark.snark").String()
-			if valueSeal == "" {
-				return "", errSnarkProofDataMissingFieldSnark
-			}
-			valueDigest := gjson.GetBytes(proof, "Snark.post_state_digest").String()
-			if valueDigest == "" {
-				return "", errSnarkProofDataMissingFieldPostStateDigest
-			}
-			valueJournal := gjson.GetBytes(proof, "Snark.journal").String()
-			if valueJournal == "" {
-				return "", errSnarkProofDataMissingFieldJournal
-			}
-
-			abiBytes, err := abi.NewType("bytes", "", nil)
-			if err != nil {
-				return "", errors.Wrap(err, "new ethereum accounts abi pack failed")
-			}
-			args := abi.Arguments{
-				{Type: abiBytes, Name: "proof_snark_seal"},
-				{Type: abiBytes, Name: "proof_snark_post_state_digest"},
-				{Type: abiBytes, Name: "proof_snark_journal"},
-			}
-
-			packed, err := args.Pack([]byte(valueSeal), []byte(valueDigest), []byte(valueJournal))
-			if err != nil {
-				return "", errors.Wrap(err, "ethereum accounts abi pack failed")
-			}
-			params = append(params, packed)
-
-		default:
-			value := gjson.GetBytes(task.Data[0], a.Name)
-			param := value.String()
-			if param == "" {
-				return "", errors.Errorf("miss param %s for contract abi", a.Name)
-			}
-			switch a.Type.String() {
-			case "address":
-				params = append(params, common.HexToAddress(param))
-			case "uint256":
-				i := new(big.Int)
-				i.SetString(strings.TrimPrefix(param, "0x"), 16)
-				params = append(params, i)
-			default:
-				params = append(params, param)
-			}
-		}
-	}
-	calldata, err := e.contractABI.Pack(e.contractMethod.Name, params...)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to pack by contract abi")
-	}
-
-	txHash, err := e.sendTX(context.Background(), calldata)
+	txHash, err := e.sendTX(context.Background(), proof)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to send transaction")
 	}
