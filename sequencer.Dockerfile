@@ -13,13 +13,12 @@ COPY ./ ./
 
 RUN cd ./cmd/sequencer && CGO_ENABLED=1 CGO_LDFLAGS='-L./lib/linux-x86_64 -lioConnectCore' go build -ldflags "-s -w -extldflags '-static'" -o sequencer
 
-FROM --platform=linux/amd64 scratch AS runtime
+FROM --platform=linux/amd64 alpine:3.20 AS runtime
 
 ENV LANG en_US.UTF-8
 
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /etc/passwd /etc/passwd
+RUN apk add --no-cache ca-certificates tzdata
+
 COPY --from=builder /go/src/cmd/sequencer/sequencer /go/bin/sequencer
 EXPOSE 9000
 
