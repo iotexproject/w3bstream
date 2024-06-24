@@ -1,371 +1,757 @@
 package contract
 
-// import (
-// 	"container/list"
-// 	"errors"
-// 	"testing"
-// 	"time"
+import (
+	"encoding/binary"
+	"encoding/json"
+	"errors"
+	"testing"
+	"time"
 
-// 	"github.com/agiledragon/gomonkey/v2"
-// 	"github.com/ethereum/go-ethereum/common"
-// 	"github.com/ethereum/go-ethereum/ethclient"
-// 	"github.com/stretchr/testify/require"
+	"github.com/agiledragon/gomonkey/v2"
+	"github.com/cockroachdb/pebble"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stretchr/testify/require"
 
-// 	"github.com/machinefi/sprout/smartcontracts/go/project"
-// 	"github.com/machinefi/sprout/smartcontracts/go/prover"
-// )
+	"github.com/machinefi/sprout/smartcontracts/go/project"
+	"github.com/machinefi/sprout/smartcontracts/go/prover"
+)
 
-// func TestContract_Project(t *testing.T) {
-// 	r := require.New(t)
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+type mockCloser struct{}
 
-// 	bp := &blockProjects{}
-// 	p.ApplyPrivateMethod(bp, "project", func(uint64, uint64) *Project { return nil })
+func (m mockCloser) Close() error { return nil }
 
-// 	c := &Contract{
-// 		blockProjects: bp,
-// 	}
-// 	r.Nil(c.Project(0, 0))
-// }
+func TestContract_Project(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{
+		db: &pebble.DB{},
+	}
+	t.Run("FailedToGet", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// func TestContract_LatestProject(t *testing.T) {
-// 	r := require.New(t)
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 
-// 	bp := &blockProjects{}
-// 	p.ApplyPrivateMethod(bp, "project", func(uint64, uint64) *Project { return nil })
+		project := c.Project(0, 0)
+		r.Nil(project)
+	})
+	t.Run("FailedToUnmarshalBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 	c := &Contract{
-// 		blockProjects: bp,
-// 	}
-// 	r.Nil(c.LatestProject(0))
-// }
+		p.ApplyMethodReturn(c.db, "Get", []byte("data"), nil, nil)
+		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
 
-// func TestContract_LatestProjects(t *testing.T) {
-// 	r := require.New(t)
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+		project := c.Project(0, 0)
+		r.Nil(project)
+	})
+	t.Run("FailedToCloseResultOfBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 	bp := &blockProjects{}
-// 	p.ApplyPrivateMethod(bp, "projects", func() *blockProject {
-// 		return &blockProject{
-// 			Projects: map[uint64]*Project{1: {}},
-// 		}
-// 	})
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "Get", []byte("data"), mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
-// 	c := &Contract{
-// 		blockProjects: bp,
-// 	}
-// 	r.Equal(len(c.LatestProjects()), 1)
-// }
+		project := c.Project(0, 0)
+		r.Nil(project)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// func TestContract_Provers(t *testing.T) {
-// 	r := require.New(t)
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+		mc := mockCloser{}
+		bd := &block{
+			blockProject: blockProject{
+				Projects: map[uint64]*Project{},
+			},
+		}
+		j, err := json.Marshal(bd)
+		r.NoError(err)
+		p.ApplyMethodReturn(c.db, "Get", j, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(mc, "Close", nil)
 
-// 	bp := &blockProvers{}
-// 	p.ApplyPrivateMethod(bp, "provers", func(blockNumber uint64) *blockProver {
-// 		return &blockProver{
-// 			Provers: map[uint64]*Prover{1: {}},
-// 		}
-// 	})
+		project := c.Project(0, 0)
+		r.Nil(project)
+	})
+}
 
-// 	c := &Contract{
-// 		blockProvers: bp,
-// 	}
-// 	r.Equal(len(c.Provers(0)), 1)
-// }
+func TestContract_LatestProject(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{}
+	t.Run("ProjectNotExist", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// func TestContract_LatestProvers(t *testing.T) {
-// 	r := require.New(t)
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+		p.ApplyPrivateMethod(c, "latestProjects", func() *blockProject { return nil })
 
-// 	bp := &blockProvers{}
-// 	p.ApplyPrivateMethod(bp, "provers", func(blockNumber uint64) *blockProver {
-// 		return &blockProver{
-// 			Provers: map[uint64]*Prover{1: {}},
-// 		}
-// 	})
+		project := c.LatestProject(0)
+		r.Nil(project)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 	c := &Contract{
-// 		blockProvers: bp,
-// 	}
-// 	r.Equal(len(c.LatestProvers()), 1)
-// }
+		p.ApplyPrivateMethod(c, "latestProjects", func() *blockProject { return &blockProject{} })
 
-// func TestContract_Prover(t *testing.T) {
-// 	r := require.New(t)
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+		project := c.LatestProject(0)
+		r.Nil(project)
+	})
+}
 
-// 	bp := &blockProvers{}
-// 	p.ApplyPrivateMethod(bp, "prover", func(common.Address) *Prover { return nil })
+func TestContract_LatestProjects(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{}
+	t.Run("ProjectsNotExist", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 	c := &Contract{
-// 		blockProvers: bp,
-// 	}
-// 	r.Nil(c.Prover(common.Address{}))
-// }
+		p.ApplyPrivateMethod(c, "latestProjects", func() *blockProject { return nil })
 
-// func TestContract_notifyProject(t *testing.T) {
-// 	r := require.New(t)
+		projects := c.LatestProjects()
+		r.Nil(projects)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 	n := make(chan *Project, 10)
-// 	c := &Contract{
-// 		projectNotifications: []chan<- *Project{n},
-// 	}
-// 	c.notifyProject(&blockProject{
-// 		Projects: map[uint64]*Project{1: {}},
-// 	})
-// 	p := <-n
-// 	r.Equal(uint64(0), p.ID)
-// }
+		p.ApplyPrivateMethod(c, "latestProjects", func() *blockProject { return &blockProject{} })
 
-// func TestContract_notifyChainHead(t *testing.T) {
-// 	r := require.New(t)
+		projects := c.LatestProjects()
+		r.Equal(len(projects), 0)
+	})
+}
 
-// 	n := make(chan uint64, 10)
-// 	c := &Contract{
-// 		chainHeadNotifications: []chan<- uint64{n},
-// 	}
-// 	c.notifyChainHead(1)
-// 	p := <-n
-// 	r.Equal(uint64(1), p)
-// }
+func TestContract_latestProjects(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{
+		db: &pebble.DB{},
+	}
+	numberBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(numberBytes, 10)
+	t.Run("FailedToGetChainHeadData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// func TestContract_addBlockProject(t *testing.T) {
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, errors.New(t.Name()))
 
-// 	bp := &blockProjects{}
-// 	c := &Contract{
-// 		blockProjects: bp,
-// 	}
-// 	p.ApplyPrivateMethod(bp, "add", func(*blockProject) {})
-// 	p.ApplyPrivateMethod(c, "notifyProject", func(*blockProject) {})
-// 	c.addBlockProject(nil)
-// }
+		projects := c.latestProjects()
+		r.Nil(projects)
+	})
+	t.Run("FailedToCloseResultOfChainHead", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// func TestContract_list(t *testing.T) {
-// 	r := require.New(t)
-// 	t.Run("FailedToListProject", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
-// 		c := &Contract{}
-// 		p.ApplyFuncReturn(listProject, nil, uint64(0), uint64(0), errors.New(t.Name()))
+		projects := c.latestProjects()
+		r.Nil(projects)
+	})
+	t.Run("FailedToCloseResultOfChainHead", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		_, err := c.list()
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToListProver", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodSeq(b, "Get", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{numberBytes, mc, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]byte{}, mc, pebble.ErrNotFound},
+				Times:  1,
+			},
+		})
 
-// 		c := &Contract{}
-// 		p.ApplyFuncReturn(listProject, nil, uint64(0), uint64(0), nil)
-// 		p.ApplyFuncReturn(listProver, nil, uint64(0), uint64(0), errors.New(t.Name()))
+		projects := c.latestProjects()
+		r.Nil(projects)
+	})
+	t.Run("FailedToUnmarshalBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		_, err := c.list()
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToFilterContractLogs", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
 
-// 		cli := &ethclient.Client{}
-// 		c := &Contract{client: cli}
-// 		p.ApplyFuncReturn(listProject, nil, uint64(100), uint64(200), nil)
-// 		p.ApplyFuncReturn(listProver, nil, uint64(100), uint64(200), nil)
-// 		p.ApplyMethodReturn(cli, "FilterLogs", nil, errors.New(t.Name()))
+		projects := c.latestProjects()
+		r.Nil(projects)
+	})
+	t.Run("FailedToCloseResultOfBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		_, err := c.list()
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToProcessProjectLogs", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodSeq(mc, "Close", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{errors.New(t.Name())},
+				Times:  1,
+			},
+		})
 
-// 		cli := &ethclient.Client{}
-// 		c := &Contract{client: cli}
-// 		p.ApplyFuncReturn(listProject, nil, uint64(100), uint64(200), nil)
-// 		p.ApplyFuncReturn(listProver, nil, uint64(100), uint64(200), nil)
-// 		p.ApplyMethodReturn(cli, "FilterLogs", nil, nil)
-// 		p.ApplyFuncReturn(processProjectLogs, errors.New(t.Name()))
+		projects := c.latestProjects()
+		r.Nil(projects)
+	})
+	t.Run("FailedToCommitBatch", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		_, err := c.list()
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToProcessProverLogs", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(b, "Commit", errors.New(t.Name()))
 
-// 		cli := &ethclient.Client{}
-// 		c := &Contract{client: cli}
-// 		p.ApplyFuncReturn(listProject, nil, uint64(100), uint64(200), nil)
-// 		p.ApplyFuncReturn(listProver, nil, uint64(100), uint64(200), nil)
-// 		p.ApplyMethodReturn(cli, "FilterLogs", nil, nil)
-// 		p.ApplyFuncReturn(processProjectLogs, nil)
-// 		p.ApplyFuncReturn(processProverLogs, errors.New(t.Name()))
+		projects := c.latestProjects()
+		r.Nil(projects)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		_, err := c.list()
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("Success", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(b, "Commit", nil)
 
-// 		cli := &ethclient.Client{}
-// 		c := &Contract{
-// 			client: cli,
-// 			blockProjects: &blockProjects{
-// 				capacity: 10,
-// 				blocks:   list.New(),
-// 			},
-// 			blockProvers: &blockProvers{
-// 				capacity: 10,
-// 				blocks:   list.New(),
-// 			},
-// 		}
-// 		p.ApplyFuncReturn(listProject, nil, uint64(100), uint64(200), nil)
-// 		p.ApplyFuncReturn(listProver, nil, uint64(100), uint64(200), nil)
-// 		p.ApplyMethodReturn(cli, "FilterLogs", nil, nil)
+		projects := c.latestProjects()
+		r.NotNil(projects)
+	})
+}
 
-// 		_, err := c.list()
-// 		r.NoError(err)
-// 	})
-// }
+func TestContract_Provers(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{
+		db: &pebble.DB{},
+	}
+	t.Run("FailedToGet", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// func TestContract_watch(t *testing.T) {
-// 	r := require.New(t)
-// 	p := gomonkey.NewPatches()
-// 	defer p.Reset()
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 
-// 	ct := make(chan time.Time, 10)
-// 	ticker := &time.Ticker{
-// 		C: ct,
-// 	}
+		prover := c.Provers(0)
+		r.Nil(prover)
+	})
+	t.Run("FailedToUnmarshalBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 	cli := &ethclient.Client{}
-// 	head := make(chan uint64, 10)
-// 	c := &Contract{
-// 		client: cli,
-// 		blockProjects: &blockProjects{
-// 			capacity: 10,
-// 			blocks:   list.New(),
-// 		},
-// 		blockProvers: &blockProvers{
-// 			capacity: 10,
-// 			blocks:   list.New(),
-// 		},
-// 		chainHeadNotifications: []chan<- uint64{head},
-// 	}
-// 	p.ApplyFuncReturn(time.NewTicker, ticker)
-// 	p.ApplyMethodSeq(cli, "FilterLogs", []gomonkey.OutputCell{
-// 		{
-// 			Values: gomonkey.Params{nil, errors.New(t.Name())},
-// 			Times:  1,
-// 		},
-// 		{
-// 			Values: gomonkey.Params{nil, nil},
-// 			Times:  3,
-// 		},
-// 	})
-// 	p.ApplyFuncSeq(processProjectLogs, []gomonkey.OutputCell{
-// 		{
-// 			Values: gomonkey.Params{errors.New(t.Name())},
-// 			Times:  1,
-// 		},
-// 		{
-// 			Values: gomonkey.Params{nil},
-// 			Times:  2,
-// 		},
-// 	})
-// 	p.ApplyFuncSeq(processProverLogs, []gomonkey.OutputCell{
-// 		{
-// 			Values: gomonkey.Params{errors.New(t.Name())},
-// 			Times:  1,
-// 		},
-// 		{
-// 			Values: gomonkey.Params{nil},
-// 			Times:  1,
-// 		},
-// 	})
-// 	for i := 0; i < 4; i++ {
-// 		ct <- time.Now()
-// 	}
-// 	close(ct)
-// 	c.watch(0)
-// 	res := <-head
-// 	r.Equal(uint64(1), res)
-// }
+		p.ApplyMethodReturn(c.db, "Get", []byte("data"), nil, nil)
+		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
 
-// func TestNew(t *testing.T) {
-// 	r := require.New(t)
-// 	t.Run("FailedToDialChainEndpoint", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		prover := c.Provers(0)
+		r.Nil(prover)
+	})
+	t.Run("FailedToCloseResultOfBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "Get", []byte("data"), mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
-// 		addr := common.Address{}
-// 		_, err := New(1, "", addr, addr, addr, addr, nil, nil)
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToNewProjectContractInstance", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		prover := c.Provers(0)
+		r.Nil(prover)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-// 		p.ApplyFuncReturn(project.NewProject, nil, errors.New(t.Name()))
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "Get", []byte("data"), mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
 
-// 		addr := common.Address{}
-// 		_, err := New(1, "", addr, addr, addr, addr, nil, nil)
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToNewProverContractInstance", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		prover := c.Provers(0)
+		r.NotNil(prover)
+	})
+}
 
-// 		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-// 		p.ApplyFuncReturn(project.NewProject, nil, nil)
-// 		p.ApplyFuncReturn(prover.NewProver, nil, errors.New(t.Name()))
+func TestContract_LatestProvers(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{
+		db: &pebble.DB{},
+	}
+	t.Run("ProversNotExist", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		addr := common.Address{}
-// 		_, err := New(1, "", addr, addr, addr, addr, nil, nil)
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("FailedToList", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		p.ApplyPrivateMethod(c, "latestProvers", func() *blockProver { return nil })
 
-// 		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-// 		p.ApplyFuncReturn(project.NewProject, nil, nil)
-// 		p.ApplyFuncReturn(prover.NewProver, nil, nil)
-// 		p.ApplyPrivateMethod(&Contract{}, "list", func() (uint64, error) { return 0, errors.New(t.Name()) })
+		provers := c.LatestProvers()
+		r.Nil(provers)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		addr := common.Address{}
-// 		_, err := New(1, "", addr, addr, addr, addr, nil, nil)
-// 		r.ErrorContains(err, t.Name())
-// 	})
-// 	t.Run("Success", func(t *testing.T) {
-// 		p := gomonkey.NewPatches()
-// 		defer p.Reset()
+		bp := &blockProver{Provers: map[uint64]*Prover{1: {OperatorAddress: common.Address{}}}}
+		p.ApplyPrivateMethod(c, "latestProvers", func() *blockProver { return bp })
 
-// 		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
-// 		p.ApplyFuncReturn(project.NewProject, nil, nil)
-// 		p.ApplyFuncReturn(prover.NewProver, nil, nil)
-// 		p.ApplyPrivateMethod(&Contract{}, "list", func() (uint64, error) { return 0, nil })
-// 		p.ApplyPrivateMethod(&Contract{}, "watch", func(uint64) {})
+		provers := c.LatestProvers()
+		r.NotNil(provers)
+		r.Equal(len(provers), 1)
+	})
+}
 
-// 		addr := common.Address{}
-// 		_, err := New(1, "", addr, addr, addr, addr, nil, nil)
-// 		time.Sleep(10 * time.Millisecond)
+func TestContract_Prover(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{
+		db: &pebble.DB{},
+	}
+	t.Run("ProversNotExist", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
 
-// 		r.NoError(err)
-// 	})
-// }
+		p.ApplyPrivateMethod(c, "latestProvers", func() *blockProver { return nil })
+
+		prover := c.Prover(common.Address{})
+		r.Nil(prover)
+	})
+	t.Run("ProversNotFound", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		bp := &blockProver{Provers: map[uint64]*Prover{}}
+		p.ApplyPrivateMethod(c, "latestProvers", func() *blockProver { return bp })
+
+		prover := c.Prover(common.Address{})
+		r.Nil(prover)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		bp := &blockProver{Provers: map[uint64]*Prover{1: {OperatorAddress: common.Address{}}}}
+		p.ApplyPrivateMethod(c, "latestProvers", func() *blockProver { return bp })
+
+		prover := c.Prover(common.Address{})
+		r.NotNil(prover)
+	})
+}
+
+func TestContract_latestProvers(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{
+		db: &pebble.DB{},
+	}
+	numberBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(numberBytes, 10)
+	t.Run("FailedToGetChainHeadData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, errors.New(t.Name()))
+
+		provers := c.latestProvers()
+		r.Nil(provers)
+	})
+	t.Run("FailedToCloseResultOfChainHead", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
+
+		provers := c.latestProvers()
+		r.Nil(provers)
+	})
+	t.Run("FailedToCloseResultOfChainHead", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodSeq(b, "Get", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{numberBytes, mc, nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{[]byte{}, mc, pebble.ErrNotFound},
+				Times:  1,
+			},
+		})
+
+		provers := c.latestProvers()
+		r.Nil(provers)
+	})
+	t.Run("FailedToUnmarshalBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+
+		provers := c.latestProvers()
+		r.Nil(provers)
+	})
+	t.Run("FailedToCloseResultOfBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodSeq(mc, "Close", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+
+		provers := c.latestProvers()
+		r.Nil(provers)
+	})
+	t.Run("FailedToCommitBatch", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(b, "Commit", errors.New(t.Name()))
+
+		provers := c.latestProvers()
+		r.Nil(provers)
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(b, "Commit", nil)
+
+		provers := c.latestProvers()
+		r.NotNil(provers)
+	})
+}
+
+func TestContract_notifyProject(t *testing.T) {
+	r := require.New(t)
+
+	n := make(chan uint64, 10)
+	c := &Contract{
+		projectNotifications: []chan<- uint64{n},
+	}
+	c.notifyProject(&blockProjectDiff{
+		diffs: map[uint64]*projectDiff{1: {id: 1}},
+	})
+	p := <-n
+	r.Equal(uint64(1), p)
+}
+
+func TestContract_notifyChainHead(t *testing.T) {
+	r := require.New(t)
+
+	n := make(chan uint64, 10)
+	c := &Contract{
+		chainHeadNotifications: []chan<- uint64{n},
+	}
+	c.notifyChainHead(1)
+	p := <-n
+	r.Equal(uint64(1), p)
+}
+
+func TestContract_updateDB(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{
+		db: &pebble.DB{},
+	}
+	numberBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(numberBytes, 10)
+	t.Run("FailedToGet", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, errors.New(t.Name()))
+
+		err := c.updateDB(0, nil, nil)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToUnmarshalBlockData", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+
+		err := c.updateDB(0, nil, nil)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToCloseResultOfPreBlock", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		mc := mockCloser{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
+
+		err := c.updateDB(0, nil, nil)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToMarshal", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyFuncReturn(json.Marshal, nil, errors.New(t.Name()))
+
+		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToBatchSet", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyMethodReturn(b, "Set", errors.New(t.Name()))
+
+		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToBatchSet2", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyMethodSeq(b, "Set", []gomonkey.OutputCell{
+			{
+				Values: gomonkey.Params{nil},
+				Times:  1,
+			},
+			{
+				Values: gomonkey.Params{errors.New(t.Name())},
+				Times:  1,
+			},
+		})
+
+		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToBatchDel", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyMethodReturn(b, "Set", nil)
+		p.ApplyMethodReturn(b, "Delete", errors.New(t.Name()))
+
+		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToBatchCommit", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyMethodReturn(b, "Set", nil)
+		p.ApplyMethodReturn(b, "Delete", nil)
+		p.ApplyMethodReturn(b, "Commit", errors.New(t.Name()))
+
+		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		b := &pebble.Batch{}
+		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
+		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyMethodReturn(b, "Set", nil)
+		p.ApplyMethodReturn(b, "Delete", nil)
+		p.ApplyMethodReturn(b, "Commit", nil)
+
+		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
+		r.NoError(err)
+	})
+}
+
+func TestContract_processLogs(t *testing.T) {
+	r := require.New(t)
+	c := &Contract{
+		db: &pebble.DB{},
+	}
+	t.Run("FailedToProcessProjectLogs", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyPrivateMethod(c, "processProjectLogs", func([]types.Log) (map[uint64]*blockProjectDiff, error) { return nil, errors.New(t.Name()) })
+
+		err := c.processLogs(0, 0, []types.Log{}, true)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToProcessProverLogs", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyPrivateMethod(c, "processProjectLogs", func([]types.Log) (map[uint64]*blockProjectDiff, error) { return nil, nil })
+		p.ApplyPrivateMethod(c, "processProverLogs", func([]types.Log) (map[uint64]*blockProverDiff, error) { return nil, errors.New(t.Name()) })
+
+		err := c.processLogs(0, 0, []types.Log{}, true)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToUpdateDB", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyPrivateMethod(c, "processProjectLogs", func([]types.Log) (map[uint64]*blockProjectDiff, error) {
+			return map[uint64]*blockProjectDiff{0: {}}, nil
+		})
+		p.ApplyPrivateMethod(c, "processProverLogs", func([]types.Log) (map[uint64]*blockProverDiff, error) { return map[uint64]*blockProverDiff{}, nil })
+		p.ApplyPrivateMethod(c, "updateDB", func(uint64, *blockProjectDiff, *blockProverDiff) error { return errors.New(t.Name()) })
+
+		err := c.processLogs(0, 0, []types.Log{}, true)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyPrivateMethod(c, "processProjectLogs", func([]types.Log) (map[uint64]*blockProjectDiff, error) {
+			return map[uint64]*blockProjectDiff{0: {}}, nil
+		})
+		p.ApplyPrivateMethod(c, "processProverLogs", func([]types.Log) (map[uint64]*blockProverDiff, error) { return map[uint64]*blockProverDiff{}, nil })
+		p.ApplyPrivateMethod(c, "updateDB", func(uint64, *blockProjectDiff, *blockProverDiff) error { return nil })
+		p.ApplyPrivateMethod(c, "notifyProject", func(*blockProjectDiff) {})
+
+		err := c.processLogs(0, 0, []types.Log{}, true)
+		r.NoError(err)
+	})
+}
+
+func TestNew(t *testing.T) {
+	r := require.New(t)
+	t.Run("FailedToDialChainEndpoint", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(ethclient.Dial, nil, errors.New(t.Name()))
+
+		addr := common.Address{}
+		_, err := New(nil, 1, 0, "", addr, addr, nil, nil)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToNewProjectContractInstance", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
+		p.ApplyFuncReturn(project.NewProject, nil, errors.New(t.Name()))
+
+		addr := common.Address{}
+		_, err := New(nil, 1, 0, "", addr, addr, nil, nil)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToNewProverContractInstance", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
+		p.ApplyFuncReturn(project.NewProject, nil, nil)
+		p.ApplyFuncReturn(prover.NewProver, nil, errors.New(t.Name()))
+
+		addr := common.Address{}
+		_, err := New(nil, 1, 0, "", addr, addr, nil, nil)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToList", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
+		p.ApplyFuncReturn(project.NewProject, nil, nil)
+		p.ApplyFuncReturn(prover.NewProver, nil, nil)
+		p.ApplyPrivateMethod(&Contract{}, "list", func() (uint64, error) { return 0, errors.New(t.Name()) })
+
+		addr := common.Address{}
+		_, err := New(nil, 1, 0, "", addr, addr, nil, nil)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("Success", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyFuncReturn(ethclient.Dial, nil, nil)
+		p.ApplyFuncReturn(project.NewProject, nil, nil)
+		p.ApplyFuncReturn(prover.NewProver, nil, nil)
+		p.ApplyPrivateMethod(&Contract{}, "list", func() (uint64, error) { return 0, nil })
+		p.ApplyPrivateMethod(&Contract{}, "watch", func(uint64) {})
+
+		addr := common.Address{}
+		_, err := New(nil, 1, 0, "", addr, addr, nil, nil)
+		time.Sleep(10 * time.Millisecond)
+
+		r.NoError(err)
+	})
+}
