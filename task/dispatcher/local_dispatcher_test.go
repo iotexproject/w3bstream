@@ -20,7 +20,7 @@ func TestNewLocal(t *testing.T) {
 
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 
-		_, err := NewLocal(&mockPersistence{}, nil, nil, "", "", "", "", []byte(""), 0)
+		_, err := NewLocal(&mockPersistence{}, nil, nil, "", "", "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToGetProject", func(t *testing.T) {
@@ -31,7 +31,7 @@ func TestNewLocal(t *testing.T) {
 		p.ApplyMethodReturn(pm, "Project", nil, errors.New(t.Name()))
 		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 
-		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", []byte(""), 0)
+		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToAddPubSubs", func(t *testing.T) {
@@ -43,7 +43,7 @@ func TestNewLocal(t *testing.T) {
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 		p.ApplyMethodReturn(pm, "Project", nil, nil)
 
-		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", []byte(""), 0)
+		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToNewProjectDispatch", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestNewLocal(t *testing.T) {
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
 
-		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", []byte(""), 0)
+		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
@@ -73,7 +73,7 @@ func TestNewLocal(t *testing.T) {
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
 		p.ApplyPrivateMethod(w, "setSize", func(uint64) {})
 
-		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", []byte(""), 0)
+		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", "", []byte(""), 0)
 		r.NoError(err)
 	})
 }

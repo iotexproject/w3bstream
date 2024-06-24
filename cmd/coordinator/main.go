@@ -80,12 +80,12 @@ func main() {
 	var taskDispatcher *dispatcher.Dispatcher
 	if local {
 		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI,
-			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.BootNodeMultiAddr, sequencerPubKey, conf.IoTeXChainID)
+			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.BootNodeMultiAddr, conf.ContractWhitelist, sequencerPubKey, conf.IoTeXChainID)
 	} else {
 		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
 
 		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI, conf.BootNodeMultiAddr,
-			conf.OperatorPriKey, conf.OperatorPriKeyED25519, sequencerPubKey, conf.IoTeXChainID,
+			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.ContractWhitelist, sequencerPubKey, conf.IoTeXChainID,
 			dispatcherNotification, chainHeadNotification, contractPersistence, projectOffsets)
 	}
 	if err != nil {

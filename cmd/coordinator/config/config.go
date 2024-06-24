@@ -26,6 +26,7 @@ type Config struct {
 	BeginningBlockNumber  uint64 `env:"BEGINNING_BLOCK_NUMBER,optional"`
 	LogLevel              int    `env:"LOG_LEVEL,optional"`
 	SequencerPubKey       string `env:"SEQUENCER_PUBKEY,optional"`
+	ContractWhitelist     string `env:"CONTRACT_WHITELIST,optional"`
 	env                   string `env:"-"`
 }
 
@@ -46,6 +47,7 @@ var (
 		LocalDBDir:           "./local_db",
 		SchedulerEpoch:       720,
 		BeginningBlockNumber: 20000000,
+		ContractWhitelist:    "0x1AA325E5144f763a520867c56FC77cC1411430d0,0xC9D7D9f25b98119DF5b2303ac0Df6b15C982BbF5",
 	}
 	// local debug default config for coordinator; all config elements come from docker-compose-dev.yaml in root of project
 	defaultDebugConfig = &Config{
@@ -57,6 +59,7 @@ var (
 		IPFSEndpoint:         "ipfs.mainnet.iotex.io",
 		SequencerPubKey:      "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
 		LogLevel:             int(slog.LevelDebug),
+		ContractWhitelist:    "0x1AA325E5144f763a520867c56FC77cC1411430d0,0xC9D7D9f25b98119DF5b2303ac0Df6b15C982BbF5",
 	}
 	// integration default config for coordinator; all config elements come from Makefile in `integration_test` entry
 	defaultTestConfig = &Config{

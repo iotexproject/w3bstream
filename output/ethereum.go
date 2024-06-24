@@ -26,16 +26,27 @@ var (
 )
 
 type ethereumContract struct {
-	client          *ethclient.Client
-	contractAddress common.Address
-	receiverAddress string
-	secretKey       *ecdsa.PrivateKey
-	signer          ethtypes.Signer
-	contractABI     abi.ABI
-	contractMethod  abi.Method
+	client            *ethclient.Client
+	contractAddress   common.Address
+	receiverAddress   string
+	secretKey         *ecdsa.PrivateKey
+	signer            ethtypes.Signer
+	contractABI       abi.ABI
+	contractMethod    abi.Method
+	contractWhitelist []string
 }
 
 func (e *ethereumContract) Output(task *task.Task, proof []byte) (string, error) {
+
+	if e.isWhitelist() {
+		txHash, err := e.sendTX(context.Background(), proof)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to send transaction")
+		}
+
+		return txHash, nil
+	}
+
 	params := []interface{}{}
 	for _, a := range e.contractMethod.Inputs {
 		switch a.Name {
@@ -154,7 +165,15 @@ func (e *ethereumContract) sendTX(ctx context.Context, data []byte) (string, err
 	return signedTx.Hash().Hex(), nil
 }
 
-func newEthereum(conf EthereumConfig, secretKey string) (*ethereumContract, error) {
+func (e *ethereumContract) isWhitelist() bool {
+	for _, address := range e.contractWhitelist {
+		if strings.ToLower(e.contractAddress.String()) == strings.ToLower(address) {
+			return true
+		}
+	}
+	return false
+}
+func newEthereum(conf EthereumConfig, secretKey string, contractWhitelist string) (*ethereumContract, error) {
 	if secretKey == "" {
 		return nil, errors.New("secret key is empty")
 	}
@@ -175,12 +194,13 @@ func newEthereum(conf EthereumConfig, secretKey string) (*ethereumContract, erro
 		return nil, errors.Wrap(err, "failed to get chain id")
 	}
 	return &ethereumContract{
-		client:          client,
-		secretKey:       crypto.ToECDSAUnsafe(common.FromHex(secretKey)),
-		signer:          ethtypes.NewLondonSigner(chainID),
-		contractAddress: common.HexToAddress(conf.ContractAddress),
-		receiverAddress: conf.ReceiverAddress,
-		contractABI:     contractABI,
-		contractMethod:  method,
+		client:            client,
+		secretKey:         crypto.ToECDSAUnsafe(common.FromHex(secretKey)),
+		signer:            ethtypes.NewLondonSigner(chainID),
+		contractAddress:   common.HexToAddress(conf.ContractAddress),
+		receiverAddress:   conf.ReceiverAddress,
+		contractABI:       contractABI,
+		contractMethod:    method,
+		contractWhitelist: strings.Split(contractWhitelist, ","),
 	}, nil
 }
