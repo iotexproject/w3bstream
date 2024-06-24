@@ -15,6 +15,7 @@ type taskStateHandler struct {
 	projectManager            ProjectManager
 	operatorPrivateKeyECDSA   string
 	operatorPrivateKeyED25519 string
+	contractWhitelist         string
 }
 
 func (h *taskStateHandler) handle(dispatchedTime time.Time, s *task.StateLog, t *task.Task) (finished bool) {
@@ -62,7 +63,7 @@ func (h *taskStateHandler) handle(dispatchedTime time.Time, s *task.StateLog, t 
 		return
 	}
 
-	output, err := output.New(&c.Output, h.operatorPrivateKeyECDSA, h.operatorPrivateKeyED25519)
+	output, err := output.New(&c.Output, h.operatorPrivateKeyECDSA, h.operatorPrivateKeyED25519, h.contractWhitelist)
 	if err != nil {
 		slog.Error("failed to init output", "error", err, "project_id", t.ProjectID)
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)
@@ -115,12 +116,14 @@ func (h *taskStateHandler) handle(dispatchedTime time.Time, s *task.StateLog, t 
 	return true
 }
 
-func newTaskStateHandler(persistence Persistence, contract Contract, projectManager ProjectManager, operatorPrivateKeyECDSA, operatorPrivateKeyED25519 string) *taskStateHandler {
+func newTaskStateHandler(persistence Persistence, contract Contract, projectManager ProjectManager,
+	operatorPrivateKeyECDSA, operatorPrivateKeyED25519, contractWhitelist string) *taskStateHandler {
 	return &taskStateHandler{
 		contract:                  contract,
 		persistence:               persistence,
 		projectManager:            projectManager,
 		operatorPrivateKeyECDSA:   operatorPrivateKeyECDSA,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
+		contractWhitelist:         contractWhitelist,
 	}
 }

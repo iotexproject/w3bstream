@@ -186,12 +186,12 @@ func (d *Dispatcher) Run() {
 }
 
 func New(persistence Persistence, newDatasource NewDatasource,
-	projectManager ProjectManager, defaultDatasourceURI, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519 string,
+	projectManager ProjectManager, defaultDatasourceURI, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519, contractWhitelist string,
 	sequencerPubKey []byte, iotexChainID int, projectNotification <-chan uint64, chainHeadNotification <-chan uint64,
 	contract Contract, projectOffsets *scheduler.ProjectEpochOffsets) (*Dispatcher, error) {
 
 	projectDispatchers := &sync.Map{}
-	taskStateHandler := newTaskStateHandler(persistence, contract, projectManager, operatorPrivateKey, operatorPrivateKeyED25519)
+	taskStateHandler := newTaskStateHandler(persistence, contract, projectManager, operatorPrivateKey, operatorPrivateKeyED25519, contractWhitelist)
 	d := &Dispatcher{
 		local:                     false,
 		persistence:               persistence,

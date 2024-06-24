@@ -11,11 +11,11 @@ import (
 )
 
 func NewLocal(persistence Persistence, newDatasource NewDatasource,
-	projectManager ProjectManager, defaultDatasourceURI, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr string,
+	projectManager ProjectManager, defaultDatasourceURI, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr, contractWhitelist string,
 	sequencerPubKey []byte, iotexChainID int) (*Dispatcher, error) {
 
 	projectDispatchers := &sync.Map{}
-	taskStateHandler := newTaskStateHandler(persistence, nil, projectManager, operatorPrivateKey, operatorPrivateKeyED25519)
+	taskStateHandler := newTaskStateHandler(persistence, nil, projectManager, operatorPrivateKey, operatorPrivateKeyED25519, contractWhitelist)
 	d := &Dispatcher{
 		local:              true,
 		projectDispatchers: projectDispatchers,

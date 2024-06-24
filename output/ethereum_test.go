@@ -68,7 +68,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 
 			conf.Ethereum.ContractAbiJSON = testABIProofInputOnlyMethod
-			o, err := New(conf, "1", "")
+			o, err := New(conf, "1", "", "")
 			r.NoError(err)
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
@@ -87,7 +87,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 
 			conf.Ethereum.ContractAbiJSON = testABIProjectInputOnlyMethod
-			o, err := New(conf, "1", "")
+			o, err := New(conf, "1", "", "")
 			r.NoError(err)
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
@@ -106,7 +106,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 
 			conf.Ethereum.ContractAbiJSON = testABIReceiverInputOnlyMethod
-			o, err := New(conf, "1", "")
+			o, err := New(conf, "1", "", "")
 			r.NoError(err)
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
@@ -118,7 +118,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			})
 
 			conf.Ethereum.ReceiverAddress = "0x"
-			o, err = New(conf, "1", "")
+			o, err = New(conf, "1", "", "")
 			r.NoError(err)
 			_, ok = o.(*ethereumContract)
 			r.True(ok)
@@ -139,7 +139,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 
 			conf.Ethereum.ContractAbiJSON = testABIDataSnarkInputOnlyMethod
-			o, err := New(conf, "1", "")
+			o, err := New(conf, "1", "", "")
 			r.NoError(err)
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
@@ -174,7 +174,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 			t.Run("MissingMethodNameParam", func(t *testing.T) {
 				conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod
-				o, err := New(conf, "1", "")
+				o, err := New(conf, "1", "", "")
 				r.NoError(err)
 				_, ok := o.(*ethereumContract)
 				r.True(ok)
@@ -190,7 +190,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			t.Run("BuildParamsByType", func(t *testing.T) {
 				t.Run("Address", func(t *testing.T) {
 					conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod_address
-					o, err := New(conf, "1", "")
+					o, err := New(conf, "1", "", "")
 					r.NoError(err)
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
@@ -204,7 +204,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				})
 				t.Run("Uint256", func(t *testing.T) {
 					conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod_uint256
-					o, err := New(conf, "1", "")
+					o, err := New(conf, "1", "", "")
 					r.NoError(err)
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
@@ -218,7 +218,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				})
 				t.Run("Other", func(t *testing.T) {
 					conf.Ethereum.ContractAbiJSON = testABIOtherInputOnlyMethod
-					o, err := New(conf, "1", "")
+					o, err := New(conf, "1", "", "")
 					r.NoError(err)
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
@@ -244,7 +244,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, errors.New(t.Name()))
 
 			conf.Ethereum.ContractAbiJSON = testABIProofInputOnlyMethod
-			o, err := New(conf, "1", "")
+			o, err := New(conf, "1", "", "")
 			r.NoError(err)
 
 			txHash, err := o.Output(&task.Task{
@@ -267,7 +267,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 			p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, errors.New(t.Name()))
 
-			o, err := New(conf, "1", "")
+			o, err := New(conf, "1", "", "")
 			r.NoError(err)
 
 			txHash, err := o.Output(&task.Task{
@@ -289,7 +289,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 		p.ApplyMethodReturn(&ethclient.Client{}, "ChainID", nil, nil)
 		p.ApplyMethodReturn(abi.ABI{}, "Pack", nil, nil)
 
-		o, err := New(conf, "1", "")
+		o, err := New(conf, "1", "", "")
 		r.NoError(err)
 
 		txHash, err := o.Output(&task.Task{
@@ -318,7 +318,7 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p.ApplyFuncReturn(common.HexToAddress, common.Address{})
 		p.ApplyMethodReturn(&ethclient.Client{}, "SuggestGasPrice", nil, errors.New(t.Name()))
 
-		o, err := New(conf, "1", "")
+		o, err := New(conf, "1", "", "")
 		r.NoError(err)
 		contract, ok := o.(*ethereumContract)
 		r.True(ok)
@@ -339,7 +339,7 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
 		p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", nil, errors.New(t.Name()))
 
-		o, err := New(conf, "1", "")
+		o, err := New(conf, "1", "", "")
 		r.NoError(err)
 		contract, ok := o.(*ethereumContract)
 		r.True(ok)
@@ -360,7 +360,7 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p.ApplyMethodReturn(&ethclient.Client{}, "PendingNonceAt", uint64(1), nil)
 		p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", nil, errors.New(t.Name()))
 
-		o, err := New(conf, "1", "")
+		o, err := New(conf, "1", "", "")
 		r.NoError(err)
 		contract, ok := o.(*ethereumContract)
 		r.True(ok)
@@ -382,7 +382,7 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p.ApplyMethodReturn(&ethclient.Client{}, "EstimateGas", uint64(1), nil)
 		p.ApplyFuncReturn(ethtypes.SignTx, nil, errors.New(t.Name()))
 
-		o, err := New(conf, "1", "")
+		o, err := New(conf, "1", "", "")
 		r.NoError(err)
 		contract, ok := o.(*ethereumContract)
 		r.True(ok)
@@ -405,7 +405,7 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p.ApplyFuncReturn(ethtypes.SignTx, nil, nil)
 		p.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", errors.New(t.Name()))
 
-		o, err := New(conf, "1", "")
+		o, err := New(conf, "1", "", "")
 		r.NoError(err)
 		contract, ok := o.(*ethereumContract)
 		r.True(ok)
@@ -429,7 +429,7 @@ func Test_ethereumContract_sendTX(t *testing.T) {
 		p.ApplyMethodReturn(&ethclient.Client{}, "SendTransaction", nil)
 		p.ApplyMethodReturn(&ethtypes.Transaction{}, "Hash", common.Hash{})
 
-		o, err := New(conf, "1", "")
+		o, err := New(conf, "1", "", "")
 		r.NoError(err)
 		contract, ok := o.(*ethereumContract)
 		r.True(ok)

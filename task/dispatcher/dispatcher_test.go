@@ -135,7 +135,7 @@ func TestNew(t *testing.T) {
 
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, errors.New(t.Name()))
 
-		_, err := New(&mockPersistence{}, nil, nil, "", "", "", "", []byte(""), 0, nil, nil, nil, nil)
+		_, err := New(&mockPersistence{}, nil, nil, "", "", "", "", "", []byte(""), 0, nil, nil, nil, nil)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
@@ -145,7 +145,7 @@ func TestNew(t *testing.T) {
 		p.ApplyFuncReturn(p2p.NewPubSubs, nil, nil)
 		p.ApplyFuncReturn(newTaskStateHandler, nil)
 
-		_, err := New(&mockPersistence{}, nil, nil, "", "", "", "", []byte(""), 0, nil, nil, nil, nil)
+		_, err := New(&mockPersistence{}, nil, nil, "", "", "", "", "", []byte(""), 0, nil, nil, nil, nil)
 		r.NoError(err)
 	})
 }

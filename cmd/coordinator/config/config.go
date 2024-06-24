@@ -26,6 +26,7 @@ type Config struct {
 	BeginningBlockNumber  uint64 `env:"BEGINNING_BLOCK_NUMBER,optional"`
 	LogLevel              int    `env:"LOG_LEVEL,optional"`
 	SequencerPubKey       string `env:"SEQUENCER_PUBKEY,optional"`
+	ContractWhitelist     string `env:"CONTRACT_WHITELIST,optional"`
 	env                   string `env:"-"`
 }
 

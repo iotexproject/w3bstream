@@ -40,10 +40,10 @@ type Output interface {
 	Output(task *task.Task, proof []byte) (string, error)
 }
 
-func New(conf *Config, privateKeyECDSA, privateKeyED25519 string) (Output, error) {
+func New(conf *Config, privateKeyECDSA, privateKeyED25519 string, contractWhitelist string) (Output, error) {
 	switch conf.Type {
 	case EthereumContract:
-		return newEthereum(conf.Ethereum, privateKeyECDSA)
+		return newEthereum(conf.Ethereum, privateKeyECDSA, contractWhitelist)
 	case SolanaProgram:
 		return newSolanaProgram(conf.Solana, privateKeyED25519)
 	case Textile:
