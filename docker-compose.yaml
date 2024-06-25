@@ -10,7 +10,7 @@ services:
       - "8000:8000"
 
   sequencer:
-    image: ghcr.io/machinefi/sequencer:v0.12.0
+    image: ghcr.io/machinefi/sequencer:v0.12.1
     depends_on:
       - "postgres"
       - "coordinator"
@@ -22,7 +22,7 @@ services:
     command: [ "-coordinatorAddress", "coordinator:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
 
   coordinator:
-    image: ghcr.io/machinefi/coordinator:v0.12.0
+    image: ghcr.io/machinefi/coordinator:v0.12.1
     depends_on:
       - "postgres"
       - "bootnode"
@@ -41,7 +41,7 @@ services:
       - ./test/project:/data
 
   prover:
-    image: ghcr.io/machinefi/prover:v0.12.0
+    image: ghcr.io/machinefi/prover:v0.12.1
     depends_on:
       - "risc0"
       - "halo2"
@@ -72,7 +72,7 @@ services:
     restart: always
 
   risc0:
-    image: wangweixiaohao2944/risc0server:v1.0.0.rc4
+    image: wangweixiaohao2944/risc0server:v1.0.0.rc6
     depends_on:
       - "postgres"
     container_name: risc0-service
@@ -84,7 +84,7 @@ services:
       BONSAI_KEY: "${BONSAI_KEY:-}"
 
   wasm:
-    image: wangweixiaohao2944/wasmserver:v0.0.1.rc0
+    image: wangweixiaohao2944/wasmserver:v0.1.0.rc0
     container_name: wasm-service
     platform: linux/x86_64
     restart: always
