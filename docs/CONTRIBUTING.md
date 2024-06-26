@@ -11,7 +11,7 @@ There are many ways to contribute to this project:
 1. **Code Contributions**: If you're looking to add or fix something in the codebase, please follow the steps outlined in the Getting started below.
 2. **Bug Reports**: If you find a bug, please open an issue using the **Bug Report** template..
 3. **Feature Suggestions**: Have ideas for new features? Open an issue using the **Feature Request** template.
-4. **Documentation**: Improvements or additions to our documentation are always welcome. We currently use GitBook for our documentation, and you can read it at [docs.iotex.io](https://docs.iotex.io). Just locat the "Edit this Page on GitHub" link on any page to start contributing.
+4. **Documentation**: Improvements or additions to our documentation are always welcome. We currently use GitBook for our documentation, and you can read it at [docs.iotex.io](https://docs.iotex.io). Just locate the "Edit this Page on GitHub" link on any page to start contributing.
 
 ## Getting Started
 
