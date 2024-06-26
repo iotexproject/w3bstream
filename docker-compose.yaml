@@ -66,7 +66,7 @@ services:
     restart: always
 
   zkwasm:
-    image: wangweixiaohao2944/zkwasmserver:v0.0.4
+    image: wangweixiaohao2944/zkwasmserver:v0.0.5
     container_name: zkwasm-service
     platform: linux/x86_64
     restart: always
@@ -84,7 +84,7 @@ services:
       BONSAI_KEY: "${BONSAI_KEY:-}"
 
   wasm:
-    image: wangweixiaohao2944/wasmserver:v0.1.0.rc0
+    image: wangweixiaohao2944/wasmserver:v0.1.0.rc1
     container_name: wasm-service
     platform: linux/x86_64
     restart: always
