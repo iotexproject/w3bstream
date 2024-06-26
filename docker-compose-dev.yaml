@@ -18,7 +18,7 @@ services:
       - 4002:4001
 
   zkwasm:
-    image: wangweixiaohao2944/zkwasmserver:v0.0.4
+    image: wangweixiaohao2944/zkwasmserver:v0.0.5
     container_name: zkwasm-service
     platform: linux/x86_64
     restart: always
@@ -40,7 +40,7 @@ services:
      - "4001:4001"
 
   wasm:
-    image: wangweixiaohao2944/wasmserver:v0.1.0.rc0
+    image: wangweixiaohao2944/wasmserver:v0.1.0.rc1
     container_name: wasm-service
     platform: linux/x86_64
     restart: always

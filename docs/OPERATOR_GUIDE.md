@@ -104,7 +104,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"projectID": 10001,"projec
 Send a message to a zkWasm-based test project (ID 10002):
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"projectID": 10002,"projectVersion": "0.1","data": "{\"private_input\": [1, 1] , \"public_input\": [] }"}' http://localhost:9000/message
+curl -X POST -H "Content-Type: application/json" -d '{"projectID": 10002,"projectVersion": "0.1","data": "{\"private_input\": [1, 1] , \"public_input\": [2] }"}' http://localhost:9000/message
 ```
 
 #### Query the status of a proof request

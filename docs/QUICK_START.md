@@ -27,7 +27,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"projectID": 92,"projectVe
 Send a message to a zkWasm-based test project (ID 93):
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"projectID": 93,"projectVersion": "0.1","data": "{\"private_input\": [1, 1] , \"public_input\": [] }"}' https://sprout-testnet.w3bstream.com/message
+curl -X POST -H "Content-Type: application/json" -d '{"projectID": 93,"projectVersion": "0.1","data": "{\"private_input\": [1, 1] , \"public_input\": [2] }"}' https://sprout-testnet.w3bstream.com/message
 ```
 
 ### Query the status of a proof request
