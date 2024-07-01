@@ -203,7 +203,7 @@ For convenience, you can set the encrypted request body as env var.
 export cipherdata= #output above
 ```
 
-Commit proof message and set
+Commit encrypted proof message with token
 
 ```bash
 curl -X POST -d $cipherdata \
