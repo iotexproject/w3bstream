@@ -124,8 +124,6 @@ git clone git@github.com:machinefi/ioconnect-go.git
 make targets && mv cmd/didctl __YOUR_SYSTEM_PATH__
 ```
 
-[More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
-
 ### fetch **sprout** service did document
 
 ```bash
