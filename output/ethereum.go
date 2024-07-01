@@ -57,6 +57,10 @@ func (e *ethereumContract) Output(task *task.Task, proof []byte) (string, error)
 			i := new(big.Int).SetUint64(task.ProjectID)
 			params = append(params, i)
 
+		case "taskId", "_taskId":
+			i := new(big.Int).SetUint64(task.ID)
+			params = append(params, i)
+
 		case "receiver", "_receiver":
 			if e.receiverAddress == "" {
 				return "", errMissingReceiverParam
