@@ -111,8 +111,8 @@ chain.
 
 For security purposes, **sprout** integrates ioID identity verification and
 DID-Comm message encryption features. Next, you can use the `didctl`
-command-line tool and bound client to simulate message encryption, allowing you
-to submit encrypted proof tasks.
+command-line tool to simulate message encryption, allowing you to submit
+encrypted proof tasks.
 
 > note: currently, `didctl` is an experimental tool and is only supported on
 > Linux. Adaptation for other os is still under development.
