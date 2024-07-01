@@ -92,6 +92,12 @@ func (p *Postgres) New(dsn string) (Datasource, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect postgres, dsn %s", dsn)
 	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get sql db")
+	}
+	sqlDB.SetMaxOpenConns(500)
+
 	d = &postgres{db}
 	p.ps[dsn] = d
 	return d, nil
