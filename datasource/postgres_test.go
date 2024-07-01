@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 
@@ -25,13 +26,28 @@ func TestNewPostgres(t *testing.T) {
 		r.Nil(datasource)
 		r.ErrorContains(err, t.Name())
 	})
+	t.Run("FailedToGetSQLDB", func(t *testing.T) {
+		p := NewPatches()
+		defer p.Reset()
+
+		d := &gorm.DB{}
+		testutil.GormOpen(p, d, nil)
+		p.ApplyMethodReturn(d, "DB", nil, errors.New(t.Name()))
+		pg := NewPostgres()
+		datasource, err := pg.New("any")
+		r.Nil(datasource)
+		r.ErrorContains(err, t.Name())
+	})
 	t.Run("Success", func(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
 		d := &gorm.DB{}
+		sd := &sql.DB{}
 
 		testutil.GormOpen(p, d, nil)
+		p.ApplyMethodReturn(d, "DB", sd, nil)
+		p.ApplyMethodReturn(sd, "SetMaxOpenConns")
 		pg := NewPostgres()
 		datasource, err := pg.New("any")
 		r.NotNil(datasource)
