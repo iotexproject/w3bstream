@@ -37,13 +37,15 @@ cd sprout
 
 >For more details on creating Halo2 circuits see the [Halo2 README](./examples/halo2-circuit/README.md).
 
+NOTE: If you want to develop your circuit, please refer [halo2 development documentation](https://zcash.github.io/halo2/user/simple-example.html)
+
 Install `wasm-pack`
 
 ```bash
 curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 ```
 
-Write your own circuit following the [halo2 development documentation](https://zcash.github.io/halo2/user/simple-example.html), place it in `src/circuits`, adapt the code corresponding to `TODO` lines in `src/lib.rs` and build the wasm prover with:
+build the wasm prover with:
 
 ```bash
 cd examples/halo2-circuit/
@@ -68,6 +70,8 @@ target/release/halo2-simple-circuit solidity -f path/filename.sol
 #### Create a W3bstream Project Using zkWASM
 
 For more details on zkWASM circuits see the [zkWASM README](./examples/zkwasm-circuit/README.md).
+
+NOTE: If you want to develop your circuit, please refer [zkwasm project bootstrap](https://github.com/DelphinusLab/zkWasm?tab=readme-ov-file#project-bootstrap)
 
 Ensure you have AssemblyScript installed:
 
@@ -98,6 +102,8 @@ ioctl ws project config -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID"
 #### Create a W3bstream Project Using RISC0
 
 More details and options for `Risc0 circuit` are given in [its README](./examples/risc0-circuit/README.md).
+
+NOTE: If you want to develop your circuit, please refer [more risc0 guest examples](https://github.com/risc0/risc0/tree/main/examples)
 
 Make sure you have cargo 1.72.0 or higher
 
