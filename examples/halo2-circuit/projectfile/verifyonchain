@@ -7,9 +7,10 @@
         "type": "ethereumContract",
         "ethereum": {
           "chainEndpoint": "https://babel-api.testnet.iotex.io",
-          "contractAddress": "0xDea7f9b692cb90a2DF1860189BcAc428500c44f1",
+          "contractAddress": "0x77be2D8760A89cf07bb49aFACA221799695A357e",
+          "receiverAddress": "0xDea7f9b692cb90a2DF1860189BcAc428500c44f1",
           "contractMethod": "verify",
-          "contractAbiJSON": "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"uint256ToFr\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"verifier\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"publicInput\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"projectID\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"taskID\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"verify\",\"outputs\":[],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+          "contractAbiJSON": "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_publicInput\",\"type\":\"uint256\"}],\"name\":\"setPublicInput\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPublicInput\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"uint256ToFr\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_verifier\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_projectID\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_taskID\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_proof\",\"type\":\"bytes\"}],\"name\":\"verify\",\"outputs\":[],\"stateMutability\":\"view\",\"type\":\"function\"}]"
         }
       },
       "version": "0.1",
