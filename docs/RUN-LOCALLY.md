@@ -21,9 +21,9 @@ docker compose version
 
 ## Create project config file
 after [build circuit](BUILD-CIRCUIT.md)
-- move `risc0-config.json` to `test/project, and then rename `risc0-config.json` to `20000`(`20000` is project id).  
-- move `halo2-config.json` to `test/project, and then rename `halo2-config.json` to `20001`(`20001` is project id).
-- move `zkwasm-config.json` to `test/project, and then rename `zkwasm-config.json` to `20002`(`20002` is project id).
+- move `risc0-config.json` to `test/project`, and then rename `risc0-config.json` to `20000` (`20000` is the project id).
+- move `halo2-config.json` to `test/project`, and then rename `halo2-config.json` to `20001` (`20001` is the project id).
+- move `zkwasm-config.json` to `test/project`, and then rename `zkwasm-config.json` to `20002` (`20002` is the project id).
 
 ## Configure W3bstream
 
@@ -41,7 +41,7 @@ export PRIVATE_KEY=${your private key}
 export BONSAI_KEY=${your bonsai key}
 ```
 
-3. Docker Compose will mount the current work directory under the `/data` volume. You can edit the file `docker-compose.yaml` to set `PROJECT_FILE_DIRECTORY` tp the appropriate path where the project configuration file (which includes the prover code) is stored.
+3. Docker Compose will mount the current work directory under the `/data` volume. You can edit the file `docker-compose.yaml` to set `PROJECT_FILE_DIRECTORY` to the appropriate path where the project configuration file (which includes the prover code) is stored.
 
 ## Running W3bstream
 
@@ -77,7 +77,7 @@ docker-compose down
 
 ## Send testing data to the W3bstream instance
 
-W3bstream projects are currently placed inside the folder `test/project`. Each project file name is a unique ID for the project. And each project file is composed of a JSON object definition that includes the binary code of the proover, vm type, and other parameters.
+W3bstream projects are currently placed inside the folder `test/project`. Each project file name is a unique ID for the project. And each project file is composed of a JSON object definition that includes the binary code of the prover, vm type, and other parameters.
 
 The following example sends a message to an example project deployed on the W3bstream instance that makes use of a RISC0 prover, which has project ID 20000, please change the project ID to yours if necessary:
 

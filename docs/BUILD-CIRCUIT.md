@@ -73,9 +73,9 @@ Or you can run `ioctl ws project config -t "halo2" -i "halo2_wasm_bg.wasm" -o "p
 ### Convert risc0 circuit to w3bstream project config
 
 ```bash
-ioctl ws project config -t "risc0" -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}
+ioctl ws project config -t "risc0" -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
 # if you need set datasource, you should add -s 
-ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable" -t "risc0" -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}
+ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable" -t "risc0" -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
 ```
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs`.
 
