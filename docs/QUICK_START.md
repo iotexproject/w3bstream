@@ -1,6 +1,8 @@
-## Interacting with W3bstream
+# Interacting with W3bstream
 
-### Prerequisites
+---
+
+## Prerequisites
 
 - jq:
   [installation instructions →](https://jqlang.github.io/jq/)
@@ -8,31 +10,46 @@
 - curl:
   [installation instructions →](https://curl.se/)
 
-### Send messages use curl
+## Send messages use curl
+
+We have created preset test projects for three types of zero-knowledge proof vm
+(`risc0`, `halo2` and `zkWASM`). You can interact with the **sprout**
+service by _task submitting_ and _task querying_ APIs to commit proof task and
+retrieve task proof status.
 
 Examples of sending messages to pre-created projects:
 
 Send a message to a RISC0-based test project (ID 91):
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"projectID": 91,"projectVersion": "0.1","data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"}' https://sprout-testnet.w3bstream.com/message
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"projectID": 91,"projectVersion": "0.1","data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"}'\
+  https://sprout-testnet.w3bstream.com/message
 ```
 
 Send a message to the Halo2-based test project (ID 92):
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"projectID": 92,"projectVersion": "0.1","data": "{\"private_a\": 3, \"private_b\": 4}"}' https://sprout-testnet.w3bstream.com/message
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"projectID": 92,"projectVersion": "0.1","data": "{\"private_a\": 3, \"private_b\": 4}"}' \
+  https://sprout-testnet.w3bstream.com/message
 ```
 
 Send a message to a zkWasm-based test project (ID 93):
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"projectID": 93,"projectVersion": "0.1","data": "{\"private_input\": [1, 1] , \"public_input\": [2] }"}' https://sprout-testnet.w3bstream.com/message
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"projectID": 93,"projectVersion": "0.1","data": "{\"private_input\": [1, 1] , \"public_input\": [2] }"}' \
+  https://sprout-testnet.w3bstream.com/message
 ```
 
-### Query the status of a proof request
+## Query the status of a proof request
 
-After sending a message, you'll receive a message ID as a response from the node, e.g.,
+After sending a message, you'll receive a message ID(an uuid to identify the
+unique task) as a response from the **sprout** service.
 
 ```json
 {
@@ -86,106 +103,116 @@ example result:
 }
 ```
 
-When the request is in "proved" state, you can check out the comment to find out the hash of the blockchain transaction
-that wrote the proof to the destination chain.
+When the request is in "proved" state, you can check out the comment to find out
+the hash of the blockchain transaction that wrote the proof to the destination
+chain.
 
-### Send messages with ioID (Experimental)
+## Send messages with token (Experimental)
 
-Install **ioctl**: The command-line interface for interacting with the IoTeX blockchain.
-Install **didctl**: The command-line used for encrypting and decrypting did-comm message
+For security purposes, **sprout** integrates ioID identity verification and
+DID-Comm message encryption features. Next, you can use the `didctl`
+command-line tool to simulate message encryption, allowing you to submit
+encrypted proof tasks.
+
+> note: currently, `didctl` is an experimental tool and is only supported on
+> Linux. Adaptation for other os is still under development.
+
+### install `didctl` command-line
 
 ```bash
-## clone or pull the latest iotex-core respository
-git clone -b master git@github.com:iotexproject/iotex-core.git
-cd iotex-core && git pull origin master
-
-## make ioctl and move the CLI tool to you system PATH
-make ioctl && mv bin/ioctl __YOUR_SYSTEM_PATH__
-
 git clone git@github.com:machinefi/ioconnect-go.git
 make targets && mv cmd/didctl __YOUR_SYSTEM_PATH__
 ```
 
-[More on the IoTeX ioctl client →](https://docs.iotex.io/the-iotex-stack/wallets/command-line-client)
+### fetch **sprout** service did document
 
-### Get verifiable credential token (WIP)
-
-> NOTE: The following mock client DID, which have already been binded to existing projects, as $CLIENT_ID to get a VC
-> token.
->> did:example:d23dd687a7dc6787646f2eb98d0
-> > did:key:z6MkeeChrUs1EoKkNNzoy9FwJJb9gNQ92UT8kcXZHMbwj67B
-> > did:ethr:0x9d9250fb4e08ba7a858fe7196a6ba946c6083ff0
-
-Assuming that we are going to interact with W3bstream Sprout Staging
-server (`SERVER=https://sprout-testnet.w3bstream.com`), and env `CLIENT_DID` has been set, the following command is used
-to exchange a DID token with server:
-
-```bash
-export DID_TOKEN=`echo '{
-  "credential": {
-    "@context": "https://www.w3.org/2018/credentials/v1",
-    "id": "http://example.org/credentials/3731",
-    "type": [
-      "VerifiableCredential"
-    ],
-    "issuer": "did:key:z6MkjP2Pa1pkUgz2rP6yTXpATe4qd7ahwsGAQuU697JpcCLf",
-    "issuanceDate": "2020-08-19T21:41:50Z",
-    "credentialSubject": {
-      "id": "'$CLIENT_DID'"
-    }
-  },
-  "options": {
-    "verificationMethod": "did:key:z6MkjP2Pa1pkUgz2rP6yTXpATe4qd7ahwsGAQuU697JpcCLf#z6MkjP2Pa1pkUgz2rP6yTXpATe4qd7ahwsGAQuU697JpcCLf",
-    "proofPurpose": "assertionMethod",
-    "proofFormat": "jwt"
-  }
-}' | http post $SERVER/sign_credential | jq -r '.verifiableCredential'`
-```
-
-### Send messages use curl and didctl
-
-before this you need have a simulated client secret for generate JWK to encrypt or decrypt data
-
-1. fetch server's did doc and did
- 
 ```bash
 curl https://sprout-testnet.w3bstream.com/didDoc
 ```
 
-2. export server's did doc, server's did, client key agreement JWK secret and client did to env
+For convenience, you can set the did document of sprout service as an
+environment variable.
 
 ```bash
-export SERVER_DOC=...
-export SERVER_DID=...
-export CLIENT_SEC=...
-export CLIENT_DID=...
+export serverdoc='{"@context":["https://www.w3.org/ns/did/v1","https://w3id.org/security#keyAgreementMethod"],"id":"did:io:0x81a3864898d6098b15eff17b6452fc4e28e05983","authentication":["did:io:0x81a3864898d6098b15eff17b6452fc4e28e05983#Key-secp256k1-2147483616"],"keyAgreement":["did:io:0xaefe2f283b262978a1cabc483410593d62c9c732#Key-p256-2147483617"],"verificationMethod":[{"id":"did:io:0xaefe2f283b262978a1cabc483410593d62c9c732#Key-p256-2147483617","type":"JsonWebKey2020","controller":"did:io:0x81a3864898d6098b15eff17b6452fc4e28e05983","publicKeyJwk":{"crv":"P-256","x":"xaKC13yoR2Q6FSF6mrm027-onSs9qud4OApuIE6eFd4","y":"PQk3EoMlKYf9FqorTUN8slXpNSpHyhZdxDBJ9dJmnzE","d":"","kty":"EC","kid":"Key-p256-2147483617"}},{"id":"did:io:0x81a3864898d6098b15eff17b6452fc4e28e05983#Key-secp256k1-2147483616","type":"JsonWebKey2020","controller":"did:io:0x81a3864898d6098b15eff17b6452fc4e28e05983","publicKeyJwk":{"crv":"secp256k1","x":"CBlqq_7ZfcFALq4UL-GRMrKok8Zj8XNRBCWG4XT4sVQ","y":"SopcvJFTWw8hOEUl_eE96YIcpDttqeRZSMkz4-dho6Q","d":"","kty":"EC","kid":"Key-secp256k1-2147483616"}}]}'
+export serverdid=did:io:0x81a3864898d6098b15eff17b6452fc4e28e05983
 ```
 
-3. request encrypted token from server
+### set simulate device client did and JWK secret envs
+
+In the next steps, we will use a simulated device that already has an **ioID**
+identity to submit encrypted request message to **sprout**. Of course, if you
+already have an ioID identity and the corresponding JWK keys, you can replace
+the client information below.
 
 ```bash
-export $CIPHER_TOKEN=`curl -X POST -d '{"clientID":"'$clientdid'"}' https://sprout-testnet.w3bstream.com/issue_vc`
+export clientdid=did:io:0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73
+export clientsec=vebfEf+v2rLUzFm2mMH9XzPbZJFzaEj3nctUCnoAbMw=
 ```
 
-4. try to decrypt token
+### request token from **sprout** service
+
+First, use the `curl` command to request the issuance of a token from the
+**sprout** service.
 
 ```bash
-didctl decrypt --recipient $CLIENT_SEC --encryptor $SERVER_DID --cipher $CIPHER_TOKEN
-export PLAIN_TOKEN=...
+curl -X POST -d '{"clientID":"'$clientdid'"}' https://sprout-testnet.w3bstream.com/issue_vc
 ```
 
-5. encrypt your task commit request body
+For security purposes, **sprout** will respond with an encrypted token. For
+convenience, you can set the responded encrypted token as an env var
 
 ```bash
-export PLAIN_TASK='{"projectID": 21, "projectVersion": "0.1", "data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"}'
-didctl encrypt --recipient $SERVER_DOC --encryptor $CLIENT_DID --plain $PLAIN_TASK
-export CIPHER_TASK=...
-curl -X POST -d $CIPHER_TASK --header "Authorization: Bearer $PLAIN_TOKEN"  https://sprout-testnet.w3bstream.com/message
-export CIPHER_RESPONSE=...
+export ciphertoken= # response above
 ```
 
-6. decrypt server's response
+Next, we need to use the `didctl` tool to decrypt the message and obtain the
+plaintext token.
 
 ```bash
-didctl decrypt --recipient $CLIENT_SEC --encryptor $SERVER_DID --cipher $CIPHER_RESPONSE
+didctl decrypt --cipher $ciphertoken --encryptor $serverdid --recipient $clientsec --recipient-id 2
+```
+
+For convenience, you can set the plain token as env var.
+
+```bash
+export TOKEN= #output above
+```
+
+### commit encrypted proof message
+
+First, prepare plain request body
+
+> note: the simulated device is bound with project 21, if you use your
+> own `ioID` and JWK key to replace the `projectID` and other request
+> information.
+
+```bash
+export plain_task='{"projectID": 21, "projectVersion": "0.1", "data": "{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"}'
+```
+
+Next, encrypt request body
+
+```bash
+didctl encrypt --recipient $serverdoc --encryptor $clientdid --plain $plain_task
+```
+
+For convenience, you can set the encrypted request body as env var.
+
+```bash
+export cipherdata= #output above
+```
+
+Commit encrypted proof message with token
+
+```bash
+curl -X POST -d $cipherdata \
+  -H "Authorization: Bearer $TOKEN" https://sprout-testnet.w3bstream.com/message
+export cipherresponse= # response above
+```
+
+Last, decrypt **sprout** response to retrieve message id
+
+```bash
+didctl decrypt --recipient $clientsec --encryptor $serverdid --cipher $cipherresp --recipient-id 2
 ```
