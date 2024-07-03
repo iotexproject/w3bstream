@@ -2,5 +2,5 @@
 pragma solidity ^0.8.19;
 
 interface IDapp {
-    function process(bytes calldata _data) external;
+    function process(uint256 _projectId, uint256 _proverId, uint256 _taskId, bytes calldata _data) external;
 }
