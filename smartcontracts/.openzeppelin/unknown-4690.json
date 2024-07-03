@@ -1368,6 +1368,79 @@
         },
         "namespaces": {}
       }
+    },
+    "fbe064e7c193799db9de5bd5d909613b0803d4d3b77573c790f781f6b1e98af7": {
+      "address": "0xc68d9F20F83feCe230a31d6b78DCa5d87B1f1cCc",
+      "txHash": "0x26dfb3c561101c8a6602d0bd7cd864a1a189994ce68f0d367a14a64ef7211646",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "fleetManagement",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:16"
+          },
+          {
+            "label": "projectStore",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:17"
+          },
+          {
+            "label": "dapp",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:19"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
     }
   }
 }
