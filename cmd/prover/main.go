@@ -45,7 +45,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
 
-	vmHandler := vm.NewHandler(
+	vmHandler, err := vm.NewHandler(
 		map[vm.Type]string{
 			vm.Risc0:  conf.Risc0ServerEndpoint,
 			vm.Halo2:  conf.Halo2ServerEndpoint,
@@ -53,6 +53,9 @@ func main() {
 			vm.Wasm:   conf.WasmServerEndpoint,
 		},
 	)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new vm handler"))
+	}
 
 	projectManagerNotification := make(chan uint64, 10)
 	schedulerNotification := make(chan uint64, 10)

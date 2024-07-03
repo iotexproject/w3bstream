@@ -5,6 +5,8 @@ import (
 	"log/slog"
 
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/machinefi/sprout/task"
 )
@@ -19,31 +21,37 @@ const (
 )
 
 type Handler struct {
-	vmServerEndpoints map[Type]string
+	vmServerClients map[Type]*grpc.ClientConn
 }
 
 func (r *Handler) Handle(task *task.Task, vmtype Type, code string, expParam string) ([]byte, error) {
-	endpoint, ok := r.vmServerEndpoints[vmtype]
+	conn, ok := r.vmServerClients[vmtype]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
 	}
 
-	ins, err := newInstance(context.Background(), task.ProjectID, endpoint, code, expParam)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to new instance")
+	if err := create(context.Background(), conn, task.ProjectID, code, expParam); err != nil {
+		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
-	defer ins.release()
-	slog.Debug("acquire vm instance success", "vm_type", vmtype)
+	slog.Debug("create vm instance success", "vm_type", vmtype)
 
-	res, err := ins.execute(context.Background(), task)
+	res, err := execute(context.Background(), conn, task)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute instance")
 	}
 	return res, nil
 }
 
-func NewHandler(vmServerEndpoints map[Type]string) *Handler {
-	return &Handler{
-		vmServerEndpoints: vmServerEndpoints,
+func NewHandler(vmServerEndpoints map[Type]string) (*Handler, error) {
+	clients := map[Type]*grpc.ClientConn{}
+	for t, e := range vmServerEndpoints {
+		conn, err := grpc.NewClient(e, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to new grpc client")
+		}
+		clients[t] = conn
 	}
+	return &Handler{
+		vmServerClients: clients,
+	}, nil
 }
