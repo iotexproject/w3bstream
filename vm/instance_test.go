@@ -23,18 +23,8 @@ func (*MockClient) ExecuteOperator(ctx context.Context, in *proto.ExecuteRequest
 	return nil, nil
 }
 
-func TestNewInstance(t *testing.T) {
+func TestCreateInstance(t *testing.T) {
 	r := require.New(t)
-
-	t.Run("FailedToDialGRPC", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p.ApplyFuncReturn(grpc.Dial, nil, errors.New(t.Name()))
-		_, err := newInstance(context.Background(), 100, "any", "any", "any")
-		r.ErrorContains(err, t.Name())
-	})
-
 	t.Run("FailedToInvokeGRPCCreate", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -43,10 +33,9 @@ func TestNewInstance(t *testing.T) {
 		p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
 		p.ApplyMethodReturn(&MockClient{}, "Create", nil, errors.New(t.Name()))
 
-		_, err := newInstance(context.Background(), 100, "any", "any", "any")
+		err := create(context.Background(), nil, 100, "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -56,17 +45,13 @@ func TestNewInstance(t *testing.T) {
 		p.ApplyMethodReturn(&MockClient{}, "Create", &proto.CreateResponse{}, nil)
 		p.ApplyMethodReturn(&grpc.ClientConn{}, "Close", nil)
 
-		i, err := newInstance(context.Background(), 100, "any", "any", "any")
+		err := create(context.Background(), nil, 100, "any", "any")
 		r.NoError(err, t.Name())
-		r.NotNil(i)
-		i.release()
 	})
 }
 
-func TestInstance_Execute(t *testing.T) {
+func TestExecuteInstance(t *testing.T) {
 	r := require.New(t)
-	i := &instance{}
-
 	t.Run("FailedToCallGRPCExecuteOperator", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -74,10 +59,9 @@ func TestInstance_Execute(t *testing.T) {
 		p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
 		p.ApplyMethodReturn(&MockClient{}, "ExecuteOperator", nil, errors.New(t.Name()))
 
-		_, err := i.execute(context.Background(), &task.Task{})
+		_, err := execute(context.Background(), nil, &task.Task{})
 		r.ErrorContains(err, t.Name())
 	})
-
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
@@ -85,7 +69,7 @@ func TestInstance_Execute(t *testing.T) {
 		p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
 		p.ApplyMethodReturn(&MockClient{}, "ExecuteOperator", &proto.ExecuteResponse{Result: []byte("any")}, nil)
 
-		res, err := i.execute(context.Background(), &task.Task{Data: [][]byte{[]byte("data")}})
+		res, err := execute(context.Background(), nil, &task.Task{Data: [][]byte{[]byte("data")}})
 		r.NoError(err, t.Name())
 		r.Equal(res, []byte("any"))
 	})

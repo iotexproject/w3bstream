@@ -165,7 +165,7 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(err)
 	}
 
-	vmHandler := vm.NewHandler(
+	vmHandler, err := vm.NewHandler(
 		map[vm.Type]string{
 			vm.Risc0:  conf.Risc0ServerEndpoint,
 			vm.Halo2:  conf.Halo2ServerEndpoint,
@@ -173,6 +173,9 @@ func runProver(conf *proverconfig.Config) {
 			vm.Wasm:   conf.WasmServerEndpoint,
 		},
 	)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new vm handler"))
+	}
 
 	projectManager, err := project.NewLocalManager(conf.ProjectFileDir)
 	if err != nil {
