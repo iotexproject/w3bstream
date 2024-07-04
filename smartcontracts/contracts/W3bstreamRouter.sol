@@ -28,7 +28,7 @@ contract W3bstreamRouter is IRouter, Initializable {
         projectStore = _projectStore;
     }
 
-    function route(uint256 _projectId, uint256 _proverId, bytes calldata _data) external override {
+    function route(uint256 _projectId, uint256 _proverId, uint256 _taskId, bytes calldata _data) external override {
         address _dapp = dapp[_projectId];
         require(_dapp != address(0), "no dapp");
         IFleetManagement _fm = IFleetManagement(fleetManagement);
@@ -36,15 +36,14 @@ contract W3bstreamRouter is IRouter, Initializable {
         // TODO: 1. epoch based
         // TODO: 2. validate operator (of prover) signature
         require(_fm.isActiveProver(_proverId), "invalid prover");
-        /*require(!IProjectCenter(projectStore).isPaused(_projectId), "invalid project");
+        require(!IProjectCenter(projectStore).isPaused(_projectId), "invalid project");
 
-        try IDapp(_dapp).process(_data) {
+        try IDapp(_dapp).process(_projectId, _proverId, _taskId, _data) {
             _fm.grant(_proverId, 1);
             emit DataProcessed(_projectId, _proverId, msg.sender, true, "");
         } catch Error(string memory revertReason) {
             emit DataProcessed(_projectId, _proverId, msg.sender, false, revertReason);
         }
-        */
     }
 
     function bindDapp(uint256 _projectId, address _dapp) external override onlyProjectOwner(_projectId) {

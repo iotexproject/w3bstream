@@ -32,6 +32,7 @@ describe('W3bstream Router', function () {
     await fleetManagement.setCoordinator(coordinator.address);
     await fleetManagement.setStakingHub(mockStakingHub.getAddress());
     await fleetManagement.setProverStore(w3bstreamProver.getAddress());
+    await fleetManagement.setCreditCenter(w3bstreamCredit.getAddress());
     await fleetManagement.setRegistrationFee(12345);
     await fleetManagement.connect(prover).register({ value: 12345 });
     await mockStakingHub.setAmount(100);
@@ -43,9 +44,10 @@ describe('W3bstream Router', function () {
     await w3bstreamProject.connect(binder).bind(projectId);
 
     const proverId = 1;
+    const taskId = 1;
     await w3bstreamProver.connect(prover).resume(proverId);
     await w3bstreamProject.connect(projectOwner).resume(projectId);
     await w3bstreamRouter.connect(projectOwner).bindDapp(projectId, mockProcessor.getAddress());
-    await w3bstreamRouter.connect(coordinator).route(projectId, proverId, '0x0000');
+    await w3bstreamRouter.connect(coordinator).route(projectId, proverId, taskId, '0x0000');
   });
 });
