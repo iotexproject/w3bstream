@@ -52,6 +52,13 @@ type contractData struct {
 	DIDDoc         map[common.Address]didDOC
 }
 
+func newContractData() *contractData {
+	return &contractData{
+		ProjectClients: map[uint64]map[common.Address]bool{},
+		DIDDoc:         map[common.Address]didDOC{},
+	}
+}
+
 func (c *Contract) IsApproved(projectID uint64, clientAddr common.Address) (bool, error) {
 	dataBytes, closer, err := c.db.Get(c.dbKey())
 	if err != nil {
@@ -62,15 +69,15 @@ func (c *Contract) IsApproved(projectID uint64, clientAddr common.Address) (bool
 	}
 	dst := make([]byte, len(dataBytes))
 	copy(dst, dataBytes)
-	blockData := &contractData{ProjectClients: map[uint64]map[common.Address]bool{}}
-	if err := json.Unmarshal(dst, blockData); err != nil {
+	data := newContractData()
+	if err := json.Unmarshal(dst, data); err != nil {
 		return false, errors.Wrap(err, "failed to unmarshal contract data")
 	}
 	if err := closer.Close(); err != nil {
 		return false, errors.Wrap(err, "failed to close result of contract data")
 	}
 
-	cs, ok := blockData.ProjectClients[projectID]
+	cs, ok := data.ProjectClients[projectID]
 	if !ok {
 		return false, nil
 	}
@@ -100,10 +107,7 @@ func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
 	if err != nil && err != pebble.ErrNotFound {
 		return errors.Wrap(err, "failed to get local db contract data")
 	}
-	data := &contractData{
-		ProjectClients: map[uint64]map[common.Address]bool{},
-		DIDDoc:         map[common.Address]didDOC{},
-	}
+	data := newContractData()
 	if err == nil {
 		dst := make([]byte, len(dataBytes))
 		copy(dst, dataBytes)
