@@ -18,31 +18,38 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
+	"github.com/machinefi/sprout/smartcontracts/go/ioidregistry"
 	"github.com/machinefi/sprout/smartcontracts/go/projectclient"
-)
-
-const (
-	chainHead    = "chain_head"
-	contractData = "contract_data"
 )
 
 var (
 	approveTopic   = crypto.Keccak256Hash([]byte("Approve(uint256,address)"))
 	unapproveTopic = crypto.Keccak256Hash([]byte("Unapprove(uint256,address)"))
+
+	newDeviceTopic    = crypto.Keccak256Hash([]byte("NewDevice(address,address,bytes32,string)"))
+	updateDeviceTopic = crypto.Keccak256Hash([]byte("UpdateDevice(address,address,bytes32,string)"))
 )
 
 type Contract struct {
 	db                   *pebble.DB
 	beginningBlockNumber uint64
-	contractAddr         common.Address
+	clientContractAddr   common.Address
+	didContractAddr      common.Address
 	listStepSize         uint64
 	watchInterval        time.Duration
 	client               *ethclient.Client
-	instance             *projectclient.Projectclient
+	clientInstance       *projectclient.Projectclient
+	didInstance          *ioidregistry.Ioidregistry
 }
 
-type projectClients struct {
+type didDOC struct {
+	URI  string
+	Hash common.Hash
+}
+
+type contractData struct {
 	ProjectClients map[uint64]map[common.Address]bool
+	DIDDoc         map[common.Address]didDOC
 }
 
 func (c *Contract) IsApproved(projectID uint64, clientAddr common.Address) (bool, error) {
@@ -55,7 +62,7 @@ func (c *Contract) IsApproved(projectID uint64, clientAddr common.Address) (bool
 	}
 	dst := make([]byte, len(dataBytes))
 	copy(dst, dataBytes)
-	blockData := &projectClients{ProjectClients: map[uint64]map[common.Address]bool{}}
+	blockData := &contractData{ProjectClients: map[uint64]map[common.Address]bool{}}
 	if err := json.Unmarshal(dst, blockData); err != nil {
 		return false, errors.Wrap(err, "failed to unmarshal contract data")
 	}
@@ -71,11 +78,11 @@ func (c *Contract) IsApproved(projectID uint64, clientAddr common.Address) (bool
 }
 
 func (c *Contract) dbHead() []byte {
-	return []byte(chainHead)
+	return []byte("chain_head")
 }
 
 func (c *Contract) dbKey() []byte {
-	return []byte(contractData)
+	return []byte("contract_data")
 }
 
 func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
@@ -93,7 +100,10 @@ func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
 	if err != nil && err != pebble.ErrNotFound {
 		return errors.Wrap(err, "failed to get local db contract data")
 	}
-	data := &projectClients{ProjectClients: map[uint64]map[common.Address]bool{}}
+	data := &contractData{
+		ProjectClients: map[uint64]map[common.Address]bool{},
+		DIDDoc:         map[common.Address]didDOC{},
+	}
 	if err == nil {
 		dst := make([]byte, len(dataBytes))
 		copy(dst, dataBytes)
@@ -107,7 +117,7 @@ func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
 	for _, l := range logs {
 		switch l.Topics[0] {
 		case approveTopic:
-			e, err := c.instance.ParseApprove(l)
+			e, err := c.clientInstance.ParseApprove(l)
 			if err != nil {
 				return errors.Wrap(err, "failed to parse project client approve event")
 			}
@@ -119,7 +129,7 @@ func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
 			cs[e.Device] = true
 
 		case unapproveTopic:
-			e, err := c.instance.ParseUnapprove(l)
+			e, err := c.clientInstance.ParseUnapprove(l)
 			if err != nil {
 				return errors.Wrap(err, "failed to parse project client unapprove event")
 			}
@@ -129,6 +139,28 @@ func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
 				continue
 			}
 			delete(cs, e.Device)
+
+		case newDeviceTopic:
+			e, err := c.didInstance.ParseNewDevice(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse new device event")
+			}
+
+			data.DIDDoc[e.Device] = didDOC{
+				URI:  e.Uri,
+				Hash: e.Hash,
+			}
+
+		case updateDeviceTopic:
+			e, err := c.didInstance.ParseUpdateDevice(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse update device event")
+			}
+
+			data.DIDDoc[e.Device] = didDOC{
+				URI:  e.Uri,
+				Hash: e.Hash,
+			}
 		}
 	}
 
@@ -169,10 +201,13 @@ func (c *Contract) list() (uint64, error) {
 		}
 	}
 	query := ethereum.FilterQuery{
-		Addresses: []common.Address{c.contractAddr},
+		Addresses: []common.Address{c.clientContractAddr, c.didContractAddr},
 		Topics: [][]common.Hash{{
 			approveTopic,
 			unapproveTopic,
+
+			newDeviceTopic,
+			updateDeviceTopic,
 		}},
 	}
 	from := head
@@ -207,10 +242,13 @@ func (c *Contract) list() (uint64, error) {
 func (c *Contract) watch(listedBlockNumber uint64) {
 	queriedBlockNumber := listedBlockNumber
 	query := ethereum.FilterQuery{
-		Addresses: []common.Address{c.contractAddr},
+		Addresses: []common.Address{c.clientContractAddr, c.didContractAddr},
 		Topics: [][]common.Hash{{
 			approveTopic,
 			unapproveTopic,
+
+			newDeviceTopic,
+			updateDeviceTopic,
 		}},
 	}
 	ticker := time.NewTicker(c.watchInterval)
@@ -239,24 +277,30 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 	}()
 }
 
-func New(db *pebble.DB, beginningBlockNumber uint64, chainEndpoint string, contractAddr common.Address) (*Contract, error) {
+func New(db *pebble.DB, beginningBlockNumber uint64, chainEndpoint string, clientContractAddr, didContractAddr common.Address) (*Contract, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial chain endpoint")
 	}
-	instance, err := projectclient.NewProjectclient(contractAddr, client)
+	clientInstance, err := projectclient.NewProjectclient(clientContractAddr, client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new project client contract instance")
+	}
+	didInstance, err := ioidregistry.NewIoidregistry(didContractAddr, client)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to new ioid registry contract instance")
 	}
 
 	c := &Contract{
 		db:                   db,
 		beginningBlockNumber: beginningBlockNumber,
-		contractAddr:         contractAddr,
+		clientContractAddr:   clientContractAddr,
+		didContractAddr:      didContractAddr,
 		listStepSize:         10000,
 		watchInterval:        1 * time.Second,
 		client:               client,
-		instance:             instance,
+		clientInstance:       clientInstance,
+		didInstance:          didInstance,
 	}
 
 	listedBlockNumber, err := c.list()
