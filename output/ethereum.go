@@ -36,7 +36,7 @@ type ethereumContract struct {
 	contractWhitelist []string
 }
 
-func (e *ethereumContract) Output(task *task.Task, proof []byte) (string, error) {
+func (e *ethereumContract) Output(proverID uint64, task *task.Task, proof []byte) (string, error) {
 
 	if e.isWhitelist() {
 		txHash, err := e.sendTX(context.Background(), proof)
@@ -50,11 +50,19 @@ func (e *ethereumContract) Output(task *task.Task, proof []byte) (string, error)
 	params := []interface{}{}
 	for _, a := range e.contractMethod.Inputs {
 		switch a.Name {
-		case "proof", "_proof":
+		case "proof", "_proof", "data", "_data":
 			params = append(params, proof)
 
 		case "projectId", "_projectId":
 			i := new(big.Int).SetUint64(task.ProjectID)
+			params = append(params, i)
+
+		case "taskId", "_taskId":
+			i := new(big.Int).SetUint64(task.ID)
+			params = append(params, i)
+
+		case "proverId", "_proverId":
+			i := new(big.Int).SetUint64(proverID)
 			params = append(params, i)
 
 		case "receiver", "_receiver":

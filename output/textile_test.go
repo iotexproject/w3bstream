@@ -144,7 +144,7 @@ func Test_textile_Output(t *testing.T) {
 		defer p.Reset()
 		p = patchTextileDBPackData(p, nil, errors.New(t.Name()))
 
-		txHash, err := o.Output(&task.Task{}, []byte("any"))
+		txHash, err := o.Output(uint64(0), &task.Task{}, []byte("any"))
 		r.Empty(txHash)
 		r.ErrorContains(err, t.Name())
 	})
@@ -155,7 +155,7 @@ func Test_textile_Output(t *testing.T) {
 		p = patchTextileDBPackData(p, []byte("any"), nil)
 		p = patchTextileDBWrite(p, "", errors.New(t.Name()))
 
-		txHash, err := o.Output(&task.Task{}, []byte("any"))
+		txHash, err := o.Output(uint64(0), &task.Task{}, []byte("any"))
 		r.Empty(txHash)
 		r.ErrorContains(err, t.Name())
 	})
@@ -166,7 +166,7 @@ func Test_textile_Output(t *testing.T) {
 		p = patchTextileDBPackData(p, []byte("any"), nil)
 		p = patchTextileDBWrite(p, "any", nil)
 
-		txHash, err := o.Output(&task.Task{}, []byte("any"))
+		txHash, err := o.Output(uint64(0), &task.Task{}, []byte("any"))
 		r.NotEmpty(txHash)
 		r.NoError(err)
 	})

@@ -81,7 +81,7 @@ func (h *taskStateHandler) handle(dispatchedTime time.Time, s *task.StateLog, t 
 		return true
 	}
 
-	outRes, err := output.Output(t, s.Result)
+	outRes, err := output.Output(s.ProverID, t, s.Result)
 	if err != nil {
 		slog.Error("failed to output", "error", err, "task_id", s.TaskID)
 		metrics.FailedTaskNumMtc(t.ProjectID, t.ProjectVersion)

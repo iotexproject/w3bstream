@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -54,6 +55,30 @@ func patchEthereumContractSendTX(p *Patches, txhash string, err error) *Patches 
 	)
 }
 
+func Test_router(t *testing.T) {
+	conf := &EthereumConfig{
+		ChainEndpoint:   "https://babel-api.testnet.iotex.io",
+		ContractAddress: "0x79F58270D704B8a138B2CA7B1576076fBeDdD211",
+		ContractMethod:  "route",
+		ContractAbiJSON: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"dapp\",\"type\":\"address\"}],\"name\":\"DappBound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"DappUnbound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"router\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"revertReason\",\"type\":\"string\"}],\"name\":\"DataProcessed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_dapp\",\"type\":\"address\"}],\"name\":\"bindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"dapp\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"fleetManagement\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_fleetManagement\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_projectStore\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"projectStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_proverId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_taskId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"route\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"}],\"name\":\"unbindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	}
+
+	ethContract, err := newEthereum(*conf, "a8937c6de59cd3d8464f2260db76055bbdeb2fa37ce8ffc5e0f16f548b255a24", "")
+	if err != nil {
+		fmt.Println(err)
+	}
+	tk := &task.Task{
+		ID:             0,
+		ProjectID:      0,
+		ProjectVersion: "",
+		Data:           [][]byte{},
+		ClientID:       "",
+		Signature:      "",
+	}
+	ethContract.Output(uint64(0), tk, []byte(""))
+
+}
+
 func Test_ethereumContract_Output(t *testing.T) {
 	r := require.New(t)
 	txHashRet := "anyTxHash"
@@ -73,7 +98,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
 
-			txHash, err := o.Output(&task.Task{}, []byte("any proof data"))
+			txHash, err := o.Output(uint64(0), &task.Task{}, []byte("any proof data"))
 			r.Equal(txHash, txHashRet)
 			r.NoError(err)
 		})
@@ -92,7 +117,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			_, ok := o.(*ethereumContract)
 			r.True(ok)
 
-			txHash, err := o.Output(&task.Task{}, []byte("any proof data"))
+			txHash, err := o.Output(uint64(0), &task.Task{}, []byte("any proof data"))
 			r.Equal(txHash, txHashRet)
 			r.NoError(err)
 		})
@@ -112,19 +137,18 @@ func Test_ethereumContract_Output(t *testing.T) {
 			r.True(ok)
 
 			t.Run("ReceiverAddressNotInConfig", func(t *testing.T) {
-				txHash, err := o.Output(&task.Task{}, []byte("any proof data"))
+				txHash, err := o.Output(uint64(0), &task.Task{}, []byte("any proof data"))
 				r.Equal(txHash, "")
 				r.Equal(err, errMissingReceiverParam)
 			})
 
-			conf.Ethereum.ReceiverAddress = "0x"
 			o, err = New(conf, "1", "", "")
 			r.NoError(err)
 			_, ok = o.(*ethereumContract)
 			r.True(ok)
 
 			t.Run("Success", func(t *testing.T) {
-				txHash, err := o.Output(&task.Task{}, []byte("any proof data"))
+				txHash, err := o.Output(uint64(0), &task.Task{}, []byte("any proof data"))
 				r.Equal(txHash, txHashRet)
 				r.NoError(err)
 			})
@@ -145,7 +169,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			r.True(ok)
 
 			t.Run("FailedToDecodeProof", func(t *testing.T) {
-				txHash, err := o.Output(&task.Task{}, []byte("INVALID_HEX_DECODE"))
+				txHash, err := o.Output(uint64(0), &task.Task{}, []byte("INVALID_HEX_DECODE"))
 				r.Equal(txHash, "")
 				r.Error(err)
 			})
@@ -159,7 +183,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				r.NoError(err)
 				hexdata := hex.EncodeToString(data)
 
-				txHash, err := o.Output(&task.Task{}, []byte(hexdata))
+				txHash, err := o.Output(uint64(0), &task.Task{}, []byte(hexdata))
 				r.Equal(txHash, "")
 				r.Equal(err, errSnarkProofDataMissingFieldSnark)
 			})
@@ -179,7 +203,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 				_, ok := o.(*ethereumContract)
 				r.True(ok)
 
-				txHash, err := o.Output(&task.Task{
+				txHash, err := o.Output(uint64(0), &task.Task{
 					ProjectID: 1,
 					Data:      [][]byte{[]byte(`{"other":""}`)},
 				}, nil)
@@ -195,7 +219,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(&task.Task{
+					txHash, err := o.Output(uint64(0), &task.Task{
 						ProjectID: 1,
 						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
@@ -209,7 +233,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(&task.Task{
+					txHash, err := o.Output(uint64(0), &task.Task{
 						ProjectID: 1,
 						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
@@ -223,7 +247,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 					_, ok := o.(*ethereumContract)
 					r.True(ok)
 
-					txHash, err := o.Output(&task.Task{
+					txHash, err := o.Output(uint64(0), &task.Task{
 						ProjectID: 1,
 						Data:      [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
@@ -247,7 +271,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			o, err := New(conf, "1", "", "")
 			r.NoError(err)
 
-			txHash, err := o.Output(&task.Task{
+			txHash, err := o.Output(uint64(0), &task.Task{
 				ProjectID: 1,
 				Data:      [][]byte{[]byte(`{"other":""}`)},
 			}, nil)
@@ -270,7 +294,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 			o, err := New(conf, "1", "", "")
 			r.NoError(err)
 
-			txHash, err := o.Output(&task.Task{
+			txHash, err := o.Output(uint64(0), &task.Task{
 				ProjectID: 1,
 				Data:      [][]byte{[]byte(`{"other":""}`)},
 			}, nil)
@@ -292,7 +316,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 		o, err := New(conf, "1", "", "")
 		r.NoError(err)
 
-		txHash, err := o.Output(&task.Task{
+		txHash, err := o.Output(uint64(0), &task.Task{
 			ProjectID: 1,
 			Data:      [][]byte{[]byte(`{"other":""}`)},
 		}, nil)

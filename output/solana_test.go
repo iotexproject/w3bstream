@@ -28,11 +28,11 @@ func Test_solanaProgram_Output(t *testing.T) {
 		defer p.Reset()
 		p = patchSolanaProgramSendTX(p, "", errors.New(t.Name()))
 
-		txHash, err := e1.Output(&task.Task{}, nil)
+		txHash, err := e1.Output(uint64(0), &task.Task{}, nil)
 		r.Equal(txHash, "")
 		r.ErrorContains(err, t.Name())
 
-		txHash, err = e2.Output(&task.Task{}, nil)
+		txHash, err = e2.Output(uint64(0), &task.Task{}, nil)
 		r.Equal(txHash, "")
 		r.ErrorContains(err, t.Name())
 	})
@@ -43,11 +43,11 @@ func Test_solanaProgram_Output(t *testing.T) {
 		defer p.Reset()
 		p = patchSolanaProgramSendTX(p, txHashRet, nil)
 
-		txHash, err := e1.Output(&task.Task{}, nil)
+		txHash, err := e1.Output(uint64(0), &task.Task{}, nil)
 		r.Equal(txHash, txHashRet)
 		r.NoError(err)
 
-		txHash, err = e2.Output(&task.Task{}, nil)
+		txHash, err = e2.Output(uint64(0), &task.Task{}, nil)
 		r.Equal(txHash, txHashRet)
 		r.NoError(err)
 	})

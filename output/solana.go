@@ -21,7 +21,7 @@ type solanaProgram struct {
 	stateAccountPK string
 }
 
-func (e *solanaProgram) Output(task *task.Task, proof []byte) (string, error) {
+func (e *solanaProgram) Output(proverID uint64, task *task.Task, proof []byte) (string, error) {
 	slog.Debug("outputing to solana program", "chain endpoint", e.endpoint)
 	ins := e.packInstructions(proof)
 	txHash, err := e.sendTX(ins)

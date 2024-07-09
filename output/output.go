@@ -37,7 +37,7 @@ type TextileConfig struct {
 }
 
 type Output interface {
-	Output(task *task.Task, proof []byte) (string, error)
+	Output(proverID uint64, task *task.Task, proof []byte) (string, error)
 }
 
 func New(conf *Config, privateKeyECDSA, privateKeyED25519 string, contractWhitelist string) (Output, error) {
