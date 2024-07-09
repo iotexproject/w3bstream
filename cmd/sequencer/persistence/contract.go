@@ -1,11 +1,15 @@
 package persistence
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log/slog"
 	"math/big"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -32,6 +36,7 @@ var (
 
 type Contract struct {
 	db                   *pebble.DB
+	ioIDRegistryEndpoint string
 	beginningBlockNumber uint64
 	clientContractAddr   common.Address
 	didContractAddr      common.Address
@@ -57,6 +62,65 @@ func newContractData() *contractData {
 		ProjectClients: map[uint64]map[common.Address]bool{},
 		DIDDoc:         map[common.Address]didDOC{},
 	}
+}
+
+func (c *Contract) DIDDoc(did string) ([]byte, error) {
+	dataBytes, closer, err := c.db.Get(c.dbKey())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get db contract data")
+	}
+	dst := make([]byte, len(dataBytes))
+	copy(dst, dataBytes)
+	data := newContractData()
+	if err := json.Unmarshal(dst, data); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal contract data")
+	}
+	if err := closer.Close(); err != nil {
+		return nil, errors.Wrap(err, "failed to close result of contract data")
+	}
+	address := common.HexToAddress(strings.TrimPrefix(did, "did:io:"))
+
+	meta, ok := data.DIDDoc[address]
+	if !ok {
+		return nil, errors.New("did not exist in contract data")
+	}
+	return c.loadDoc(did, meta)
+}
+
+func (c *Contract) loadDoc(did string, meta didDOC) ([]byte, error) {
+	dataBytes, closer, err := c.db.Get(c.dbDocKey(did))
+	if err == nil {
+		dst := make([]byte, len(dataBytes))
+		copy(dst, dataBytes)
+		if err := closer.Close(); err != nil {
+			return nil, errors.Wrap(err, "failed to close result of did doc")
+		}
+		hash := crypto.Keccak256Hash(dst)
+		if bytes.Equal(meta.Hash[:], hash[:]) {
+			return dst, nil
+		}
+	}
+
+	url := fmt.Sprintf("https://%s/cid/%s", c.ioIDRegistryEndpoint, meta.URI)
+	rsp, err := http.Get(url)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch did doc from ioid registry")
+	}
+	defer rsp.Body.Close()
+
+	content, err := io.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read ioid registry response")
+	}
+
+	hash := crypto.Keccak256Hash(content)
+	if !bytes.Equal(meta.Hash[:], hash[:]) {
+		return nil, errors.New("failed to validate ioid registry response")
+	}
+	if err := c.db.Set(c.dbDocKey(did), content, nil); err != nil {
+		slog.Error("failed to save did doc", "error", err)
+	}
+	return content, nil
 }
 
 func (c *Contract) IsApproved(projectID uint64, clientAddr common.Address) (bool, error) {
@@ -90,6 +154,10 @@ func (c *Contract) dbHead() []byte {
 
 func (c *Contract) dbKey() []byte {
 	return []byte("contract_data")
+}
+
+func (c *Contract) dbDocKey(did string) []byte {
+	return []byte("did_doc_" + did)
 }
 
 func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
@@ -281,7 +349,7 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 	}()
 }
 
-func New(db *pebble.DB, beginningBlockNumber uint64, chainEndpoint string, clientContractAddr, didContractAddr common.Address) (*Contract, error) {
+func New(db *pebble.DB, beginningBlockNumber uint64, chainEndpoint, ioIDRegistryEndpoint string, clientContractAddr, didContractAddr common.Address) (*Contract, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial chain endpoint")
@@ -297,6 +365,7 @@ func New(db *pebble.DB, beginningBlockNumber uint64, chainEndpoint string, clien
 
 	c := &Contract{
 		db:                   db,
+		ioIDRegistryEndpoint: ioIDRegistryEndpoint,
 		beginningBlockNumber: beginningBlockNumber,
 		clientContractAddr:   clientContractAddr,
 		didContractAddr:      didContractAddr,
