@@ -8,7 +8,7 @@ import (
 
 type stdout struct{}
 
-func (r *stdout) Output(task *task.Task, proof []byte) (string, error) {
+func (r *stdout) Output(proverID uint64, task *task.Task, proof []byte) (string, error) {
 	slog.Info("stdout", "proof", string(proof))
 	return "", nil
 }

@@ -16,7 +16,9 @@ import (
 
 type mockOutput struct{}
 
-func (m *mockOutput) Output(task *task.Task, proof []byte) (string, error) {
+var _ output.Output = (*mockOutput)(nil)
+
+func (m *mockOutput) Output(proverID uint64, task *task.Task, proof []byte) (string, error) {
 	return "", nil
 }
 
