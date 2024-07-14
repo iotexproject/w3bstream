@@ -68,7 +68,7 @@ func createProject() {
 		return
 	}
 
-	switch rand.Intn(2) {
+	switch rand.Intn(1) {
 	case 0:
 		cmd = exec.Command("./ioctl", "ws", "project", "update", "--id", pidStr, "--path", halo2ProjectFile)
 		o, err = cmd.CombinedOutput()
@@ -77,14 +77,14 @@ func createProject() {
 			return
 		}
 		slog.Info("project halo2 config updated", "project_id", pidStr)
-	case 1:
-		cmd = exec.Command("./ioctl", "ws", "project", "update", "--id", pidStr, "--path", risc0ProjectFile)
-		o, err = cmd.CombinedOutput()
-		if err != nil {
-			slog.Error("failed to update risc0 project", "project_id", pidStr, "error", err, "output", string(o))
-			return
-		}
-		slog.Info("project risc0 config updated", "project_id", pidStr)
+		// case 1: // will not create risc0 project
+		// 	cmd = exec.Command("./ioctl", "ws", "project", "update", "--id", pidStr, "--path", risc0ProjectFile)
+		// 	o, err = cmd.CombinedOutput()
+		// 	if err != nil {
+		// 		slog.Error("failed to update risc0 project", "project_id", pidStr, "error", err, "output", string(o))
+		// 		return
+		// 	}
+		// 	slog.Info("project risc0 config updated", "project_id", pidStr)
 		// case 2: // will not create zkwasm project
 		// 	tx, err := projectInstance.UpdateConfig(opts, projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
 		// 	if err != nil {
