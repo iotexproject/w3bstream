@@ -392,6 +392,7 @@ func (c *Contract) list() (uint64, error) {
 		if from > to {
 			break
 		}
+		slog.Info("listing chain", "from", from, "to", to)
 		query.FromBlock = new(big.Int).SetUint64(from)
 		query.ToBlock = new(big.Int).SetUint64(to)
 		logs, err := c.client.FilterLogs(context.Background(), query)
@@ -462,7 +463,7 @@ func New(db *pebble.DB, size, beginningBlockNumber uint64, chainEndpoint string,
 		projectContractAddr:    projectContractAddr,
 		chainHeadNotifications: chainHeadNotifications,
 		projectNotifications:   projectNotifications,
-		listStepSize:           10000,
+		listStepSize:           500,
 		watchInterval:          1 * time.Second,
 		client:                 client,
 		proverInstance:         proverInstance,
