@@ -28,11 +28,11 @@ import (
 )
 
 var (
-	projectCacheDir        = "./project_cache"
-	localDBDir             = "./local_db"
+	projectCacheDir        = "/mnt/stress/stress/project_cache"
+	localDBDir             = "/mnt/stress/stress/local_db"
 	beginningBlockNumber   = uint64(26000000)
 	chainEndpoint          = "https://babel-api.testnet.iotex.io"
-	projectContractAddress = common.HexToAddress("0x2faBD8F8667158Ff8B0523f7BA8fC0CD0df3d0eA")
+	projectContractAddress = common.HexToAddress("0xd70BA83dE65967F8BB3530CE5d2A8f38A20e6748")
 	proverContractAddress  = common.HexToAddress("0x0764e9c021F140d3A8CAb6EDd59904E584378D19")
 	ipfsEndpoint           = "ipfs.mainnet.iotex.io"
 	schedulerEpoch         = uint64(20)
@@ -61,14 +61,14 @@ func createProject() {
 	pidStr := strings.TrimSpace(strings.TrimPrefix(string(o), "Registerd ioID project id is"))
 	slog.Info("currently project id", "project_id", pidStr)
 
-	cmd = exec.Command("./ioctl", "ws", "project", "register", "--id", pidStr)
+	cmd = exec.Command("./ioctl", "ws", "project", "register", "--id", pidStr, "--amount", "1000000000000000000")
 	o, err = cmd.CombinedOutput()
 	if err != nil {
 		slog.Error("failed to register project", "error", err, "output", string(o))
 		return
 	}
 
-	switch rand.Intn(2) {
+	switch rand.Intn(1) {
 	case 0:
 		cmd = exec.Command("./ioctl", "ws", "project", "update", "--id", pidStr, "--path", halo2ProjectFile)
 		o, err = cmd.CombinedOutput()
@@ -77,14 +77,14 @@ func createProject() {
 			return
 		}
 		slog.Info("project halo2 config updated", "project_id", pidStr)
-	case 1:
-		cmd = exec.Command("./ioctl", "ws", "project", "update", "--id", pidStr, "--path", risc0ProjectFile)
-		o, err = cmd.CombinedOutput()
-		if err != nil {
-			slog.Error("failed to update risc0 project", "project_id", pidStr, "error", err, "output", string(o))
-			return
-		}
-		slog.Info("project risc0 config updated", "project_id", pidStr)
+		// case 1: // will not create risc0 project
+		// 	cmd = exec.Command("./ioctl", "ws", "project", "update", "--id", pidStr, "--path", risc0ProjectFile)
+		// 	o, err = cmd.CombinedOutput()
+		// 	if err != nil {
+		// 		slog.Error("failed to update risc0 project", "project_id", pidStr, "error", err, "output", string(o))
+		// 		return
+		// 	}
+		// 	slog.Info("project risc0 config updated", "project_id", pidStr)
 		// case 2: // will not create zkwasm project
 		// 	tx, err := projectInstance.UpdateConfig(opts, projectID, zkwasmProjectFileURI, zkwasmProjectFileHash)
 		// 	if err != nil {
