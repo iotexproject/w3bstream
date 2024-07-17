@@ -40,9 +40,9 @@ func main() {
 	}
 	proverOperatorAddress := crypto.PubkeyToAddress(sk.PublicKey)
 
-	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	defaultDatasourcePubKey, err := hexutil.Decode(conf.DefaultDatasourcePubKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
+		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
 	}
 
 	vmHandler, err := vm.NewHandler(
@@ -102,7 +102,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}
 
-	taskProcessor := processor.NewProcessor(vmHandler, projectManager.Project, sk, sequencerPubKey, proverID)
+	taskProcessor := processor.NewProcessor(vmHandler, projectManager.Project, sk, defaultDatasourcePubKey, proverID)
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {

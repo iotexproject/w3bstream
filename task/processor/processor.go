@@ -29,12 +29,12 @@ type VMHandler interface {
 type Project func(projectID uint64) (*project.Project, error)
 
 type Processor struct {
-	vmHandler        VMHandler
-	project          Project
-	proverPrivateKey *ecdsa.PrivateKey
-	sequencerPubKey  []byte
-	proverID         uint64
-	projectProvers   sync.Map
+	vmHandler               VMHandler
+	project                 Project
+	proverPrivateKey        *ecdsa.PrivateKey
+	defaultDatasourcePubKey []byte
+	proverID                uint64
+	projectProvers          sync.Map
 }
 
 func (r *Processor) HandleProjectProvers(projectID uint64, proverIDs []uint64) {
@@ -73,7 +73,17 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 		}
 	}
 
-	if err := t.VerifySignature(r.sequencerPubKey); err != nil {
+	pubKey := r.defaultDatasourcePubKey
+	if p.DatasourcePubKey != "" {
+		pubKey, err = hexutil.Decode(p.DatasourcePubKey)
+		if err != nil {
+			slog.Error("failed to decode datasource public key", "error", err, "project_id", t.ProjectID)
+			r.reportFail(t, err, topic)
+			return
+		}
+	}
+
+	if err := t.VerifySignature(pubKey); err != nil {
 		slog.Error("failed to verify task signature", "error", err)
 		return
 	}
@@ -165,12 +175,12 @@ func (r *Processor) reportSuccess(t *task.Task, state task.State, result []byte,
 	}
 }
 
-func NewProcessor(vmHandler VMHandler, project Project, proverPrivateKey *ecdsa.PrivateKey, seqPubkey []byte, proverID uint64) *Processor {
+func NewProcessor(vmHandler VMHandler, project Project, proverPrivateKey *ecdsa.PrivateKey, defaultDatasourcePubKey []byte, proverID uint64) *Processor {
 	return &Processor{
-		vmHandler:        vmHandler,
-		project:          project,
-		proverPrivateKey: proverPrivateKey,
-		sequencerPubKey:  seqPubkey,
-		proverID:         proverID,
+		vmHandler:               vmHandler,
+		project:                 project,
+		proverPrivateKey:        proverPrivateKey,
+		defaultDatasourcePubKey: defaultDatasourcePubKey,
+		proverID:                proverID,
 	}
 }

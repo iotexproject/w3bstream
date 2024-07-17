@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
 	"github.com/machinefi/sprout/p2p"
@@ -12,7 +13,7 @@ import (
 
 func NewLocal(persistence Persistence, newDatasource NewDatasource,
 	projectManager ProjectManager, defaultDatasourceURI, operatorPrivateKey, operatorPrivateKeyED25519, bootNodeMultiaddr, contractWhitelist string,
-	sequencerPubKey []byte, iotexChainID int) (*Dispatcher, error) {
+	defaultDatasourcePubKey []byte, iotexChainID int) (*Dispatcher, error) {
 
 	projectDispatchers := &sync.Map{}
 	taskStateHandler := newTaskStateHandler(persistence, nil, projectManager, operatorPrivateKey, operatorPrivateKeyED25519, contractWhitelist)
@@ -46,7 +47,14 @@ func NewLocal(persistence Persistence, newDatasource NewDatasource,
 		if uri == "" {
 			uri = defaultDatasourceURI
 		}
-		pd, err := newProjectDispatcher(persistence, uri, newDatasource, cp, ps, taskStateHandler, sequencerPubKey)
+		pubKey := defaultDatasourcePubKey
+		if p.DatasourcePubKey != "" {
+			pubKey, err = hexutil.Decode(p.DatasourcePubKey)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to decode datasource public key, project_id %v", id)
+			}
+		}
+		pd, err := newProjectDispatcher(persistence, uri, newDatasource, cp, ps, taskStateHandler, pubKey)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to new project dispatcher, project_id %v", id)
 		}

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 
 	"github.com/machinefi/sprout/datasource"
@@ -48,7 +49,7 @@ type Dispatcher struct {
 	bootNodeMultiaddr         string
 	operatorPrivateKey        string
 	operatorPrivateKeyED25519 string
-	sequencerPubKey           []byte
+	defaultDatasourcePubKey   []byte
 	iotexChainID              int
 	projectNotification       <-chan uint64
 	chainHeadNotification     <-chan uint64
@@ -125,7 +126,15 @@ func (d *Dispatcher) setProjectDispatcher(pid uint64) {
 	if uri == "" {
 		uri = d.defaultDatasourceURI
 	}
-	pd, err := newProjectDispatcher(d.persistence, uri, d.newDatasource, cp, d.pubSubs, d.taskStateHandler, d.sequencerPubKey)
+	pubKey := d.defaultDatasourcePubKey
+	if pf.DatasourcePubKey != "" {
+		pubKey, err = hexutil.Decode(pf.DatasourcePubKey)
+		if err != nil {
+			slog.Error("failed to decode datasource public key", "error", err, "project_id", cp.ID)
+			return
+		}
+	}
+	pd, err := newProjectDispatcher(d.persistence, uri, d.newDatasource, cp, d.pubSubs, d.taskStateHandler, pubKey)
 	if err != nil {
 		slog.Error("failed to new project dispatcher", "project_id", cp.ID, "error", err)
 		return
@@ -187,7 +196,7 @@ func (d *Dispatcher) Run() {
 
 func New(persistence Persistence, newDatasource NewDatasource,
 	projectManager ProjectManager, defaultDatasourceURI, bootNodeMultiaddr, operatorPrivateKey, operatorPrivateKeyED25519, contractWhitelist string,
-	sequencerPubKey []byte, iotexChainID int, projectNotification <-chan uint64, chainHeadNotification <-chan uint64,
+	defaultDatasourcePubKey []byte, iotexChainID int, projectNotification <-chan uint64, chainHeadNotification <-chan uint64,
 	contract Contract, projectOffsets *scheduler.ProjectEpochOffsets) (*Dispatcher, error) {
 
 	projectDispatchers := &sync.Map{}
@@ -201,7 +210,7 @@ func New(persistence Persistence, newDatasource NewDatasource,
 		bootNodeMultiaddr:         bootNodeMultiaddr,
 		operatorPrivateKey:        operatorPrivateKey,
 		operatorPrivateKeyED25519: operatorPrivateKeyED25519,
-		sequencerPubKey:           sequencerPubKey,
+		defaultDatasourcePubKey:   defaultDatasourcePubKey,
 		iotexChainID:              iotexChainID,
 		projectNotification:       projectNotification,
 		chainHeadNotification:     chainHeadNotification,

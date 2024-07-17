@@ -22,7 +22,7 @@ type projectDispatcher struct {
 	projectID            uint64
 	datasource           datasource.Datasource
 	pubSubs              *p2p.PubSubs
-	sequencerPubKey      []byte
+	datasourcePubKey     []byte
 	requiredProverAmount *atomic.Uint64
 	paused               *atomic.Bool
 	idle                 *atomic.Bool
@@ -63,7 +63,7 @@ func (d *projectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 		d.idle.Store(true)
 		return nextTaskID, nil
 	}
-	if err := t.VerifySignature(d.sequencerPubKey); err != nil {
+	if err := t.VerifySignature(d.datasourcePubKey); err != nil {
 		d.idle.Store(true)
 		return 0, errors.Wrap(err, "failed to verify task signature")
 	}
@@ -80,7 +80,7 @@ func (d *projectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	return t.ID + 1, nil
 }
 
-func newProjectDispatcher(persistence Persistence, datasourceURI string, newDatasource NewDatasource, p *contract.Project, pubSubs *p2p.PubSubs, handler *taskStateHandler, sequencerPubKey []byte) (*projectDispatcher, error) {
+func newProjectDispatcher(persistence Persistence, datasourceURI string, newDatasource NewDatasource, p *contract.Project, pubSubs *p2p.PubSubs, handler *taskStateHandler, datasourcePubKey []byte) (*projectDispatcher, error) {
 	processedTaskID, err := persistence.ProcessedTaskID(p.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", p.ID)
@@ -112,7 +112,7 @@ func newProjectDispatcher(persistence Persistence, datasourceURI string, newData
 		datasource:           datasource,
 		projectID:            p.ID,
 		pubSubs:              pubSubs,
-		sequencerPubKey:      sequencerPubKey,
+		datasourcePubKey:     datasourcePubKey,
 		requiredProverAmount: proverAmount,
 		paused:               &paused,
 		idle:                 &idle,
