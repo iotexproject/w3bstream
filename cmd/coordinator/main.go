@@ -30,9 +30,9 @@ func main() {
 	conf.Print()
 	slog.Info("coordinator config loaded")
 
-	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	defaultDatasourcePubKey, err := hexutil.Decode(conf.DefaultDatasourcePubKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
+		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
 	}
 
 	persistence, err := postgres.New(conf.DatabaseDSN)
@@ -80,12 +80,12 @@ func main() {
 	var taskDispatcher *dispatcher.Dispatcher
 	if local {
 		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI,
-			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.BootNodeMultiAddr, conf.ContractWhitelist, sequencerPubKey, conf.IoTeXChainID)
+			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.BootNodeMultiAddr, conf.ContractWhitelist, defaultDatasourcePubKey, conf.IoTeXChainID)
 	} else {
 		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
 
 		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI, conf.BootNodeMultiAddr,
-			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.ContractWhitelist, sequencerPubKey, conf.IoTeXChainID,
+			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.ContractWhitelist, defaultDatasourcePubKey, conf.IoTeXChainID,
 			dispatcherNotification, chainHeadNotification, contractPersistence, projectOffsets)
 	}
 	if err != nil {

@@ -23,9 +23,10 @@ var (
 )
 
 type Project struct {
-	DatasourceURI  string    `json:"datasourceURI,omitempty"`
-	DefaultVersion string    `json:"defaultVersion"`
-	Versions       []*Config `json:"versions"`
+	DatasourceURI    string    `json:"datasourceURI,omitempty"`
+	DatasourcePubKey string    `json:"datasourcePublicKey,omitempty"`
+	DefaultVersion   string    `json:"defaultVersion"`
+	Versions         []*Config `json:"versions"`
 }
 
 type Meta struct {

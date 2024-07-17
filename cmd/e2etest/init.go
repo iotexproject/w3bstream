@@ -187,7 +187,7 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(errors.Wrap(err, "failed parse prover private key"))
 	}
 
-	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	sequencerPubKey, err := hexutil.Decode(conf.DefaultDatasourcePubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
@@ -210,7 +210,7 @@ func runCoordinator(conf *coordinatorconfig.Config) {
 		log.Fatal(err)
 	}
 
-	sequencerPubKey, err := hexutil.Decode(conf.SequencerPubKey)
+	sequencerPubKey, err := hexutil.Decode(conf.DefaultDatasourcePubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode sequencer pubkey"))
 	}
