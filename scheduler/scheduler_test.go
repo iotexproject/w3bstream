@@ -9,10 +9,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/util/distance"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/util/distance"
 )
 
 func TestScheduler_schedule(t *testing.T) {

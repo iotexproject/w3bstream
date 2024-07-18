@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/machinefi/sprout/util/hash"
+	"github.com/iotexproject/w3bstream/util/hash"
 )
 
 type hashDistance struct {

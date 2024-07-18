@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/smartcontracts/go/project"
-	"github.com/machinefi/sprout/util/hash"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
+	"github.com/iotexproject/w3bstream/util/hash"
 )
 
 func TestNewProject(t *testing.T) {

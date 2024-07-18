@@ -8,11 +8,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/datasource"
-	"github.com/machinefi/sprout/metrics"
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/datasource"
+	"github.com/iotexproject/w3bstream/metrics"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type projectDispatcher struct {

@@ -28,6 +28,6 @@ and make sure it's tagged [`IOTEX`].
 
 ## Found a Bug or Have a Feature Request?
 
-If you believe you've found a bug or if you have a proposal for a new feature, please use the appropriate [issue template](https://github.com/machinefi/sprout/issues) to report it.
+If you believe you've found a bug or if you have a proposal for a new feature, please use the appropriate [issue template](https://github.com/iotexproject/w3bstream/issues) to report it.
 
 Thank you for being a part of the IoTeX Developers community!

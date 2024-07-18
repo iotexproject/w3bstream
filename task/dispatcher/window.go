@@ -6,8 +6,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type window struct {

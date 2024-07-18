@@ -11,9 +11,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/util/ipfs"
-	"github.com/machinefi/sprout/vm"
+	"github.com/iotexproject/w3bstream/output"
+	"github.com/iotexproject/w3bstream/util/ipfs"
+	"github.com/iotexproject/w3bstream/vm"
 )
 
 var (

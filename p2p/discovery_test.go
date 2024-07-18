@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/machinefi/sprout/testutil/mock"
+	"github.com/iotexproject/w3bstream/testutil/mock"
 )
 
 func TestDiscoverPeers(t *testing.T) {

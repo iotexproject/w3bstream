@@ -7,9 +7,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/machinefi/sprout/metrics"
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/metrics"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type dispatchedTask struct {

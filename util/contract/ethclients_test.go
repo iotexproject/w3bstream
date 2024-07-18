@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	. "github.com/machinefi/sprout/util/contract"
+	. "github.com/iotexproject/w3bstream/util/contract"
 )
 
 var endpoint = "https://babel-api.testnet.iotex.io"

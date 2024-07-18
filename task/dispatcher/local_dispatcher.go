@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/persistence/contract"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/persistence/contract"
 )
 
 func NewLocal(persistence Persistence, newDatasource NewDatasource,

@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/clients"
-	"github.com/machinefi/sprout/cmd/sequencer/persistence"
+	"github.com/iotexproject/w3bstream/apitypes"
+	"github.com/iotexproject/w3bstream/clients"
+	"github.com/iotexproject/w3bstream/cmd/sequencer/persistence"
 )
 
 func TestNewHttpServer(t *testing.T) {

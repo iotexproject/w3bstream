@@ -15,10 +15,10 @@ import (
 	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/clients"
-	"github.com/machinefi/sprout/cmd/sequencer/persistence"
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/apitypes"
+	"github.com/iotexproject/w3bstream/clients"
+	"github.com/iotexproject/w3bstream/cmd/sequencer/persistence"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type httpServer struct {

@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/util/distance"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/util/distance"
 )
 
 type HandleProjectProvers func(projectID uint64, proverIDs []uint64)

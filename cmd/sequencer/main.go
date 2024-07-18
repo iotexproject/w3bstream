@@ -13,9 +13,9 @@ import (
 	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/clients"
-	"github.com/machinefi/sprout/cmd/sequencer/api"
-	"github.com/machinefi/sprout/cmd/sequencer/persistence"
+	"github.com/iotexproject/w3bstream/clients"
+	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
+	"github.com/iotexproject/w3bstream/cmd/sequencer/persistence"
 )
 
 var (

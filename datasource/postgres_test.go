@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/machinefi/sprout/testutil"
+	"github.com/iotexproject/w3bstream/testutil"
 )
 
 func TestNewPostgres(t *testing.T) {

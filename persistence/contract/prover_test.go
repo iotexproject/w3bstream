@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/smartcontracts/go/prover"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
 )
 
 func TestNewProver(t *testing.T) {

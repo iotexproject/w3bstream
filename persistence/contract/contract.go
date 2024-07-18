@@ -18,8 +18,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/smartcontracts/go/project"
-	"github.com/machinefi/sprout/smartcontracts/go/prover"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
 )
 
 const (

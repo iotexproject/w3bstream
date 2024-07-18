@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/machinefi/sprout/cmd/internal"
+	"github.com/iotexproject/w3bstream/cmd/internal"
 )
 
 type Config struct {

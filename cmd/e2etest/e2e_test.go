@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 
-	"github.com/machinefi/sprout/apitypes"
-	coordinatorconfig "github.com/machinefi/sprout/cmd/coordinator/config"
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/apitypes"
+	coordinatorconfig "github.com/iotexproject/w3bstream/cmd/coordinator/config"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 func TestHttpApi(t *testing.T) {

@@ -8,10 +8,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/persistence/postgres"
-	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/output"
+	"github.com/iotexproject/w3bstream/persistence/postgres"
+	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type mockOutput struct{}

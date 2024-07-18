@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type projectProcessedTask struct {

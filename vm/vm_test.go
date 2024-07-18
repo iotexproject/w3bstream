@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 func TestHandler_Handle(t *testing.T) {

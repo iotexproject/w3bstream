@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/cmd/coordinator/config"
-	"github.com/machinefi/sprout/cmd/internal"
+	"github.com/iotexproject/w3bstream/cmd/coordinator/config"
+	"github.com/iotexproject/w3bstream/cmd/internal"
 )
 
 func TestConfig_Init(t *testing.T) {

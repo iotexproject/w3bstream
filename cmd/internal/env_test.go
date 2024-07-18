@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/cmd/coordinator/config"
+	"github.com/iotexproject/w3bstream/cmd/coordinator/config"
 )
 
 func TestParseEnv(t *testing.T) {

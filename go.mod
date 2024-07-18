@@ -1,4 +1,4 @@
-module github.com/machinefi/sprout
+module github.com/iotexproject/w3bstream
 
 go 1.22.0
 
