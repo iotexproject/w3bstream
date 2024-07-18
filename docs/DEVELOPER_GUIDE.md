@@ -199,3 +199,17 @@ If you want to stop the project's task process, can use this cmd
 ```bash
 ioctl ws project pause --id "your project id"
 ```
+
+### Bind Your Dapp Contract
+
+If you want to verify zk proof in your Dapp contract, you need to bind the project with the Dapp.
+
+``` bash
+ioctl ws router bind --project-id "your project id" --dapp "your dapp contract address"
+```
+
+If you want to unbind the project with the Dapp.
+
+``` bash
+ioctl ws router unbind --project-id "your project id"
+```
