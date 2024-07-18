@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
-	"github.com/machinefi/sprout/task"
-	"github.com/machinefi/sprout/vm/proto"
+	"github.com/iotexproject/w3bstream/task"
+	"github.com/iotexproject/w3bstream/vm/proto"
 )
 
 type MockClient struct{}

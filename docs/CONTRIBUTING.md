@@ -15,7 +15,7 @@ There are many ways to contribute to this project:
 
 ## Getting Started
 
-1. **Fork this Repository**: Start by [forking the project repository](https://github.com/machinefi/sprout/fork) to your GitHub account.
+1. **Fork this Repository**: Start by [forking the project repository](https://github.com/iotexproject/w3bstream/fork) to your GitHub account.
 
 2. **Clone the Repository**: Clone your forked repository to your local machine.
 
@@ -110,7 +110,7 @@ There are many ways to contribute to this project:
 
 ### Submitting a Pull Request
 
-1. **Create a Pull Request (PR)**: Go to this [project repository](https://github.com/machinefi/sprout) and click on 'New Pull Request'. Compare branches and create the PR from your feature branch to the main project's branch.
+1. **Create a Pull Request (PR)**: Go to this [project repository](https://github.com/iotexproject/w3bstream) and click on 'New Pull Request'. Compare branches and create the PR from your feature branch to the main project's branch.
 
 2. **Describe Your Changes**: In the PR description, clearly outline what you've done. Link any relevant issues.
 

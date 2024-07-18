@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/persistence/contract"
+	"github.com/iotexproject/w3bstream/persistence/contract"
 )
 
 type ContractProject func(projectID uint64) *contract.Project

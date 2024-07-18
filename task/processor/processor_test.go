@@ -12,12 +12,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/output"
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/task"
-	"github.com/machinefi/sprout/testutil"
-	"github.com/machinefi/sprout/vm"
+	"github.com/iotexproject/w3bstream/output"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/task"
+	"github.com/iotexproject/w3bstream/testutil"
+	"github.com/iotexproject/w3bstream/vm"
 )
 
 func TestProcessor_ReportFail(t *testing.T) {

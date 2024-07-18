@@ -18,10 +18,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/cmd/coordinator/config"
-	"github.com/machinefi/sprout/persistence/postgres"
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/apitypes"
+	"github.com/iotexproject/w3bstream/cmd/coordinator/config"
+	"github.com/iotexproject/w3bstream/persistence/postgres"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 func TestNewHttpServer(t *testing.T) {

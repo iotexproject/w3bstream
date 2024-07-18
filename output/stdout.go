@@ -3,7 +3,7 @@ package output
 import (
 	"log/slog"
 
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type stdout struct{}

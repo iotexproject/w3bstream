@@ -12,14 +12,14 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/cmd/coordinator/api"
-	"github.com/machinefi/sprout/cmd/coordinator/config"
-	"github.com/machinefi/sprout/datasource"
-	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/persistence/postgres"
-	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/scheduler"
-	"github.com/machinefi/sprout/task/dispatcher"
+	"github.com/iotexproject/w3bstream/cmd/coordinator/api"
+	"github.com/iotexproject/w3bstream/cmd/coordinator/config"
+	"github.com/iotexproject/w3bstream/datasource"
+	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/persistence/postgres"
+	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/scheduler"
+	"github.com/iotexproject/w3bstream/task/dispatcher"
 )
 
 func main() {

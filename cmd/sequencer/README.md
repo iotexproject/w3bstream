@@ -7,5 +7,5 @@ A reference implementation for A DePIN Sequencer service that supports:
 - Secure device communication based on DID
 
 ## Example
-See https://github.com/machinefi/sprout/blob/develop/docs/QUICK_START.md#interacting-with-w3bstream
+See https://github.com/iotexproject/w3bstream/blob/develop/docs/QUICK_START.md#interacting-with-w3bstream
  

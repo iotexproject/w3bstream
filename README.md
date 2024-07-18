@@ -20,9 +20,9 @@ The diagram represents the main components of the software and how they interact
 
 ## Docker images
 
-* [sequencer](https://github.com/machinefi/sprout/pkgs/container/sequencer)
-* [prover](https://github.com/machinefi/sprout/pkgs/container/prover)
-* [coordinator](https://github.com/machinefi/sprout/pkgs/container/coordinator)
+* [sequencer](https://github.com/iotexproject/w3bstream/pkgs/container/sequencer)
+* [prover](https://github.com/iotexproject/w3bstream/pkgs/container/prover)
+* [coordinator](https://github.com/iotexproject/w3bstream/pkgs/container/coordinator)
 
 
 ## Running
@@ -34,7 +34,7 @@ Developers looking to build circuits and deploy W3bstream projects should consul
 ## Sandbox
 The DePIN Sandbox is an initial deployment of Layer 1 contracts that facilitate the deployment od DePIN Projects on IoTeX using W3bstream
 
-https://github.com/machinefi/sprout/tree/develop/smartcontracts/sandbox#depin-sandbox-contracts
+https://github.com/iotexproject/w3bstream/tree/develop/smartcontracts/sandbox#depin-sandbox-contracts
 
 ## Contributing
 

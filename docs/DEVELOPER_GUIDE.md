@@ -29,7 +29,7 @@ A W3bstream project primarily includes the binary code of the a ZK Prover and th
 Start by cloning the W3bstream repository:
 
 ```bash
-git clone https://github.com/machinefi/sprout.git
+git clone https://github.com/iotexproject/w3bstream.git
 cd sprout
 ```
 

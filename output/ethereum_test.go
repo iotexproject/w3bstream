@@ -18,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 var (

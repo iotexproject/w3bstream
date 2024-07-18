@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/machinefi/sprout/task"
-	"github.com/machinefi/sprout/testutil"
+	"github.com/iotexproject/w3bstream/task"
+	"github.com/iotexproject/w3bstream/testutil"
 )
 
 func TestPostgres_ProcessedTaskID(t *testing.T) {

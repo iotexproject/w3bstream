@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tablelandnetwork/basin-cli/pkg/signing"
 
-	"github.com/machinefi/sprout/task"
-	"github.com/machinefi/sprout/testutil"
+	"github.com/iotexproject/w3bstream/task"
+	"github.com/iotexproject/w3bstream/testutil"
 )
 
 func patchTextileDBPackData(p *Patches, data []byte, err error) *Patches {

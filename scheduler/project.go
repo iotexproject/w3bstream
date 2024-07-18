@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/util/hash"
+	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/util/hash"
 )
 
 type LatestProjects func() []*contract.Project

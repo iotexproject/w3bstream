@@ -2,7 +2,7 @@
 
 ## Get Repository
 ```bash
-git clone https://github.com/machinefi/sprout.git
+git clone https://github.com/iotexproject/w3bstream.git
 cd sprout
 ```
 

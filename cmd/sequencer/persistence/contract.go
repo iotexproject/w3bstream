@@ -22,8 +22,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/smartcontracts/go/ioidregistry"
-	"github.com/machinefi/sprout/smartcontracts/go/projectclient"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/ioidregistry"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/projectclient"
 )
 
 var (

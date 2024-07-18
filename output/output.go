@@ -1,6 +1,6 @@
 package output
 
-import "github.com/machinefi/sprout/task"
+import "github.com/iotexproject/w3bstream/task"
 
 type Type string
 

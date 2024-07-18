@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/persistence/contract"
+	"github.com/iotexproject/w3bstream/persistence/contract"
 )
 
 func TestNewManager(t *testing.T) {

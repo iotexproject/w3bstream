@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	tasktype "github.com/machinefi/sprout/task"
+	tasktype "github.com/iotexproject/w3bstream/task"
 )
 
 type message struct {

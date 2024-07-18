@@ -21,10 +21,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/persistence/contract"
-	"github.com/machinefi/sprout/project"
-	"github.com/machinefi/sprout/vm"
+	"github.com/iotexproject/w3bstream/apitypes"
+	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/vm"
 )
 
 var (

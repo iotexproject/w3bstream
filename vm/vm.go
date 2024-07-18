@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type Type string

@@ -13,8 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/util/ipfs"
-	"github.com/machinefi/sprout/vm"
+	"github.com/iotexproject/w3bstream/util/ipfs"
+	"github.com/iotexproject/w3bstream/vm"
 )
 
 func TestProjectMeta_FetchProjectRawData_init(t *testing.T) {

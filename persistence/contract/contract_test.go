@@ -14,8 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/smartcontracts/go/project"
-	"github.com/machinefi/sprout/smartcontracts/go/prover"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
 )
 
 type mockCloser struct{}

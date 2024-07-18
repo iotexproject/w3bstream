@@ -11,9 +11,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/machinefi/sprout/apitypes"
-	"github.com/machinefi/sprout/cmd/coordinator/config"
-	"github.com/machinefi/sprout/persistence/postgres"
+	"github.com/iotexproject/w3bstream/apitypes"
+	"github.com/iotexproject/w3bstream/cmd/coordinator/config"
+	"github.com/iotexproject/w3bstream/persistence/postgres"
 )
 
 type HttpServer struct {

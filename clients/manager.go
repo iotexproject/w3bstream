@@ -12,7 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/machinefi/sprout/util/contract"
+	"github.com/iotexproject/w3bstream/util/contract"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/machinefi/ioconnect-go/pkg/ioconnect"

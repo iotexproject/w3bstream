@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/machinefi/sprout/clients"
+	"github.com/iotexproject/w3bstream/clients"
 )
 
 func TestClientByClientID(t *testing.T) {

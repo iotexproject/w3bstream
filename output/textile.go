@@ -19,7 +19,7 @@ import (
 	"github.com/tablelandnetwork/basin-cli/pkg/signing"
 	"github.com/tidwall/gjson"
 
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type textileDB struct {

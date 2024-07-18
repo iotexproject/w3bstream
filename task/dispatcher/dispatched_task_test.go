@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/machinefi/sprout/p2p"
-	"github.com/machinefi/sprout/task"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 func TestDispatchedTask_handleState(t *testing.T) {
