@@ -43,7 +43,7 @@ contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
         _mint(msg.sender, id_);
 
         _paused[id_] = false;
-        emit TypeSet(_id);
+        emit TypeSet(id_);
     }
 
     function pause(uint256 _id) external onlyTypeOwner(_id) {
