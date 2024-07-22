@@ -28,7 +28,7 @@ contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
         return nextTypeId;
     }
 
-    function nodeType(uint256 _id) external view returns (string memory) {
+    function vmType(uint256 _id) external view returns (string memory) {
         _requireMinted(_id);
         return _types[_id];
     }
