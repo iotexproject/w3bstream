@@ -30,9 +30,9 @@ import (
 var (
 	projectCacheDir        = "/mnt/stress/stress/project_cache"
 	localDBDir             = "/mnt/stress/stress/local_db"
-	beginningBlockNumber   = uint64(26000000)
+	beginningBlockNumber   = uint64(27200000)
 	chainEndpoint          = "https://babel-api.testnet.iotex.io"
-	projectContractAddress = common.HexToAddress("0xd70BA83dE65967F8BB3530CE5d2A8f38A20e6748")
+	projectContractAddress = common.HexToAddress("0x952d9Bc43C17f9370C9A80977285962c5b3BBeca")
 	proverContractAddress  = common.HexToAddress("0x0764e9c021F140d3A8CAb6EDd59904E584378D19")
 	ipfsEndpoint           = "ipfs.mainnet.iotex.io"
 	schedulerEpoch         = uint64(20)
@@ -61,7 +61,7 @@ func createProject() {
 	pidStr := strings.TrimSpace(strings.TrimPrefix(string(o), "Registerd ioID project id is"))
 	slog.Info("currently project id", "project_id", pidStr)
 
-	cmd = exec.Command("./ioctl", "ws", "project", "register", "--id", pidStr, "--amount", "1000000000000000000")
+	cmd = exec.Command("./ioctl", "ws", "project", "register", "--id", pidStr)
 	o, err = cmd.CombinedOutput()
 	if err != nil {
 		slog.Error("failed to register project", "error", err, "output", string(o))
