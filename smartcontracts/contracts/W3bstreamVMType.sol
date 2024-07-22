@@ -42,6 +42,7 @@ contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
         id_ = ++nextTypeId;
         _mint(msg.sender, id_);
 
+        _types[id_] = _name;
         _paused[id_] = false;
         emit TypeSet(id_);
     }
