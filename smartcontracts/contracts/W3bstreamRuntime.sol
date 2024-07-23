@@ -4,17 +4,17 @@ pragma solidity ^0.8.19;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
-    event TypeSet(uint256 indexed id);
-    event TypePaused(uint256 indexed id);
-    event TypeResumed(uint256 indexed id);
+contract W3bstreamRuntime is OwnableUpgradeable, ERC721Upgradeable {
+    event RuntimeSet(uint256 indexed id);
+    event RuntimePaused(uint256 indexed id);
+    event RuntimeResumed(uint256 indexed id);
 
-    uint256 nextTypeId;
+    uint256 nextRuntimeId;
 
-    mapping(uint256 => string) _types;
+    mapping(uint256 => string) _runtimes;
     mapping(uint256 => bool) _paused;
 
-    modifier onlyTypeOwner(uint256 _id) {
+    modifier onlyRuntimeOwner(uint256 _id) {
         require(ownerOf(_id) == msg.sender, "not owner");
         _;
     }
@@ -25,12 +25,12 @@ contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
     }
 
     function count() external view returns (uint256) {
-        return nextTypeId;
+        return nextRuntimeId;
     }
 
-    function vmType(uint256 _id) external view returns (string memory) {
+    function runtimeName(uint256 _id) external view returns (string memory) {
         _requireMinted(_id);
-        return _types[_id];
+        return _runtimes[_id];
     }
 
     function isPaused(uint256 _id) external view returns (bool) {
@@ -39,25 +39,25 @@ contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
     }
 
     function mint(string memory _name) external returns (uint256 id_) {
-        id_ = ++nextTypeId;
+        id_ = ++nextRuntimeId;
         _mint(msg.sender, id_);
 
-        _types[id_] = _name;
+        _runtimes[id_] = _name;
         _paused[id_] = false;
-        emit TypeSet(id_);
+        emit RuntimeSet(id_);
     }
 
-    function pause(uint256 _id) external onlyTypeOwner(_id) {
+    function pause(uint256 _id) external onlyRuntimeOwner(_id) {
         require(!_paused[_id], "already paused");
 
         _paused[_id] = true;
-        emit TypePaused(_id);
+        emit RuntimePaused(_id);
     }
 
-    function resume(uint256 _id) external onlyTypeOwner(_id) {
+    function resume(uint256 _id) external onlyRuntimeOwner(_id) {
         require(_paused[_id], "already actived");
 
         _paused[_id] = false;
-        emit TypeResumed(_id);
+        emit RuntimeResumed(_id);
     }
 }

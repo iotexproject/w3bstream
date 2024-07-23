@@ -6,8 +6,8 @@ import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC72
 
 contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
     event OperatorSet(uint256 indexed id, address indexed operator);
-    event NodeTypeAdded(uint256 indexed id, uint256 typ);
-    event NodeTypeDeleted(uint256 indexed id, uint256 typ);
+    event RuntimeAdded(uint256 indexed id, uint256 runtimeId);
+    event RuntimeDeleted(uint256 indexed id, uint256 runtimeId);
     event ProverPaused(uint256 indexed id);
     event ProverResumed(uint256 indexed id);
     event MinterSet(address minter);
@@ -15,7 +15,7 @@ contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
     address public minter;
     uint256 nextProverId;
 
-    mapping(uint256 => mapping(uint256 => bool)) _nodeTypes;
+    mapping(uint256 => mapping(uint256 => bool)) _runtimes;
     mapping(uint256 => address) _operators;
     mapping(uint256 => bool) _paused;
     mapping(address => uint256) operatorToProver;
@@ -35,9 +35,9 @@ contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
         return nextProverId;
     }
 
-    function hasNodeType(uint256 _id, uint256 _type) external view returns (bool) {
+    function isRuntimeSupported(uint256 _id, uint256 _runtimeId) external view returns (bool) {
         _requireMinted(_id);
-        return _nodeTypes[_id][_type];
+        return _runtimes[_id][_runtimeId];
     }
 
     function operator(uint256 _id) external view returns (address) {
@@ -81,14 +81,14 @@ contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
         emit OperatorSet(_id, _operator);
     }
 
-    function addNodeType(uint256 _id, uint256 _type) external onlyProverOwner(_id) {
-        _nodeTypes[_id][_type] = true;
-        emit NodeTypeAdded(_id, _type);
+    function addRuntime(uint256 _id, uint256 _runtimeId) external onlyProverOwner(_id) {
+        _runtimes[_id][_runtimeId] = true;
+        emit RuntimeAdded(_id, _runtimeId);
     }
 
-    function delNodeType(uint256 _id, uint256 _type) external onlyProverOwner(_id) {
-        _nodeTypes[_id][_type] = false;
-        emit NodeTypeDeleted(_id, _type);
+    function delRuntime(uint256 _id, uint256 _runtimeId) external onlyProverOwner(_id) {
+        _runtimes[_id][_runtimeId] = false;
+        emit RuntimeDeleted(_id, _runtimeId);
     }
 
     function changeOperator(uint256 _id, address _operator) external onlyProverOwner(_id) {
