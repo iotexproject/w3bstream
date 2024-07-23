@@ -31,7 +31,7 @@ var (
 
 // ProverMetaData contains all meta data concerning the Prover contract.
 var ProverMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"approved\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"minter\",\"type\":\"address\"}],\"name\":\"MinterSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"typ\",\"type\":\"uint256\"}],\"name\":\"NodeTypeUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"ProverPaused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"ProverResumed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"changeOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"count\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"isPaused\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"mint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"id_\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"minter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"nodeType\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"operator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"ownerOfOperator\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"pause\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"prover\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"resume\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_minter\",\"type\":\"address\"}],\"name\":\"setMinter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"tokenURI\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_type\",\"type\":\"uint256\"}],\"name\":\"updateNodeType\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"approved\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"minter\",\"type\":\"address\"}],\"name\":\"MinterSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"typ\",\"type\":\"uint256\"}],\"name\":\"NodeTypeAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"typ\",\"type\":\"uint256\"}],\"name\":\"NodeTypeDeleted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"ProverPaused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"ProverResumed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_type\",\"type\":\"uint256\"}],\"name\":\"addNodeType\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"changeOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"count\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_type\",\"type\":\"uint256\"}],\"name\":\"delNodeType\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_type\",\"type\":\"uint256\"}],\"name\":\"hasNodeType\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"isPaused\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"mint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"id_\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"minter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"operator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"ownerOfOperator\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"pause\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"prover\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"resume\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_minter\",\"type\":\"address\"}],\"name\":\"setMinter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"tokenURI\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // ProverABI is the input ABI used to generate the binding from.
@@ -273,6 +273,37 @@ func (_Prover *ProverCallerSession) GetApproved(tokenId *big.Int) (common.Addres
 	return _Prover.Contract.GetApproved(&_Prover.CallOpts, tokenId)
 }
 
+// HasNodeType is a free data retrieval call binding the contract method 0x5b60c637.
+//
+// Solidity: function hasNodeType(uint256 _id, uint256 _type) view returns(bool)
+func (_Prover *ProverCaller) HasNodeType(opts *bind.CallOpts, _id *big.Int, _type *big.Int) (bool, error) {
+	var out []interface{}
+	err := _Prover.contract.Call(opts, &out, "hasNodeType", _id, _type)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// HasNodeType is a free data retrieval call binding the contract method 0x5b60c637.
+//
+// Solidity: function hasNodeType(uint256 _id, uint256 _type) view returns(bool)
+func (_Prover *ProverSession) HasNodeType(_id *big.Int, _type *big.Int) (bool, error) {
+	return _Prover.Contract.HasNodeType(&_Prover.CallOpts, _id, _type)
+}
+
+// HasNodeType is a free data retrieval call binding the contract method 0x5b60c637.
+//
+// Solidity: function hasNodeType(uint256 _id, uint256 _type) view returns(bool)
+func (_Prover *ProverCallerSession) HasNodeType(_id *big.Int, _type *big.Int) (bool, error) {
+	return _Prover.Contract.HasNodeType(&_Prover.CallOpts, _id, _type)
+}
+
 // IsApprovedForAll is a free data retrieval call binding the contract method 0xe985e9c5.
 //
 // Solidity: function isApprovedForAll(address owner, address operator) view returns(bool)
@@ -395,37 +426,6 @@ func (_Prover *ProverSession) Name() (string, error) {
 // Solidity: function name() view returns(string)
 func (_Prover *ProverCallerSession) Name() (string, error) {
 	return _Prover.Contract.Name(&_Prover.CallOpts)
-}
-
-// NodeType is a free data retrieval call binding the contract method 0x1c794b84.
-//
-// Solidity: function nodeType(uint256 _id) view returns(uint256)
-func (_Prover *ProverCaller) NodeType(opts *bind.CallOpts, _id *big.Int) (*big.Int, error) {
-	var out []interface{}
-	err := _Prover.contract.Call(opts, &out, "nodeType", _id)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// NodeType is a free data retrieval call binding the contract method 0x1c794b84.
-//
-// Solidity: function nodeType(uint256 _id) view returns(uint256)
-func (_Prover *ProverSession) NodeType(_id *big.Int) (*big.Int, error) {
-	return _Prover.Contract.NodeType(&_Prover.CallOpts, _id)
-}
-
-// NodeType is a free data retrieval call binding the contract method 0x1c794b84.
-//
-// Solidity: function nodeType(uint256 _id) view returns(uint256)
-func (_Prover *ProverCallerSession) NodeType(_id *big.Int) (*big.Int, error) {
-	return _Prover.Contract.NodeType(&_Prover.CallOpts, _id)
 }
 
 // Operator is a free data retrieval call binding the contract method 0xab3d047f.
@@ -677,6 +677,27 @@ func (_Prover *ProverCallerSession) TokenURI(tokenId *big.Int) (string, error) {
 	return _Prover.Contract.TokenURI(&_Prover.CallOpts, tokenId)
 }
 
+// AddNodeType is a paid mutator transaction binding the contract method 0xe2b6f485.
+//
+// Solidity: function addNodeType(uint256 _id, uint256 _type) returns()
+func (_Prover *ProverTransactor) AddNodeType(opts *bind.TransactOpts, _id *big.Int, _type *big.Int) (*types.Transaction, error) {
+	return _Prover.contract.Transact(opts, "addNodeType", _id, _type)
+}
+
+// AddNodeType is a paid mutator transaction binding the contract method 0xe2b6f485.
+//
+// Solidity: function addNodeType(uint256 _id, uint256 _type) returns()
+func (_Prover *ProverSession) AddNodeType(_id *big.Int, _type *big.Int) (*types.Transaction, error) {
+	return _Prover.Contract.AddNodeType(&_Prover.TransactOpts, _id, _type)
+}
+
+// AddNodeType is a paid mutator transaction binding the contract method 0xe2b6f485.
+//
+// Solidity: function addNodeType(uint256 _id, uint256 _type) returns()
+func (_Prover *ProverTransactorSession) AddNodeType(_id *big.Int, _type *big.Int) (*types.Transaction, error) {
+	return _Prover.Contract.AddNodeType(&_Prover.TransactOpts, _id, _type)
+}
+
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(address to, uint256 tokenId) returns()
@@ -717,6 +738,27 @@ func (_Prover *ProverSession) ChangeOperator(_id *big.Int, _operator common.Addr
 // Solidity: function changeOperator(uint256 _id, address _operator) returns()
 func (_Prover *ProverTransactorSession) ChangeOperator(_id *big.Int, _operator common.Address) (*types.Transaction, error) {
 	return _Prover.Contract.ChangeOperator(&_Prover.TransactOpts, _id, _operator)
+}
+
+// DelNodeType is a paid mutator transaction binding the contract method 0x6dcab315.
+//
+// Solidity: function delNodeType(uint256 _id, uint256 _type) returns()
+func (_Prover *ProverTransactor) DelNodeType(opts *bind.TransactOpts, _id *big.Int, _type *big.Int) (*types.Transaction, error) {
+	return _Prover.contract.Transact(opts, "delNodeType", _id, _type)
+}
+
+// DelNodeType is a paid mutator transaction binding the contract method 0x6dcab315.
+//
+// Solidity: function delNodeType(uint256 _id, uint256 _type) returns()
+func (_Prover *ProverSession) DelNodeType(_id *big.Int, _type *big.Int) (*types.Transaction, error) {
+	return _Prover.Contract.DelNodeType(&_Prover.TransactOpts, _id, _type)
+}
+
+// DelNodeType is a paid mutator transaction binding the contract method 0x6dcab315.
+//
+// Solidity: function delNodeType(uint256 _id, uint256 _type) returns()
+func (_Prover *ProverTransactorSession) DelNodeType(_id *big.Int, _type *big.Int) (*types.Transaction, error) {
+	return _Prover.Contract.DelNodeType(&_Prover.TransactOpts, _id, _type)
 }
 
 // Initialize is a paid mutator transaction binding the contract method 0x4cd88b76.
@@ -948,27 +990,6 @@ func (_Prover *ProverSession) TransferOwnership(newOwner common.Address) (*types
 // Solidity: function transferOwnership(address newOwner) returns()
 func (_Prover *ProverTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _Prover.Contract.TransferOwnership(&_Prover.TransactOpts, newOwner)
-}
-
-// UpdateNodeType is a paid mutator transaction binding the contract method 0x6a07973f.
-//
-// Solidity: function updateNodeType(uint256 _id, uint256 _type) returns()
-func (_Prover *ProverTransactor) UpdateNodeType(opts *bind.TransactOpts, _id *big.Int, _type *big.Int) (*types.Transaction, error) {
-	return _Prover.contract.Transact(opts, "updateNodeType", _id, _type)
-}
-
-// UpdateNodeType is a paid mutator transaction binding the contract method 0x6a07973f.
-//
-// Solidity: function updateNodeType(uint256 _id, uint256 _type) returns()
-func (_Prover *ProverSession) UpdateNodeType(_id *big.Int, _type *big.Int) (*types.Transaction, error) {
-	return _Prover.Contract.UpdateNodeType(&_Prover.TransactOpts, _id, _type)
-}
-
-// UpdateNodeType is a paid mutator transaction binding the contract method 0x6a07973f.
-//
-// Solidity: function updateNodeType(uint256 _id, uint256 _type) returns()
-func (_Prover *ProverTransactorSession) UpdateNodeType(_id *big.Int, _type *big.Int) (*types.Transaction, error) {
-	return _Prover.Contract.UpdateNodeType(&_Prover.TransactOpts, _id, _type)
 }
 
 // ProverApprovalIterator is returned from FilterApproval and is used to iterate over the raw logs and unpacked data for Approval events raised by the Prover contract.
@@ -1555,9 +1576,9 @@ func (_Prover *ProverFilterer) ParseMinterSet(log types.Log) (*ProverMinterSet, 
 	return event, nil
 }
 
-// ProverNodeTypeUpdatedIterator is returned from FilterNodeTypeUpdated and is used to iterate over the raw logs and unpacked data for NodeTypeUpdated events raised by the Prover contract.
-type ProverNodeTypeUpdatedIterator struct {
-	Event *ProverNodeTypeUpdated // Event containing the contract specifics and raw log
+// ProverNodeTypeAddedIterator is returned from FilterNodeTypeAdded and is used to iterate over the raw logs and unpacked data for NodeTypeAdded events raised by the Prover contract.
+type ProverNodeTypeAddedIterator struct {
+	Event *ProverNodeTypeAdded // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1571,7 +1592,7 @@ type ProverNodeTypeUpdatedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *ProverNodeTypeUpdatedIterator) Next() bool {
+func (it *ProverNodeTypeAddedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1580,7 +1601,7 @@ func (it *ProverNodeTypeUpdatedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(ProverNodeTypeUpdated)
+			it.Event = new(ProverNodeTypeAdded)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1595,7 +1616,7 @@ func (it *ProverNodeTypeUpdatedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(ProverNodeTypeUpdated)
+		it.Event = new(ProverNodeTypeAdded)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1611,52 +1632,52 @@ func (it *ProverNodeTypeUpdatedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *ProverNodeTypeUpdatedIterator) Error() error {
+func (it *ProverNodeTypeAddedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *ProverNodeTypeUpdatedIterator) Close() error {
+func (it *ProverNodeTypeAddedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// ProverNodeTypeUpdated represents a NodeTypeUpdated event raised by the Prover contract.
-type ProverNodeTypeUpdated struct {
+// ProverNodeTypeAdded represents a NodeTypeAdded event raised by the Prover contract.
+type ProverNodeTypeAdded struct {
 	Id  *big.Int
 	Typ *big.Int
 	Raw types.Log // Blockchain specific contextual infos
 }
 
-// FilterNodeTypeUpdated is a free log retrieval operation binding the contract event 0x09e65b7abf1ac020ee57d85addfaffc3466fbaa144c58cf8d736f09de55820ab.
+// FilterNodeTypeAdded is a free log retrieval operation binding the contract event 0x7a8d6c13ab852956e13c00c7ca802bab711f762666d33ba105921650b0243f20.
 //
-// Solidity: event NodeTypeUpdated(uint256 indexed id, uint256 typ)
-func (_Prover *ProverFilterer) FilterNodeTypeUpdated(opts *bind.FilterOpts, id []*big.Int) (*ProverNodeTypeUpdatedIterator, error) {
+// Solidity: event NodeTypeAdded(uint256 indexed id, uint256 typ)
+func (_Prover *ProverFilterer) FilterNodeTypeAdded(opts *bind.FilterOpts, id []*big.Int) (*ProverNodeTypeAddedIterator, error) {
 
 	var idRule []interface{}
 	for _, idItem := range id {
 		idRule = append(idRule, idItem)
 	}
 
-	logs, sub, err := _Prover.contract.FilterLogs(opts, "NodeTypeUpdated", idRule)
+	logs, sub, err := _Prover.contract.FilterLogs(opts, "NodeTypeAdded", idRule)
 	if err != nil {
 		return nil, err
 	}
-	return &ProverNodeTypeUpdatedIterator{contract: _Prover.contract, event: "NodeTypeUpdated", logs: logs, sub: sub}, nil
+	return &ProverNodeTypeAddedIterator{contract: _Prover.contract, event: "NodeTypeAdded", logs: logs, sub: sub}, nil
 }
 
-// WatchNodeTypeUpdated is a free log subscription operation binding the contract event 0x09e65b7abf1ac020ee57d85addfaffc3466fbaa144c58cf8d736f09de55820ab.
+// WatchNodeTypeAdded is a free log subscription operation binding the contract event 0x7a8d6c13ab852956e13c00c7ca802bab711f762666d33ba105921650b0243f20.
 //
-// Solidity: event NodeTypeUpdated(uint256 indexed id, uint256 typ)
-func (_Prover *ProverFilterer) WatchNodeTypeUpdated(opts *bind.WatchOpts, sink chan<- *ProverNodeTypeUpdated, id []*big.Int) (event.Subscription, error) {
+// Solidity: event NodeTypeAdded(uint256 indexed id, uint256 typ)
+func (_Prover *ProverFilterer) WatchNodeTypeAdded(opts *bind.WatchOpts, sink chan<- *ProverNodeTypeAdded, id []*big.Int) (event.Subscription, error) {
 
 	var idRule []interface{}
 	for _, idItem := range id {
 		idRule = append(idRule, idItem)
 	}
 
-	logs, sub, err := _Prover.contract.WatchLogs(opts, "NodeTypeUpdated", idRule)
+	logs, sub, err := _Prover.contract.WatchLogs(opts, "NodeTypeAdded", idRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1666,8 +1687,8 @@ func (_Prover *ProverFilterer) WatchNodeTypeUpdated(opts *bind.WatchOpts, sink c
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(ProverNodeTypeUpdated)
-				if err := _Prover.contract.UnpackLog(event, "NodeTypeUpdated", log); err != nil {
+				event := new(ProverNodeTypeAdded)
+				if err := _Prover.contract.UnpackLog(event, "NodeTypeAdded", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1688,12 +1709,157 @@ func (_Prover *ProverFilterer) WatchNodeTypeUpdated(opts *bind.WatchOpts, sink c
 	}), nil
 }
 
-// ParseNodeTypeUpdated is a log parse operation binding the contract event 0x09e65b7abf1ac020ee57d85addfaffc3466fbaa144c58cf8d736f09de55820ab.
+// ParseNodeTypeAdded is a log parse operation binding the contract event 0x7a8d6c13ab852956e13c00c7ca802bab711f762666d33ba105921650b0243f20.
 //
-// Solidity: event NodeTypeUpdated(uint256 indexed id, uint256 typ)
-func (_Prover *ProverFilterer) ParseNodeTypeUpdated(log types.Log) (*ProverNodeTypeUpdated, error) {
-	event := new(ProverNodeTypeUpdated)
-	if err := _Prover.contract.UnpackLog(event, "NodeTypeUpdated", log); err != nil {
+// Solidity: event NodeTypeAdded(uint256 indexed id, uint256 typ)
+func (_Prover *ProverFilterer) ParseNodeTypeAdded(log types.Log) (*ProverNodeTypeAdded, error) {
+	event := new(ProverNodeTypeAdded)
+	if err := _Prover.contract.UnpackLog(event, "NodeTypeAdded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// ProverNodeTypeDeletedIterator is returned from FilterNodeTypeDeleted and is used to iterate over the raw logs and unpacked data for NodeTypeDeleted events raised by the Prover contract.
+type ProverNodeTypeDeletedIterator struct {
+	Event *ProverNodeTypeDeleted // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *ProverNodeTypeDeletedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(ProverNodeTypeDeleted)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(ProverNodeTypeDeleted)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *ProverNodeTypeDeletedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *ProverNodeTypeDeletedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// ProverNodeTypeDeleted represents a NodeTypeDeleted event raised by the Prover contract.
+type ProverNodeTypeDeleted struct {
+	Id  *big.Int
+	Typ *big.Int
+	Raw types.Log // Blockchain specific contextual infos
+}
+
+// FilterNodeTypeDeleted is a free log retrieval operation binding the contract event 0xef1aba63aee4e221bc1b165e1617efd3034ad5c99837d048c05850fd10b138d2.
+//
+// Solidity: event NodeTypeDeleted(uint256 indexed id, uint256 typ)
+func (_Prover *ProverFilterer) FilterNodeTypeDeleted(opts *bind.FilterOpts, id []*big.Int) (*ProverNodeTypeDeletedIterator, error) {
+
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
+	}
+
+	logs, sub, err := _Prover.contract.FilterLogs(opts, "NodeTypeDeleted", idRule)
+	if err != nil {
+		return nil, err
+	}
+	return &ProverNodeTypeDeletedIterator{contract: _Prover.contract, event: "NodeTypeDeleted", logs: logs, sub: sub}, nil
+}
+
+// WatchNodeTypeDeleted is a free log subscription operation binding the contract event 0xef1aba63aee4e221bc1b165e1617efd3034ad5c99837d048c05850fd10b138d2.
+//
+// Solidity: event NodeTypeDeleted(uint256 indexed id, uint256 typ)
+func (_Prover *ProverFilterer) WatchNodeTypeDeleted(opts *bind.WatchOpts, sink chan<- *ProverNodeTypeDeleted, id []*big.Int) (event.Subscription, error) {
+
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
+	}
+
+	logs, sub, err := _Prover.contract.WatchLogs(opts, "NodeTypeDeleted", idRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(ProverNodeTypeDeleted)
+				if err := _Prover.contract.UnpackLog(event, "NodeTypeDeleted", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNodeTypeDeleted is a log parse operation binding the contract event 0xef1aba63aee4e221bc1b165e1617efd3034ad5c99837d048c05850fd10b138d2.
+//
+// Solidity: event NodeTypeDeleted(uint256 indexed id, uint256 typ)
+func (_Prover *ProverFilterer) ParseNodeTypeDeleted(log types.Log) (*ProverNodeTypeDeleted, error) {
+	event := new(ProverNodeTypeDeleted)
+	if err := _Prover.contract.UnpackLog(event, "NodeTypeDeleted", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

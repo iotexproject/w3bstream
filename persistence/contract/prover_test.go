@@ -22,19 +22,18 @@ func TestNewProver(t *testing.T) {
 func TestProver_Merge(t *testing.T) {
 	r := require.New(t)
 
-	np := &Prover{}
+	np := newProver()
 	paused := true
 	addr := common.Address{}
-	nodeType := uint64(10)
 	diff := &proverDiff{
-		id:              1,
-		operatorAddress: &addr,
-		paused:          &paused,
-		nodeTypes:       &nodeType,
+		id:               1,
+		operatorAddress:  &addr,
+		paused:           &paused,
+		nodeTypesUpdated: []nodeTypeUpdated{{isAdded: true, typ: 1}},
 	}
 	np.merge(diff)
 	r.Equal(np.ID, diff.id)
-	r.Equal(np.NodeTypes, *diff.nodeTypes)
+	r.Equal(len(np.NodeTypes), 1)
 }
 
 func TestBlockProver_Merge(t *testing.T) {
@@ -44,14 +43,13 @@ func TestBlockProver_Merge(t *testing.T) {
 
 	paused := true
 	addr := common.Address{}
-	nodeType := uint64(10)
 	diff := &blockProverDiff{
 		diffs: map[uint64]*proverDiff{
 			1: {
-				id:              1,
-				operatorAddress: &addr,
-				paused:          &paused,
-				nodeTypes:       &nodeType,
+				id:               1,
+				operatorAddress:  &addr,
+				paused:           &paused,
+				nodeTypesUpdated: []nodeTypeUpdated{{isAdded: true, typ: 10}},
 			},
 		},
 	}
@@ -85,14 +83,30 @@ func TestContract_processProverLogs(t *testing.T) {
 		_, err := c.processProverLogs(logs)
 		r.ErrorContains(err, t.Name())
 	})
-	t.Run("FailedToParseProverNodeTypeUpdatedEvent", func(t *testing.T) {
+	t.Run("FailedToParseProverNodeTypeAddedEvent", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(filterer, "ParseNodeTypeUpdated", &prover.ProverNodeTypeUpdated{Id: id, Typ: id}, errors.New(t.Name()))
+		p.ApplyMethodReturn(filterer, "ParseNodeTypeAdded", &prover.ProverNodeTypeAdded{Id: id, Typ: id}, errors.New(t.Name()))
 		logs := []types.Log{
 			{
-				Topics:      []common.Hash{nodeTypeUpdatedTopic},
+				Topics:      []common.Hash{nodeTypeAddedTopic},
+				BlockNumber: 99,
+				TxIndex:     1,
+			},
+		}
+
+		_, err := c.processProverLogs(logs)
+		r.ErrorContains(err, t.Name())
+	})
+	t.Run("FailedToParseProverNodeTypeDeletedEvent", func(t *testing.T) {
+		p := gomonkey.NewPatches()
+		defer p.Reset()
+
+		p.ApplyMethodReturn(filterer, "ParseNodeTypeDeleted", &prover.ProverNodeTypeDeleted{Id: id, Typ: id}, errors.New(t.Name()))
+		logs := []types.Log{
+			{
+				Topics:      []common.Hash{nodeTypeDeletedTopic},
 				BlockNumber: 99,
 				TxIndex:     1,
 			},
@@ -140,7 +154,8 @@ func TestContract_processProverLogs(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(filterer, "ParseOperatorSet", &prover.ProverOperatorSet{Id: id}, nil)
-		p.ApplyMethodReturn(filterer, "ParseNodeTypeUpdated", &prover.ProverNodeTypeUpdated{Id: id, Typ: id}, nil)
+		p.ApplyMethodReturn(filterer, "ParseNodeTypeAdded", &prover.ProverNodeTypeAdded{Id: id, Typ: id}, nil)
+		p.ApplyMethodReturn(filterer, "ParseNodeTypeDeleted", &prover.ProverNodeTypeDeleted{Id: id, Typ: id}, nil)
 		p.ApplyMethodReturn(filterer, "ParseProverPaused", &prover.ProverProverPaused{Id: id}, nil)
 		p.ApplyMethodReturn(filterer, "ParseProverResumed", &prover.ProverProverResumed{Id: id}, nil)
 
@@ -151,9 +166,14 @@ func TestContract_processProverLogs(t *testing.T) {
 				TxIndex:     1,
 			},
 			{
-				Topics:      []common.Hash{nodeTypeUpdatedTopic},
+				Topics:      []common.Hash{nodeTypeAddedTopic},
 				BlockNumber: 99,
 				TxIndex:     1,
+			},
+			{
+				Topics:      []common.Hash{nodeTypeDeletedTopic},
+				BlockNumber: 99,
+				TxIndex:     2,
 			},
 			{
 				Topics:      []common.Hash{proverPausedTopic},

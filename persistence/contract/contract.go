@@ -35,7 +35,8 @@ var (
 		projectConfigUpdatedTopic,
 
 		operatorSetTopic,
-		nodeTypeUpdatedTopic,
+		nodeTypeAddedTopic,
+		nodeTypeDeletedTopic,
 		proverPausedTopic,
 		proverResumedTopic,
 	}
