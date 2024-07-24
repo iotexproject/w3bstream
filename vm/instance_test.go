@@ -19,7 +19,7 @@ func (*MockClient) Create(ctx context.Context, in *proto.CreateRequest, opts ...
 	return nil, nil
 }
 
-func (*MockClient) ExecuteOperator(ctx context.Context, in *proto.ExecuteRequest, opts ...grpc.CallOption) (*proto.ExecuteResponse, error) {
+func (*MockClient) Execute(ctx context.Context, in *proto.ExecuteRequest, opts ...grpc.CallOption) (*proto.ExecuteResponse, error) {
 	return nil, nil
 }
 
@@ -52,12 +52,12 @@ func TestCreateInstance(t *testing.T) {
 
 func TestExecuteInstance(t *testing.T) {
 	r := require.New(t)
-	t.Run("FailedToCallGRPCExecuteOperator", func(t *testing.T) {
+	t.Run("FailedToCallGRPCExecute", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
 		p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
-		p.ApplyMethodReturn(&MockClient{}, "ExecuteOperator", nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&MockClient{}, "Execute", nil, errors.New(t.Name()))
 
 		_, err := execute(context.Background(), nil, &task.Task{})
 		r.ErrorContains(err, t.Name())
@@ -67,7 +67,7 @@ func TestExecuteInstance(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyFuncReturn(proto.NewVmRuntimeClient, &MockClient{})
-		p.ApplyMethodReturn(&MockClient{}, "ExecuteOperator", &proto.ExecuteResponse{Result: []byte("any")}, nil)
+		p.ApplyMethodReturn(&MockClient{}, "Execute", &proto.ExecuteResponse{Result: []byte("any")}, nil)
 
 		res, err := execute(context.Background(), nil, &task.Task{Data: [][]byte{[]byte("data")}})
 		r.NoError(err, t.Name())
