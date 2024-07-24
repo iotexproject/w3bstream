@@ -252,7 +252,7 @@ func TestRun(t *testing.T) {
 
 	p.ApplyPrivateMethod(&scheduler{}, "schedule", func() {})
 
-	err := Run(10, 1, nil, nil, nil, nil, nil, &ProjectEpochOffsets{})
+	err := Run(10, 1, nil, nil, nil, nil, nil, &ProjectEpochOffsets{}, nil)
 	r.NoError(err)
 }
 
@@ -269,7 +269,7 @@ func TestRunLocal(t *testing.T) {
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 
-		RunLocal(ps, f, pm.ProjectIDs)
+		RunLocal(ps, f, pm)
 	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -283,6 +283,6 @@ func TestRunLocal(t *testing.T) {
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 
-		RunLocal(ps, f, pm.ProjectIDs)
+		RunLocal(ps, f, pm)
 	})
 }

@@ -19,11 +19,10 @@ import (
 	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/task"
 	"github.com/iotexproject/w3bstream/util/distance"
-	"github.com/iotexproject/w3bstream/vm"
 )
 
 type VMHandler interface {
-	Handle(task *task.Task, vmtype vm.Type, code string, expParam string) ([]byte, error)
+	Handle(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error)
 }
 
 type Project func(projectID uint64) (*project.Project, error)
@@ -91,7 +90,7 @@ func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
 	slog.Debug("get a new task", "project_id", t.ProjectID, "task_id", t.ID)
 	r.reportSuccess(t, task.StateDispatched, nil, "", topic)
 
-	res, err := r.vmHandler.Handle(t, c.VMType, c.Code, c.CodeExpParam)
+	res, err := r.vmHandler.Handle(t, c.VMTypeID, c.Code, c.CodeExpParam)
 	if err != nil {
 		slog.Error("failed to generate proof", "error", err)
 		r.reportFail(t, err, topic)

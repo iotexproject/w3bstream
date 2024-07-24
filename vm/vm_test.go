@@ -24,7 +24,7 @@ func TestHandler_Handle(t *testing.T) {
 		},
 	}
 	t.Run("UnsupportedVMType", func(t *testing.T) {
-		_, err := h.Handle(&task.Task{}, Type("other"), "any", "any")
+		_, err := h.Handle(&task.Task{}, 1, "any", "any")
 		r.Error(err)
 	})
 	t.Run("FailedToNewVmInstance", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestHandler_Handle(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyFuncReturn(create, errors.New(t.Name()))
-		_, err := h.Handle(&task.Task{}, ZKwasm, "any", "any")
+		_, err := h.Handle(&task.Task{}, 1, "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToExecuteMessage", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestHandler_Handle(t *testing.T) {
 		p.ApplyFuncReturn(create, nil)
 		p.ApplyFuncReturn(execute, nil, errors.New(t.Name()))
 
-		_, err := h.Handle(&task.Task{}, ZKwasm, "any", "any")
+		_, err := h.Handle(&task.Task{}, 1, "any", "any")
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestHandler_Handle(t *testing.T) {
 		p.ApplyFuncReturn(execute, []byte("any"), nil)
 		p.ApplyFuncReturn(hex.DecodeString, []byte("any"), nil)
 
-		_, err := h.Handle(&task.Task{}, ZKwasm, "any", "any")
+		_, err := h.Handle(&task.Task{}, 1, "any", "any")
 		r.NoError(err)
 	})
 }
