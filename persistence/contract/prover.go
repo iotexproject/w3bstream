@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	operatorSetTopic     = crypto.Keccak256Hash([]byte("OperatorSet(uint256,address)"))
-	nodeTypeAddedTopic   = crypto.Keccak256Hash([]byte("NodeTypeAdded(uint256,uint256)"))
-	nodeTypeDeletedTopic = crypto.Keccak256Hash([]byte("NodeTypeDeleted(uint256, uint256)"))
-	proverPausedTopic    = crypto.Keccak256Hash([]byte("ProverPaused(uint256)"))
-	proverResumedTopic   = crypto.Keccak256Hash([]byte("ProverResumed(uint256)"))
+	operatorSetTopic   = crypto.Keccak256Hash([]byte("OperatorSet(uint256,address)"))
+	vmTypeAddedTopic   = crypto.Keccak256Hash([]byte("VMTypeAdded(uint256,uint256)"))
+	vmTypeDeletedTopic = crypto.Keccak256Hash([]byte("VMTypeDeleted(uint256,uint256)"))
+	proverPausedTopic  = crypto.Keccak256Hash([]byte("ProverPaused(uint256)"))
+	proverResumedTopic = crypto.Keccak256Hash([]byte("ProverResumed(uint256)"))
 )
 
 type Prover struct {
@@ -109,10 +109,10 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 			p.operatorAddress = &e.Operator
 			ps.diffs[e.Id.Uint64()] = p
 
-		case nodeTypeAddedTopic:
-			e, err := c.proverInstance.ParseNodeTypeAdded(l)
+		case vmTypeAddedTopic:
+			e, err := c.proverInstance.ParseVMTypeAdded(l)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to parse prover node type added event")
+				return nil, errors.Wrap(err, "failed to parse prover vm type added event")
 			}
 
 			p, ok := ps.diffs[e.Id.Uint64()]
@@ -123,10 +123,10 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 			p.nodeTypesUpdated = append(p.nodeTypesUpdated, nodeTypeUpdated{isAdded: true, typ: nt})
 			ps.diffs[e.Id.Uint64()] = p
 
-		case nodeTypeDeletedTopic:
-			e, err := c.proverInstance.ParseNodeTypeDeleted(l)
+		case vmTypeDeletedTopic:
+			e, err := c.proverInstance.ParseVMTypeDeleted(l)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to parse prover node type deleted event")
+				return nil, errors.Wrap(err, "failed to parse prover vm type deleted event")
 			}
 
 			p, ok := ps.diffs[e.Id.Uint64()]

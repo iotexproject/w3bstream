@@ -87,10 +87,10 @@ func TestContract_processProverLogs(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(filterer, "ParseNodeTypeAdded", &prover.ProverNodeTypeAdded{Id: id, Typ: id}, errors.New(t.Name()))
+		p.ApplyMethodReturn(filterer, "ParseVMTypeAdded", &prover.ProverVMTypeAdded{Id: id, Typ: id}, errors.New(t.Name()))
 		logs := []types.Log{
 			{
-				Topics:      []common.Hash{nodeTypeAddedTopic},
+				Topics:      []common.Hash{vmTypeAddedTopic},
 				BlockNumber: 99,
 				TxIndex:     1,
 			},
@@ -103,10 +103,10 @@ func TestContract_processProverLogs(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(filterer, "ParseNodeTypeDeleted", &prover.ProverNodeTypeDeleted{Id: id, Typ: id}, errors.New(t.Name()))
+		p.ApplyMethodReturn(filterer, "ParseVMTypeDeleted", &prover.ProverVMTypeDeleted{Id: id, Typ: id}, errors.New(t.Name()))
 		logs := []types.Log{
 			{
-				Topics:      []common.Hash{nodeTypeDeletedTopic},
+				Topics:      []common.Hash{vmTypeDeletedTopic},
 				BlockNumber: 99,
 				TxIndex:     1,
 			},
@@ -154,8 +154,8 @@ func TestContract_processProverLogs(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(filterer, "ParseOperatorSet", &prover.ProverOperatorSet{Id: id}, nil)
-		p.ApplyMethodReturn(filterer, "ParseNodeTypeAdded", &prover.ProverNodeTypeAdded{Id: id, Typ: id}, nil)
-		p.ApplyMethodReturn(filterer, "ParseNodeTypeDeleted", &prover.ProverNodeTypeDeleted{Id: id, Typ: id}, nil)
+		p.ApplyMethodReturn(filterer, "ParseNodeTypeAdded", &prover.ProverVMTypeAdded{Id: id, Typ: id}, nil)
+		p.ApplyMethodReturn(filterer, "ParseNodeTypeDeleted", &prover.ProverVMTypeDeleted{Id: id, Typ: id}, nil)
 		p.ApplyMethodReturn(filterer, "ParseProverPaused", &prover.ProverProverPaused{Id: id}, nil)
 		p.ApplyMethodReturn(filterer, "ParseProverResumed", &prover.ProverProverResumed{Id: id}, nil)
 
@@ -166,12 +166,12 @@ func TestContract_processProverLogs(t *testing.T) {
 				TxIndex:     1,
 			},
 			{
-				Topics:      []common.Hash{nodeTypeAddedTopic},
+				Topics:      []common.Hash{vmTypeAddedTopic},
 				BlockNumber: 99,
 				TxIndex:     1,
 			},
 			{
-				Topics:      []common.Hash{nodeTypeDeletedTopic},
+				Topics:      []common.Hash{vmTypeDeletedTopic},
 				BlockNumber: 99,
 				TxIndex:     2,
 			},

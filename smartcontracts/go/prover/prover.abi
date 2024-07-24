@@ -85,44 +85,6 @@
           "type": "uint256"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "typ",
-          "type": "uint256"
-        }
-      ],
-      "name": "NodeTypeAdded",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "typ",
-          "type": "uint256"
-        }
-      ],
-      "name": "NodeTypeDeleted",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        },
-        {
           "indexed": true,
           "internalType": "address",
           "name": "operator",
@@ -203,6 +165,44 @@
       "type": "event"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "typ",
+          "type": "uint256"
+        }
+      ],
+      "name": "VMTypeAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "typ",
+          "type": "uint256"
+        }
+      ],
+      "name": "VMTypeDeleted",
+      "type": "event"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -215,7 +215,7 @@
           "type": "uint256"
         }
       ],
-      "name": "addNodeType",
+      "name": "addVMType",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -301,7 +301,7 @@
           "type": "uint256"
         }
       ],
-      "name": "delNodeType",
+      "name": "delVMType",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -320,30 +320,6 @@
           "internalType": "address",
           "name": "",
           "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_id",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_type",
-          "type": "uint256"
-        }
-      ],
-      "name": "hasNodeType",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -400,6 +376,30 @@
         }
       ],
       "name": "isPaused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_id",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_type",
+          "type": "uint256"
+        }
+      ],
+      "name": "isVMTypeSupported",
       "outputs": [
         {
           "internalType": "bool",
