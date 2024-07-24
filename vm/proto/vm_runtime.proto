@@ -4,7 +4,7 @@ option go_package = "./proto";
 
 service VmRuntime {
     rpc Create(CreateRequest) returns (CreateResponse);
-    rpc ExecuteOperator(ExecuteRequest) returns (ExecuteResponse);
+    rpc Execute(ExecuteRequest) returns (ExecuteResponse);
 }
 
 message CreateRequest {
