@@ -5,16 +5,16 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
-    event TypeSet(uint256 indexed id);
-    event TypePaused(uint256 indexed id);
-    event TypeResumed(uint256 indexed id);
+    event VMTypeSet(uint256 indexed id);
+    event VMTypePaused(uint256 indexed id);
+    event VMTypeResumed(uint256 indexed id);
 
     uint256 nextTypeId;
 
     mapping(uint256 => string) _types;
     mapping(uint256 => bool) _paused;
 
-    modifier onlyTypeOwner(uint256 _id) {
+    modifier onlyVMTypeOwner(uint256 _id) {
         require(ownerOf(_id) == msg.sender, "not owner");
         _;
     }
@@ -28,7 +28,7 @@ contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
         return nextTypeId;
     }
 
-    function vmType(uint256 _id) external view returns (string memory) {
+    function vmTypeName(uint256 _id) external view returns (string memory) {
         _requireMinted(_id);
         return _types[_id];
     }
@@ -44,20 +44,20 @@ contract W3bstreamVMType is OwnableUpgradeable, ERC721Upgradeable {
 
         _types[id_] = _name;
         _paused[id_] = false;
-        emit TypeSet(id_);
+        emit VMTypeSet(id_);
     }
 
-    function pause(uint256 _id) external onlyTypeOwner(_id) {
+    function pause(uint256 _id) external onlyVMTypeOwner(_id) {
         require(!_paused[_id], "already paused");
 
         _paused[_id] = true;
-        emit TypePaused(_id);
+        emit VMTypePaused(_id);
     }
 
-    function resume(uint256 _id) external onlyTypeOwner(_id) {
+    function resume(uint256 _id) external onlyVMTypeOwner(_id) {
         require(_paused[_id], "already actived");
 
         _paused[_id] = false;
-        emit TypeResumed(_id);
+        emit VMTypeResumed(_id);
     }
 }
