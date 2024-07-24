@@ -8,24 +8,30 @@ import (
 )
 
 var (
-	operatorSetTopic     = crypto.Keccak256Hash([]byte("OperatorSet(uint256,address)"))
-	nodeTypeUpdatedTopic = crypto.Keccak256Hash([]byte("NodeTypeUpdated(uint256,uint256)"))
-	proverPausedTopic    = crypto.Keccak256Hash([]byte("ProverPaused(uint256)"))
-	proverResumedTopic   = crypto.Keccak256Hash([]byte("ProverResumed(uint256)"))
+	operatorSetTopic   = crypto.Keccak256Hash([]byte("OperatorSet(uint256,address)"))
+	vmTypeAddedTopic   = crypto.Keccak256Hash([]byte("VMTypeAdded(uint256,uint256)"))
+	vmTypeDeletedTopic = crypto.Keccak256Hash([]byte("VMTypeDeleted(uint256,uint256)"))
+	proverPausedTopic  = crypto.Keccak256Hash([]byte("ProverPaused(uint256)"))
+	proverResumedTopic = crypto.Keccak256Hash([]byte("ProverResumed(uint256)"))
 )
 
 type Prover struct {
 	ID              uint64
 	OperatorAddress common.Address
 	Paused          bool
-	NodeTypes       uint64
+	NodeTypes       map[uint64]bool
+}
+
+type nodeTypeUpdated struct {
+	isAdded bool
+	typ     uint64
 }
 
 type proverDiff struct {
-	id              uint64
-	operatorAddress *common.Address
-	paused          *bool
-	nodeTypes       *uint64
+	id               uint64
+	operatorAddress  *common.Address
+	paused           *bool
+	nodeTypesUpdated []nodeTypeUpdated
 }
 
 type blockProver struct {
@@ -38,7 +44,8 @@ type blockProverDiff struct {
 
 func newProver() *Prover {
 	return &Prover{
-		Paused: true,
+		Paused:    true,
+		NodeTypes: map[uint64]bool{},
 	}
 }
 
@@ -52,8 +59,12 @@ func (p *Prover) merge(diff *proverDiff) {
 	if diff.paused != nil {
 		p.Paused = *diff.paused
 	}
-	if diff.nodeTypes != nil {
-		p.NodeTypes = *diff.nodeTypes
+	for _, u := range diff.nodeTypesUpdated {
+		if u.isAdded {
+			p.NodeTypes[u.typ] = true
+		} else {
+			delete(p.NodeTypes, u.typ)
+		}
 	}
 }
 
@@ -98,10 +109,10 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 			p.operatorAddress = &e.Operator
 			ps.diffs[e.Id.Uint64()] = p
 
-		case nodeTypeUpdatedTopic:
-			e, err := c.proverInstance.ParseNodeTypeUpdated(l)
+		case vmTypeAddedTopic:
+			e, err := c.proverInstance.ParseVMTypeAdded(l)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to parse prover node type updated event")
+				return nil, errors.Wrap(err, "failed to parse prover vm type added event")
 			}
 
 			p, ok := ps.diffs[e.Id.Uint64()]
@@ -109,7 +120,21 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 				p = &proverDiff{id: e.Id.Uint64()}
 			}
 			nt := e.Typ.Uint64()
-			p.nodeTypes = &nt
+			p.nodeTypesUpdated = append(p.nodeTypesUpdated, nodeTypeUpdated{isAdded: true, typ: nt})
+			ps.diffs[e.Id.Uint64()] = p
+
+		case vmTypeDeletedTopic:
+			e, err := c.proverInstance.ParseVMTypeDeleted(l)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse prover vm type deleted event")
+			}
+
+			p, ok := ps.diffs[e.Id.Uint64()]
+			if !ok {
+				p = &proverDiff{id: e.Id.Uint64()}
+			}
+			nt := e.Typ.Uint64()
+			p.nodeTypesUpdated = append(p.nodeTypesUpdated, nodeTypeUpdated{isAdded: false, typ: nt})
 			ps.diffs[e.Id.Uint64()] = p
 
 		case proverPausedTopic:
