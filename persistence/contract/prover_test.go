@@ -154,8 +154,8 @@ func TestContract_processProverLogs(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(filterer, "ParseOperatorSet", &prover.ProverOperatorSet{Id: id}, nil)
-		p.ApplyMethodReturn(filterer, "ParseNodeTypeAdded", &prover.ProverVMTypeAdded{Id: id, Typ: id}, nil)
-		p.ApplyMethodReturn(filterer, "ParseNodeTypeDeleted", &prover.ProverVMTypeDeleted{Id: id, Typ: id}, nil)
+		p.ApplyMethodReturn(filterer, "ParseVMTypeAdded", &prover.ProverVMTypeAdded{Id: id, Typ: id}, nil)
+		p.ApplyMethodReturn(filterer, "ParseVMTypeDeleted", &prover.ProverVMTypeDeleted{Id: id, Typ: id}, nil)
 		p.ApplyMethodReturn(filterer, "ParseProverPaused", &prover.ProverProverPaused{Id: id}, nil)
 		p.ApplyMethodReturn(filterer, "ParseProverResumed", &prover.ProverProverResumed{Id: id}, nil)
 
