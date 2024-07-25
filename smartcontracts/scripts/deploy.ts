@@ -88,6 +88,13 @@ async function main() {
   });
   await router.waitForDeployment();
   console.log(`W3bstreamRouter deployed to ${router.target}`);
+
+  const W3bstreamVMType = await ethers.getContractFactory('W3bstreamVMType');
+  const vmtype = await upgrades.deployProxy(W3bstreamVMType, ['W3bstream VmType', 'WVTN'], {
+    initializer: 'initialize',
+  });
+  await vmtype.waitForDeployment();
+  console.log(`W3bstreamVMType deployed to ${vmtype.target}`);
 }
 
 main().catch(err => {
