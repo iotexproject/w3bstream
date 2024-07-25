@@ -110,12 +110,12 @@ func main() {
 	}
 
 	if local {
-		scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager.ProjectIDs)
+		scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager)
 	} else {
 		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
 
 		if err := scheduler.Run(conf.SchedulerEpoch, proverID, pubSubs, taskProcessor.HandleProjectProvers,
-			chainHeadNotification, contractPersistence.Project, contractPersistence.Provers, projectOffsets); err != nil {
+			chainHeadNotification, contractPersistence.Project, contractPersistence.Provers, projectOffsets, projectManager); err != nil {
 			log.Fatal(errors.Wrap(err, "failed to run scheduler"))
 		}
 	}

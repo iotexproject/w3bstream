@@ -6,19 +6,25 @@ import (
 
 	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/util/distance"
 )
 
 type HandleProjectProvers func(projectID uint64, proverIDs []uint64)
 
-type ProjectIDs func() []uint64
 type ContractProject func(projectID, blockNumber uint64) *contract.Project
 type ContractProvers func(blockNumber uint64) []*contract.Prover
+
+type ProjectManager interface {
+	ProjectIDs() []uint64
+	Project(projectID uint64) (*project.Project, error)
+}
 
 type scheduler struct {
 	chainHead            <-chan uint64
 	contractProject      ContractProject
 	contractProvers      ContractProvers
+	projectManager       ProjectManager
 	projectOffsets       *ProjectEpochOffsets
 	epoch                uint64
 	pubSubs              *p2p.PubSubs
@@ -44,10 +50,10 @@ func (s *scheduler) schedule() {
 				continue
 			}
 
-			proverIDs := []uint64{}
+			provers := []*contract.Prover{}
 			for _, p := range s.contractProvers(blockNumber) {
 				if !p.Paused {
-					proverIDs = append(proverIDs, p.ID)
+					provers = append(provers, p)
 				}
 			}
 
@@ -63,12 +69,29 @@ func (s *scheduler) schedule() {
 					slog.Error("failed to find project from contract", "project_id", projectID)
 					continue
 				}
+				pf, err := s.projectManager.Project(projectID)
+				if err != nil {
+					slog.Error("failed to get project file", "project_id", projectID, "error", err)
+					continue
+				}
+				pfConf, err := pf.DefaultConfig()
+				if err != nil {
+					slog.Error("failed to get project file default config", "project_id", projectID, "error", err)
+					continue
+				}
+
+				proverIDs := []uint64{}
+				for _, p := range provers {
+					if p.NodeTypes[pfConf.VMTypeID] {
+						proverIDs = append(proverIDs, p.ID)
+					}
+				}
 
 				amount := uint64(1)
 				if v, ok := cp.Attributes[contract.RequiredProverAmount]; ok {
 					n, err := strconv.ParseUint(string(v), 10, 64)
 					if err != nil {
-						slog.Error("failed to parse project required prover amount", "project_id", projectID)
+						slog.Error("failed to parse project required prover amount", "project_id", projectID, "error", err)
 						continue
 					}
 					amount = n
@@ -105,7 +128,7 @@ func (s *scheduler) schedule() {
 	}
 }
 
-func Run(epoch uint64, proverID uint64, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, chainHead <-chan uint64, contractProject ContractProject, contractProvers ContractProvers, projectOffsets *ProjectEpochOffsets) error {
+func Run(epoch uint64, proverID uint64, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, chainHead <-chan uint64, contractProject ContractProject, contractProvers ContractProvers, projectOffsets *ProjectEpochOffsets, projectManager ProjectManager) error {
 	s := &scheduler{
 		contractProvers:      contractProvers,
 		contractProject:      contractProject,
@@ -115,18 +138,19 @@ func Run(epoch uint64, proverID uint64, pubSubs *p2p.PubSubs, handleProjectProve
 		chainHead:            chainHead,
 		proverID:             proverID,
 		handleProjectProvers: handleProjectProvers,
+		projectManager:       projectManager,
 	}
 	go s.schedule()
 	return nil
 }
 
-func RunLocal(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, projectIDs ProjectIDs) {
+func RunLocal(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, projectManager ProjectManager) {
 	s := &scheduler{
 		pubSubs:              pubSubs,
 		handleProjectProvers: handleProjectProvers,
 	}
 
-	ids := projectIDs()
+	ids := projectManager.ProjectIDs()
 	for _, id := range ids {
 		s.handleProjectProvers(id, []uint64{})
 		if err := s.pubSubs.Add(id); err != nil {

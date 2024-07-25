@@ -13,13 +13,11 @@ import (
 
 	"github.com/iotexproject/w3bstream/output"
 	"github.com/iotexproject/w3bstream/util/ipfs"
-	"github.com/iotexproject/w3bstream/vm"
 )
 
 var (
-	errEmptyConfig       = errors.New("config is empty")
-	errEmptyCode         = errors.New("code is empty")
-	errUnsupportedVMType = errors.New("unsupported vm type")
+	errEmptyConfig = errors.New("config is empty")
+	errEmptyCode   = errors.New("code is empty")
 )
 
 type Project struct {
@@ -42,7 +40,7 @@ type Attribute struct {
 
 type Config struct {
 	Version      string        `json:"version"`
-	VMType       vm.Type       `json:"vmType"`
+	VMTypeID     uint64        `json:"vmTypeID"`
 	Output       output.Config `json:"output"`
 	CodeExpParam string        `json:"codeExpParam,omitempty"`
 	Code         string        `json:"code"`
@@ -65,12 +63,7 @@ func (c *Config) validate() error {
 	if len(c.Code) == 0 {
 		return errEmptyCode
 	}
-	switch c.VMType {
-	default:
-		return errUnsupportedVMType
-	case vm.Halo2, vm.Wasm, vm.Risc0, vm.ZKwasm:
-		return nil
-	}
+	return nil
 }
 
 func (m *Meta) FetchProjectRawData(ipfsEndpoint string) ([]byte, error) {

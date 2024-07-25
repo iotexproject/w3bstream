@@ -199,7 +199,7 @@ func runProver(conf *proverconfig.Config) {
 		log.Fatal(err)
 	}
 
-	scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager.ProjectIDs)
+	scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager)
 
 	slog.Info("prover started")
 }

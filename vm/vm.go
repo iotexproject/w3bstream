@@ -24,8 +24,9 @@ type Handler struct {
 	vmServerClients map[Type]*grpc.ClientConn
 }
 
-func (r *Handler) Handle(task *task.Task, vmtype Type, code string, expParam string) ([]byte, error) {
-	conn, ok := r.vmServerClients[vmtype]
+func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error) {
+	vmType := Halo2 // FIXME: will read vmTypeID from contract
+	conn, ok := r.vmServerClients[vmType]
 	if !ok {
 		return nil, errors.New("unsupported vm type")
 	}
@@ -33,7 +34,7 @@ func (r *Handler) Handle(task *task.Task, vmtype Type, code string, expParam str
 	if err := create(context.Background(), conn, task.ProjectID, code, expParam); err != nil {
 		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
-	slog.Debug("create vm instance success", "vm_type", vmtype)
+	slog.Debug("create vm instance success", "vm_type", vmType)
 
 	res, err := execute(context.Background(), conn, task)
 	if err != nil {

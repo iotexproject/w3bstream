@@ -110,7 +110,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 		Versions: []*project.Config{{
 			Code:         "code",
 			CodeExpParam: "codeExpParam",
-			VMType:       vm.Risc0,
+			VMTypeID:     1,
 			Output:       output.Config{},
 			Version:      "0.1",
 		}},

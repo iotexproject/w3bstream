@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotexproject/w3bstream/util/ipfs"
-	"github.com/iotexproject/w3bstream/vm"
 )
 
 func TestProjectMeta_FetchProjectRawData_init(t *testing.T) {
@@ -137,8 +136,8 @@ func TestConfig_Validate(t *testing.T) {
 	r := require.New(t)
 
 	config := &Config{
-		VMType: vm.Halo2,
-		Code:   "testCode",
+		VMTypeID: 1,
+		Code:     "testCode",
 	}
 
 	t.Run("EmptyCode", func(t *testing.T) {
@@ -146,13 +145,6 @@ func TestConfig_Validate(t *testing.T) {
 		c.Code = ""
 		err := c.validate()
 		r.EqualError(err, errEmptyCode.Error())
-	})
-
-	t.Run("UnsupportedVMType", func(t *testing.T) {
-		c := *config
-		c.VMType = "test"
-		err := c.validate()
-		r.EqualError(err, errUnsupportedVMType.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {

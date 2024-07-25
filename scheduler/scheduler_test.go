@@ -97,11 +97,14 @@ func TestScheduler_schedule(t *testing.T) {
 		paused := false
 		pm := &contract.Contract{}
 		pes := &ProjectEpochOffsets{}
+		pf := &project.Manager{}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("err")},
 		})
+		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
+		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
 		chainHead := make(chan uint64, 10)
 		chainHead <- 1
@@ -113,6 +116,7 @@ func TestScheduler_schedule(t *testing.T) {
 			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
+			projectManager:       pf,
 		}
 		pe := &projectEpochOffset{}
 		pe.projectIDs.Store(uint64(1), uint64(1))
@@ -127,12 +131,15 @@ func TestScheduler_schedule(t *testing.T) {
 		paused := false
 		pm := &contract.Contract{}
 		pes := &ProjectEpochOffsets{epoch: 1}
+		pf := &project.Manager{}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("10")},
 		})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Delete")
+		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
+		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
 		chainHead := make(chan uint64, 10)
 		chainHead <- 1
@@ -144,6 +151,7 @@ func TestScheduler_schedule(t *testing.T) {
 			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
+			projectManager:       pf,
 		}
 		pe := &projectEpochOffset{}
 		pe.projectIDs.Store(uint64(1), uint64(1))
@@ -158,11 +166,14 @@ func TestScheduler_schedule(t *testing.T) {
 		paused := false
 		pm := &contract.Contract{}
 		pes := &ProjectEpochOffsets{epoch: 1}
+		pf := &project.Manager{}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyFuncReturn(distance.Sort, []uint64{100})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Delete")
+		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
+		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
 		chainHead := make(chan uint64, 10)
 		chainHead <- 1
@@ -174,6 +185,7 @@ func TestScheduler_schedule(t *testing.T) {
 			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
+			projectManager:       pf,
 		}
 		pe := &projectEpochOffset{}
 		pe.projectIDs.Store(uint64(1), uint64(1))
@@ -188,10 +200,13 @@ func TestScheduler_schedule(t *testing.T) {
 		paused := false
 		pm := &contract.Contract{}
 		pes := &ProjectEpochOffsets{}
+		pf := &project.Manager{}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
-		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused}})
+		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused, NodeTypes: map[uint64]bool{0: true}}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
+		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
+		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
 		chainHead := make(chan uint64, 10)
 		chainHead <- 1
@@ -204,6 +219,7 @@ func TestScheduler_schedule(t *testing.T) {
 			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
+			projectManager:       pf,
 		}
 		pe := &projectEpochOffset{}
 		pe.projectIDs.Store(uint64(1), uint64(1))
@@ -218,10 +234,13 @@ func TestScheduler_schedule(t *testing.T) {
 		paused := false
 		pm := &contract.Contract{}
 		pes := &ProjectEpochOffsets{epoch: 1}
+		pf := &project.Manager{}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
-		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused}})
+		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused, NodeTypes: map[uint64]bool{0: true}}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
+		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
+		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
 		chainHead := make(chan uint64, 10)
 		chainHead <- 1
@@ -234,6 +253,7 @@ func TestScheduler_schedule(t *testing.T) {
 			projectOffsets:       pes,
 			epoch:                1,
 			handleProjectProvers: handleProjectProvers,
+			projectManager:       pf,
 		}
 		pe := &projectEpochOffset{}
 		pe.projectIDs.Store(uint64(1), uint64(1))
@@ -252,7 +272,7 @@ func TestRun(t *testing.T) {
 
 	p.ApplyPrivateMethod(&scheduler{}, "schedule", func() {})
 
-	err := Run(10, 1, nil, nil, nil, nil, nil, &ProjectEpochOffsets{})
+	err := Run(10, 1, nil, nil, nil, nil, nil, &ProjectEpochOffsets{}, nil)
 	r.NoError(err)
 }
 
@@ -269,7 +289,7 @@ func TestRunLocal(t *testing.T) {
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 
-		RunLocal(ps, f, pm.ProjectIDs)
+		RunLocal(ps, f, pm)
 	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
@@ -283,6 +303,6 @@ func TestRunLocal(t *testing.T) {
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 
-		RunLocal(ps, f, pm.ProjectIDs)
+		RunLocal(ps, f, pm)
 	})
 }

@@ -24,7 +24,6 @@ import (
 	"github.com/iotexproject/w3bstream/apitypes"
 	"github.com/iotexproject/w3bstream/persistence/contract"
 	"github.com/iotexproject/w3bstream/project"
-	"github.com/iotexproject/w3bstream/vm"
 )
 
 var (
@@ -146,24 +145,24 @@ func sendMessage(contractPersistence *contract.Contract, projectManager *project
 			slog.Error("failed to get project data", "project_id", project.ID, "error", err)
 			continue
 		}
-		defaultVer, err := projectFile.DefaultConfig()
+		_, err = projectFile.DefaultConfig()
 		if err != nil {
 			slog.Error("failed to get project default version", "project_id", project.ID, "error", err)
 			continue
 		}
 		var data string
-		switch defaultVer.VMType {
-		case vm.Halo2:
-			data = halo2MessageData
-		case vm.Risc0:
-			data = risc0MessageData
-		case vm.ZKwasm:
-			// data = zkwasmMessageData
-			continue // skip zkwasm
-		default:
-			slog.Error("unsupported vm type", "project_id", project.ID, "vm_type", defaultVer.VMType)
-			continue
-		}
+		// switch defaultVer.VMType {
+		// case vm.Halo2:
+		// 	data = halo2MessageData
+		// case vm.Risc0:
+		// 	data = risc0MessageData
+		// case vm.ZKwasm:
+		// 	// data = zkwasmMessageData
+		// 	continue // skip zkwasm
+		// default:
+		// 	slog.Error("unsupported vm type", "project_id", project.ID, "vm_type", defaultVer.VMType)
+		// 	continue
+		// }
 		req := &apitypes.HandleMessageReq{
 			ProjectID:      project.ID,
 			ProjectVersion: "0.1",
