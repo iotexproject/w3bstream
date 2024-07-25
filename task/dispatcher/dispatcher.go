@@ -118,6 +118,11 @@ func (d *Dispatcher) setProjectDispatcher(pid uint64) {
 		slog.Error("failed to get project", "project_id", cp.ID, "error", err)
 		return
 	}
+	pfConf, err := pf.DefaultConfig()
+	if err != nil {
+		slog.Error("failed to get project default config", "project_id", cp.ID, "error", err)
+		return
+	}
 	if err := d.pubSubs.Add(cp.ID); err != nil {
 		slog.Error("failed to add pubsubs", "project_id", cp.ID, "error", err)
 		return
@@ -134,7 +139,7 @@ func (d *Dispatcher) setProjectDispatcher(pid uint64) {
 			return
 		}
 	}
-	pd, err := newProjectDispatcher(d.persistence, uri, d.newDatasource, cp, d.pubSubs, d.taskStateHandler, pubKey)
+	pd, err := newProjectDispatcher(d.persistence, uri, d.newDatasource, cp, d.pubSubs, d.taskStateHandler, pubKey, d.contract, pfConf.VMTypeID)
 	if err != nil {
 		slog.Error("failed to new project dispatcher", "project_id", cp.ID, "error", err)
 		return

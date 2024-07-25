@@ -11,11 +11,13 @@ import (
 	"github.com/iotexproject/w3bstream/datasource"
 	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/p2p"
-	"github.com/iotexproject/w3bstream/persistence/contract"
+	contractpkg "github.com/iotexproject/w3bstream/persistence/contract"
 	"github.com/iotexproject/w3bstream/task"
 )
 
 type projectDispatcher struct {
+	contract             Contract // optional, nil means local model
+	vmTypeID             uint64
 	window               *window
 	waitInterval         time.Duration
 	startTaskID          uint64
@@ -39,6 +41,21 @@ func (d *projectDispatcher) run() {
 			d.idle.Store(true)
 			time.Sleep(d.waitInterval)
 			continue
+		}
+		if d.contract != nil {
+			ps := d.contract.LatestProvers()
+			isSupported := false
+			for _, p := range ps {
+				if p.NodeTypes[d.vmTypeID] {
+					isSupported = true
+					break
+				}
+			}
+			if !isSupported {
+				d.idle.Store(true)
+				time.Sleep(d.waitInterval)
+				continue
+			}
 		}
 		next, err := d.dispatch(nextTaskID)
 		if err != nil {
@@ -80,7 +97,7 @@ func (d *projectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	return t.ID + 1, nil
 }
 
-func newProjectDispatcher(persistence Persistence, datasourceURI string, newDatasource NewDatasource, p *contract.Project, pubSubs *p2p.PubSubs, handler *taskStateHandler, datasourcePubKey []byte) (*projectDispatcher, error) {
+func newProjectDispatcher(persistence Persistence, datasourceURI string, newDatasource NewDatasource, p *contractpkg.Project, pubSubs *p2p.PubSubs, handler *taskStateHandler, datasourcePubKey []byte, contract Contract, vmTypeID uint64) (*projectDispatcher, error) {
 	processedTaskID, err := persistence.ProcessedTaskID(p.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", p.ID)
@@ -92,7 +109,7 @@ func newProjectDispatcher(persistence Persistence, datasourceURI string, newData
 
 	proverAmount := &atomic.Uint64{}
 	proverAmount.Store(1)
-	if v, ok := p.Attributes[contract.RequiredProverAmount]; ok {
+	if v, ok := p.Attributes[contractpkg.RequiredProverAmount]; ok {
 		n, err := strconv.ParseUint(string(v), 10, 64)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse project required prover amount, project_id %v", p.ID)
@@ -106,6 +123,8 @@ func newProjectDispatcher(persistence Persistence, datasourceURI string, newData
 	idle := atomic.Bool{}
 	idle.Store(true)
 	d := &projectDispatcher{
+		contract:             contract,
+		vmTypeID:             vmTypeID,
 		window:               window,
 		waitInterval:         3 * time.Second,
 		startTaskID:          processedTaskID + 1,
