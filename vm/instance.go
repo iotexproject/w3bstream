@@ -37,7 +37,7 @@ func execute(ctx context.Context, conn *grpc.ClientConn, task *task.Task) ([]byt
 		Datas:              ds,
 	}
 	cli := proto.NewVmRuntimeClient(conn)
-	resp, err := cli.ExecuteOperator(ctx, req)
+	resp, err := cli.Execute(ctx, req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
