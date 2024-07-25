@@ -26,14 +26,14 @@ func TestProver_Merge(t *testing.T) {
 	paused := true
 	addr := common.Address{}
 	diff := &proverDiff{
-		id:               1,
-		operatorAddress:  &addr,
-		paused:           &paused,
-		nodeTypesUpdated: []nodeTypeUpdated{{isAdded: true, typ: 1}},
+		id:              1,
+		operatorAddress: &addr,
+		paused:          &paused,
+		vmTypesUpdated:  []vmTypeUpdated{{isAdded: true, typ: 1}},
 	}
 	np.merge(diff)
 	r.Equal(np.ID, diff.id)
-	r.Equal(len(np.NodeTypes), 1)
+	r.Equal(len(np.VMTypes), 1)
 }
 
 func TestBlockProver_Merge(t *testing.T) {
@@ -46,10 +46,10 @@ func TestBlockProver_Merge(t *testing.T) {
 	diff := &blockProverDiff{
 		diffs: map[uint64]*proverDiff{
 			1: {
-				id:               1,
-				operatorAddress:  &addr,
-				paused:           &paused,
-				nodeTypesUpdated: []nodeTypeUpdated{{isAdded: true, typ: 10}},
+				id:              1,
+				operatorAddress: &addr,
+				paused:          &paused,
+				vmTypesUpdated:  []vmTypeUpdated{{isAdded: true, typ: 10}},
 			},
 		},
 	}

@@ -46,7 +46,7 @@ func (d *projectDispatcher) run() {
 			ps := d.contract.LatestProvers()
 			isSupported := false
 			for _, p := range ps {
-				if p.NodeTypes[d.vmTypeID] {
+				if p.VMTypes[d.vmTypeID] {
 					isSupported = true
 					break
 				}

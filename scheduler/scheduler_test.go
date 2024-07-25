@@ -202,7 +202,7 @@ func TestScheduler_schedule(t *testing.T) {
 		pes := &ProjectEpochOffsets{}
 		pf := &project.Manager{}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
-		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused, NodeTypes: map[uint64]bool{0: true}}})
+		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused, VMTypes: map[uint64]bool{0: true}}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
 		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
@@ -236,7 +236,7 @@ func TestScheduler_schedule(t *testing.T) {
 		pes := &ProjectEpochOffsets{epoch: 1}
 		pf := &project.Manager{}
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
-		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused, NodeTypes: map[uint64]bool{0: true}}})
+		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused, VMTypes: map[uint64]bool{0: true}}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)

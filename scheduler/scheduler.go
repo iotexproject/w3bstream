@@ -82,7 +82,7 @@ func (s *scheduler) schedule() {
 
 				proverIDs := []uint64{}
 				for _, p := range provers {
-					if p.NodeTypes[pfConf.VMTypeID] {
+					if p.VMTypes[pfConf.VMTypeID] {
 						proverIDs = append(proverIDs, p.ID)
 					}
 				}
