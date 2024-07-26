@@ -41,7 +41,8 @@ func TestNewLocal(t *testing.T) {
 		pm := &mockProjectManager{}
 		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
-		p.ApplyMethodReturn(pm, "Project", nil, nil)
+		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
+		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
 		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
@@ -55,6 +56,7 @@ func TestNewLocal(t *testing.T) {
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, nil, errors.New(t.Name()))
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
+		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
 		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", "", []byte(""), 0)
 		r.ErrorContains(err, t.Name())
@@ -71,6 +73,7 @@ func TestNewLocal(t *testing.T) {
 		p.ApplyFuncReturn(newProjectDispatcher, &projectDispatcher{window: w, requiredProverAmount: &a}, nil)
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{0, 0})
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
+		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 		p.ApplyPrivateMethod(w, "setSize", func(uint64) {})
 
 		_, err := NewLocal(&mockPersistence{}, nil, pm, "", "", "", "", "", []byte(""), 0)

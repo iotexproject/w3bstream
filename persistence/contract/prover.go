@@ -19,19 +19,19 @@ type Prover struct {
 	ID              uint64
 	OperatorAddress common.Address
 	Paused          bool
-	NodeTypes       map[uint64]bool
+	VMTypes         map[uint64]bool
 }
 
-type nodeTypeUpdated struct {
+type vmTypeUpdated struct {
 	isAdded bool
 	typ     uint64
 }
 
 type proverDiff struct {
-	id               uint64
-	operatorAddress  *common.Address
-	paused           *bool
-	nodeTypesUpdated []nodeTypeUpdated
+	id              uint64
+	operatorAddress *common.Address
+	paused          *bool
+	vmTypesUpdated  []vmTypeUpdated
 }
 
 type blockProver struct {
@@ -44,8 +44,8 @@ type blockProverDiff struct {
 
 func newProver() *Prover {
 	return &Prover{
-		Paused:    true,
-		NodeTypes: map[uint64]bool{},
+		Paused:  true,
+		VMTypes: map[uint64]bool{},
 	}
 }
 
@@ -59,11 +59,11 @@ func (p *Prover) merge(diff *proverDiff) {
 	if diff.paused != nil {
 		p.Paused = *diff.paused
 	}
-	for _, u := range diff.nodeTypesUpdated {
+	for _, u := range diff.vmTypesUpdated {
 		if u.isAdded {
-			p.NodeTypes[u.typ] = true
+			p.VMTypes[u.typ] = true
 		} else {
-			delete(p.NodeTypes, u.typ)
+			delete(p.VMTypes, u.typ)
 		}
 	}
 }
@@ -120,7 +120,7 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 				p = &proverDiff{id: e.Id.Uint64()}
 			}
 			nt := e.Typ.Uint64()
-			p.nodeTypesUpdated = append(p.nodeTypesUpdated, nodeTypeUpdated{isAdded: true, typ: nt})
+			p.vmTypesUpdated = append(p.vmTypesUpdated, vmTypeUpdated{isAdded: true, typ: nt})
 			ps.diffs[e.Id.Uint64()] = p
 
 		case vmTypeDeletedTopic:
@@ -134,7 +134,7 @@ func (c *Contract) processProverLogs(logs []types.Log) (map[uint64]*blockProverD
 				p = &proverDiff{id: e.Id.Uint64()}
 			}
 			nt := e.Typ.Uint64()
-			p.nodeTypesUpdated = append(p.nodeTypesUpdated, nodeTypeUpdated{isAdded: false, typ: nt})
+			p.vmTypesUpdated = append(p.vmTypesUpdated, vmTypeUpdated{isAdded: false, typ: nt})
 			ps.diffs[e.Id.Uint64()] = p
 
 		case proverPausedTopic:

@@ -142,7 +142,7 @@ func TestNewProjectDispatcher(t *testing.T) {
 		ps := &mockPersistence{}
 		p.ApplyMethodReturn(ps, "ProcessedTaskID", uint64(0), errors.New(t.Name()))
 
-		_, err := newProjectDispatcher(ps, "", nil, &contract.Project{}, nil, nil, nil)
+		_, err := newProjectDispatcher(ps, "", nil, &contract.Project{}, nil, nil, nil, nil, 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToNewTaskRetriever", func(t *testing.T) {
@@ -153,7 +153,7 @@ func TestNewProjectDispatcher(t *testing.T) {
 		p.ApplyMethodReturn(ps, "ProcessedTaskID", uint64(0), nil)
 		nd := func(string) (datasource.Datasource, error) { return nil, errors.New(t.Name()) }
 
-		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{}, nil, nil, nil)
+		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{}, nil, nil, nil, nil, 0)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToParseProjectRequiredProverAmount", func(t *testing.T) {
@@ -166,7 +166,7 @@ func TestNewProjectDispatcher(t *testing.T) {
 
 		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("err")},
-		}, nil, nil, nil)
+		}, nil, nil, nil, nil, 0)
 		r.ErrorContains(err, "failed to parse project required prover amount")
 	})
 	t.Run("Success", func(t *testing.T) {
@@ -183,7 +183,7 @@ func TestNewProjectDispatcher(t *testing.T) {
 		_, err := newProjectDispatcher(ps, "", nd, &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("1")},
 			Paused:     paused,
-		}, nil, nil, nil)
+		}, nil, nil, nil, nil, 0)
 		time.Sleep(10 * time.Millisecond)
 		r.NoError(err)
 	})

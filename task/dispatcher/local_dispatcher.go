@@ -32,9 +32,13 @@ func NewLocal(persistence Persistence, newDatasource NewDatasource,
 		if ok {
 			continue
 		}
-		p, err := projectManager.Project(id)
+		pf, err := projectManager.Project(id)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get project, project_id %v", id)
+		}
+		pfConf, err := pf.DefaultConfig()
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get project default config, project_id %v", id)
 		}
 		if err := ps.Add(id); err != nil {
 			return nil, errors.Wrapf(err, "failed to add pubsubs, project_id %v", id)
@@ -43,18 +47,18 @@ func NewLocal(persistence Persistence, newDatasource NewDatasource,
 			ID:         id,
 			Attributes: map[common.Hash][]byte{},
 		}
-		uri := p.DatasourceURI
+		uri := pf.DatasourceURI
 		if uri == "" {
 			uri = defaultDatasourceURI
 		}
 		pubKey := defaultDatasourcePubKey
-		if p.DatasourcePubKey != "" {
-			pubKey, err = hexutil.Decode(p.DatasourcePubKey)
+		if pf.DatasourcePubKey != "" {
+			pubKey, err = hexutil.Decode(pf.DatasourcePubKey)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to decode datasource public key, project_id %v", id)
 			}
 		}
-		pd, err := newProjectDispatcher(persistence, uri, newDatasource, cp, ps, taskStateHandler, pubKey)
+		pd, err := newProjectDispatcher(persistence, uri, newDatasource, cp, ps, taskStateHandler, pubKey, nil, pfConf.VMTypeID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to new project dispatcher, project_id %v", id)
 		}
