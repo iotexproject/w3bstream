@@ -3,7 +3,7 @@
   "defaultVersion": "0.1",
   "versions": [
     {
-      "vmType": "halo2",
+      "vmTypeID": 2,
       "output": {
         "type": "stdout"
       },

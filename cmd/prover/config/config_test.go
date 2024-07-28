@@ -3,6 +3,7 @@ package config_test
 import (
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
@@ -19,10 +20,7 @@ func TestConfig_Init(t *testing.T) {
 	t.Run("UseEnvConfig", func(t *testing.T) {
 		os.Clearenv()
 		expected := config.Config{
-			Risc0ServerEndpoint:  "risc0:1111",
-			Halo2ServerEndpoint:  "halo2:2222",
-			ZKWasmServerEndpoint: "zkwasm:3333",
-			WasmServerEndpoint:   "wasm:4444",
+			VMEndpoints:          `{"1":"halo2:4001","2":"risc0:4001","3":"zkwasm:4001","4":"wasm:4001"}`,
 			ChainEndpoint:        "http://abc.def.com",
 			ProjectContractAddr:  "0x123",
 			DatabaseDSN:          "postgres://root@localhost/abc?ext=666",
@@ -36,10 +34,7 @@ func TestConfig_Init(t *testing.T) {
 			LocalDBDir:           "./test",
 		}
 
-		_ = os.Setenv("RISC0_SERVER_ENDPOINT", expected.Risc0ServerEndpoint)
-		_ = os.Setenv("HALO2_SERVER_ENDPOINT", expected.Halo2ServerEndpoint)
-		_ = os.Setenv("ZKWASM_SERVER_ENDPOINT", expected.ZKWasmServerEndpoint)
-		_ = os.Setenv("WASM_SERVER_ENDPOINT", expected.WasmServerEndpoint)
+		_ = os.Setenv("VM_ENDPOINTS", expected.VMEndpoints)
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATABASE_DSN", expected.DatabaseDSN)
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
@@ -87,7 +82,7 @@ func TestGet(t *testing.T) {
 
 		conf, err := config.Get()
 		r.NoError(err)
-		r.Equal("localhost:14001", conf.Risc0ServerEndpoint)
+		r.True(strings.Contains(conf.VMEndpoints, "localhost:14001"))
 	})
 
 	t.Run("GetDefaultDebugConfig", func(t *testing.T) {
@@ -95,7 +90,7 @@ func TestGet(t *testing.T) {
 
 		conf, err := config.Get()
 		r.NoError(err)
-		r.Equal("localhost:4001", conf.Risc0ServerEndpoint)
+		r.True(strings.Contains(conf.VMEndpoints, "localhost:4001"))
 	})
 
 	t.Run("GetDefaultConfig", func(t *testing.T) {
@@ -103,6 +98,6 @@ func TestGet(t *testing.T) {
 
 		conf, err := config.Get()
 		r.NoError(err)
-		r.Equal("risc0:4001", conf.Risc0ServerEndpoint)
+		r.True(strings.Contains(conf.VMEndpoints, "risc0:4001"))
 	})
 }
