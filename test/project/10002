@@ -2,7 +2,7 @@
   "defaultVersion": "0.1",
   "versions": [
     {
-      "vmType": "zkwasm",
+      "vmTypeID": 3,
       "output": {
         "type": "stdout"
       },

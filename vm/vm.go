@@ -11,30 +11,20 @@ import (
 	"github.com/iotexproject/w3bstream/task"
 )
 
-type Type string
-
-const (
-	Risc0  Type = "risc0"
-	Halo2  Type = "halo2"
-	ZKwasm Type = "zkwasm"
-	Wasm   Type = "wasm"
-)
-
 type Handler struct {
-	vmServerClients map[Type]*grpc.ClientConn
+	vmClients map[uint64]*grpc.ClientConn
 }
 
 func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error) {
-	vmType := Halo2 // FIXME: will read vmTypeID from contract
-	conn, ok := r.vmServerClients[vmType]
+	conn, ok := r.vmClients[vmTypeID]
 	if !ok {
-		return nil, errors.New("unsupported vm type")
+		return nil, errors.Errorf("unsupported vm type id %d", vmTypeID)
 	}
 
 	if err := create(context.Background(), conn, task.ProjectID, code, expParam); err != nil {
 		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
-	slog.Debug("create vm instance success", "vm_type", vmType)
+	slog.Debug("create vm instance success", "vm_type_id", vmTypeID)
 
 	res, err := execute(context.Background(), conn, task)
 	if err != nil {
@@ -43,9 +33,9 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 	return res, nil
 }
 
-func NewHandler(vmServerEndpoints map[Type]string) (*Handler, error) {
-	clients := map[Type]*grpc.ClientConn{}
-	for t, e := range vmServerEndpoints {
+func NewHandler(vmEndpoints map[uint64]string) (*Handler, error) {
+	clients := map[uint64]*grpc.ClientConn{}
+	for t, e := range vmEndpoints {
 		conn, err := grpc.NewClient(e, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to new grpc client")
@@ -53,6 +43,6 @@ func NewHandler(vmServerEndpoints map[Type]string) (*Handler, error) {
 		clients[t] = conn
 	}
 	return &Handler{
-		vmServerClients: clients,
+		vmClients: clients,
 	}, nil
 }

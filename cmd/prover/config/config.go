@@ -8,10 +8,7 @@ import (
 )
 
 type Config struct {
-	Risc0ServerEndpoint     string `env:"RISC0_SERVER_ENDPOINT"`
-	Halo2ServerEndpoint     string `env:"HALO2_SERVER_ENDPOINT"`
-	ZKWasmServerEndpoint    string `env:"ZKWASM_SERVER_ENDPOINT"`
-	WasmServerEndpoint      string `env:"WASM_SERVER_ENDPOINT"`
+	VMEndpoints             string `env:"VM_ENDPOINTS"`
 	DatabaseDSN             string `env:"DATABASE_DSN"`
 	BootNodeMultiAddr       string `env:"BOOTNODE_MULTIADDR"`
 	ChainEndpoint           string `env:"CHAIN_ENDPOINT,optional"`
@@ -32,10 +29,7 @@ type Config struct {
 
 var (
 	defaultConfig = &Config{
-		Risc0ServerEndpoint:     "risc0:4001",
-		Halo2ServerEndpoint:     "halo2:4001",
-		ZKWasmServerEndpoint:    "zkwasm:4001",
-		WasmServerEndpoint:      "wasm:4001",
+		VMEndpoints:             `{"1":"risc0:4001","2":"halo2:4001","3":"zkwasm:4001","4":"wasm:4001"}`,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
 		DatabaseDSN:             "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
@@ -52,10 +46,7 @@ var (
 	}
 
 	defaultDebugConfig = &Config{
-		Risc0ServerEndpoint:     "localhost:4001",
-		Halo2ServerEndpoint:     "localhost:4002",
-		ZKWasmServerEndpoint:    "localhost:4003",
-		WasmServerEndpoint:      "localhost:4004",
+		VMEndpoints:             `{"1":"localhost:4001","2":"localhost:4002","3":"localhost:4003","4":"localhost:4004"}`,
 		DatabaseDSN:             "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable",
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		ProverOperatorPriKey:    "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
@@ -66,10 +57,7 @@ var (
 	}
 
 	defaultTestConfig = &Config{
-		Risc0ServerEndpoint:     "localhost:14001",
-		Halo2ServerEndpoint:     "localhost:14002",
-		ZKWasmServerEndpoint:    "localhost:14003",
-		WasmServerEndpoint:      "localhost:14004",
+		VMEndpoints:             `{"1":"localhost:14001","2":"localhost:14002","3":"localhost:14003","4":"localhost:14004"}`,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
 		ProjectContractAddr:     "",
 		DatabaseDSN:             "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"log/slog"
 	"os"
@@ -45,14 +46,12 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
 	}
 
-	vmHandler, err := vm.NewHandler(
-		map[vm.Type]string{
-			vm.Risc0:  conf.Risc0ServerEndpoint,
-			vm.Halo2:  conf.Halo2ServerEndpoint,
-			vm.ZKwasm: conf.ZKWasmServerEndpoint,
-			vm.Wasm:   conf.WasmServerEndpoint,
-		},
-	)
+	vmEndpoints := map[uint64]string{}
+	if err := json.Unmarshal([]byte(conf.VMEndpoints), &vmEndpoints); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to unmarshal vm endpoints"))
+	}
+
+	vmHandler, err := vm.NewHandler(vmEndpoints)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new vm handler"))
 	}

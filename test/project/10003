@@ -2,7 +2,7 @@
   "defaultVersion": "0.1",
   "versions": [
     {
-      "vmType": "wasm",
+      "vmTypeID": 4,
       "output": {
         "type": "stdout"
       },

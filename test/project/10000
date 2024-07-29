@@ -2,7 +2,7 @@
   "defaultVersion": "0.1",
   "versions": [
     {
-      "vmType": "risc0",
+      "vmTypeID": 1,
       "output": {
         "type": "stdout"
       },
