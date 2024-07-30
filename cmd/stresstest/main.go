@@ -27,7 +27,6 @@ import (
 )
 
 var (
-	projectCacheDir        = "/mnt/stress/stress/project_cache"
 	localDBDir             = "/mnt/stress/stress/local_db"
 	beginningBlockNumber   = uint64(27200000)
 	chainEndpoint          = "https://babel-api.testnet.iotex.io"
@@ -199,10 +198,6 @@ func main() {
 		}
 	}()
 
-	projectManagerNotification := make(chan uint64, 10)
-
-	projectNotifications := []chan<- uint64{projectManagerNotification}
-
 	db, err := pebble.Open(localDBDir, &pebble.Options{})
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to open pebble db"))
@@ -210,7 +205,7 @@ func main() {
 	defer db.Close()
 
 	contractPersistence, err := contract.New(db, schedulerEpoch, beginningBlockNumber, chainEndpoint, proverContractAddress,
-		projectContractAddress, nil, projectNotifications)
+		projectContractAddress, nil, nil)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 	}
@@ -222,10 +217,7 @@ func main() {
 		}
 	}()
 
-	projectManager, err := project.NewManager(projectCacheDir, contractPersistence.LatestProject, projectManagerNotification)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new project manager"))
-	}
+	projectManager := project.NewManager(db, contractPersistence.LatestProject)
 
 	taskCount := &atomic.Uint64{}
 	taskCountPrintTicker := time.NewTicker(1 * time.Minute)

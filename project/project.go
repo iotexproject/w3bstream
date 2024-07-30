@@ -3,12 +3,12 @@ package project
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/output"
@@ -107,9 +107,9 @@ func (m *Meta) FetchProjectFile() ([]byte, error) {
 	return data, nil
 }
 
-func convertProject(projectRawData []byte) (*Project, error) {
+func convertProject(projectFile []byte) (*Project, error) {
 	p := &Project{}
-	if err := json.Unmarshal(projectRawData, &p); err != nil {
+	if err := easyjson.Unmarshal(projectFile, p); err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal project")
 	}
 

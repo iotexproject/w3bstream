@@ -19,7 +19,6 @@ type Config struct {
 	SchedulerEpoch          uint64 `env:"SCHEDULER_EPOCH,optional"`
 	BeginningBlockNumber    uint64 `env:"BEGINNING_BLOCK_NUMBER,optional"`
 	ProjectFileDir          string `env:"PROJECT_FILE_DIRECTORY,optional"`
-	ProjectCacheDir         string `env:"PROJECT_CACHE_DIRECTORY,optional"`
 	LocalDBDir              string `env:"LOCAL_DB_DIRECTORY,optional"`
 	LogLevel                int    `env:"LOG_LEVEL,optional"`
 	DefaultDatasourcePubKey string `env:"DEFAULT_DATASOURCE_PUBLIC_KEY,optional"`

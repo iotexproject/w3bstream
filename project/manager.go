@@ -1,12 +1,14 @@
 package project
 
 import (
+	"bytes"
 	"log/slog"
 	"os"
 	"path"
 	"strconv"
 	"sync"
 
+	"github.com/cockroachdb/pebble"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/persistence/contract"
@@ -15,70 +17,109 @@ import (
 type ContractProject func(projectID uint64) *contract.Project
 
 type Manager struct {
-	contractProject ContractProject
-	projects        sync.Map // projectID(uint64) -> *Project for local model
-	cache           *cache   // optional
+	local           bool
+	contractProject ContractProject // optional
+	db              *pebble.DB      // optional
+	localProjects   sync.Map        // projectID(uint64) -> *Project for local model
 }
 
-func (m *Manager) ProjectIDs() []uint64 {
+func (m *Manager) dbKey(projectID uint64) []byte {
+	return []byte("project_file_" + strconv.FormatUint(projectID, 10))
+}
+
+func (m *Manager) dbHashKey(projectID uint64) []byte {
+	return []byte("project_file_hash_" + strconv.FormatUint(projectID, 10))
+}
+
+func (m *Manager) ProjectIDs() ([]uint64, error) {
+	if !m.local {
+		return nil, errors.New("get project ids not supported")
+	}
 	var ids []uint64
-	m.projects.Range(func(key, value any) bool {
+	m.localProjects.Range(func(key, value any) bool {
 		ids = append(ids, key.(uint64))
 		return true
 	})
-	return ids
+	return ids, nil
 }
 
 func (m *Manager) Project(projectID uint64) (*Project, error) {
-	var err error
-	p, ok := m.projects.Load(projectID)
+	if m.local {
+		return m.loadFromLocal(projectID)
+	}
+	return m.loadFromContract(projectID)
+}
+
+func (m *Manager) loadFromLocal(projectID uint64) (*Project, error) {
+	p, ok := m.localProjects.Load(projectID)
 	if !ok {
-		p, err = m.load(projectID)
-		if err != nil {
-			return nil, err
-		}
+		return nil, errors.Errorf("project not exist, project_id %v", projectID)
 	}
 	return p.(*Project), nil
 }
 
-func (m *Manager) load(projectID uint64) (*Project, error) {
+func (m *Manager) loadFromContract(projectID uint64) (*Project, error) {
 	cp := m.contractProject(projectID)
 	if cp == nil {
-		return nil, errors.Errorf("the project not exist, project_id %v", projectID)
+		return nil, errors.Errorf("project not exist, project_id %v", projectID)
+	}
+	dataBytes, closer, err := m.db.Get(m.dbHashKey(projectID))
+	if err != nil && err != pebble.ErrNotFound {
+		return nil, errors.Wrapf(err, "failed to get db project file hash data, project_id %v", projectID)
+	}
+	hash := make([]byte, len(dataBytes))
+	copy(hash, dataBytes)
+	if err := closer.Close(); err != nil {
+		return nil, errors.Wrapf(err, "failed to close result of project file hash data, project_id %v", projectID)
 	}
 
-	pm := &Meta{
-		ProjectID: projectID,
-		Uri:       cp.Uri,
-		Hash:      cp.Hash,
-	}
-
-	var data []byte
-	var err error
-	cached := true
-	if m.cache != nil {
-		data = m.cache.get(projectID, cp.Hash[:])
-	}
-	if len(data) == 0 {
-		cached = false
-		data, err = pm.FetchProjectFile()
+	if bytes.Equal(cp.Hash[:], hash) {
+		dataBytes, closer, err := m.db.Get(m.dbKey(projectID))
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get db project file data, project_id %v", projectID)
+		}
+		p, err := convertProject(dataBytes)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal project file, project_id %v", projectID)
+		}
+		if err := closer.Close(); err != nil {
+			return nil, errors.Wrapf(err, "failed to close result of project file data, project_id %v", projectID)
+		}
+		return p, nil
+	} else {
+		pm := &Meta{ProjectID: projectID, Uri: cp.Uri, Hash: cp.Hash}
+		data, err := pm.FetchProjectFile()
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to fetch project file, project_id %v", projectID)
 		}
+		p, err := convertProject(data)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal project file, project_id %v", projectID)
+		}
+		if err := m.setDB(projectID, data, pm.Hash[:]); err != nil {
+			return nil, err
+		}
+		return p, nil
 	}
-	if !cached && m.cache != nil {
-		m.cache.set(projectID, data)
-	}
-
-	p, err := convertProject(data)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to convert project, project_id %v", projectID)
-	}
-	m.projects.Store(projectID, p)
-	return p, nil
 }
 
-func (m *Manager) loadFromLocal(projectFileDir string) error {
+func (m *Manager) setDB(projectID uint64, file, hash []byte) error {
+	batch := m.db.NewBatch()
+	defer batch.Close()
+
+	if err := batch.Set(m.dbHashKey(projectID), hash, nil); err != nil {
+		return errors.Wrapf(err, "failed to set project file hash, project_id %v", projectID)
+	}
+	if err := batch.Set(m.dbKey(projectID), file, nil); err != nil {
+		return errors.Wrapf(err, "failed to set project file, project_id %v", projectID)
+	}
+	if err := batch.Commit(pebble.Sync); err != nil {
+		return errors.Wrapf(err, "failed to commit batch, project_id %v", projectID)
+	}
+	return nil
+}
+
+func (m *Manager) fillLocal(projectFileDir string) error {
 	files, err := os.ReadDir(projectFileDir)
 	if err != nil {
 		return errors.Wrapf(err, "failed to read project directory %s", projectFileDir)
@@ -104,41 +145,25 @@ func (m *Manager) loadFromLocal(projectFileDir string) error {
 			slog.Error("failed to convert project", "project_id", projectID, "error", err)
 			continue
 		}
-		m.projects.Store(projectID, p)
+		m.localProjects.Store(projectID, p)
 	}
 	return nil
 }
 
-func (m *Manager) watchProject(projectNotification <-chan uint64) {
-	for pid := range projectNotification {
-		m.projects.Delete(pid)
-	}
-}
-
-func NewManager(projectCacheDir string, contractProject ContractProject, projectNotification <-chan uint64) (*Manager, error) {
-	var (
-		c   *cache
-		err error
-	)
-	if projectCacheDir != "" {
-		c, err = newCache(projectCacheDir)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to new cache")
-		}
-	}
-
-	m := &Manager{
+func NewManager(db *pebble.DB, contractProject ContractProject) *Manager {
+	return &Manager{
+		local:           false,
+		db:              db,
 		contractProject: contractProject,
-		cache:           c,
 	}
-	go m.watchProject(projectNotification)
-	return m, nil
 }
 
 func NewLocalManager(projectFileDirectory string) (*Manager, error) {
-	m := &Manager{}
+	m := &Manager{
+		local: true,
+	}
 
-	if err := m.loadFromLocal(projectFileDirectory); err != nil {
+	if err := m.fillLocal(projectFileDirectory); err != nil {
 		return nil, err
 	}
 	return m, nil

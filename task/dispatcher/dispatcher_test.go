@@ -32,8 +32,8 @@ func (m *mockPersistence) UpsertProcessedTask(projectID, taskID uint64) error {
 
 type mockProjectManager struct{}
 
-func (m *mockProjectManager) ProjectIDs() []uint64 {
-	return []uint64{uint64(0)}
+func (m *mockProjectManager) ProjectIDs() ([]uint64, error) {
+	return []uint64{uint64(0)}, nil
 }
 func (m *mockProjectManager) Project(projectID uint64) (*project.Project, error) {
 	return nil, nil

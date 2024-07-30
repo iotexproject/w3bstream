@@ -195,10 +195,12 @@ func runProver(conf *proverconfig.Config) {
 
 	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Wrap(err, "failed to new p2p pubsubs"))
 	}
 
-	scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager)
+	if err := scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run scheduler"))
+	}
 
 	slog.Info("prover started")
 }

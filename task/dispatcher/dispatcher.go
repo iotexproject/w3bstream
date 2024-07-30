@@ -27,7 +27,7 @@ type Contract interface {
 }
 
 type ProjectManager interface {
-	ProjectIDs() []uint64
+	ProjectIDs() ([]uint64, error)
 	Project(projectID uint64) (*project.Project, error)
 }
 

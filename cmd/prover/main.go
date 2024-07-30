@@ -56,24 +56,24 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new vm handler"))
 	}
 
-	projectManagerNotification := make(chan uint64, 10)
 	schedulerNotification := make(chan uint64, 10)
 	chainHeadNotification := make(chan uint64, 10)
 
-	projectNotifications := []chan<- uint64{projectManagerNotification, schedulerNotification}
+	projectNotifications := []chan<- uint64{schedulerNotification}
 	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
 
 	local := conf.ProjectFileDir != ""
 
 	var contractPersistence *contract.Contract
+	var kvDB *pebble.DB
 	if !local {
-		db, err := pebble.Open(conf.LocalDBDir, &pebble.Options{})
+		kvDB, err = pebble.Open(conf.LocalDBDir, &pebble.Options{})
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to open pebble db"))
 		}
-		defer db.Close()
+		defer kvDB.Close()
 
-		contractPersistence, err = contract.New(db, conf.SchedulerEpoch, conf.BeginningBlockNumber,
+		contractPersistence, err = contract.New(kvDB, conf.SchedulerEpoch, conf.BeginningBlockNumber,
 			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddr),
 			common.HexToAddress(conf.ProjectContractAddr), chainHeadNotifications, projectNotifications)
 		if err != nil {
@@ -95,7 +95,7 @@ func main() {
 	if local {
 		projectManager, err = project.NewLocalManager(conf.ProjectFileDir)
 	} else {
-		projectManager, err = project.NewManager(conf.ProjectCacheDir, contractPersistence.LatestProject, projectManagerNotification)
+		projectManager = project.NewManager(kvDB, contractPersistence.LatestProject)
 	}
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
