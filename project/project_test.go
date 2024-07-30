@@ -24,7 +24,7 @@ func TestProjectMeta_FetchProjectRawData_init(t *testing.T) {
 	t.Run("InvalidUri", func(t *testing.T) {
 		p = p.ApplyFuncReturn(url.Parse, nil, errors.New(t.Name()))
 
-		_, err := (&Meta{}).FetchProjectRawData("")
+		_, err := (&Meta{}).FetchProjectFile()
 		r.ErrorContains(err, t.Name())
 	})
 }
@@ -51,7 +51,7 @@ func TestProjectMeta_FetchProjectRawData_http(t *testing.T) {
 	t.Run("FailedToGetHTTP", func(t *testing.T) {
 		p = p.ApplyFuncReturn(http.Get, nil, errors.New(t.Name()))
 
-		_, err := pm.FetchProjectRawData("")
+		_, err := pm.FetchProjectFile()
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToIOReadAll", func(t *testing.T) {
@@ -60,7 +60,7 @@ func TestProjectMeta_FetchProjectRawData_http(t *testing.T) {
 		}, nil)
 		p = p.ApplyFuncReturn(io.ReadAll, nil, errors.New(t.Name()))
 
-		_, err := pm.FetchProjectRawData("")
+		_, err := pm.FetchProjectFile()
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("HashMismatch", func(t *testing.T) {
@@ -68,11 +68,11 @@ func TestProjectMeta_FetchProjectRawData_http(t *testing.T) {
 
 		npm := *pm
 		npm.Hash = [32]byte{}
-		_, err := npm.FetchProjectRawData("")
+		_, err := npm.FetchProjectFile()
 		r.ErrorContains(err, "failed to validate project hash")
 	})
 	t.Run("Success", func(t *testing.T) {
-		_, err := pm.FetchProjectRawData("")
+		_, err := pm.FetchProjectFile()
 		r.NoError(err)
 	})
 }
@@ -88,7 +88,7 @@ func TestProjectMeta_FetchProjectRawData_ipfs(t *testing.T) {
 	t.Run("FailedToGetIPFS", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 
-		_, err := pm.FetchProjectRawData("")
+		_, err := pm.FetchProjectFile()
 		r.ErrorContains(err, t.Name())
 	})
 }
@@ -103,10 +103,8 @@ func TestProjectMeta_FetchProjectRawData_default(t *testing.T) {
 	}
 
 	t.Run("FailedToGetIPFS", func(t *testing.T) {
-		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
-
-		_, err := pm.FetchProjectRawData("")
-		r.ErrorContains(err, t.Name())
+		_, err := pm.FetchProjectFile()
+		r.ErrorContains(err, "invalid project file uri")
 	})
 }
 

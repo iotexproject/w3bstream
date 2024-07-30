@@ -24,7 +24,7 @@ func TestNewManager(t *testing.T) {
 
 		p.ApplyFuncReturn(newCache, nil, errors.New(t.Name()))
 
-		_, err := NewManager("cache", "", nil, nil)
+		_, err := NewManager("cache", nil, nil)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
@@ -33,7 +33,7 @@ func TestNewManager(t *testing.T) {
 
 		p.ApplyFuncReturn(newCache, nil, nil)
 
-		_, err := NewManager("", "", nil, nil)
+		_, err := NewManager("", nil, nil)
 		r.NoError(err)
 	})
 }
@@ -123,8 +123,7 @@ func TestManager_load(t *testing.T) {
 				Hash: common.Hash{},
 			}
 		},
-		ipfsEndpoint: "https://ipfs.com",
-		cache:        &cache{},
+		cache: &cache{},
 	}
 
 	t.Run("NotExist", func(t *testing.T) {
@@ -135,8 +134,7 @@ func TestManager_load(t *testing.T) {
 					Hash: common.Hash{},
 				}
 			},
-			ipfsEndpoint: "https://ipfs.com",
-			cache:        &cache{},
+			cache: &cache{},
 		}
 		m1.contractProject = func(projectID uint64) *contract.Project {
 			return nil

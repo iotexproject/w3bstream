@@ -66,10 +66,10 @@ func (c *Config) validate() error {
 	return nil
 }
 
-func (m *Meta) FetchProjectRawData(ipfsEndpoint string) ([]byte, error) {
+func (m *Meta) FetchProjectFile() ([]byte, error) {
 	u, err := url.Parse(m.Uri)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse project uri %s", m.Uri)
+		return nil, errors.Wrapf(err, "failed to parse project file uri %s", m.Uri)
 	}
 
 	var data []byte
@@ -77,10 +77,9 @@ func (m *Meta) FetchProjectRawData(ipfsEndpoint string) ([]byte, error) {
 	case "http", "https":
 		resp, _err := http.Get(m.Uri)
 		if _err != nil {
-			return nil, errors.Wrapf(_err, "failed to fetch project, uri %s", m.Uri)
+			return nil, errors.Wrapf(_err, "failed to fetch project file, uri %s", m.Uri)
 		}
 		defer resp.Body.Close()
-		// TODO network error should try again
 		data, err = io.ReadAll(resp.Body)
 
 	case "ipfs":
@@ -90,22 +89,19 @@ func (m *Meta) FetchProjectRawData(ipfsEndpoint string) ([]byte, error) {
 		data, err = sh.Cat(cid[0])
 
 	default:
-		// fetch content by ipfs cid with default endpoint
-		sh := ipfs.NewIPFS(ipfsEndpoint)
-		cid := strings.Split(strings.Trim(u.Path, "/"), "/")
-		data, err = sh.Cat(cid[0])
+		return nil, errors.Errorf("invalid project file uri %s", m.Uri)
 	}
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read project, uri %s", m.Uri)
+		return nil, errors.Wrapf(err, "failed to read project file, uri %s", m.Uri)
 	}
 
 	h := sha256.New()
 	if _, err := h.Write(data); err != nil {
-		return nil, errors.Wrap(err, "failed to generate project hash")
+		return nil, errors.Wrap(err, "failed to generate project file hash")
 	}
 	if !bytes.Equal(h.Sum(nil), m.Hash[:]) {
-		return nil, errors.New("failed to validate project hash")
+		return nil, errors.New("failed to validate project file hash")
 	}
 
 	return data, nil

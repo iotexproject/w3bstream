@@ -33,7 +33,6 @@ var (
 	chainEndpoint          = "https://babel-api.testnet.iotex.io"
 	projectContractAddress = common.HexToAddress("0x952d9Bc43C17f9370C9A80977285962c5b3BBeca")
 	proverContractAddress  = common.HexToAddress("0x0764e9c021F140d3A8CAb6EDd59904E584378D19")
-	ipfsEndpoint           = "ipfs.mainnet.iotex.io"
 	schedulerEpoch         = uint64(20)
 )
 
@@ -223,7 +222,7 @@ func main() {
 		}
 	}()
 
-	projectManager, err := project.NewManager(projectCacheDir, ipfsEndpoint, contractPersistence.LatestProject, projectManagerNotification)
+	projectManager, err := project.NewManager(projectCacheDir, contractPersistence.LatestProject, projectManagerNotification)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}

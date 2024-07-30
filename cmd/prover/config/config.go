@@ -18,7 +18,6 @@ type Config struct {
 	IoTeXChainID            int    `env:"IOTEX_CHAINID"`
 	SchedulerEpoch          uint64 `env:"SCHEDULER_EPOCH,optional"`
 	BeginningBlockNumber    uint64 `env:"BEGINNING_BLOCK_NUMBER,optional"`
-	IPFSEndpoint            string `env:"IPFS_ENDPOINT"`
 	ProjectFileDir          string `env:"PROJECT_FILE_DIRECTORY,optional"`
 	ProjectCacheDir         string `env:"PROJECT_CACHE_DIRECTORY,optional"`
 	LocalDBDir              string `env:"LOCAL_DB_DIRECTORY,optional"`
@@ -40,7 +39,6 @@ var (
 		SchedulerEpoch:          720,
 		BeginningBlockNumber:    20000000,
 		LocalDBDir:              "./local_db",
-		IPFSEndpoint:            "ipfs.mainnet.iotex.io",
 		LogLevel:                int(slog.LevelDebug),
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
 	}
@@ -51,7 +49,6 @@ var (
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		ProverOperatorPriKey:    "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
 		IoTeXChainID:            2,
-		IPFSEndpoint:            "ipfs.mainnet.iotex.io",
 		LogLevel:                int(slog.LevelDebug),
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
 	}
@@ -66,7 +63,6 @@ var (
 		ProverOperatorPriKey:    "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
 		IoTeXChainID:            2,
 		SchedulerEpoch:          20,
-		IPFSEndpoint:            "ipfs.mainnet.iotex.io",
 		ProjectFileDir:          "./testdata",
 		LogLevel:                int(slog.LevelDebug),
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",

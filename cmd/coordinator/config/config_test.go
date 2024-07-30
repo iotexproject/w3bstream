@@ -27,7 +27,6 @@ func TestConfig_Init(t *testing.T) {
 			IoTeXChainID:          100,
 			ProjectContractAddr:   "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 			ProverContractAddr:    "0x",
-			IPFSEndpoint:          "a.b.com",
 			OperatorPriKey:        "",
 			OperatorPriKeyED25519: "",
 			ProjectFileDir:        "/path/to/project/configs",
@@ -42,7 +41,6 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
-		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
 		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddr)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
 		// missing some env

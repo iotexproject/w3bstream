@@ -70,7 +70,7 @@ func main() {
 	if local {
 		projectManager, err = project.NewLocalManager(conf.ProjectFileDir)
 	} else {
-		projectManager, err = project.NewManager(conf.ProjectCacheDir, conf.IPFSEndpoint, contractPersistence.LatestProject, projectManagerNotification)
+		projectManager, err = project.NewManager(conf.ProjectCacheDir, contractPersistence.LatestProject, projectManagerNotification)
 	}
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
