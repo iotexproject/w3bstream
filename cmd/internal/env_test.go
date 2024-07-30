@@ -23,7 +23,6 @@ func TestParseEnv(t *testing.T) {
 			BootNodeMultiAddr:     "/dns4/a.b.com/tcp/1000/ipfs/123123123",
 			IoTeXChainID:          100,
 			ProjectContractAddr:   "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
-			IPFSEndpoint:          "a.b.com",
 			OperatorPriKey:        "",
 			OperatorPriKeyED25519: "",
 			ProjectFileDir:        "/path/to/project/configs",
@@ -37,7 +36,6 @@ func TestParseEnv(t *testing.T) {
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
-		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
 		// missing some env
 		// _ = os.Setenv("OPERATOR_PRIVATE_KEY", expected.OperatorPrivateKey)
 		// _ = os.Setenv("OPERATOR_PRIVATE_KEY_ED25519", expected.OperatorPrivateKeyED25519)
