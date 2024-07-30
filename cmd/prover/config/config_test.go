@@ -28,7 +28,6 @@ func TestConfig_Init(t *testing.T) {
 			ProverContractAddr:   "0x456",
 			IoTeXChainID:         5,
 			SchedulerEpoch:       720,
-			IPFSEndpoint:         "abc.ipfs.net",
 			ProverOperatorPriKey: "private key",
 			ProjectFileDir:       "/path/to/project/configs",
 			LocalDBDir:           "./test",
@@ -42,7 +41,6 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
 		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
-		_ = os.Setenv("IPFS_ENDPOINT", expected.IPFSEndpoint)
 		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPriKey)
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDir)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)

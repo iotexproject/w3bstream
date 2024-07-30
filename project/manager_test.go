@@ -24,7 +24,7 @@ func TestNewManager(t *testing.T) {
 
 		p.ApplyFuncReturn(newCache, nil, errors.New(t.Name()))
 
-		_, err := NewManager("cache", "", nil, nil)
+		_, err := NewManager("cache", nil, nil)
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("Success", func(t *testing.T) {
@@ -33,7 +33,7 @@ func TestNewManager(t *testing.T) {
 
 		p.ApplyFuncReturn(newCache, nil, nil)
 
-		_, err := NewManager("", "", nil, nil)
+		_, err := NewManager("", nil, nil)
 		r.NoError(err)
 	})
 }
@@ -123,8 +123,7 @@ func TestManager_load(t *testing.T) {
 				Hash: common.Hash{},
 			}
 		},
-		ipfsEndpoint: "https://ipfs.com",
-		cache:        &cache{},
+		cache: &cache{},
 	}
 
 	t.Run("NotExist", func(t *testing.T) {
@@ -135,8 +134,7 @@ func TestManager_load(t *testing.T) {
 					Hash: common.Hash{},
 				}
 			},
-			ipfsEndpoint: "https://ipfs.com",
-			cache:        &cache{},
+			cache: &cache{},
 		}
 		m1.contractProject = func(projectID uint64) *contract.Project {
 			return nil
@@ -145,11 +143,11 @@ func TestManager_load(t *testing.T) {
 		r.ErrorContains(err, "the project not exist")
 	})
 
-	t.Run("FailedToGetRawData", func(t *testing.T) {
+	t.Run("FailedToGetProjectFile", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectFile", nil, errors.New(t.Name()))
 		_, err := m.load(uint64(0))
 		r.ErrorContains(err, t.Name())
 	})
@@ -158,7 +156,7 @@ func TestManager_load(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", []byte(""), nil)
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectFile", []byte(""), nil)
 
 		p.ApplyFuncReturn(convertProject, nil, errors.New(t.Name()))
 
@@ -170,7 +168,7 @@ func TestManager_load(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", []byte(""), nil)
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectFile", []byte(""), nil)
 		p.ApplyFuncReturn(convertProject, &Project{}, nil)
 
 		project, err := m.load(uint64(0))

@@ -16,8 +16,7 @@ type ContractProject func(projectID uint64) *contract.Project
 
 type Manager struct {
 	contractProject ContractProject
-	ipfsEndpoint    string
-	projects        sync.Map // projectID(uint64) -> *Project
+	projects        sync.Map // projectID(uint64) -> *Project for local model
 	cache           *cache   // optional
 }
 
@@ -62,9 +61,9 @@ func (m *Manager) load(projectID uint64) (*Project, error) {
 	}
 	if len(data) == 0 {
 		cached = false
-		data, err = pm.FetchProjectRawData(m.ipfsEndpoint)
+		data, err = pm.FetchProjectFile()
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get project raw data, project_id %v", projectID)
+			return nil, errors.Wrapf(err, "failed to fetch project file, project_id %v", projectID)
 		}
 	}
 	if !cached && m.cache != nil {
@@ -116,7 +115,7 @@ func (m *Manager) watchProject(projectNotification <-chan uint64) {
 	}
 }
 
-func NewManager(projectCacheDir, ipfsEndpoint string, contractProject ContractProject, projectNotification <-chan uint64) (*Manager, error) {
+func NewManager(projectCacheDir string, contractProject ContractProject, projectNotification <-chan uint64) (*Manager, error) {
 	var (
 		c   *cache
 		err error
@@ -130,7 +129,6 @@ func NewManager(projectCacheDir, ipfsEndpoint string, contractProject ContractPr
 
 	m := &Manager{
 		contractProject: contractProject,
-		ipfsEndpoint:    ipfsEndpoint,
 		cache:           c,
 	}
 	go m.watchProject(projectNotification)
