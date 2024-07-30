@@ -9,9 +9,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  COORDINATOR_IMAGE_NAME: machinefi/coordinator
-  PROVER_IMAGE_NAME: machinefi/prover
-  SEQUENCER_IMAGE_NAME: machinefi/sequencer
+  COORDINATOR_IMAGE_NAME: iotexproject/coordinator
+  PROVER_IMAGE_NAME: iotexproject/prover
+  SEQUENCER_IMAGE_NAME: iotexproject/sequencer
 
 jobs:
   build_prover_image:
