@@ -71,7 +71,7 @@ func TestNewLocal(t *testing.T) {
 		p.ApplyFuncReturn(p2p.NewPubSubs, &p2p.PubSubs{}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 		p.ApplyFuncReturn(newProjectDispatcher, &projectDispatcher{window: w, requiredProverAmount: &a}, nil)
-		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{0, 0})
+		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{0, 0}, nil)
 		p.ApplyMethodReturn(pm, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 		p.ApplyPrivateMethod(w, "setSize", func(uint64) {})
