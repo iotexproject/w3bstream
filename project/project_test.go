@@ -29,7 +29,7 @@ func TestProjectMeta_FetchProjectRawData_init(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_FetchProjectRawData_http(t *testing.T) {
+func TestProjectMeta_FetchProjectFile_http(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -69,7 +69,7 @@ func TestProjectMeta_FetchProjectRawData_http(t *testing.T) {
 		npm := *pm
 		npm.Hash = [32]byte{}
 		_, err := npm.FetchProjectFile()
-		r.ErrorContains(err, "failed to validate project hash")
+		r.ErrorContains(err, "failed to validate project file hash")
 	})
 	t.Run("Success", func(t *testing.T) {
 		_, err := pm.FetchProjectFile()
@@ -77,7 +77,7 @@ func TestProjectMeta_FetchProjectRawData_http(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_FetchProjectRawData_ipfs(t *testing.T) {
+func TestProjectMeta_FetchProjectFile_ipfs(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
@@ -93,7 +93,7 @@ func TestProjectMeta_FetchProjectRawData_ipfs(t *testing.T) {
 	})
 }
 
-func TestProjectMeta_FetchProjectRawData_default(t *testing.T) {
+func TestProjectMeta_FetchProjectFile_default(t *testing.T) {
 	r := require.New(t)
 	p := gomonkey.NewPatches()
 	defer p.Reset()
