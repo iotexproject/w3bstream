@@ -300,7 +300,7 @@ func TestRunLocal(t *testing.T) {
 		}
 		pm := &project.Manager{}
 
-		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1})
+		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1}, nil)
 		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
 
 		RunLocal(ps, f, pm)
