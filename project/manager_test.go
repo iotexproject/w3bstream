@@ -143,11 +143,11 @@ func TestManager_load(t *testing.T) {
 		r.ErrorContains(err, "the project not exist")
 	})
 
-	t.Run("FailedToGetRawData", func(t *testing.T) {
+	t.Run("FailedToGetProjectFile", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectFile", nil, errors.New(t.Name()))
 		_, err := m.load(uint64(0))
 		r.ErrorContains(err, t.Name())
 	})
@@ -156,7 +156,7 @@ func TestManager_load(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", []byte(""), nil)
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectFile", []byte(""), nil)
 
 		p.ApplyFuncReturn(convertProject, nil, errors.New(t.Name()))
 
@@ -168,7 +168,7 @@ func TestManager_load(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p.ApplyMethodReturn(&Meta{}, "FetchProjectRawData", []byte(""), nil)
+		p.ApplyMethodReturn(&Meta{}, "FetchProjectFile", []byte(""), nil)
 		p.ApplyFuncReturn(convertProject, &Project{}, nil)
 
 		project, err := m.load(uint64(0))
