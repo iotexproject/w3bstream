@@ -28,7 +28,7 @@ type textileDB struct {
 }
 
 func (t *textileDB) Output(proverID uint64, task *task.Task, proof []byte) (string, error) {
-	slog.Debug("outputing to textileDB", "chain endpoint", t.endpoint)
+	slog.Debug("outputting to textileDB", "chain endpoint", t.endpoint)
 	encodedData, err := t.packData(proof)
 	if err != nil {
 		return "", err

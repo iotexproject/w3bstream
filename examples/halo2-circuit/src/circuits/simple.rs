@@ -253,7 +253,7 @@ impl<F: Field> Circuit<F> for SimpleCircuit<F> {
     }
 
     // circuit layout
-    // | ins  | advice_0 | advice_1 | seletor |
+    // | ins  | advice_0 | advice_1 | selector |
     // |------|----------|----------|---------|
     // |  out |    a     |          |         |
     // |      |    b     |          |         |
