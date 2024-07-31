@@ -1,0 +1,59 @@
+name: Folder Change Notification
+'on':
+  push:
+    paths:
+      - examples/**
+      - smartcontracts/**
+      - docs/**
+  pull_request:
+    paths:
+      - examples/**
+      - smartcontracts/**
+      - docs/**
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Create or Update Issue
+        uses: actions/github-script@v6
+        with:
+          script: >
+            const { owner, repo } = context.repo;
+
+            const issueTitle = 'Changes detected in examples, smartcontracts, or
+            docs folder';
+
+            const issueBody = `@simonerom Changes were detected in the
+            'examples', 'smartcontracts', or 'docs' folder. Please review the
+            changes.`;
+
+
+            const issues = await github.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              labels: 'notification'
+            });
+
+
+            if (issues.data.length === 0) {
+              // Create a new issue if no open issues with the label exist
+              await github.issues.create({
+                owner,
+                repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['notification']
+              });
+            } else {
+              // Comment on the first open issue with the label
+              const issueNumber = issues.data[0].number;
+              await github.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: issueBody
+              });
+            }
