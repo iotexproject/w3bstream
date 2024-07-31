@@ -26,7 +26,10 @@ func NewLocal(persistence Persistence, newDatasource NewDatasource,
 		return nil, err
 	}
 
-	projectIDs := projectManager.ProjectIDs()
+	projectIDs, err := projectManager.ProjectIDs()
+	if err != nil {
+		return nil, err
+	}
 	for _, id := range projectIDs {
 		_, ok := projectDispatchers.Load(id)
 		if ok {

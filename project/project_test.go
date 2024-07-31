@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -158,7 +159,7 @@ func TestConvertProject(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+		p.ApplyFuncReturn(easyjson.Unmarshal, errors.New(t.Name()))
 		_, err := convertProject(nil)
 		r.ErrorContains(err, t.Name())
 	})
@@ -167,7 +168,7 @@ func TestConvertProject(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		p = p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 		_, err := convertProject(nil)
 		r.ErrorContains(err, errEmptyConfig.Error())
 	})

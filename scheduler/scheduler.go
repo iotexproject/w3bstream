@@ -16,7 +16,7 @@ type ContractProject func(projectID, blockNumber uint64) *contract.Project
 type ContractProvers func(blockNumber uint64) []*contract.Prover
 
 type ProjectManager interface {
-	ProjectIDs() []uint64
+	ProjectIDs() ([]uint64, error)
 	Project(projectID uint64) (*project.Project, error)
 }
 
@@ -144,13 +144,16 @@ func Run(epoch uint64, proverID uint64, pubSubs *p2p.PubSubs, handleProjectProve
 	return nil
 }
 
-func RunLocal(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, projectManager ProjectManager) {
+func RunLocal(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, projectManager ProjectManager) error {
 	s := &scheduler{
 		pubSubs:              pubSubs,
 		handleProjectProvers: handleProjectProvers,
 	}
 
-	ids := projectManager.ProjectIDs()
+	ids, err := projectManager.ProjectIDs()
+	if err != nil {
+		return err
+	}
 	for _, id := range ids {
 		s.handleProjectProvers(id, []uint64{})
 		if err := s.pubSubs.Add(id); err != nil {
@@ -159,4 +162,5 @@ func RunLocal(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, p
 		}
 		slog.Info("the project scheduled to this prover", "project_id", id)
 	}
+	return nil
 }

@@ -30,3 +30,4 @@ ignore:
   - cmd/coordinator/main.go
   - cmd/prover/main.go
   - cmd/sequencer/main.go
+  - project/project_easyjson.go
