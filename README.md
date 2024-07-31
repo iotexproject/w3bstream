@@ -21,6 +21,11 @@ The diagram represents the main components of the software and how they interact
 - Chain contract: Projects and provers are registered in IoTeX contracts. They are publicly available and open to all to register.
 - ZK vm: Three ZK vms are supported, including Halo2, ZkWasm, and Risc0. A project could specify the vm to be used in the project.
 
+
+## Architecture
+
+[Detailed system architecture description →](./docs/ARCHITECTURE.md)
+
 ## Docker images
 
 * [sequencer](https://github.com/iotexproject/w3bstream/pkgs/container/sequencer)
