@@ -2,7 +2,6 @@ package contract
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
@@ -41,7 +41,7 @@ func TestContract_Project(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(c.db, "Get", []byte("data"), nil, nil)
-		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+		p.ApplyFuncReturn(easyjson.Unmarshal, errors.New(t.Name()))
 
 		project := c.Project(0, 0)
 		r.Nil(project)
@@ -52,7 +52,7 @@ func TestContract_Project(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", []byte("data"), mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
 		project := c.Project(0, 0)
@@ -68,10 +68,10 @@ func TestContract_Project(t *testing.T) {
 				Projects: map[uint64]*Project{},
 			},
 		}
-		j, err := json.Marshal(bd)
+		j, err := easyjson.Marshal(bd)
 		r.NoError(err)
 		p.ApplyMethodReturn(c.db, "Get", j, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 		p.ApplyMethodReturn(mc, "Close", nil)
 
 		project := c.Project(0, 0)
@@ -177,7 +177,7 @@ func TestContract_latestProjects(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+		p.ApplyFuncReturn(easyjson.Unmarshal, errors.New(t.Name()))
 
 		projects := c.latestProjects()
 		r.Nil(projects)
@@ -188,7 +188,7 @@ func TestContract_latestProjects(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 		p.ApplyMethodSeq(mc, "Close", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{nil},
@@ -209,7 +209,7 @@ func TestContract_latestProjects(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 
 		projects := c.latestProjects()
 		r.NotNil(projects)
@@ -235,7 +235,7 @@ func TestContract_Provers(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(c.db, "Get", []byte("data"), nil, nil)
-		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+		p.ApplyFuncReturn(easyjson.Unmarshal, errors.New(t.Name()))
 
 		prover := c.Provers(0)
 		r.Nil(prover)
@@ -246,7 +246,7 @@ func TestContract_Provers(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", []byte("data"), mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
 		prover := c.Provers(0)
@@ -258,7 +258,7 @@ func TestContract_Provers(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", []byte("data"), mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 
 		prover := c.Provers(0)
 		r.NotNil(prover)
@@ -380,7 +380,7 @@ func TestContract_latestProvers(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+		p.ApplyFuncReturn(easyjson.Unmarshal, errors.New(t.Name()))
 
 		provers := c.latestProvers()
 		r.Nil(provers)
@@ -391,7 +391,7 @@ func TestContract_latestProvers(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 		p.ApplyMethodSeq(mc, "Close", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{nil},
@@ -412,7 +412,7 @@ func TestContract_latestProvers(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 
 		provers := c.latestProvers()
 		r.NotNil(provers)
@@ -467,7 +467,7 @@ func TestContract_updateDB(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
+		p.ApplyFuncReturn(easyjson.Unmarshal, errors.New(t.Name()))
 
 		err := c.updateDB(0, nil, nil)
 		r.ErrorContains(err, t.Name())
@@ -478,7 +478,7 @@ func TestContract_updateDB(t *testing.T) {
 
 		mc := mockCloser{}
 		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
+		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
 		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
 		err := c.updateDB(0, nil, nil)
@@ -489,7 +489,7 @@ func TestContract_updateDB(t *testing.T) {
 		defer p.Reset()
 
 		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
-		p.ApplyFuncReturn(json.Marshal, nil, errors.New(t.Name()))
+		p.ApplyFuncReturn(easyjson.Marshal, nil, errors.New(t.Name()))
 
 		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
 		r.ErrorContains(err, t.Name())
@@ -501,7 +501,7 @@ func TestContract_updateDB(t *testing.T) {
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
 		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
-		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyFuncReturn(easyjson.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", errors.New(t.Name()))
 
 		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
@@ -514,7 +514,7 @@ func TestContract_updateDB(t *testing.T) {
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
 		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
-		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyFuncReturn(easyjson.Marshal, nil, nil)
 		p.ApplyMethodSeq(b, "Set", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{nil},
@@ -536,7 +536,7 @@ func TestContract_updateDB(t *testing.T) {
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
 		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
-		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyFuncReturn(easyjson.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", errors.New(t.Name()))
 
@@ -550,7 +550,7 @@ func TestContract_updateDB(t *testing.T) {
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
 		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
-		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyFuncReturn(easyjson.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", nil)
 		p.ApplyMethodReturn(b, "Commit", errors.New(t.Name()))
@@ -565,7 +565,7 @@ func TestContract_updateDB(t *testing.T) {
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
 		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
-		p.ApplyFuncReturn(json.Marshal, nil, nil)
+		p.ApplyFuncReturn(easyjson.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", nil)
 		p.ApplyMethodReturn(b, "Commit", nil)

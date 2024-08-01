@@ -3,7 +3,6 @@ package contract
 import (
 	"context"
 	"encoding/binary"
-	"encoding/json"
 	"log/slog"
 	"math/big"
 	"sort"
@@ -16,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
@@ -64,7 +64,7 @@ func (c *Contract) Project(projectID, blockNumber uint64) *Project {
 		return nil
 	}
 	blockData := &block{}
-	if err := json.Unmarshal(dataBytes, blockData); err != nil {
+	if err := easyjson.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", blockNumber, "error", err)
 		return nil
 	}
@@ -115,7 +115,7 @@ func (c *Contract) latestProjects() *blockProject {
 		return nil
 	}
 	blockData := &block{}
-	if err := json.Unmarshal(dataBytes, blockData); err != nil {
+	if err := easyjson.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", head, "error", err)
 		return nil
 	}
@@ -136,7 +136,7 @@ func (c *Contract) Provers(blockNumber uint64) []*Prover {
 		return nil
 	}
 	blockData := &block{}
-	if err := json.Unmarshal(dataBytes, blockData); err != nil {
+	if err := easyjson.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", blockNumber, "error", err)
 		return nil
 	}
@@ -197,7 +197,7 @@ func (c *Contract) latestProvers() *blockProver {
 		return nil
 	}
 	blockData := &block{}
-	if err := json.Unmarshal(dataBytes, blockData); err != nil {
+	if err := easyjson.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", head, "error", err)
 		return nil
 	}
@@ -243,7 +243,7 @@ func (c *Contract) updateDB(blockNumber uint64, projectDiff *blockProjectDiff, p
 	}
 	preBlockData := &block{}
 	if err == nil {
-		if err := json.Unmarshal(preBlockBytes, preBlockData); err != nil {
+		if err := easyjson.Unmarshal(preBlockBytes, preBlockData); err != nil {
 			return errors.Wrap(err, "failed to unmarshal pre block data")
 		}
 		if err := closer.Close(); err != nil {
@@ -265,7 +265,7 @@ func (c *Contract) updateDB(blockNumber uint64, projectDiff *blockProjectDiff, p
 	if proverDiff != nil {
 		preBlockData.blockProver.merge(proverDiff)
 	}
-	currBlockBytes, err := json.Marshal(preBlockData)
+	currBlockBytes, err := easyjson.Marshal(preBlockData)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal block data")
 	}

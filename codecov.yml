@@ -31,3 +31,6 @@ ignore:
   - cmd/prover/main.go
   - cmd/sequencer/main.go
   - project/project_easyjson.go
+  - persistence/contract/contract_easyjson.go
+  - persistence/contract/project_easyjson.go
+  - persistence/contract/prover_easyjson.go
