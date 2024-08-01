@@ -500,7 +500,7 @@ func TestContract_updateDB(t *testing.T) {
 
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", errors.New(t.Name()))
 
@@ -513,7 +513,7 @@ func TestContract_updateDB(t *testing.T) {
 
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodSeq(b, "Set", []gomonkey.OutputCell{
 			{
@@ -535,7 +535,7 @@ func TestContract_updateDB(t *testing.T) {
 
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", errors.New(t.Name()))
@@ -549,7 +549,7 @@ func TestContract_updateDB(t *testing.T) {
 
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", nil)
@@ -564,7 +564,7 @@ func TestContract_updateDB(t *testing.T) {
 
 		b := &pebble.Batch{}
 		p.ApplyMethodReturn(c.db, "NewBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", nil)
