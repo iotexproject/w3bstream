@@ -41,7 +41,7 @@ impl<F: Field> FibonacciChip<F> {
         let selector = meta.selector();
 
         meta.create_gate("fibonacci", |meta| {
-            // | ins   | a0     |   a1   | seletor|
+            // | ins   | a0     |   a1   | selector|
             // |-------|------- |------- |------- |
             // |   a   | f(0)=a | f(1)=b |    1   |
             // |   b   | f(2)=b | f(3)   |    1   |
