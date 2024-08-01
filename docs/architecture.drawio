@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2024-03-24T09:20:08.156Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" etag="45INvbsmu6pn4O4yaSBK" version="24.0.6" type="device">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36" version="24.7.6">
   <diagram name="第 1 页" id="A09lGtO91ABeVb0lPZ-M">
-    <mxGraphModel dx="1026" dy="687" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#000000" math="0" shadow="0">
+    <mxGraphModel dx="1026" dy="685" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#000000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -22,7 +22,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="P-kxANTKAj5TKY9pIXBq-6" value="Data &lt;br&gt;Availability" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;fillColor=#000000;" parent="1" vertex="1">
-          <mxGeometry x="633.25" y="43" width="94.5" height="117" as="geometry" />
+          <mxGeometry x="633.25" y="40" width="94.5" height="117" as="geometry" />
         </mxCell>
         <mxCell id="P-kxANTKAj5TKY9pIXBq-12" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" parent="1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
@@ -44,7 +44,7 @@
             <mxPoint x="420" y="358.75" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="P-kxANTKAj5TKY9pIXBq-18" value="Fetch&amp;nbsp;unprocessed task" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" parent="P-kxANTKAj5TKY9pIXBq-17" vertex="1" connectable="0">
+        <mxCell id="P-kxANTKAj5TKY9pIXBq-18" value="Retrieve&amp;nbsp;unprocessed task" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" parent="P-kxANTKAj5TKY9pIXBq-17" vertex="1" connectable="0">
           <mxGeometry x="0.1673" relative="1" as="geometry">
             <mxPoint x="32" y="-4" as="offset" />
           </mxGeometry>
@@ -69,7 +69,7 @@
             <mxPoint x="270" y="267" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="P-kxANTKAj5TKY9pIXBq-23" value="Receive proof" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" parent="P-kxANTKAj5TKY9pIXBq-22" vertex="1" connectable="0">
+        <mxCell id="P-kxANTKAj5TKY9pIXBq-23" value="Grpc call" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" parent="P-kxANTKAj5TKY9pIXBq-22" vertex="1" connectable="0">
           <mxGeometry x="-0.0486" y="-1" relative="1" as="geometry">
             <mxPoint x="-50" y="546" as="offset" />
           </mxGeometry>
@@ -111,18 +111,18 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="P-kxANTKAj5TKY9pIXBq-34" value="halo2" style="ellipse;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" parent="1" vertex="1">
-          <mxGeometry x="215" y="997" width="90" height="60" as="geometry" />
+          <mxGeometry x="186.5" y="996" width="90" height="60" as="geometry" />
         </mxCell>
         <mxCell id="P-kxANTKAj5TKY9pIXBq-36" value="zkWasm" style="ellipse;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" parent="1" vertex="1">
-          <mxGeometry x="305" y="997" width="90" height="60" as="geometry" />
+          <mxGeometry x="276.5" y="996" width="90" height="60" as="geometry" />
         </mxCell>
         <mxCell id="P-kxANTKAj5TKY9pIXBq-37" value="risc0" style="ellipse;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" parent="1" vertex="1">
-          <mxGeometry x="395" y="997" width="90" height="60" as="geometry" />
+          <mxGeometry x="366.5" y="996" width="90" height="60" as="geometry" />
         </mxCell>
         <mxCell id="P-kxANTKAj5TKY9pIXBq-38" value="" style="ellipse;whiteSpace=wrap;html=1;opacity=30;shadow=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;strokeWidth=1;" parent="1" vertex="1">
-          <mxGeometry x="142" y="987" width="420" height="80" as="geometry" />
+          <mxGeometry x="149.25" y="986" width="430" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="P-kxANTKAj5TKY9pIXBq-41" value="ZK runtime manager" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" parent="1" vertex="1">
+        <mxCell id="P-kxANTKAj5TKY9pIXBq-41" value="ZK vm manager" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" parent="1" vertex="1">
           <mxGeometry x="304.25" y="867" width="126" height="59" as="geometry" />
         </mxCell>
         <mxCell id="P-kxANTKAj5TKY9pIXBq-42" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;" parent="1" source="P-kxANTKAj5TKY9pIXBq-41" edge="1">
@@ -137,7 +137,7 @@
             <mxPoint x="19" y="800" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="P-kxANTKAj5TKY9pIXBq-44" value="Call ZK runtime by project config &lt;br&gt;and task data" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" parent="P-kxANTKAj5TKY9pIXBq-43" vertex="1" connectable="0">
+        <mxCell id="P-kxANTKAj5TKY9pIXBq-44" value="Call ZK vm by project config &lt;br&gt;and task data" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" parent="P-kxANTKAj5TKY9pIXBq-43" vertex="1" connectable="0">
           <mxGeometry x="-0.4286" y="3" relative="1" as="geometry">
             <mxPoint x="-69" y="32" as="offset" />
           </mxGeometry>
@@ -283,7 +283,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="UP-G3eTPMFQIpMaofVEP-15" value="" style="rounded=1;whiteSpace=wrap;html=1;opacity=30;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" parent="1" vertex="1">
-          <mxGeometry x="210" y="670" width="444" height="270" as="geometry" />
+          <mxGeometry x="186.5" y="675" width="444" height="270" as="geometry" />
         </mxCell>
         <mxCell id="zauLdbbxjyopaiMLOlRp-5" value="Data &lt;br&gt;Availability" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;fillColor=#000000;" parent="1" vertex="1">
           <mxGeometry x="635" y="190" width="94.5" height="117" as="geometry" />
@@ -320,6 +320,9 @@
           <mxGeometry x="-0.0518" relative="1" as="geometry">
             <mxPoint y="13" as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="Pae7CKYSrIpY95QZIFut-1" value="wasm" style="ellipse;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="456.5" y="996" width="90" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
