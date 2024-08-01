@@ -1,0 +1,157 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36" version="24.7.6">
+  <diagram name="第 1 页" id="A09lGtO91ABeVb0lPZ-M">
+    <mxGraphModel dx="1026" dy="685" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#000000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="P-kxANTKAj5TKY9pIXBq-17" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.079;entryY=0.017;entryDx=0;entryDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;exitX=0.741;exitY=0.987;exitDx=0;exitDy=0;exitPerimeter=0;entryPerimeter=0;" parent="1" source="5lvEPefjpxRXjr-yOejh-8" target="Tlwqoc283wSsLZkvjHgJ-4" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="367" y="140" as="sourcePoint" />
+            <mxPoint x="420" y="358.75" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="P-kxANTKAj5TKY9pIXBq-18" value="2. Watch prover register event" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" parent="P-kxANTKAj5TKY9pIXBq-17" vertex="1" connectable="0">
+          <mxGeometry x="0.1673" relative="1" as="geometry">
+            <mxPoint x="-42" y="-14" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="P-kxANTKAj5TKY9pIXBq-19" value="P2P network" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="339" y="380" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="5lvEPefjpxRXjr-yOejh-1" value="Actor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#FFFFFF;fillStyle=cross-hatch;" parent="1" vertex="1">
+          <mxGeometry x="72.75" y="54" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="5lvEPefjpxRXjr-yOejh-3" value="" style="endArrow=classic;html=1;rounded=0;entryX=-0.024;entryY=0.46;entryDx=0;entryDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;entryPerimeter=0;" parent="1" source="5lvEPefjpxRXjr-yOejh-1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="130" y="90" as="sourcePoint" />
+            <mxPoint x="289.8879999999999" y="84.39999999999998" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5lvEPefjpxRXjr-yOejh-4" value="1. Register prover by ioctl" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" parent="5lvEPefjpxRXjr-yOejh-3" vertex="1" connectable="0">
+          <mxGeometry x="-0.0121" y="-1" relative="1" as="geometry">
+            <mxPoint y="-1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5lvEPefjpxRXjr-yOejh-8" value="Prover&lt;div&gt;Registrar Contract&lt;/div&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="290" y="19.25" width="81" height="135.5" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-1" value="Project&lt;br&gt;Registrar Contract" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="443" y="19.25" width="81" height="135.5" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-4" value="Scheduler" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;fillColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="340" y="256" width="126" height="59" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-5" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.913;entryY=0.017;entryDx=0;entryDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;exitX=0.145;exitY=1;exitDx=0;exitDy=-4.35;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="Tlwqoc283wSsLZkvjHgJ-1" target="Tlwqoc283wSsLZkvjHgJ-4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="360" y="163" as="sourcePoint" />
+            <mxPoint x="360" y="351" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-6" value="3. Watch project register event" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" vertex="1" connectable="0" parent="Tlwqoc283wSsLZkvjHgJ-5">
+          <mxGeometry x="0.1673" relative="1" as="geometry">
+            <mxPoint x="46" y="-11" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-7" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.533;entryY=0.15;entryDx=0;entryDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryPerimeter=0;" edge="1" parent="1" source="Tlwqoc283wSsLZkvjHgJ-4" target="P-kxANTKAj5TKY9pIXBq-19">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="464" y="160" as="sourcePoint" />
+            <mxPoint x="465" y="267" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-8" value="4. Scheduler uses the hash distance between prover and project to determine&amp;nbsp;&lt;div&gt;whether to join the project&#39;s P2P topic&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" vertex="1" connectable="0" parent="Tlwqoc283wSsLZkvjHgJ-7">
+          <mxGeometry x="0.1673" relative="1" as="geometry">
+            <mxPoint y="-11" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-9" value="8. Grpc call" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="401.2931520078678" y="790.4974779906142" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-10" value="Task&amp;nbsp;processor" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="342" y="517" width="126" height="59" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-13" value="halo2" style="ellipse;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="227.25" y="826" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-14" value="zkWasm" style="ellipse;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="317.25" y="826" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-15" value="risc0" style="ellipse;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="407.25" y="826" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-16" value="" style="ellipse;whiteSpace=wrap;html=1;opacity=30;shadow=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="190" y="816" width="430" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-17" value="ZK vm manager" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="345" y="683" width="126" height="59" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-18" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;" edge="1" parent="1" source="Tlwqoc283wSsLZkvjHgJ-17">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="37.75" y="696" as="sourcePoint" />
+            <mxPoint x="407.75" y="817" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-19" value="" style="endArrow=classic;html=1;rounded=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;entryX=0.183;entryY=0.017;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.19;exitY=0.983;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="Tlwqoc283wSsLZkvjHgJ-10" target="Tlwqoc283wSsLZkvjHgJ-17">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="368" y="600" as="sourcePoint" />
+            <mxPoint x="367" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-20" value="7. Call ZK vm by project file&lt;br&gt;and task data" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" vertex="1" connectable="0" parent="Tlwqoc283wSsLZkvjHgJ-19">
+          <mxGeometry x="-0.4286" y="3" relative="1" as="geometry">
+            <mxPoint x="-26" y="31" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-21" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="Tlwqoc283wSsLZkvjHgJ-10" target="Tlwqoc283wSsLZkvjHgJ-34">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="609.75" y="670" as="sourcePoint" />
+            <mxPoint x="521.75" y="546.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-22" value="6. Fetch project file" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" vertex="1" connectable="0" parent="Tlwqoc283wSsLZkvjHgJ-21">
+          <mxGeometry x="-0.04" relative="1" as="geometry">
+            <mxPoint x="1" y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-23" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.841;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.823;exitY=-0.068;exitDx=0;exitDy=0;exitPerimeter=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;" edge="1" parent="1" source="Tlwqoc283wSsLZkvjHgJ-17" target="Tlwqoc283wSsLZkvjHgJ-10">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="290.75" y="657" as="sourcePoint" />
+            <mxPoint x="589.75" y="630" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-24" value="9. Return Proof" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" vertex="1" connectable="0" parent="Tlwqoc283wSsLZkvjHgJ-23">
+          <mxGeometry x="-0.0423" y="-2" relative="1" as="geometry">
+            <mxPoint x="19" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-31" value="wasm" style="ellipse;whiteSpace=wrap;html=1;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="497.25" y="826" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-32" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;" edge="1" parent="1" target="Tlwqoc283wSsLZkvjHgJ-10">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="374" y="445" as="sourcePoint" />
+            <mxPoint x="648.75" y="473.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-33" value="5. Listen task" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" vertex="1" connectable="0" parent="Tlwqoc283wSsLZkvjHgJ-32">
+          <mxGeometry x="0.1673" relative="1" as="geometry">
+            <mxPoint x="-11" y="-7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-34" value="IPFS" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fontColor=#FFFFFF;labelBackgroundColor=#000000;fillColor=#000000;strokeColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="620" y="479" width="81" height="135.5" as="geometry" />
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-35" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;fontColor=#FFFFFF;labelBackgroundColor=#000000;strokeColor=#FFFFFF;entryX=0.8;entryY=0.8;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="Tlwqoc283wSsLZkvjHgJ-10" target="P-kxANTKAj5TKY9pIXBq-19">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="459" y="689" as="sourcePoint" />
+            <mxPoint x="435" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Tlwqoc283wSsLZkvjHgJ-36" value="10. Report task state and proof" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FFFFFF;labelBackgroundColor=#000000;" vertex="1" connectable="0" parent="Tlwqoc283wSsLZkvjHgJ-35">
+          <mxGeometry x="-0.0423" y="-2" relative="1" as="geometry">
+            <mxPoint x="45" y="-3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
