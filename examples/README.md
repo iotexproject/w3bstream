@@ -32,7 +32,7 @@ Here, we use `ioctl` command, please [install](https://github.com/iotexproject/i
 
 1. convert circuit to project config file
 ```shell
-ioctl ws project config -t "halo2" -i "halo2_wasm_bg.wasm"
+ioctl ws project config -t 2 -i "halo2_wasm_bg.wasm"
 ```
 This command will generate a file named `halo2-config.json` in the current folder.
 
@@ -105,7 +105,7 @@ Here, we use `ioctl` command, please [install](https://github.com/iotexproject/i
 
 1. convert circuit to project config file
 ```shell
-ioctl ws project config -t "risc0" -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}
+ioctl ws project config -t 1 -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}
 ```
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs`.
 
@@ -155,7 +155,7 @@ Here, we use `ioctl` command, please [install](https://github.com/iotexproject/i
 
 1. convert circuit to project config file
 ```shell
-ioctl ws project config -t "zkwasm" -i "add.wasm"
+ioctl ws project config -t 3 -i "add.wasm"
 ```
 This command will generate a file named `zkwasm-config.json` in the current folder.
 

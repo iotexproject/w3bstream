@@ -58,7 +58,7 @@ Generate the W3bstream project file:
 
 ```bash
 # Customize the output project file name "$ID" with a unique number
-ioctl ws project config -t "halo2" -i "halo2_wasm_bg.wasm" -c "path/$ID"
+ioctl ws project config -t 2 -i "halo2_wasm_bg.wasm" -c "path/$ID"
 ```
 
 Create the blockchain verifier (Solidity)
@@ -96,7 +96,7 @@ Generate the W3bstream project:
 
 ```bash
 # Customize the output project file name "$ID" with a unique number
-ioctl ws project config -t "zkwasm" -i "zkwasm_demo.wasm" -o "path/ID"
+ioctl ws project config -t 3 -i "zkwasm_demo.wasm" -o "path/ID"
 ```
 
 #### Create a W3bstream Project Using RISC0
@@ -135,7 +135,7 @@ warning: methods_path is: "sprout/examples/risc0-circuits/target/release/build/r
 Generate the W3bstream Project
 
 ```bash
-ioctl ws project config -t "risc0" -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
+ioctl ws project config -t 1 -i "methods.rs" -o "path/filename.json" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
 ```
 
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs` file.
@@ -212,4 +212,31 @@ If you want to unbind the project with the Dapp.
 
 ``` bash
 ioctl ws router unbind --project-id "your project id"
+```
+
+### Bind New ZK VmType
+
+The zk vm types registered in the contract are `risc0`, `halo2`, `zkwasm` and `wasm`, and the `id` of risc0 is `1`, halo2 is `2`, zkwasm is `3`, and wasm is `4`.
+
+If you want to use a new zk vm type in the prover, you need to register vm type to the vm type contract.
+
+``` bash
+ws vmtype register --vm-type "new vm type name"
+```
+the command will return a `id`, and the `id` is the "new vm type" id. And you can use the `id` to query the name of the `id`.
+
+``` bash
+ioctl ws vmtype query --id "vm type id"
+```
+
+If you don't want to use a vm type, you need to `pause` it.
+
+``` bash
+ioctl ws vmtype pause --id "vm type id"
+```
+
+You can also use `resume` to `resume` it.
+
+``` bash
+ioctl ws vmtype resume --id "vm type id"
 ```
