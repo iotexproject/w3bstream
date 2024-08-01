@@ -216,6 +216,8 @@ ioctl ws router unbind --project-id "your project id"
 
 ### Bind New ZK VmType
 
+The zk vm types registered in the contract are `risc0`, `halo2`, `zkwasm` and `wasm`, and the `id` of risc0 is `1`, halo2 is `2`, zkwasm is `3`, and wasm is `4`.
+
 If you want to use a new zk vm type in the prover, you need to register vm type to the vm type contract.
 
 ``` bash
