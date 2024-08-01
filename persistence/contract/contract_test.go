@@ -136,9 +136,7 @@ func TestContract_latestProjects(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, errors.New(t.Name()))
 
 		projects := c.latestProjects()
 		r.Nil(projects)
@@ -147,10 +145,8 @@ func TestContract_latestProjects(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
 		projects := c.latestProjects()
@@ -160,10 +156,8 @@ func TestContract_latestProjects(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodSeq(b, "Get", []gomonkey.OutputCell{
+		p.ApplyMethodSeq(c.db, "Get", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{numberBytes, mc, nil},
 				Times:  1,
@@ -181,10 +175,8 @@ func TestContract_latestProjects(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
 
 		projects := c.latestProjects()
@@ -194,10 +186,8 @@ func TestContract_latestProjects(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyFuncReturn(json.Unmarshal, nil)
 		p.ApplyMethodSeq(mc, "Close", []gomonkey.OutputCell{
 			{
@@ -213,30 +203,13 @@ func TestContract_latestProjects(t *testing.T) {
 		projects := c.latestProjects()
 		r.Nil(projects)
 	})
-	t.Run("FailedToCommitBatch", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		b := &pebble.Batch{}
-		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
-		p.ApplyMethodReturn(b, "Commit", errors.New(t.Name()))
-
-		projects := c.latestProjects()
-		r.Nil(projects)
-	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyFuncReturn(json.Unmarshal, nil)
-		p.ApplyMethodReturn(b, "Commit", nil)
 
 		projects := c.latestProjects()
 		r.NotNil(projects)
@@ -366,9 +339,7 @@ func TestContract_latestProvers(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, errors.New(t.Name()))
 
 		provers := c.latestProvers()
 		r.Nil(provers)
@@ -377,10 +348,8 @@ func TestContract_latestProvers(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
 		provers := c.latestProvers()
@@ -390,10 +359,8 @@ func TestContract_latestProvers(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodSeq(b, "Get", []gomonkey.OutputCell{
+		p.ApplyMethodSeq(c.db, "Get", []gomonkey.OutputCell{
 			{
 				Values: gomonkey.Params{numberBytes, mc, nil},
 				Times:  1,
@@ -411,10 +378,8 @@ func TestContract_latestProvers(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
 
 		provers := c.latestProvers()
@@ -424,10 +389,8 @@ func TestContract_latestProvers(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyFuncReturn(json.Unmarshal, nil)
 		p.ApplyMethodSeq(mc, "Close", []gomonkey.OutputCell{
 			{
@@ -443,30 +406,13 @@ func TestContract_latestProvers(t *testing.T) {
 		provers := c.latestProvers()
 		r.Nil(provers)
 	})
-	t.Run("FailedToCommitBatch", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		b := &pebble.Batch{}
-		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
-		p.ApplyFuncReturn(json.Unmarshal, nil)
-		p.ApplyMethodReturn(b, "Commit", errors.New(t.Name()))
-
-		provers := c.latestProvers()
-		r.Nil(provers)
-	})
 	t.Run("Success", func(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyFuncReturn(json.Unmarshal, nil)
-		p.ApplyMethodReturn(b, "Commit", nil)
 
 		provers := c.latestProvers()
 		r.NotNil(provers)
@@ -510,9 +456,7 @@ func TestContract_updateDB(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, errors.New(t.Name()))
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, errors.New(t.Name()))
 
 		err := c.updateDB(0, nil, nil)
 		r.ErrorContains(err, t.Name())
@@ -521,10 +465,8 @@ func TestContract_updateDB(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyFuncReturn(json.Unmarshal, errors.New(t.Name()))
 
 		err := c.updateDB(0, nil, nil)
@@ -534,10 +476,8 @@ func TestContract_updateDB(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
 		mc := mockCloser{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", numberBytes, mc, nil)
+		p.ApplyMethodReturn(c.db, "Get", numberBytes, mc, nil)
 		p.ApplyFuncReturn(json.Unmarshal, nil)
 		p.ApplyMethodReturn(mc, "Close", errors.New(t.Name()))
 
@@ -548,9 +488,7 @@ func TestContract_updateDB(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, errors.New(t.Name()))
 
 		err := c.updateDB(0, &blockProjectDiff{}, &blockProverDiff{})
@@ -561,8 +499,8 @@ func TestContract_updateDB(t *testing.T) {
 		defer p.Reset()
 
 		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "NewBatch", b)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", errors.New(t.Name()))
 
@@ -574,8 +512,8 @@ func TestContract_updateDB(t *testing.T) {
 		defer p.Reset()
 
 		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "NewBatch", b)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodSeq(b, "Set", []gomonkey.OutputCell{
 			{
@@ -596,8 +534,8 @@ func TestContract_updateDB(t *testing.T) {
 		defer p.Reset()
 
 		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "NewBatch", b)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", errors.New(t.Name()))
@@ -610,8 +548,8 @@ func TestContract_updateDB(t *testing.T) {
 		defer p.Reset()
 
 		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "NewBatch", b)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", nil)
@@ -625,8 +563,8 @@ func TestContract_updateDB(t *testing.T) {
 		defer p.Reset()
 
 		b := &pebble.Batch{}
-		p.ApplyMethodReturn(c.db, "NewIndexedBatch", b)
-		p.ApplyMethodReturn(b, "Get", nil, nil, pebble.ErrNotFound)
+		p.ApplyMethodReturn(c.db, "NewBatch", b)
+		p.ApplyMethodReturn(c.db, "Get", nil, nil, pebble.ErrNotFound)
 		p.ApplyFuncReturn(json.Marshal, nil, nil)
 		p.ApplyMethodReturn(b, "Set", nil)
 		p.ApplyMethodReturn(b, "Delete", nil)

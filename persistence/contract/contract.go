@@ -22,25 +22,18 @@ import (
 	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
 )
 
-const (
-	chainHead   = "chain_head"
-	blockPrefix = "block_"
-)
+var allTopic = []common.Hash{
+	attributeSetTopic,
+	projectPausedTopic,
+	projectResumedTopic,
+	projectConfigUpdatedTopic,
 
-var (
-	allTopic = []common.Hash{
-		attributeSetTopic,
-		projectPausedTopic,
-		projectResumedTopic,
-		projectConfigUpdatedTopic,
-
-		operatorSetTopic,
-		vmTypeAddedTopic,
-		vmTypeDeletedTopic,
-		proverPausedTopic,
-		proverResumedTopic,
-	}
-)
+	operatorSetTopic,
+	vmTypeAddedTopic,
+	vmTypeDeletedTopic,
+	proverPausedTopic,
+	proverResumedTopic,
+}
 
 type Contract struct {
 	db                     *pebble.DB
@@ -70,10 +63,8 @@ func (c *Contract) Project(projectID, blockNumber uint64) *Project {
 		}
 		return nil
 	}
-	dst := make([]byte, len(dataBytes))
-	copy(dst, dataBytes)
 	blockData := &block{}
-	if err := json.Unmarshal(dst, blockData); err != nil {
+	if err := json.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", blockNumber, "error", err)
 		return nil
 	}
@@ -105,43 +96,31 @@ func (c *Contract) LatestProjects() []*Project {
 }
 
 func (c *Contract) latestProjects() *blockProject {
-	batch := c.db.NewIndexedBatch()
-	defer batch.Close()
-
-	headBytes, closer, err := batch.Get(c.dbHead())
+	headBytes, closer, err := c.db.Get(c.dbHead())
 	if err != nil {
 		slog.Error("failed to get chain head data", "error", err)
 		return nil
 	}
-	dst := make([]byte, len(headBytes))
-	copy(dst, headBytes)
-	head := binary.LittleEndian.Uint64(dst)
+	head := binary.LittleEndian.Uint64(headBytes)
 	if err := closer.Close(); err != nil {
 		slog.Error("failed to close result of chain head", "error", err)
 		return nil
 	}
 
-	dataBytes, closer, err := batch.Get(c.dbKey(head))
+	dataBytes, closer, err := c.db.Get(c.dbKey(head))
 	if err != nil {
 		if err != pebble.ErrNotFound {
 			slog.Error("failed to get db block data", "block_number", head, "error", err)
 		}
 		return nil
 	}
-	dst = make([]byte, len(dataBytes))
-	copy(dst, dataBytes)
 	blockData := &block{}
-	if err := json.Unmarshal(dst, blockData); err != nil {
+	if err := json.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", head, "error", err)
 		return nil
 	}
 	if err := closer.Close(); err != nil {
 		slog.Error("failed to close result of block data", "block_number", head, "error", err)
-		return nil
-	}
-
-	if err := batch.Commit(pebble.Sync); err != nil {
-		slog.Error("failed to commit batch", "error", err)
 		return nil
 	}
 
@@ -156,10 +135,8 @@ func (c *Contract) Provers(blockNumber uint64) []*Prover {
 		}
 		return nil
 	}
-	dst := make([]byte, len(dataBytes))
-	copy(dst, dataBytes)
 	blockData := &block{}
-	if err := json.Unmarshal(dst, blockData); err != nil {
+	if err := json.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", blockNumber, "error", err)
 		return nil
 	}
@@ -201,43 +178,31 @@ func (c *Contract) Prover(operator common.Address) *Prover {
 }
 
 func (c *Contract) latestProvers() *blockProver {
-	batch := c.db.NewIndexedBatch()
-	defer batch.Close()
-
-	headBytes, closer, err := batch.Get(c.dbHead())
+	headBytes, closer, err := c.db.Get(c.dbHead())
 	if err != nil {
 		slog.Error("failed to get chain head data", "error", err)
 		return nil
 	}
-	dst := make([]byte, len(headBytes))
-	copy(dst, headBytes)
-	head := binary.LittleEndian.Uint64(dst)
+	head := binary.LittleEndian.Uint64(headBytes)
 	if err := closer.Close(); err != nil {
 		slog.Error("failed to close result of chain head", "error", err)
 		return nil
 	}
 
-	dataBytes, closer, err := batch.Get(c.dbKey(head))
+	dataBytes, closer, err := c.db.Get(c.dbKey(head))
 	if err != nil {
 		if err != pebble.ErrNotFound {
 			slog.Error("failed to get db block data", "block_number", head, "error", err)
 		}
 		return nil
 	}
-	dst = make([]byte, len(dataBytes))
-	copy(dst, dataBytes)
 	blockData := &block{}
-	if err := json.Unmarshal(dst, blockData); err != nil {
+	if err := json.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", head, "error", err)
 		return nil
 	}
 	if err := closer.Close(); err != nil {
 		slog.Error("failed to close result of block data", "block_number", head, "error", err)
-		return nil
-	}
-
-	if err := batch.Commit(pebble.Sync); err != nil {
-		slog.Error("failed to commit batch", "error", err)
 		return nil
 	}
 
@@ -259,31 +224,26 @@ func (c *Contract) notifyChainHead(chainHead uint64) {
 }
 
 func (c *Contract) dbKey(blockNumber uint64) []byte {
-	return []byte(blockPrefix + strconv.FormatUint(blockNumber, 10))
+	return []byte("block_" + strconv.FormatUint(blockNumber, 10))
 }
 
 func (c *Contract) dbHead() []byte {
-	return []byte(chainHead)
+	return []byte("chain_head")
 }
 
 func (c *Contract) updateDB(blockNumber uint64, projectDiff *blockProjectDiff, proverDiff *blockProverDiff) error {
-	batch := c.db.NewIndexedBatch()
-	defer batch.Close()
-
 	preBlock := blockNumber - 1
 	if blockNumber == 0 {
 		preBlock = blockNumber
 	}
 
-	preBlockBytes, closer, err := batch.Get(c.dbKey(preBlock))
+	preBlockBytes, closer, err := c.db.Get(c.dbKey(preBlock))
 	if err != nil && err != pebble.ErrNotFound {
 		return errors.Wrap(err, "failed to get pre block data")
 	}
 	preBlockData := &block{}
 	if err == nil {
-		dst := make([]byte, len(preBlockBytes))
-		copy(dst, preBlockBytes)
-		if err := json.Unmarshal(dst, preBlockData); err != nil {
+		if err := json.Unmarshal(preBlockBytes, preBlockData); err != nil {
 			return errors.Wrap(err, "failed to unmarshal pre block data")
 		}
 		if err := closer.Close(); err != nil {
@@ -312,6 +272,9 @@ func (c *Contract) updateDB(blockNumber uint64, projectDiff *blockProjectDiff, p
 
 	numberBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(numberBytes, blockNumber)
+
+	batch := c.db.NewBatch()
+	defer batch.Close()
 
 	if err := batch.Set(c.dbHead(), numberBytes, nil); err != nil {
 		return errors.Wrap(err, "failed to set chain head")
@@ -366,9 +329,7 @@ func (c *Contract) list() (uint64, error) {
 	}
 	head := c.beginningBlockNumber
 	if err == nil {
-		dst := make([]byte, len(headBytes))
-		copy(dst, headBytes)
-		head = binary.LittleEndian.Uint64(dst)
+		head = binary.LittleEndian.Uint64(headBytes)
 		head++
 		if err := closer.Close(); err != nil {
 			return 0, errors.Wrap(err, "failed to close result of chain head")
