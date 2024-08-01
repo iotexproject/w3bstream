@@ -63,10 +63,8 @@ func (c *Contract) Project(projectID, blockNumber uint64) *Project {
 		}
 		return nil
 	}
-	dst := make([]byte, len(dataBytes))
-	copy(dst, dataBytes)
 	blockData := &block{}
-	if err := json.Unmarshal(dst, blockData); err != nil {
+	if err := json.Unmarshal(dataBytes, blockData); err != nil {
 		slog.Error("failed to unmarshal block data", "block_number", blockNumber, "error", err)
 		return nil
 	}
