@@ -1,6 +1,6 @@
 {
   "code": "any",
-  "codeExpParam": "any",
+  "codeExpParams": ["any"],
   "vmType": "risc0",
   "output": {
     "type": "ethereumContract",

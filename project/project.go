@@ -39,11 +39,11 @@ type Attribute struct {
 }
 
 type Config struct {
-	Version      string        `json:"version"`
-	VMTypeID     uint64        `json:"vmTypeID"`
-	Output       output.Config `json:"output"`
-	CodeExpParam string        `json:"codeExpParam,omitempty"`
-	Code         string        `json:"code"`
+	Version       string        `json:"version"`
+	VMTypeID      uint64        `json:"vmTypeID"`
+	Output        output.Config `json:"output"`
+	CodeExpParams []string      `json:"codeExpParams,omitempty"`
+	Code          string        `json:"code"`
 }
 
 func (p *Project) Config(version string) (*Config, error) {

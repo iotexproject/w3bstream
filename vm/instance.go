@@ -10,13 +10,13 @@ import (
 	"github.com/iotexproject/w3bstream/vm/proto"
 )
 
-func create(ctx context.Context, conn *grpc.ClientConn, projectID uint64, executeBinary, expParam string) error {
+func create(ctx context.Context, conn *grpc.ClientConn, projectID uint64, executeBinary string, expParams []string) error {
 	cli := proto.NewVmRuntimeClient(conn)
 
 	req := &proto.CreateRequest{
 		ProjectID: projectID,
 		Content:   executeBinary,
-		ExpParam:  expParam,
+		ExpParams: expParams,
 	}
 	if _, err := cli.Create(ctx, req); err != nil {
 		return errors.Wrap(err, "failed to create vm instance")

@@ -269,8 +269,29 @@ func easyjson7b166cadDecodeGithubComIotexprojectW3bstreamProject2(in *jlexer.Lex
 			out.VMTypeID = uint64(in.Uint64())
 		case "output":
 			easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput(in, &out.Output)
-		case "codeExpParam":
-			out.CodeExpParam = string(in.String())
+		case "codeExpParams":
+			if in.IsNull() {
+				in.Skip()
+				out.CodeExpParams = nil
+			} else {
+				in.Delim('[')
+				if out.CodeExpParams == nil {
+					if !in.IsDelim(']') {
+						out.CodeExpParams = make([]string, 0, 4)
+					} else {
+						out.CodeExpParams = []string{}
+					}
+				} else {
+					out.CodeExpParams = (out.CodeExpParams)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v6 string
+					v6 = string(in.String())
+					out.CodeExpParams = append(out.CodeExpParams, v6)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		case "code":
 			out.Code = string(in.String())
 		default:
@@ -302,10 +323,19 @@ func easyjson7b166cadEncodeGithubComIotexprojectW3bstreamProject2(out *jwriter.W
 		out.RawString(prefix)
 		easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput(out, in.Output)
 	}
-	if in.CodeExpParam != "" {
-		const prefix string = ",\"codeExpParam\":"
+	if len(in.CodeExpParams) != 0 {
+		const prefix string = ",\"codeExpParams\":"
 		out.RawString(prefix)
-		out.String(string(in.CodeExpParam))
+		{
+			out.RawByte('[')
+			for v7, v8 := range in.CodeExpParams {
+				if v7 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v8))
+			}
+			out.RawByte(']')
+		}
 	}
 	{
 		const prefix string = ",\"code\":"
