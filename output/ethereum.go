@@ -57,9 +57,8 @@ func (e *ethereumContract) Output(proverID uint64, task *task.Task, proof []byte
 			i := new(big.Int).SetUint64(task.ProjectID)
 			params = append(params, i)
 
-		case "taskId", "_taskId":
-			i := new(big.Int).SetUint64(task.ID)
-			params = append(params, i)
+		case "clientId", "_clientId":
+			params = append(params, task.ClientID)
 
 		case "proverId", "_proverId":
 			i := new(big.Int).SetUint64(proverID)
