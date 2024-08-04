@@ -3,6 +3,7 @@ pub mod generator;
 
 use std::io::BufReader;
 
+use ethabi::{encode, ethereum_types::U256, Token};
 use generator::{gen_pk, gen_proof};
 use halo2_curves::bn256::{Bn256, Fr};
 use halo2_proofs::{poly::{commitment::Params, kzg::commitment::ParamsKZG}, circuit::Value};
@@ -13,7 +14,7 @@ use crate::circuits::simple::SimpleCircuit;
 use serde_json::Value as JsonValue;
 
 #[wasm_bindgen]
-pub fn prove(project_id: u64, task_id: u64, client_id: &str, sequencer_sign: &str, input: &str) -> std::string::String {
+pub fn prove(project_id: u64, task_id: u64, client_id: &str, sequencer_sign: &str, input: &str) -> Vec<u8> {
 
     // TODO parse input json, like {"private_a": 3, "private_b": 4}
     let input_v: JsonValue = serde_json::from_str(&input).unwrap();
@@ -53,8 +54,11 @@ pub fn prove(project_id: u64, task_id: u64, client_id: &str, sequencer_sign: &st
 
     let proof = gen_proof(&params, &pk, circuit.clone(), &instances);
 
-    format!(
-        r#"{}"#,
-        hex::encode(&proof),
-    )
+    let public_input = 4 * v["private_a"].as_u64().unwrap() * v["private_a"].as_u64().unwrap() * v["private_b"].as_u64().unwrap() * v["private_b"].as_u64().unwrap();
+    let tokens = vec![
+        Token::Uint(U256::from(public_input)),
+        Token::Uint(U256::from(task_id)),
+        Token::Bytes(proof),
+    ];
+    encode(&tokens)
 }
