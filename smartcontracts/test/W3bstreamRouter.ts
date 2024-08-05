@@ -44,10 +44,10 @@ describe('W3bstream Router', function () {
     await w3bstreamProject.connect(binder).bind(projectId);
 
     const proverId = 1;
-    const taskId = 1;
+    const clientId = "_testClientId";
     await w3bstreamProver.connect(prover).resume(proverId);
     await w3bstreamProject.connect(projectOwner).resume(projectId);
     await w3bstreamRouter.connect(projectOwner).bindDapp(projectId, mockProcessor.getAddress());
-    await w3bstreamRouter.connect(coordinator).route(projectId, proverId, taskId, '0x0000');
+    await w3bstreamRouter.connect(coordinator).route(projectId, proverId, clientId, '0x0000');
   });
 });
