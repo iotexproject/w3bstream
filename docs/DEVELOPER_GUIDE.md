@@ -9,6 +9,7 @@ Dapps looking to utilize W3bstream capabilities should:
 1. [Create a W3bstream project](#create-a-w3bstream-project)
 2. [Test the project](#test-your-w3bstream-project)
 3. [Register it on the IoTeX blockchain](#registering-your-project)
+4. [Verify proof on the IoTeX blockchain](#verify-proof-on-chain)
 
 ### Prerequisites
 
@@ -200,20 +201,6 @@ If you want to stop the project's task process, can use this cmd
 ioctl ws project pause --id "your project id"
 ```
 
-### Bind Your Dapp Contract
-
-If you want to verify zk proof in your Dapp contract, you need to bind the project with the Dapp.
-
-``` bash
-ioctl ws router bind --project-id "your project id" --dapp "your dapp contract address"
-```
-
-If you want to unbind the project with the Dapp.
-
-``` bash
-ioctl ws router unbind --project-id "your project id"
-```
-
 ### Bind New ZK VmType
 
 The zk vm types registered in the contract are `risc0`, `halo2`, `zkwasm` and `wasm`, and the `id` of risc0 is `1`, halo2 is `2`, zkwasm is `3`, and wasm is `4`.
@@ -239,4 +226,65 @@ You can also use `resume` to `resume` it.
 
 ``` bash
 ioctl ws vmtype resume --id "vm type id"
+```
+
+### Verify Proof On Chain
+
+If you want to verify a proof on the chain, 
+first, you should set the `output` from `stdout` to `ethereumContract` in the **project config file**, like this
+
+### Set Output to EthereumContract
+``` bash
+{
+   "output": {
+     "type": "ethereumContract",
+     "ethereum": {
+       "chainEndpoint": "https://babel-api.testnet.iotex.io",
+       "contractAddress": "0x3841A746F811c244292194825C5e528e61F890F8",
+       "contractMethod": "route",
+       "contractAbiJSON": "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\", \"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"dapp\",\"type\":\"address\"}],\"name\":\"DappBound\",\"type\":\"event\"},{\"anonymous\":false,  \"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}], \"name\":\"DappUnbound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,  \"internalType\":\"uint256\",\"name\":\"router\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false, \"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"revertReason\",\"type\":\"string\"}],\"name\":\"DataProcessed\",  \"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"inputs\":  [{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_dapp\",\"type\":\"address\"}],\"name\":\"bindDapp\",\"outputs\":[],  \"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"dapp\",\"outputs\":[{\"internalType\":\"address\", \"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"fleetManagement\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",   \"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_fleetManagement\",\"type\":\"address\"},{\"internalType\":\"address\", \"name\":\"_projectStore\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"projectStore\",\"outputs\":  [{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\", \"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_proverId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_clientId\",\"type\":\"string\"},{\"internalType\":\"bytes\", \"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"route\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",   \"type\":\"uint256\"}],\"name\":\"unbindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+     }
+   }
+}
+```
+`chainEndpoint` is the target chain endpoint, 
+`contractAddress` is the router contract address, 
+`contractMethod` is the function that you want to call, 
+`contractAbiJSON` is the ABI of router contract.
+
+second, you should bind the Dapp of your project with the `Router`.
+
+### Bind Your Dapp Contract
+
+If you want to verify zk proof in your Dapp contract, you need to bind the project with the Dapp.
+
+``` bash
+ioctl ws router bind --project-id "your project id" --dapp "your dapp contract address"
+```
+
+If you want to unbind the project with the Dapp.
+
+``` bash
+ioctl ws router unbind --project-id "your project id"
+```
+
+### Dapp Contract
+The Dapp Contract that bound with the project will implement the interface `process`, then invoke the verifcation contract, and verify proof. 
+
+The example of Halo2Dapp 
+
+``` bash
+function process(uint256 _projectId, uint256 _proverId, string memory _clientId, bytes calldata _data) public {
+    require(halo2Verifier != address(0), "verifier address not set");
+    
+    (uint256 publicInput, uint256 taskID, bytes memory _proof) = abi.decode(_data, (uint256, uint256, bytes));
+    bytes32 _publicInput = uint256ToFr(publicInput);
+    bytes32 _taskID = uint256ToFr(taskID);
+    bytes32 _projectID = uint256ToFr(projectId);
+    bytes memory callData = abi.encodePacked(_publicInput, _projectID, _taskID, _proof);
+    
+    (bool success,) = halo2Verifier.staticcall(callData);
+    require(success, "Failed to verify proof");
+    // TODO
+}
 ```
