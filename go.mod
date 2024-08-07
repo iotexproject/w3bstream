@@ -8,7 +8,7 @@ require (
 	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/blocto/solana-go-sdk v1.26.0
 	github.com/cockroachdb/pebble v1.1.0
-	github.com/ethereum/go-ethereum v1.13.4
+	github.com/ethereum/go-ethereum v1.14.6
 	github.com/fatih/color v1.16.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.6.0
@@ -89,6 +89,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
 	github.com/huin/goupnp v1.3.0 // indirect
+	github.com/iotexproject/go-pkgs v0.1.14
 	github.com/ipfs/boxo v0.17.0 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
