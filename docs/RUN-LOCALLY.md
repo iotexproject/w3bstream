@@ -48,7 +48,7 @@ export BONSAI_KEY=${your bonsai key}
 Start the W3bstream with the following command:
 
 ```bash
-cd sprout
+cd w3bstream
 docker compose up -d
 ```
 ### Configure ioctl

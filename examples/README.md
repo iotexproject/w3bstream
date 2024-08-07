@@ -1,6 +1,6 @@
 # ZKP circuit
 
-Sprout already supports various zero-knowledge technologies, including Halo2, RISC0, and zkWASM, you can build and deploy them separately.
+W3bstream Sprout already supports various zero-knowledge technologies, including Halo2, RISC0, and zkWASM, you can build and deploy them separately.
 
 - [Halo2 ZKP]()
   - [Build Halo2 Circuit](#Build-Halo2-Circuit)
@@ -19,7 +19,7 @@ Sprout already supports various zero-knowledge technologies, including Halo2, RI
 ## Build Halo2 Circuit
 
 ```shell
-git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuit
+git clone git@github.com:iotexproject/w3bstream.git && cd examples/halo2-circuit
 wasm-pack build --target nodejs --out-dir pkg
 ```
 you will find `halo2_simple_bg.wasm` in the `pkg` folder.
@@ -47,7 +47,7 @@ The proof can be validated through smart contracts, or can be verified locally.
 ### Verified by smart contract
 1. build
 ```shell
-git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuit
+git clone git@github.com:iotexproject/w3bstream.git && cd examples/halo2-circuit
 cargo build --release
 ```
 After this command is successful, a `halo2-simple-circuit` executable file(executable file corresponding to the [simple circuit](./src/circuits/simple.rs)) will be generated in the `target/release` directory.
@@ -64,7 +64,7 @@ Then you can deploy the smart contract to IoTeX chain or other ETH-compatible ch
 ### Verified by local
 1. build
 ```shell
-git clone git@github.com:machinefi/sprout.git && cd examples/halo2-circuit
+git clone git@github.com:iotexproject/w3bstream.git && cd examples/halo2-circuit
 cargo build --release
 ```
 After this command is successful, a `halo2-simple-circuit` executable file(executable file corresponding to the [simple circuit](./src/circuits/simple.rs)) will be generated in the `target/release` directory.
@@ -89,7 +89,7 @@ More details and options for `Halo2 circuit` are given in [its README](./halo2-c
 ## Build RISC0 Circuit
 
 ```shell
-git clone git@github.com:machinefi/sprout.git && cd examples/risc0-circuit/method
+git clone git@github.com:iotexproject/w3bstream.git && cd examples/risc0-circuit/method
 cargo build --release
 ```
 you will find `methods.rs` in a folder, the folder path will print on the console, like this
@@ -97,7 +97,7 @@ you will find `methods.rs` in a folder, the folder path will print on the consol
 If you need to develop and compile your own circuits, please refer to [RISC0 README](./risc0-circuit/README.md).
 
 ```shell
-warning: methods_path is: "sprout/examples/risc0-circuit/method/target/release/build/risc0-circuits-5efc4ff59af940ab/out/methods.rs"
+warning: methods_path is: "w3bstream/examples/risc0-circuit/method/target/release/build/risc0-circuits-5efc4ff59af940ab/out/methods.rs"
 ```
 ## Deploy RISC0 circuit
 The deployment of circuits requires the circuit files to be first compressed using zlib and encoded into hex strings.
@@ -143,7 +143,7 @@ More details and options for `RISC0 circuit` are given in [its README](./risc0-c
 ## Build ZkWASM Circuit
 
 ```shell
-git clone git@github.com:machinefi/sprout.git && cd examples/zkwasm-circuit/circuit
+git clone git@github.com:iotexproject/w3bstream.git && cd examples/zkwasm-circuit/circuit
 asc src/add.ts -O --noAssert -o add.wasm
 ```
 

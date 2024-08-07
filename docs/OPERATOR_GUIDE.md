@@ -35,7 +35,7 @@ The recommended method to run a W3bstream node is using official Docker images f
 Fetch the latest stable docker-compose.yaml:
 
 ```bash
-curl https://raw.githubusercontent.com/machinefi/sprout/release/docker-compose.yaml > docker-compose.yaml
+curl https://raw.githubusercontent.com/iotexproject/w3bstream/release/docker-compose.yaml > docker-compose.yaml
 ```
 
 Pull the required images:
