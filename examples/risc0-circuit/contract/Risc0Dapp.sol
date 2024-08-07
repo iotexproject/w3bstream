@@ -13,17 +13,17 @@ contract Risc0Dapp {
     bytes32 public proof_journal;
     uint256 public projectId;
     uint256 public proverId;
-    uint256 public taskId;
+    string public clientId;
     // risc0 verification contract
     address private risc0Verifier;
 
     mapping(uint256 => bytes32) private projectIdToImageId;
 
 
-    function process(uint256 _projectId, uint256 _proverId, uint256 _taskId, bytes calldata _data) public {
+    function process(uint256 _projectId, uint256 _proverId, string memory _clientId, bytes calldata _data) public {
         projectId = _projectId;
         proverId = _proverId;
-        taskId = _taskId;
+        clientId = _clientId;
         proof = _data;
         (bytes memory proof_snark_seal, bytes memory proof_snark_journal) = abi.decode(_data, (bytes, bytes));
         proof_seal = proof_snark_seal;
