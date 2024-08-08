@@ -2,10 +2,10 @@
 DOCKER_COMPOSE_TEST_FILE=./docker-compose-test.yaml
 
 e2e_test_depends_stop:
-	@docker-compose -f ${DOCKER_COMPOSE_TEST_FILE} down
+	@docker compose -f ${DOCKER_COMPOSE_TEST_FILE} down
 
 e2e_test_depends_start:
-	@docker-compose -p w3bstream-sprout -f ${DOCKER_COMPOSE_TEST_FILE} up -d
+	@docker compose -p w3bstream-sprout -f ${DOCKER_COMPOSE_TEST_FILE} up -d
 
 .PHONY: e2e_test_depends
 e2e_test_depends: e2e_test_depends_stop e2e_test_depends_start
