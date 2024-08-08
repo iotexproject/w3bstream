@@ -28,9 +28,9 @@ The diagram represents the main components of the software and how they interact
 
 ## Docker images
 
-* [sequencer](https://github.com/iotexproject/w3bstream/pkgs/container/sequencer)
-* [prover](https://github.com/iotexproject/w3bstream/pkgs/container/prover)
-* [coordinator](https://github.com/iotexproject/w3bstream/pkgs/container/coordinator)
+* [sequencer](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-sequencer)
+* [prover](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-prover)
+* [coordinator](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-coordinator)
 
 
 ## Running
