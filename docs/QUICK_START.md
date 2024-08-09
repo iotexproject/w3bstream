@@ -13,7 +13,7 @@
 ## Send messages use curl
 
 We have created preset test projects for three types of zero-knowledge proof vm
-(`risc0`, `halo2` and `zkWASM`). You can interact with the **sprout**
+(`risc0`, `halo2` and `zkWASM`). You can interact with the **w3bstream sprout**
 service by _task submitting_ and _task querying_ APIs to commit proof task and
 retrieve task proof status.
 
@@ -49,7 +49,7 @@ curl -X POST \
 ## Query the status of a proof request
 
 After sending a message, you'll receive a message ID(an uuid to identify the
-unique task) as a response from the **sprout** service.
+unique task) as a response from the **w3bstream sprout** service.
 
 ```json
 {
@@ -109,7 +109,7 @@ chain.
 
 ## Send messages with token (Experimental)
 
-For security purposes, **sprout** integrates ioID identity verification and
+For security purposes, **w3bstream sprout** integrates ioID identity verification and
 DID-Comm message encryption features. Next, you can use the `didctl`
 command-line tool to simulate message encryption, allowing you to submit
 encrypted proof tasks.
@@ -124,13 +124,13 @@ git clone git@github.com:machinefi/ioconnect-go.git
 make targets && mv cmd/didctl __YOUR_SYSTEM_PATH__
 ```
 
-### fetch **sprout** service did document
+### fetch **w3bstream sprout** service did document
 
 ```bash
 curl https://sprout-testnet.w3bstream.com/didDoc
 ```
 
-For convenience, you can set the did document of sprout service as an
+For convenience, you can set the did document of w3bstream sprout service as an
 environment variable.
 
 ```bash
@@ -141,7 +141,7 @@ export serverdid=did:io:0x81a3864898d6098b15eff17b6452fc4e28e05983
 ### set simulate device client did and JWK secret envs
 
 In the next steps, we will use a simulated device that already has an **ioID**
-identity to submit encrypted request message to **sprout**. Of course, if you
+identity to submit encrypted request message to **w3bstream sprout**. Of course, if you
 already have an ioID identity and the corresponding JWK keys, you can replace
 the client information below.
 
@@ -150,16 +150,16 @@ export clientdid=did:io:0xba80b710f0c27c8b3b72df63861e2ecea9c5aa73
 export clientsec=vebfEf+v2rLUzFm2mMH9XzPbZJFzaEj3nctUCnoAbMw=
 ```
 
-### request token from **sprout** service
+### request token from **w3bstream sprout** service
 
 First, use the `curl` command to request the issuance of a token from the
-**sprout** service.
+**w3bstream sprout** service.
 
 ```bash
 curl -X POST -d '{"clientID":"'$clientdid'"}' https://sprout-testnet.w3bstream.com/issue_vc
 ```
 
-For security purposes, **sprout** will respond with an encrypted token. For
+For security purposes, **w3bstream sprout** will respond with an encrypted token. For
 convenience, you can set the responded encrypted token as an env var
 
 ```bash
@@ -211,7 +211,7 @@ curl -X POST -d $cipherdata \
 export cipherresponse= # response above
 ```
 
-Last, decrypt **sprout** response to retrieve message id
+Last, decrypt **w3bstream sprout** response to retrieve message id
 
 ```bash
 didctl decrypt --recipient $clientsec --encryptor $serverdid --cipher $cipherresp --recipient-id 2

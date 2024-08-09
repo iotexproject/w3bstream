@@ -31,7 +31,7 @@ Start by cloning the W3bstream repository:
 
 ```bash
 git clone https://github.com/iotexproject/w3bstream.git
-cd sprout
+cd w3bstream
 ```
 
 #### Create a W3bstream Project Using Halo2
@@ -130,7 +130,7 @@ cargo build --release
 The path of `methods.rs` will be printed to the console, like in the output example below:  
 
 ```bash
-warning: methods_path is: "sprout/examples/risc0-circuits/target/release/build/risc0-circuits-5efc4ff59af940ab/out/methods.rs"
+warning: methods_path is: "w3bstream/examples/risc0-circuits/target/release/build/risc0-circuits-5efc4ff59af940ab/out/methods.rs"
 ```
 
 Generate the W3bstream Project

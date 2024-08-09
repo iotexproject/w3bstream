@@ -3,7 +3,7 @@
 ## Get Repository
 ```bash
 git clone https://github.com/iotexproject/w3bstream.git
-cd sprout
+cd w3bstream
 ```
 
 ## Compile customized circuits
@@ -40,7 +40,7 @@ cargo build --release
 The path of `methods.rs` will be printed to the console, like this  
 
 ```bash
-warning: methods_path is: "sprout/examples/risc0-circuits/target/release/build/risc0-circuits-5efc4ff59af940ab/out/methods.rs"
+warning: methods_path is: "w3bstream/examples/risc0-circuits/target/release/build/risc0-circuits-5efc4ff59af940ab/out/methods.rs"
 ```
 
 More details and options for `Risc0 circuit` are given in [its README](./examples/risc0-circuit/README.md).
