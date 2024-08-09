@@ -53,5 +53,6 @@ jobs:
                 issue_number: issueNumber,
                 body: issueBody
               });
+            }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure the GitHub token is available as an environment variable
