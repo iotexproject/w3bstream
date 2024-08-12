@@ -68,9 +68,11 @@ func (m *Manager) loadFromContract(projectID uint64) (*Project, error) {
 		return nil, errors.Wrapf(err, "failed to get db project file hash data, project_id %v", projectID)
 	}
 	hash := make([]byte, len(dataBytes))
-	copy(hash, dataBytes)
-	if err := closer.Close(); err != nil {
-		return nil, errors.Wrapf(err, "failed to close result of project file hash data, project_id %v", projectID)
+	if err == nil {
+		copy(hash, dataBytes)
+		if err := closer.Close(); err != nil {
+			return nil, errors.Wrapf(err, "failed to close result of project file hash data, project_id %v", projectID)
+		}
 	}
 
 	if bytes.Equal(cp.Hash[:], hash) {
