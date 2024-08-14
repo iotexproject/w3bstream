@@ -4,6 +4,7 @@ import binascii
 import ipfshttpclient
 import sys
 
+dns_endpoint = 'ipfs.mainnet.iotex.io'
 def convert_code_to_zlib_hex(code_file: str) -> str:
     try:
         with open(code_file, 'rb') as f:
@@ -17,7 +18,7 @@ def convert_code_to_zlib_hex(code_file: str) -> str:
     except Exception as e:
         raise RuntimeError(f"Failed to convert and compress the code file {code_file}") from e
 
-def upload_to_ipfs(hex_string: str, endpoint: str = '/dns/ipfs.mainnet.iotex.io/tcp/443/https') -> str:
+def upload_to_ipfs(hex_string: str, endpoint: str = f"/dns/{dns_endpoint}/tcp/443/https") -> str:
     try:
         client = ipfshttpclient.connect(endpoint)
 
@@ -26,7 +27,7 @@ def upload_to_ipfs(hex_string: str, endpoint: str = '/dns/ipfs.mainnet.iotex.io/
 
         client.pin.add(cid)
 
-        return f"ipfs://{endpoint}/ipfs/{cid}"
+        return f"ipfs://{dns_endpoint}/{cid}"
     except Exception as e:
         raise RuntimeError(f"Failed to upload file to IPFS: {e}")
 
