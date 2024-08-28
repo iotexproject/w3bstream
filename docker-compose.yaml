@@ -74,8 +74,8 @@ services:
 
   zokrates:
     build:
-      context: ../../code/zokrates-sprout/
-      dockerfile: ../../code/zokrates-sprout/Dockerfile
+      context: ../zokrates-sprout/
+      dockerfile: ../zokrates-sprout/Dockerfile
 
   risc0:
     image: wangweixiaohao2944/risc0server:v1.0.0
