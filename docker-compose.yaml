@@ -46,6 +46,7 @@ services:
       - "risc0"
       - "halo2"
       - "zkwasm"
+      - "zokrates"
       - "wasm"
       - "postgres"
       - "bootnode"
@@ -70,6 +71,11 @@ services:
     container_name: zkwasm-service
     platform: linux/x86_64
     restart: always
+
+  zokrates:
+    build:
+      context: ../../code/zokrates-sprout/
+      dockerfile: ../../code/zokrates-sprout/Dockerfile
 
   risc0:
     image: wangweixiaohao2944/risc0server:v1.0.0
