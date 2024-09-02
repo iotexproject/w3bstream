@@ -3,6 +3,7 @@ pub mod opts;
 use std::{fs, io::BufReader};
 
 use clap::Parser;
+use ethabi::{encode, ethereum_types::U256, Token};
 use halo2_simple_circuit::{
     circuits::simple::SimpleCircuit,
     generator::{gen_pk, gen_proof, gen_sol_verifier},
@@ -59,6 +60,8 @@ fn main() {
         }
 
         Subcommands::Proof { private_a, private_b, project_id, task_id } => {
+            let public_input = 4 * private_a * private_a * private_b * private_b;
+
             let private_a = Fr::from(private_a);
             let private_b = Fr::from(private_b);
         
@@ -77,8 +80,15 @@ fn main() {
             let instances = vec![vec![c, Fr::from(project_id), Fr::from(task_id)]];
         
             let proof = gen_proof(&params, &pk, circuit.clone(), &instances);
-        
-            println!("the proof is {:?}", hex::encode(&proof))
+            
+            let tokens = vec![
+                Token::Uint(U256::from(public_input)),
+                Token::Uint(U256::from(task_id)),
+                Token::Bytes(proof),
+            ];
+            let result = encode(&tokens);
+            
+            println!("the proof is {:?}", hex::encode(&result))
         }
 
         Subcommands::Verfiy { proof, public, project, task } => {

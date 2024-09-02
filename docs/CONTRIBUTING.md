@@ -20,7 +20,7 @@ There are many ways to contribute to this project:
 2. **Clone the Repository**: Clone your forked repository to your local machine.
 
     ```bash
-    git clone https://github.com/your-username/sprout.git
+    git clone https://github.com/your-username/w3bstream.git
     ```
 
 3. **Create a New Branch**: Create a branch for your changes.

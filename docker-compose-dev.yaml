@@ -10,7 +10,7 @@ services:
       - 8000:8000
 
   halo2:
-    image: wangweixiaohao2944/halo2server:v0.0.8
+    image: ghcr.io/iotexproject/halo2server:v0.0.7
     container_name: halo2-service
     platform: linux/x86_64
     restart: always
@@ -26,7 +26,7 @@ services:
       - 4003:4001
 
   risc0:
-    image: wangweixiaohao2944/risc0server:v1.0.0
+    image: ghcr.io/iotexproject/risc0server:v0.0.7
     depends_on:
       - "postgres"
     container_name: risc0-service
@@ -40,7 +40,7 @@ services:
      - "4001:4001"
 
   wasm:
-    image: wangweixiaohao2944/wasmserver:v0.1.0
+    image: ghcr.io/iotexproject/wasmserver:v0.0.7
     container_name: wasm-service
     platform: linux/x86_64
     restart: always

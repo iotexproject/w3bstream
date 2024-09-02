@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-## For General Questions About Sprout
+## For General Questions About W3bstream Sprout
 
 Please do not use GitHub issues for asking general questions about this project. Instead, we encourage you to seek support and ask questions in one of the following platforms:
 

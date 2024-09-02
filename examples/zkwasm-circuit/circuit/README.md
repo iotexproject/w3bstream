@@ -12,7 +12,7 @@ npm install -g assemblyscript
 1. get template
 
 ``` shell
-git clone git@github.com:machinefi/sprout.git && cd examples/zkwasm-circuit/circuit
+git clone git@github.com:iotexproject/w3bstream.git && cd examples/zkwasm-circuit/circuit
 ```
 
 2. build

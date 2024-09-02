@@ -30,8 +30,8 @@ var (
 	localDBDir             = "/mnt/stress/stress/local_db"
 	beginningBlockNumber   = uint64(27200000)
 	chainEndpoint          = "https://babel-api.testnet.iotex.io"
-	projectContractAddress = common.HexToAddress("0x952d9Bc43C17f9370C9A80977285962c5b3BBeca")
-	proverContractAddress  = common.HexToAddress("0x0764e9c021F140d3A8CAb6EDd59904E584378D19")
+	projectContractAddress = common.HexToAddress("0xB55c5f19d7bAC1dBE52F85807683C972b16Cc2A0")
+	proverContractAddress  = common.HexToAddress("0x19ebD71C44691b25d33d3AbDFb925b1201aAdD82")
 	schedulerEpoch         = uint64(20)
 )
 
@@ -143,24 +143,24 @@ func sendMessage(contractPersistence *contract.Contract, projectManager *project
 			slog.Error("failed to get project data", "project_id", project.ID, "error", err)
 			continue
 		}
-		_, err = projectFile.DefaultConfig()
+		defaultVer, err := projectFile.DefaultConfig()
 		if err != nil {
 			slog.Error("failed to get project default version", "project_id", project.ID, "error", err)
 			continue
 		}
 		var data string
-		// switch defaultVer.VMType {
-		// case vm.Halo2:
-		// 	data = halo2MessageData
-		// case vm.Risc0:
-		// 	data = risc0MessageData
-		// case vm.ZKwasm:
-		// 	// data = zkwasmMessageData
-		// 	continue // skip zkwasm
-		// default:
-		// 	slog.Error("unsupported vm type", "project_id", project.ID, "vm_type", defaultVer.VMType)
-		// 	continue
-		// }
+		switch defaultVer.VMTypeID {
+		case 2:
+			data = halo2MessageData
+		case 1:
+			data = risc0MessageData
+		case 3:
+			// data = zkwasmMessageData
+			continue // skip zkwasm
+		default:
+			slog.Error("unsupported vm type", "project_id", project.ID, "vm_type", defaultVer.VMTypeID)
+			continue
+		}
 		req := &apitypes.HandleMessageReq{
 			ProjectID:      project.ID,
 			ProjectVersion: "0.1",
