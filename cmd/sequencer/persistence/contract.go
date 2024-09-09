@@ -168,10 +168,7 @@ func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
 		return logs[i].TxIndex < logs[j].TxIndex
 	})
 
-	batch := c.db.NewIndexedBatch()
-	defer batch.Close()
-
-	dataBytes, closer, err := batch.Get(c.dbKey())
+	dataBytes, closer, err := c.db.Get(c.dbKey())
 	if err != nil && err != pebble.ErrNotFound {
 		return errors.Wrap(err, "failed to get local db contract data")
 	}
@@ -243,6 +240,9 @@ func (c *Contract) processLogs(blockNumber uint64, logs []types.Log) error {
 
 	numberBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(numberBytes, blockNumber)
+
+	batch := c.db.NewBatch()
+	defer batch.Close()
 
 	if err := batch.Set(c.dbHead(), numberBytes, nil); err != nil {
 		return errors.Wrap(err, "failed to set chain head")
