@@ -2,8 +2,11 @@
 pragma solidity ^0.8.19;
 
 contract MockStakingHub {
-    uint256 amount;
-    constructor() {}
+    uint256 public amount;
+
+    constructor(uint256 _amount) {
+        amount = _amount;
+    }
 
     function setAmount(uint256 _amount) external {
         amount = _amount;

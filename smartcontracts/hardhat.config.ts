@@ -43,6 +43,27 @@ const config: HardhatUserConfig = {
       },
     ],
   },
+  etherscan: {
+    apiKey: 'YOUR_ETHER',
+    customChains: [
+      {
+        network: 'mainnet',
+        chainId: 4689,
+        urls: {
+          apiURL: 'https://IoTeXscout.io/api',
+          browserURL: 'https://IoTeXscan.io',
+        },
+      },
+      {
+        network: 'testnet',
+        chainId: 4690,
+        urls: {
+          apiURL: 'https://testnet.IoTeXscout.io/api',
+          browserURL: 'https://testnet.IoTeXscan.io',
+        },
+      },
+    ],
+  },
 };
 
 export default config;
