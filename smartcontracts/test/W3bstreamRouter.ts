@@ -18,7 +18,7 @@ describe('W3bstream Router', function () {
     w3bstreamProject = await ethers.deployContract('W3bstreamProject');
     w3bstreamProver = await ethers.deployContract('W3bstreamProver');
     mockProcessor = await ethers.deployContract('MockProcessor');
-    mockStakingHub = await ethers.deployContract('MockStakingHub');
+    mockStakingHub = await ethers.deployContract('MockStakingHub', [100]);
     await w3bstreamRouter.initialize(fleetManagement.getAddress(), w3bstreamProject.getAddress());
     await fleetManagement.initialize(100);
     await w3bstreamProject.initialize(project.target);
@@ -44,7 +44,7 @@ describe('W3bstream Router', function () {
     await w3bstreamProject.connect(binder).bind(projectId);
 
     const proverId = 1;
-    const clientId = "_testClientId";
+    const clientId = '_testClientId';
     await w3bstreamProver.connect(prover).resume(proverId);
     await w3bstreamProject.connect(projectOwner).resume(projectId);
     await w3bstreamRouter.connect(projectOwner).bindDapp(projectId, mockProcessor.getAddress());

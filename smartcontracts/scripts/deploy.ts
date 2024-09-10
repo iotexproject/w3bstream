@@ -73,7 +73,21 @@ async function main() {
   await tx.wait();
   console.log(`FleetManagement set CreditCenter to ${credit.target}`);
 
-  // TODO setCoordinator,setStakingHub
+  let coordinator = process.env.COORDINATOR;
+  if (!coordinator) {
+    coordinator = deployer.address;
+  }
+  tx = await fleetManagement.setCoordinator(coordinator);
+  await tx.wait();
+  console.log(`FleetManagement set coordinator to ${coordinator}`);
+
+  // TODO deploy mock StakingHub
+  const stakingHub = await ethers.deployContract('MockStakingHub', [ethers.parseEther(process.env.MIN_STAKE)]);
+  await stakingHub.waitForDeployment();
+  console.log(`MockStakingHub deployed to ${stakingHub.target}`);
+  tx = await fleetManagement.setStakingHub(stakingHub.target);
+  await tx.wait();
+  console.log(`FleetManagement set stakingHub to ${stakingHub.target}`);
 
   tx = await fleetManagement.setProverStore(prover.target);
   await tx.wait();
