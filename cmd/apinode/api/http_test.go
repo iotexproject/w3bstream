@@ -18,7 +18,7 @@ import (
 
 	"github.com/iotexproject/w3bstream/apitypes"
 	"github.com/iotexproject/w3bstream/clients"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/persistence"
+	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
 )
 
 func TestNewHttpServer(t *testing.T) {

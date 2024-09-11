@@ -16,11 +16,11 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/clients"
-	"github.com/iotexproject/w3bstream/cmd/coordinator/api"
-	coordinatorconfig "github.com/iotexproject/w3bstream/cmd/coordinator/config"
-	proverconfig "github.com/iotexproject/w3bstream/cmd/prover/config"
-	seqapi "github.com/iotexproject/w3bstream/cmd/sequencer/api"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/persistence"
+	apinode "github.com/iotexproject/w3bstream/cmd/apinode/api"
+	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
+	proverconf "github.com/iotexproject/w3bstream/cmd/prover/config"
+	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
+	sequencerconf "github.com/iotexproject/w3bstream/cmd/sequencer/config"
 	"github.com/iotexproject/w3bstream/datasource"
 	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/persistence/postgres"
@@ -88,11 +88,11 @@ func init() {
 	_ = os.Setenv("PROVER_ENV", env)
 	_ = os.Setenv("COORDINATOR_ENV", env)
 
-	proverConf, err := proverconfig.Get()
+	proverConf, err := proverconf.Get()
 	if err != nil {
 		os.Exit(-1)
 	}
-	coordinatorConf, err := coordinatorconfig.Get()
+	coordinatorConf, err := sequencerconf.Get()
 	if err != nil {
 		os.Exit(-1)
 	}
@@ -161,7 +161,7 @@ func migrateDatabase(dsn string) error {
 	return nil
 }
 
-func runProver(conf *proverconfig.Config) {
+func runProver(conf *proverconf.Config) {
 	if err := migrateDatabase(conf.DatabaseDSN); err != nil {
 		log.Fatal(err)
 	}
@@ -205,7 +205,7 @@ func runProver(conf *proverconfig.Config) {
 	slog.Info("prover started")
 }
 
-func runCoordinator(conf *coordinatorconfig.Config) {
+func runCoordinator(conf *sequencerconf.Config) {
 	pg, err := postgres.New(conf.DatabaseDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -261,7 +261,7 @@ func runSequencer(privateKey, databaseDSN, coordinatorAddress, address, projectC
 	}
 
 	go func() {
-		if err := seqapi.NewHttpServer(p, uint(1), coordinatorAddress, sk, key, manager).Run(address); err != nil {
+		if err := apinode.NewHttpServer(p, uint(1), coordinatorAddress, sk, key, manager).Run(address); err != nil {
 			log.Fatal(err)
 		}
 	}()

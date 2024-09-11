@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/clients"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/persistence"
+	"github.com/iotexproject/w3bstream/cmd/apinode/api"
+	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
 )
 
 var (

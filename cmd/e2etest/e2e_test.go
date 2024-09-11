@@ -13,14 +13,14 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/iotexproject/w3bstream/apitypes"
-	coordinatorconfig "github.com/iotexproject/w3bstream/cmd/coordinator/config"
+	sequencerconf "github.com/iotexproject/w3bstream/cmd/sequencer/config"
 	"github.com/iotexproject/w3bstream/task"
 )
 
 func TestHttpApi(t *testing.T) {
 	r := require.New(t)
 
-	coordinatorConf, err := coordinatorconfig.Get()
+	coordinatorConf, err := sequencerconf.Get()
 	r.NoError(err)
 	conf := seqConf(coordinatorConf.ServiceEndpoint)
 
