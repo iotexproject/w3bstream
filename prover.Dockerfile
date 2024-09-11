@@ -6,7 +6,7 @@ ENV GO111MODULE=on
 WORKDIR /go/src
 COPY ./ ./
 
-RUN cd ./cmd/prover && CGO_ENABLED=0 go build -ldflags "-s -w -extldflags '-static'" -o prover
+RUN cd ./cmd/prover && go build -o prover
 
 FROM alpine:3.20 AS runtime
 

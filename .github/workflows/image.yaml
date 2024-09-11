@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  COORDINATOR_IMAGE_NAME: iotexproject/w3bstream-coordinator
+  APINODE_IMAGE_NAME: iotexproject/w3bstream-apinode
   PROVER_IMAGE_NAME: iotexproject/w3bstream-prover
   SEQUENCER_IMAGE_NAME: iotexproject/w3bstream-sequencer
 
@@ -108,7 +108,7 @@ jobs:
           tags: ${{ steps.meta-sequencer.outputs.tags }}
           labels: ${{ steps.meta-sequencer.outputs.labels }}
 
-  build_coordinator_image:
+  build_apinode_image:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -139,18 +139,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract Docker metadata
-        id: meta-coordinator
+        id: meta-apinode
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ env.COORDINATOR_IMAGE_NAME }}
-      - name: Build and push Docker image coordinator
-        id: build-and-push-coordinator
+            ${{ env.REGISTRY }}/${{ env.APINODE_IMAGE_NAME }}
+      - name: Build and push Docker image apinode
+        id: build-and-push-apinode
         uses: docker/build-push-action@v4
         with:
           platforms: linux/amd64,linux/arm64
           context: .
-          file: ./coordinator.Dockerfile
+          file: ./apinode.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-coordinator.outputs.tags }}
-          labels: ${{ steps.meta-coordinator.outputs.labels }}
+          tags: ${{ steps.meta-apinode.outputs.tags }}
+          labels: ${{ steps.meta-apinode.outputs.labels }}
