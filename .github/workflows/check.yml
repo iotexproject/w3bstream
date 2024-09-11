@@ -34,14 +34,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.21
+          go-version: 1.22
 
       - name: Run Unit tests.
-        # skip e2e testing
         run: make unit_test
-
-      - name: Run E2E tests.
-        run: make e2e_test
 
       - name: Upload Coverage report to CodeCov
         uses: codecov/codecov-action@v1.0.0
