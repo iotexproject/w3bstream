@@ -18,7 +18,6 @@ require (
 	github.com/libp2p/go-libp2p v0.32.2
 	github.com/libp2p/go-libp2p-kad-dht v0.25.2
 	github.com/libp2p/go-libp2p-pubsub v0.10.0
-	github.com/machinefi/ioconnect-go v0.0.9
 	github.com/mailru/easyjson v0.7.7
 	github.com/multiformats/go-multiaddr v0.12.1
 	github.com/pkg/errors v0.9.1
@@ -34,6 +33,8 @@ require (
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/gorm v1.25.5
 )
+
+require github.com/cespare/cp v1.1.1 // indirect
 
 require (
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
@@ -89,7 +90,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
 	github.com/huin/goupnp v1.3.0 // indirect
-	github.com/iotexproject/go-pkgs v0.1.14
 	github.com/ipfs/boxo v0.17.0 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
