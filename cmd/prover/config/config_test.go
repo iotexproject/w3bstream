@@ -1,4 +1,4 @@
-package config_test
+package config
 
 import (
 	"os"
@@ -10,8 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotexproject/w3bstream/cmd/internal"
-	"github.com/iotexproject/w3bstream/cmd/prover/config"
+	"github.com/iotexproject/w3bstream/util/env"
 )
 
 func TestConfig_Init(t *testing.T) {
@@ -19,7 +18,7 @@ func TestConfig_Init(t *testing.T) {
 
 	t.Run("UseEnvConfig", func(t *testing.T) {
 		os.Clearenv()
-		expected := config.Config{
+		expected := Config{
 			VMEndpoints:          `{"1":"halo2:4001","2":"risc0:4001","3":"zkwasm:4001","4":"wasm:4001"}`,
 			ChainEndpoint:        "http://abc.def.com",
 			ProjectContractAddr:  "0x123",
@@ -45,7 +44,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDir)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
 
-		c := &config.Config{}
+		c := &Config{}
 		r.Nil(c.Init())
 		r.Equal(*c, expected)
 	})
@@ -53,7 +52,7 @@ func TestConfig_Init(t *testing.T) {
 	t.Run("CatchPanicCausedByEmptyRequiredEnvVar", func(t *testing.T) {
 		os.Clearenv()
 
-		c := &config.Config{}
+		c := &Config{}
 		defer func() {
 			r.NotNil(recover())
 		}()
@@ -64,9 +63,9 @@ func TestConfig_Init(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p.ApplyFuncReturn(internal.ParseEnv, errors.New(t.Name()))
+		p.ApplyFuncReturn(env.ParseEnv, errors.New(t.Name()))
 
-		c := &config.Config{}
+		c := &Config{}
 		err := c.Init()
 		r.ErrorContains(err, t.Name())
 	})
@@ -78,7 +77,7 @@ func TestGet(t *testing.T) {
 	t.Run("GetDefaultTestConfig", func(t *testing.T) {
 		_ = os.Setenv("PROVER_ENV", "INTEGRATION_TEST")
 
-		conf, err := config.Get()
+		conf, err := Get()
 		r.NoError(err)
 		r.True(strings.Contains(conf.VMEndpoints, "localhost:14001"))
 	})
@@ -86,7 +85,7 @@ func TestGet(t *testing.T) {
 	t.Run("GetDefaultDebugConfig", func(t *testing.T) {
 		_ = os.Setenv("PROVER_ENV", "LOCAL_DEBUG")
 
-		conf, err := config.Get()
+		conf, err := Get()
 		r.NoError(err)
 		r.True(strings.Contains(conf.VMEndpoints, "localhost:4001"))
 	})
@@ -94,7 +93,7 @@ func TestGet(t *testing.T) {
 	t.Run("GetDefaultConfig", func(t *testing.T) {
 		_ = os.Setenv("PROVER_ENV", "PROD")
 
-		conf, err := config.Get()
+		conf, err := Get()
 		r.NoError(err)
 		r.True(strings.Contains(conf.VMEndpoints, "risc0:4001"))
 	})

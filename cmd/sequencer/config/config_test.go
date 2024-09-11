@@ -1,4 +1,4 @@
-package config_test
+package config
 
 import (
 	"os"
@@ -6,11 +6,9 @@ import (
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/iotexproject/w3bstream/util/env"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/iotexproject/w3bstream/cmd/internal"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
 )
 
 func TestConfig_Init(t *testing.T) {
@@ -18,7 +16,7 @@ func TestConfig_Init(t *testing.T) {
 
 	t.Run("UseEnvConfig", func(t *testing.T) {
 		os.Clearenv()
-		expected := config.Config{
+		expected := Config{
 			ServiceEndpoint:       ":1999",
 			ChainEndpoint:         "http://iotex.chainendpoint.io",
 			DatabaseDSN:           "postgres://username:password@host:port/database?ext=1",
@@ -49,7 +47,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDir)
 		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 
-		c := &config.Config{}
+		c := &Config{}
 		r.Nil(c.Init())
 		r.Equal(*c, expected)
 	})
@@ -57,7 +55,7 @@ func TestConfig_Init(t *testing.T) {
 	t.Run("CatchPanicCausedByEmptyRequiredEnvVar", func(t *testing.T) {
 		os.Clearenv()
 
-		c := &config.Config{}
+		c := &Config{}
 		defer func() {
 			r.NotNil(recover())
 		}()
@@ -68,9 +66,9 @@ func TestConfig_Init(t *testing.T) {
 		p := NewPatches()
 		defer p.Reset()
 
-		p.ApplyFuncReturn(internal.ParseEnv, errors.New(t.Name()))
+		p.ApplyFuncReturn(env.ParseEnv, errors.New(t.Name()))
 
-		c := &config.Config{}
+		c := &Config{}
 		err := c.Init()
 		r.ErrorContains(err, t.Name())
 	})
@@ -82,7 +80,7 @@ func TestGet(t *testing.T) {
 	t.Run("GetDefaultTestConfig", func(t *testing.T) {
 		_ = os.Setenv("COORDINATOR_ENV", "INTEGRATION_TEST")
 
-		conf, err := config.Get()
+		conf, err := Get()
 		r.NoError(err)
 		r.Equal(":19001", conf.ServiceEndpoint)
 	})
@@ -90,7 +88,7 @@ func TestGet(t *testing.T) {
 	t.Run("GetDefaultDebugConfig", func(t *testing.T) {
 		_ = os.Setenv("COORDINATOR_ENV", "LOCAL_DEBUG")
 
-		conf, err := config.Get()
+		conf, err := Get()
 		r.NoError(err)
 		r.Equal(":9001", conf.ServiceEndpoint)
 	})
@@ -98,7 +96,7 @@ func TestGet(t *testing.T) {
 	t.Run("GetDefaultConfig", func(t *testing.T) {
 		_ = os.Setenv("COORDINATOR_ENV", "PROD")
 
-		conf, err := config.Get()
+		conf, err := Get()
 		r.NoError(err)
 		r.Equal(":9001", conf.ServiceEndpoint)
 	})
