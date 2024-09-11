@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/iotexproject/w3bstream/cmd/internal"
+	"github.com/iotexproject/w3bstream/util/env"
 )
 
 type Config struct {
@@ -68,17 +68,13 @@ var (
 	}
 )
 
-func (c *Config) Init() error {
-	if err := internal.ParseEnv(c); err != nil {
+func (c *Config) init() error {
+	if err := env.ParseEnv(c); err != nil {
 		return err
 	}
 	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(c.LogLevel)})
 	slog.SetDefault(slog.New(h))
 	return nil
-}
-
-func (c *Config) Env() string {
-	return c.env
 }
 
 func Get() (*Config, error) {
@@ -94,12 +90,12 @@ func Get() (*Config, error) {
 		conf = defaultConfig
 	}
 	conf.env = env
-	if err := conf.Init(); err != nil {
+	if err := conf.init(); err != nil {
 		return nil, err
 	}
 	return conf, nil
 }
 
 func (c *Config) Print() {
-	internal.Print(c)
+	env.Print(c)
 }
