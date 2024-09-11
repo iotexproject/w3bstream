@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/cmd/coordinator/api"
-	"github.com/iotexproject/w3bstream/cmd/coordinator/config"
+	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
+	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
 	"github.com/iotexproject/w3bstream/datasource"
 	"github.com/iotexproject/w3bstream/persistence/contract"
 	"github.com/iotexproject/w3bstream/persistence/postgres"
