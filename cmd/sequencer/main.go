@@ -1,95 +1,101 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/cockroachdb/pebble"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/machinefi/ioconnect-go/pkg/ioconnect"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/clients"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/persistence"
+	"github.com/iotexproject/w3bstream/cmd/coordinator/api"
+	"github.com/iotexproject/w3bstream/cmd/coordinator/config"
+	"github.com/iotexproject/w3bstream/datasource"
+	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/persistence/postgres"
+	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/scheduler"
+	"github.com/iotexproject/w3bstream/task/dispatcher"
 )
-
-var (
-	logLevel                        int
-	aggregationAmount               uint
-	address                         string
-	coordinatorAddr                 string
-	databaseDSN                     string
-	privateKey                      string
-	jwkSecret                       string
-	jwk                             *ioconnect.JWK
-	ioIDRegistryEndpoint            string
-	ioIDRegistryContractAddress     string
-	projectClientContractAddress    string
-	w3bstreamProjectContractAddress string
-	chainEndpoint                   string
-)
-
-func init() {
-	flag.IntVar(&logLevel, "logLevel", int(slog.LevelDebug), "golang slog level")
-	flag.UintVar(&aggregationAmount, "aggregationAmount", 1, "the amount for pack how many messages into one task")
-	flag.StringVar(&address, "address", ":9000", "http listen address")
-	flag.StringVar(&coordinatorAddr, "coordinatorAddress", "localhost:9001", "coordinator address")
-	flag.StringVar(&databaseDSN, "databaseDSN", "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable", "database dsn")
-	flag.StringVar(&privateKey, "privateKey", "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85", "sequencer private key")
-	flag.StringVar(&jwkSecret, "jwkSecret", "R3QNJihYLjtcaxALSTsKe1cYSX0pS28wZitFVXE4Y2klf2hxVCczYHw2dVg4fXJdSgdCcnM4PgV1aTo9DwYqEw==", "jwk secret base64 string")
-	flag.StringVar(&ioIDRegistryContractAddress, "ioIDRegistryContract", "0x06b3Fcda51e01EE96e8E8873F0302381c955Fddd", "ioIDRegistry contract address")
-	flag.StringVar(&projectClientContractAddress, "projectClientContract", "0xF4d6282C5dDD474663eF9e70c927c0d4926d1CEb", "projectClient contract address")
-	flag.StringVar(&w3bstreamProjectContractAddress, "w3bstreamProjectContract", "0x6AfCB0EB71B7246A68Bb9c0bFbe5cD7c11c4839f", "w3bstream project contract address")
-	flag.StringVar(&chainEndpoint, "chainEndpoint", "https://babel-api.testnet.iotex.io", "chain endpoint")
-	flag.StringVar(&ioIDRegistryEndpoint, "ioIDRegistryEndpoint", "did.iotex.me", "ioID registry endpoint")
-
-	// initialize jwk context from secrets
-	if jwkSecret != "" {
-		var (
-			secrets = ioconnect.JWKSecrets{}
-			err     error
-		)
-		if err = secrets.UnmarshalText([]byte(jwkSecret)); err != nil {
-			panic(errors.Wrap(err, "invalid jwk secrets from flag"))
-		}
-		if jwk, err = ioconnect.NewJWKBySecret(secrets); err != nil {
-			panic(errors.Wrap(err, "failed to new jwk from secrets"))
-		}
-		return
-	}
-}
 
 func main() {
-	flag.Parse()
-
-	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(logLevel)}))
-	slog.SetDefault(logger)
-
-	sk, err := crypto.HexToECDSA(privateKey)
+	conf, err := config.Get()
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed parse private key"))
+		log.Fatal(errors.Wrap(err, "failed to get config"))
+	}
+	conf.Print()
+	slog.Info("coordinator config loaded")
+
+	defaultDatasourcePubKey, err := hexutil.Decode(conf.DefaultDatasourcePubKey)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
 	}
 
-	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&sk.PublicKey)))
-
-	clientMgr, err := clients.NewManager(projectClientContractAddress, ioIDRegistryContractAddress, w3bstreamProjectContractAddress, ioIDRegistryEndpoint, chainEndpoint)
+	persistence, err := postgres.New(conf.DatabaseDSN)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new clients manager"))
+		log.Fatal(errors.Wrap(err, "failed to new postgres persistence"))
 	}
 
-	p, err := persistence.NewPersistence(databaseDSN)
-	if err != nil {
-		log.Fatal(err)
+	schedulerNotification := make(chan uint64, 10)
+	dispatcherNotification := make(chan uint64, 10)
+	chainHeadNotification := make(chan uint64, 10)
+
+	projectNotifications := []chan<- uint64{dispatcherNotification, schedulerNotification}
+	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
+
+	local := conf.ProjectFileDir != ""
+
+	var contractPersistence *contract.Contract
+	var kvDB *pebble.DB
+	if !local {
+		kvDB, err = pebble.Open(conf.LocalDBDir, &pebble.Options{})
+		if err != nil {
+			log.Fatal(errors.Wrap(err, "failed to open pebble db"))
+		}
+		defer kvDB.Close()
+
+		contractPersistence, err = contract.New(kvDB, conf.SchedulerEpoch, conf.BeginningBlockNumber,
+			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddr),
+			common.HexToAddress(conf.ProjectContractAddr), chainHeadNotifications, projectNotifications)
+		if err != nil {
+			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
+		}
 	}
+
+	var projectManager *project.Manager
+	if local {
+		projectManager, err = project.NewLocalManager(conf.ProjectFileDir)
+	} else {
+		projectManager = project.NewManager(kvDB, contractPersistence.LatestProject)
+	}
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new project manager"))
+	}
+
+	datasourcePG := datasource.NewPostgres()
+	var taskDispatcher *dispatcher.Dispatcher
+	if local {
+		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI,
+			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.BootNodeMultiAddr, conf.ContractWhitelist, defaultDatasourcePubKey, conf.IoTeXChainID)
+	} else {
+		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
+
+		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI, conf.BootNodeMultiAddr,
+			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.ContractWhitelist, defaultDatasourcePubKey, conf.IoTeXChainID,
+			dispatcherNotification, chainHeadNotification, contractPersistence, projectOffsets)
+	}
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new dispatcher"))
+	}
+	taskDispatcher.Run()
 
 	go func() {
-		if err := api.NewHttpServer(p, aggregationAmount, coordinatorAddr, sk, jwk, clientMgr).Run(address); err != nil {
-			log.Fatal(err)
+		if err := api.NewHttpServer(persistence, conf).Run(conf.ServiceEndpoint); err != nil {
+			log.Fatal(errors.Wrap(err, "failed to run http server"))
 		}
 	}()
 
