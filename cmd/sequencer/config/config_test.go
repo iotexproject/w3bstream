@@ -48,7 +48,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 
 		c := &Config{}
-		r.Nil(c.Init())
+		r.Nil(c.init())
 		r.Equal(*c, expected)
 	})
 
@@ -59,7 +59,7 @@ func TestConfig_Init(t *testing.T) {
 		defer func() {
 			r.NotNil(recover())
 		}()
-		_ = c.Init()
+		_ = c.init()
 	})
 
 	t.Run("FailedToParseEnv", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestConfig_Init(t *testing.T) {
 		p.ApplyFuncReturn(env.ParseEnv, errors.New(t.Name()))
 
 		c := &Config{}
-		err := c.Init()
+		err := c.init()
 		r.ErrorContains(err, t.Name())
 	})
 }

@@ -33,17 +33,13 @@ var defaultTestnetConfig = &Config{
 	env:               "TESTNET",
 }
 
-func (c *Config) Init() error {
+func (c *Config) init() error {
 	if err := env.ParseEnv(c); err != nil {
 		return err
 	}
 	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.Level(c.LogLevel)})
 	slog.SetDefault(slog.New(h))
 	return nil
-}
-
-func (c *Config) Env() string {
-	return c.env
 }
 
 func Get() (*Config, error) {
@@ -57,7 +53,7 @@ func Get() (*Config, error) {
 		conf = defaultTestnetConfig
 	}
 	conf.env = env
-	if err := conf.Init(); err != nil {
+	if err := conf.init(); err != nil {
 		return nil, err
 	}
 	return conf, nil
