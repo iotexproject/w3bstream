@@ -1,8 +1,12 @@
 package api
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	solanatypes "github.com/blocto/solana-go-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -12,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/iotexproject/w3bstream/apitypes"
+	"github.com/iotexproject/w3bstream/block"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
 	"github.com/iotexproject/w3bstream/persistence/postgres"
 )
@@ -48,6 +53,8 @@ func NewHttpServer(persistence *postgres.Postgres, conf *config.Config) *HttpSer
 		s.coordinatorConf.OperatorSolanaAddress = wallet.PublicKey.String()
 	}
 
+	s.engine.GET("/", s.jsonRPC)
+	s.engine.POST("/", s.jsonRPC)
 	s.engine.GET("/live", s.liveness)
 	s.engine.GET("/task/:project_id/:task_id", s.getTaskStateLog)
 	s.engine.GET("/coordinator_config", s.getCoordinatorConfigInfo)
@@ -62,6 +69,73 @@ func (s *HttpServer) Run(endpoint string) error {
 		return errors.Wrap(err, "start http server failed")
 	}
 	return nil
+}
+
+func (s *HttpServer) jsonRPC(c *gin.Context) {
+	req := &jsonRpcReq{}
+	rsp := &jsonRpcRsp{
+		ID:      1,
+		Version: "1.0",
+	}
+	if err := c.ShouldBind(req); err != nil {
+		slog.Error("failed to bind request param", "error", err)
+		rsp.Error = err.Error()
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	switch req.Method {
+	case "getblocktemplate":
+		h := &block.Header{
+			Meta:       [4]byte{},
+			PrevHash:   common.Hash{},
+			MerkleRoot: [32]byte{},
+			Difficulty: 500,
+			Nonce:      [8]byte{},
+		}
+		t := &blockTemplate{
+			Meta:          hex.EncodeToString(h.Meta[:]),
+			PrevBlockHash: hex.EncodeToString(h.PrevHash[:]),
+			MerkleRoot:    hex.EncodeToString(h.MerkleRoot[:]),
+			Difficulty:    h.Difficulty,
+			Ts:            uint64(time.Time{}.Unix()),
+			NonceRange:    hex.EncodeToString(h.Nonce[:]),
+		}
+		rsp.Result = t
+		c.JSON(http.StatusOK, rsp)
+	case "submitblock":
+		params := []*submitBlockParam{}
+		if err := json.Unmarshal(req.Params, &params); err != nil {
+			slog.Error("failed to unmarshal submit block param", "error", err)
+			rsp.Error = err.Error()
+			c.JSON(http.StatusBadRequest, rsp)
+			return
+		}
+		if len(params) == 0 {
+			slog.Error("empty submit block param")
+			rsp.Error = "empty submit block param"
+			c.JSON(http.StatusBadRequest, rsp)
+			return
+		}
+		param := params[0]
+		h, err := param.toBlockHeader()
+		if err != nil {
+			slog.Error("failed to construct block header", "error", err)
+			rsp.Error = err.Error()
+			c.JSON(http.StatusBadRequest, rsp)
+			return
+		}
+		if !h.IsValid() {
+			slog.Error("invalid nonce")
+			rsp.Error = "invalid nonce"
+			c.JSON(http.StatusBadRequest, rsp)
+			return
+		}
+		c.JSON(http.StatusOK, rsp)
+	default:
+		slog.Error("illegal method")
+		rsp.Error = "illegal method"
+		c.JSON(http.StatusBadRequest, rsp)
+	}
 }
 
 func (s *HttpServer) liveness(c *gin.Context) {
