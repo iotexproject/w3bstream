@@ -77,7 +77,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		ID:      1,
 		Version: "1.0",
 	}
-	if err := c.ShouldBind(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		slog.Error("failed to bind request param", "error", err)
 		rsp.Error = err.Error()
 		c.JSON(http.StatusBadRequest, rsp)
@@ -103,8 +103,15 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		rsp.Result = t
 		c.JSON(http.StatusOK, rsp)
 	case "submitblock":
+		data, err := json.Marshal(req.Params)
+		if err != nil {
+			slog.Error("failed to marshal submit block param", "error", err)
+			rsp.Error = err.Error()
+			c.JSON(http.StatusBadRequest, rsp)
+			return
+		}
 		params := []*submitBlockParam{}
-		if err := json.Unmarshal(req.Params, &params); err != nil {
+		if err := json.Unmarshal(data, &params); err != nil {
 			slog.Error("failed to unmarshal submit block param", "error", err)
 			rsp.Error = err.Error()
 			c.JSON(http.StatusBadRequest, rsp)

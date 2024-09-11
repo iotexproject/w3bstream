@@ -11,7 +11,7 @@ type jsonRpcReq struct {
 	ID      uint64 `json:"id"             binding:"required"`
 	Version string `json:"jsonrpc"        binding:"required"`
 	Method  string `json:"method"         binding:"required"`
-	Params  []byte `json:"params"`
+	Params  any    `json:"params"`
 }
 
 type jsonRpcRsp struct {
