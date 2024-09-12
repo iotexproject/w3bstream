@@ -137,7 +137,7 @@ func TestScheduler_schedule(t *testing.T) {
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{
 			Attributes: map[common.Hash][]byte{contract.RequiredProverAmount: []byte("10")},
 		})
-		p.ApplyMethodReturn(&p2p.PubSubs{}, "Delete")
+		p.ApplyMethodReturn(&p2p.PubSub{}, "Delete")
 		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
@@ -171,7 +171,7 @@ func TestScheduler_schedule(t *testing.T) {
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
 		p.ApplyFuncReturn(distance.Sort, []uint64{100})
-		p.ApplyMethodReturn(&p2p.PubSubs{}, "Delete")
+		p.ApplyMethodReturn(&p2p.PubSub{}, "Delete")
 		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
@@ -204,7 +204,7 @@ func TestScheduler_schedule(t *testing.T) {
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused, VMTypes: map[uint64]bool{0: true}}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
-		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
+		p.ApplyMethodReturn(&p2p.PubSub{}, "Add", errors.New(t.Name()))
 		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
@@ -238,7 +238,7 @@ func TestScheduler_schedule(t *testing.T) {
 		p.ApplyMethodReturn(pes, "Projects", []*ScheduledProject{{1, 0}})
 		p.ApplyMethodReturn(pm, "Provers", []*contract.Prover{{ID: 1, Paused: paused, VMTypes: map[uint64]bool{0: true}}})
 		p.ApplyMethodReturn(pm, "Project", &contract.Project{ID: 1})
-		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
+		p.ApplyMethodReturn(&p2p.PubSub{}, "Add", nil)
 		p.ApplyMethodReturn(pf, "Project", &project.Project{}, nil)
 		p.ApplyMethodReturn(&project.Project{}, "DefaultConfig", &project.Config{}, nil)
 
@@ -281,13 +281,13 @@ func TestRunLocal(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		ps := &p2p.PubSubs{}
+		ps := &p2p.PubSub{}
 		f := func(uint64, []uint64) {
 		}
 		pm := &project.Manager{}
 
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1}, nil)
-		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", errors.New(t.Name()))
+		p.ApplyMethodReturn(&p2p.PubSub{}, "Add", errors.New(t.Name()))
 
 		RunLocal(ps, f, pm)
 	})
@@ -295,13 +295,13 @@ func TestRunLocal(t *testing.T) {
 		p := gomonkey.NewPatches()
 		defer p.Reset()
 
-		ps := &p2p.PubSubs{}
+		ps := &p2p.PubSub{}
 		f := func(uint64, []uint64) {
 		}
 		pm := &project.Manager{}
 
 		p.ApplyMethodReturn(pm, "ProjectIDs", []uint64{1}, nil)
-		p.ApplyMethodReturn(&p2p.PubSubs{}, "Add", nil)
+		p.ApplyMethodReturn(&p2p.PubSub{}, "Add", nil)
 
 		RunLocal(ps, f, pm)
 	})

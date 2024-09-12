@@ -14,7 +14,7 @@ type window struct {
 	cond        *sync.Cond
 	size        *atomic.Uint64
 	tasks       *list.List
-	pubSubs     *p2p.PubSubs
+	pubSubs     *p2p.PubSub
 	handler     *taskStateHandler
 	persistence Persistence
 }
@@ -85,7 +85,7 @@ func (w *window) isFull() bool {
 	return uint64(w.tasks.Len()) >= w.size.Load()
 }
 
-func newWindow(size uint64, pubSubs *p2p.PubSubs, handler *taskStateHandler, persistence Persistence) *window {
+func newWindow(size uint64, pubSubs *p2p.PubSub, handler *taskStateHandler, persistence Persistence) *window {
 	s := &atomic.Uint64{}
 	s.Store(size)
 	return &window{

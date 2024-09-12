@@ -19,7 +19,7 @@ type dispatchedTask struct {
 	cancel         context.CancelFunc
 	waitTime       time.Duration
 	task           *task.Task
-	pubSubs        *p2p.PubSubs
+	pubSubs        *p2p.PubSub
 	handler        *taskStateHandler
 }
 
@@ -59,7 +59,7 @@ func (t *dispatchedTask) runWatchdog(ctx context.Context) {
 	}
 }
 
-func newDispatchedTask(task *task.Task, timeOut func(s *task.StateLog), pubSubs *p2p.PubSubs, handler *taskStateHandler) *dispatchedTask {
+func newDispatchedTask(task *task.Task, timeOut func(s *task.StateLog), pubSubs *p2p.PubSub, handler *taskStateHandler) *dispatchedTask {
 	ctx, cancel := context.WithCancel(context.Background())
 	t := &dispatchedTask{
 		dispatchedTime: time.Now(),

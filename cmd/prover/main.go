@@ -103,7 +103,7 @@ func main() {
 
 	taskProcessor := processor.NewProcessor(vmHandler, projectManager.Project, sk, defaultDatasourcePubKey, proverID)
 
-	pubSubs, err := p2p.NewPubSubs(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
+	pubSubs, err := p2p.NewPubSub(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new pubsubs"))
 	}
