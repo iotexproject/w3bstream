@@ -116,10 +116,10 @@ func (r *Processor) signProof(t *task.Task, res []byte) (string, error) {
 	if err := binary.Write(buf, binary.BigEndian, t.ProjectID); err != nil {
 		return "", err
 	}
-	if _, err := buf.WriteString(t.ClientID); err != nil {
+	if _, err := buf.WriteString(t.DeviceID); err != nil {
 		return "", err
 	}
-	if _, err := buf.Write(crypto.Keccak256Hash(t.Data...).Bytes()); err != nil {
+	if _, err := buf.Write(crypto.Keccak256Hash(t.Payloads...).Bytes()); err != nil {
 		return "", err
 	}
 	if _, err := buf.Write(res); err != nil {

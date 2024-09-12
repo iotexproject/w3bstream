@@ -12,11 +12,11 @@ import (
 )
 
 type Task struct {
-	ID             uint64   `json:"id"`
+	ID             string   `json:"id"`
 	ProjectID      uint64   `json:"projectID"`
 	ProjectVersion string   `json:"projectVersion"`
-	Data           [][]byte `json:"data"`
-	ClientID       string   `json:"clientID"`
+	DeviceID       string   `json:"deviceID"`
+	Payloads       [][]byte `json:"payloads"`
 	Signature      string   `json:"signature"`
 }
 
@@ -34,10 +34,10 @@ func (t *Task) VerifySignature(pubkey []byte) error {
 	if err = binary.Write(buf, binary.BigEndian, t.ProjectID); err != nil {
 		return err
 	}
-	if _, err = buf.WriteString(t.ClientID); err != nil {
+	if _, err = buf.WriteString(t.DeviceID); err != nil {
 		return err
 	}
-	if _, err = buf.Write(crypto.Keccak256Hash(t.Data...).Bytes()); err != nil {
+	if _, err = buf.Write(crypto.Keccak256Hash(t.Payloads...).Bytes()); err != nil {
 		return err
 	}
 
@@ -77,10 +77,10 @@ func (l *StateLog) SignerAddress(task *Task) (common.Address, error) {
 	if err = binary.Write(buf, binary.BigEndian, task.ProjectID); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write binary")
 	}
-	if _, err = buf.WriteString(task.ClientID); err != nil {
+	if _, err = buf.WriteString(task.DeviceID); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
-	if _, err = buf.Write(crypto.Keccak256Hash(task.Data...).Bytes()); err != nil {
+	if _, err = buf.Write(crypto.Keccak256Hash(task.Payloads...).Bytes()); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
 	if _, err = buf.Write(l.Result); err != nil {
