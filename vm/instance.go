@@ -26,13 +26,13 @@ func create(ctx context.Context, conn *grpc.ClientConn, projectID uint64, execut
 
 func execute(ctx context.Context, conn *grpc.ClientConn, task *task.Task) ([]byte, error) {
 	ds := []string{}
-	for _, d := range task.Data {
+	for _, d := range task.Payloads {
 		ds = append(ds, string(d))
 	}
 	req := &proto.ExecuteRequest{
 		ProjectID:          task.ProjectID,
 		TaskID:             task.ID,
-		ClientID:           task.ClientID,
+		ClientID:           task.DeviceID,
 		SequencerSignature: task.Signature,
 		Datas:              ds,
 	}

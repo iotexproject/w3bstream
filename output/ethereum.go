@@ -58,7 +58,7 @@ func (e *ethereumContract) Output(proverID uint64, task *task.Task, proof []byte
 			params = append(params, i)
 
 		case "clientId", "_clientId":
-			params = append(params, task.ClientID)
+			params = append(params, task.DeviceID)
 
 		case "proverId", "_proverId":
 			i := new(big.Int).SetUint64(proverID)
@@ -101,7 +101,7 @@ func (e *ethereumContract) Output(proverID uint64, task *task.Task, proof []byte
 			params = append(params, packed)
 
 		default:
-			value := gjson.GetBytes(task.Data[0], a.Name)
+			value := gjson.GetBytes(task.Payloads[0], a.Name)
 			param := value.String()
 			if param == "" {
 				return "", errors.Errorf("miss param %s for contract abi", a.Name)
