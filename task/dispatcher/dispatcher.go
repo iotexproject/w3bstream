@@ -41,7 +41,7 @@ type Dispatcher struct {
 	local                     bool
 	projectDispatchers        *sync.Map // projectID(uint64) -> *ProjectDispatcher
 	projectOffsets            *scheduler.ProjectEpochOffsets
-	pubSubs                   *p2p.PubSubs
+	pubSubs                   *p2p.PubSub
 	persistence               Persistence
 	newDatasource             NewDatasource
 	projectManager            ProjectManager
@@ -225,7 +225,7 @@ func New(persistence Persistence, newDatasource NewDatasource,
 		taskStateHandler:          taskStateHandler,
 		windowSizeSetInterval:     5 * time.Second,
 	}
-	ps, err := p2p.NewPubSubs(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
+	ps, err := p2p.NewPubSub(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
 	if err != nil {
 		return nil, err
 	}

@@ -94,7 +94,7 @@ func TestProjectDispatcher_dispatch(t *testing.T) {
 		defer p.Reset()
 
 		ds := &mockDatasource{}
-		pubSubs := &p2p.PubSubs{}
+		pubSubs := &p2p.PubSub{}
 		i := atomic.Bool{}
 		d := &projectDispatcher{
 			datasource: ds,
@@ -115,7 +115,7 @@ func TestProjectDispatcher_dispatch(t *testing.T) {
 		defer p.Reset()
 
 		ds := &mockDatasource{}
-		pubSubs := &p2p.PubSubs{}
+		pubSubs := &p2p.PubSub{}
 		i := atomic.Bool{}
 		d := &projectDispatcher{
 			datasource: ds,
