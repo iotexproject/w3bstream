@@ -46,8 +46,8 @@ contract W3bstreamRouter is IRouter, Initializable {
         try IDapp(_dapp).process(_projectId, _proverId, _clientId, _data) {
             _fm.grant(_proverId, 1);
             emit DataProcessed(_projectId, _proverId, msg.sender, true, "");
-        } catch (bytes memory revertReason) {
-            emit DataProcessed(_projectId, _proverId, msg.sender, false, revertReason);
+        } catch (bytes memory err) {
+            emit DataProcessed(_projectId, _proverId, msg.sender, false, err);
         }
     }
 

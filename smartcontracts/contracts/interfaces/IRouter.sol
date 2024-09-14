@@ -7,7 +7,7 @@ interface IRouter {
         uint256 indexed router,
         address indexed operator,
         bool success,
-        bytes revertReason
+        bytes error
     );
     event DappBound(uint256 indexed projectId, address indexed operator, address dapp);
     event DappUnbound(uint256 indexed projectId, address indexed operator);
