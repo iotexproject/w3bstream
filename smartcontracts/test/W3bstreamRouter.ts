@@ -10,6 +10,7 @@ describe('W3bstream Router', function () {
   let w3bstreamProver;
   let mockProcessor;
   let mockStakingHub;
+
   beforeEach(async function () {
     w3bstreamRouter = await ethers.deployContract('W3bstreamRouter');
     fleetManagement = await ethers.deployContract('FleetManagement');
@@ -25,6 +26,7 @@ describe('W3bstream Router', function () {
     await w3bstreamProver.initialize('W3bstream Prover', 'W3BProver');
     await w3bstreamCredit.initialize('W3bstreamCredit', 'W3BC');
   });
+
   it('route', async function () {
     const [owner, binder, coordinator, projectOwner, prover] = await ethers.getSigners();
     await w3bstreamCredit.setMinter(fleetManagement.getAddress());
@@ -49,5 +51,34 @@ describe('W3bstream Router', function () {
     await w3bstreamProject.connect(projectOwner).resume(projectId);
     await w3bstreamRouter.connect(projectOwner).bindDapp(projectId, mockProcessor.getAddress());
     await w3bstreamRouter.connect(coordinator).route(projectId, proverId, clientId, '0x0000');
+
+    const iface = new ethers.Interface(`[
+      {
+        "inputs": [{
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }],
+        "name": "Error",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "CustomError",
+        "type": "error"
+      }
+    ]`);
+
+    const revertData = iface.encodeErrorResult('Error', ['Normal Error']);
+    await mockProcessor.setErrorType(1);
+    await expect(w3bstreamRouter.connect(coordinator).route(projectId, proverId, clientId, '0x0000'))
+      .to.emit(w3bstreamRouter, 'DataProcessed')
+      .withArgs(projectId, proverId, coordinator.address, false, revertData);
+
+    const customeErrorData = iface.encodeErrorResult('CustomError', []);
+    await mockProcessor.setErrorType(2);
+    await expect(w3bstreamRouter.connect(coordinator).route(projectId, proverId, clientId, '0x0000'))
+      .to.emit(w3bstreamRouter, 'DataProcessed')
+      .withArgs(projectId, proverId, coordinator.address, false, customeErrorData);
   });
 });
