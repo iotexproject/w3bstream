@@ -75,10 +75,10 @@ describe('W3bstream Router', function () {
       .to.emit(w3bstreamRouter, 'DataProcessed')
       .withArgs(projectId, proverId, coordinator.address, false, revertData);
 
-    const customeErrorData = iface.encodeErrorResult('CustomError', []);
+    const customErrorData = iface.encodeErrorResult('CustomError', []);
     await mockProcessor.setErrorType(2);
     await expect(w3bstreamRouter.connect(coordinator).route(projectId, proverId, clientId, '0x0000'))
       .to.emit(w3bstreamRouter, 'DataProcessed')
-      .withArgs(projectId, proverId, coordinator.address, false, customeErrorData);
+      .withArgs(projectId, proverId, coordinator.address, false, customErrorData);
   });
 });
