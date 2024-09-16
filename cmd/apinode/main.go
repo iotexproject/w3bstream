@@ -14,30 +14,36 @@ import (
 	"github.com/iotexproject/w3bstream/cmd/apinode/api"
 	"github.com/iotexproject/w3bstream/cmd/apinode/config"
 	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
+	"github.com/iotexproject/w3bstream/p2p"
 )
 
 func main() {
-	conf, err := config.Get()
+	cfg, err := config.Get()
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to get config"))
 	}
-	conf.Print()
+	cfg.Print()
 	slog.Info("apinode config loaded")
 
-	priKey, err := crypto.HexToECDSA(conf.PriKey)
+	prv, err := crypto.HexToECDSA(cfg.PriKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed parse private key"))
+		log.Fatal(errors.Wrap(err, "failed to parse private key"))
 	}
 
-	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&priKey.PublicKey)))
+	slog.Info("sequencer public key", "public_key", hexutil.Encode(crypto.FromECDSAPub(&prv.PublicKey)))
 
-	p, err := persistence.NewPersistence(conf.DatabaseDSN)
+	pubSub, err := p2p.NewPubSub(cfg.BootNodeMultiAddr, cfg.IoTeXChainID, nil)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new p2p pubsub"))
+	}
+
+	p, err := persistence.NewPersistence(cfg.DatabaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
-		if err := api.NewHttpServer(p, conf.AggregationAmount, priKey).Run(conf.ServiceEndpoint); err != nil {
+		if err := api.Run(p, prv, pubSub, cfg.AggregationAmount, cfg.ServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()
