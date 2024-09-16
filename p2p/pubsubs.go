@@ -38,7 +38,7 @@ func (p *PubSub) Publish(data []byte) error {
 	return nil
 }
 
-func NewPubSub(handle HandleSubscription, bootNodeMultiaddr string, iotexChainID int) (*PubSub, error) {
+func NewPubSub(bootNodeMultiaddr string, iotexChainID int, handle HandleSubscription) (*PubSub, error) {
 	ctx := context.Background()
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"), libp2p.Muxer("/yamux/2.0.0", yamux.DefaultTransport))
 	if err != nil {

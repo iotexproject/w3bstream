@@ -24,30 +24,30 @@ import (
 )
 
 func main() {
-	conf, err := config.Get()
+	cfg, err := config.Get()
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to get config"))
 	}
-	conf.Print()
+	cfg.Print()
 	slog.Info("prover config loaded")
 
-	if err := migrateDatabase(conf.DatabaseDSN); err != nil {
+	if err := migrateDatabase(cfg.DatabaseDSN); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to migrate database"))
 	}
 
-	sk, err := crypto.HexToECDSA(conf.ProverOperatorPriKey)
+	sk, err := crypto.HexToECDSA(cfg.ProverOperatorPriKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}
 	proverOperatorAddress := crypto.PubkeyToAddress(sk.PublicKey)
 
-	defaultDatasourcePubKey, err := hexutil.Decode(conf.DefaultDatasourcePubKey)
+	defaultDatasourcePubKey, err := hexutil.Decode(cfg.DefaultDatasourcePubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
 	}
 
 	vmEndpoints := map[uint64]string{}
-	if err := json.Unmarshal([]byte(conf.VMEndpoints), &vmEndpoints); err != nil {
+	if err := json.Unmarshal([]byte(cfg.VMEndpoints), &vmEndpoints); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to unmarshal vm endpoints"))
 	}
 
@@ -62,20 +62,20 @@ func main() {
 	projectNotifications := []chan<- uint64{schedulerNotification}
 	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
 
-	local := conf.ProjectFileDir != ""
+	local := cfg.ProjectFileDir != ""
 
 	var contractPersistence *contract.Contract
 	var kvDB *pebble.DB
 	if !local {
-		kvDB, err = pebble.Open(conf.LocalDBDir, &pebble.Options{})
+		kvDB, err = pebble.Open(cfg.LocalDBDir, &pebble.Options{})
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to open pebble db"))
 		}
 		defer kvDB.Close()
 
-		contractPersistence, err = contract.New(kvDB, conf.SchedulerEpoch, conf.BeginningBlockNumber,
-			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddr),
-			common.HexToAddress(conf.ProjectContractAddr), chainHeadNotifications, projectNotifications)
+		contractPersistence, err = contract.New(kvDB, cfg.SchedulerEpoch, cfg.BeginningBlockNumber,
+			cfg.ChainEndpoint, common.HexToAddress(cfg.ProverContractAddr),
+			common.HexToAddress(cfg.ProjectContractAddr), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}
@@ -93,7 +93,7 @@ func main() {
 
 	var projectManager *project.Manager
 	if local {
-		projectManager, err = project.NewLocalManager(conf.ProjectFileDir)
+		projectManager, err = project.NewLocalManager(cfg.ProjectFileDir)
 	} else {
 		projectManager = project.NewManager(kvDB, contractPersistence.LatestProject)
 	}
@@ -103,7 +103,7 @@ func main() {
 
 	taskProcessor := processor.NewProcessor(vmHandler, projectManager.Project, sk, defaultDatasourcePubKey, proverID)
 
-	pubSubs, err := p2p.NewPubSub(taskProcessor.HandleP2PData, conf.BootNodeMultiAddr, conf.IoTeXChainID)
+	pubSubs, err := p2p.NewPubSub(taskProcessor.HandleP2PData, cfg.BootNodeMultiAddr, cfg.IoTeXChainID)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new pubsubs"))
 	}
@@ -111,9 +111,9 @@ func main() {
 	if local {
 		scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager)
 	} else {
-		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
+		projectOffsets := scheduler.NewProjectEpochOffsets(cfg.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
 
-		if err := scheduler.Run(conf.SchedulerEpoch, proverID, pubSubs, taskProcessor.HandleProjectProvers,
+		if err := scheduler.Run(cfg.SchedulerEpoch, proverID, pubSubs, taskProcessor.HandleProjectProvers,
 			chainHeadNotification, contractPersistence.Project, contractPersistence.Provers, projectOffsets, projectManager); err != nil {
 			log.Fatal(errors.Wrap(err, "failed to run scheduler"))
 		}

@@ -23,19 +23,19 @@ import (
 )
 
 func main() {
-	conf, err := config.Get()
+	cfg, err := config.Get()
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to get config"))
 	}
-	conf.Print()
+	cfg.Print()
 	slog.Info("coordinator config loaded")
 
-	defaultDatasourcePubKey, err := hexutil.Decode(conf.DefaultDatasourcePubKey)
+	defaultDatasourcePubKey, err := hexutil.Decode(cfg.DefaultDatasourcePubKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
 	}
 
-	persistence, err := postgres.New(conf.DatabaseDSN)
+	persistence, err := postgres.New(cfg.DatabaseDSN)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new postgres persistence"))
 	}
@@ -47,20 +47,20 @@ func main() {
 	projectNotifications := []chan<- uint64{dispatcherNotification, schedulerNotification}
 	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
 
-	local := conf.ProjectFileDir != ""
+	local := cfg.ProjectFileDir != ""
 
 	var contractPersistence *contract.Contract
 	var kvDB *pebble.DB
 	if !local {
-		kvDB, err = pebble.Open(conf.LocalDBDir, &pebble.Options{})
+		kvDB, err = pebble.Open(cfg.LocalDBDir, &pebble.Options{})
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to open pebble db"))
 		}
 		defer kvDB.Close()
 
-		contractPersistence, err = contract.New(kvDB, conf.SchedulerEpoch, conf.BeginningBlockNumber,
-			conf.ChainEndpoint, common.HexToAddress(conf.ProverContractAddr),
-			common.HexToAddress(conf.ProjectContractAddr), chainHeadNotifications, projectNotifications)
+		contractPersistence, err = contract.New(kvDB, cfg.SchedulerEpoch, cfg.BeginningBlockNumber,
+			cfg.ChainEndpoint, common.HexToAddress(cfg.ProverContractAddr),
+			common.HexToAddress(cfg.ProjectContractAddr), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}
@@ -68,7 +68,7 @@ func main() {
 
 	var projectManager *project.Manager
 	if local {
-		projectManager, err = project.NewLocalManager(conf.ProjectFileDir)
+		projectManager, err = project.NewLocalManager(cfg.ProjectFileDir)
 	} else {
 		projectManager = project.NewManager(kvDB, contractPersistence.LatestProject)
 	}
@@ -79,13 +79,13 @@ func main() {
 	datasourcePG := datasource.NewPostgres()
 	var taskDispatcher *dispatcher.Dispatcher
 	if local {
-		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI,
-			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.BootNodeMultiAddr, conf.ContractWhitelist, defaultDatasourcePubKey, conf.IoTeXChainID)
+		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager, cfg.DefaultDatasourceURI,
+			cfg.OperatorPriKey, cfg.OperatorPriKeyED25519, cfg.BootNodeMultiAddr, cfg.ContractWhitelist, defaultDatasourcePubKey, cfg.IoTeXChainID)
 	} else {
-		projectOffsets := scheduler.NewProjectEpochOffsets(conf.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
+		projectOffsets := scheduler.NewProjectEpochOffsets(cfg.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
 
-		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, conf.DefaultDatasourceURI, conf.BootNodeMultiAddr,
-			conf.OperatorPriKey, conf.OperatorPriKeyED25519, conf.ContractWhitelist, defaultDatasourcePubKey, conf.IoTeXChainID,
+		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, cfg.DefaultDatasourceURI, cfg.BootNodeMultiAddr,
+			cfg.OperatorPriKey, cfg.OperatorPriKeyED25519, cfg.ContractWhitelist, defaultDatasourcePubKey, cfg.IoTeXChainID,
 			dispatcherNotification, chainHeadNotification, contractPersistence, projectOffsets)
 	}
 	if err != nil {
@@ -94,7 +94,7 @@ func main() {
 	taskDispatcher.Run()
 
 	go func() {
-		if err := api.NewHttpServer(persistence, conf).Run(conf.ServiceEndpoint); err != nil {
+		if err := api.NewHttpServer(persistence, cfg).Run(cfg.ServiceEndpoint); err != nil {
 			log.Fatal(errors.Wrap(err, "failed to run http server"))
 		}
 	}()

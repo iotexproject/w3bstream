@@ -2,7 +2,9 @@ package task
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/binary"
+	"encoding/json"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -17,36 +19,44 @@ type Task struct {
 	ProjectVersion string   `json:"projectVersion"`
 	DeviceID       string   `json:"deviceID"`
 	Payloads       [][]byte `json:"payloads"`
-	Signature      string   `json:"signature"`
+	Signature      string   `json:"signature,omitempty"`
 }
 
-func (t *Task) VerifySignature(pubkey []byte) error {
+func (t *Task) Sign(prv *ecdsa.PrivateKey) (string, error) {
+	nt := *t
+	nt.Signature = ""
+	j, err := json.Marshal(&nt)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal task")
+	}
+
+	h := crypto.Keccak256Hash(j)
+	sig, err := crypto.Sign(h.Bytes(), prv)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to sign")
+	}
+	return hexutil.Encode(sig), nil
+}
+
+func (t *Task) VerifySignature(pubKey []byte) error {
 	sig, err := hexutil.Decode(t.Signature)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode task signature")
 	}
 
-	buf := bytes.NewBuffer(nil)
-
-	if err = binary.Write(buf, binary.BigEndian, t.ID); err != nil {
-		return err
-	}
-	if err = binary.Write(buf, binary.BigEndian, t.ProjectID); err != nil {
-		return err
-	}
-	if _, err = buf.WriteString(t.DeviceID); err != nil {
-		return err
-	}
-	if _, err = buf.Write(crypto.Keccak256Hash(t.Payloads...).Bytes()); err != nil {
-		return err
+	nt := *t
+	nt.Signature = ""
+	j, err := json.Marshal(&nt)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal task")
 	}
 
-	h := crypto.Keccak256Hash(buf.Bytes())
+	h := crypto.Keccak256Hash(j)
 	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
 	if err != nil {
 		return errors.Wrap(err, "failed to recover public key")
 	}
-	if !bytes.Equal(sigpk, pubkey) {
+	if !bytes.Equal(sigpk, pubKey) {
 		return errors.New("task signature unmatched")
 	}
 	return nil
