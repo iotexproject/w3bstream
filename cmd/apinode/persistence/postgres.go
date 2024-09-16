@@ -103,12 +103,12 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *Message, prv *
 	return nil
 }
 
-func (p *Persistence) Save(msg *Message, aggregationAmount uint, priKey *ecdsa.PrivateKey) error {
+func (p *Persistence) Save(msg *Message, aggregationAmount uint, prv *ecdsa.PrivateKey) error {
 	return p.db.Transaction(func(tx *gorm.DB) error {
 		if err := p.createMessageTx(tx, msg); err != nil {
 			return err
 		}
-		if err := p.aggregateTaskTx(tx, int(aggregationAmount), msg, priKey); err != nil {
+		if err := p.aggregateTaskTx(tx, int(aggregationAmount), msg, prv); err != nil {
 			return err
 		}
 		return nil

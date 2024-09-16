@@ -23,14 +23,10 @@ type Task struct {
 }
 
 func (t *Task) Sign(prv *ecdsa.PrivateKey) (string, error) {
-	nt := *t
-	nt.Signature = ""
-	j, err := json.Marshal(&nt)
+	h, err := t.hash()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to marshal task")
+		return "", err
 	}
-
-	h := crypto.Keccak256Hash(j)
 	sig, err := crypto.Sign(h.Bytes(), prv)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to sign")
@@ -44,14 +40,10 @@ func (t *Task) VerifySignature(pubKey []byte) error {
 		return errors.Wrap(err, "failed to decode task signature")
 	}
 
-	nt := *t
-	nt.Signature = ""
-	j, err := json.Marshal(&nt)
+	h, err := t.hash()
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal task")
+		return err
 	}
-
-	h := crypto.Keccak256Hash(j)
 	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
 	if err != nil {
 		return errors.Wrap(err, "failed to recover public key")
@@ -60,6 +52,17 @@ func (t *Task) VerifySignature(pubKey []byte) error {
 		return errors.New("task signature unmatched")
 	}
 	return nil
+}
+
+func (t *Task) hash() (common.Hash, error) {
+	nt := *t
+	nt.Signature = ""
+	j, err := json.Marshal(&nt)
+	if err != nil {
+		return common.Hash{}, errors.Wrap(err, "failed to marshal task")
+	}
+
+	return crypto.Keccak256Hash(j), nil
 }
 
 type StateLog struct {
