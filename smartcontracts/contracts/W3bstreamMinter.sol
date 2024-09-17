@@ -44,8 +44,8 @@ contract W3bstreamMinter is OwnableUpgradeable {
     bytes4 public adhocDifficulty;
     bytes4 public currentDifficulty;
 
-    bytes4 public constant UPPER_BOUND = 0xffffffff;
-    bytes4 public constant LOWER_BOUND = 0x00000001;
+    uint32 private constant UPPER_BOUND = 0xffffffff;
+    uint32 private constant LOWER_BOUND = 0x00000001;
 
     uint256[10] private durations;
     uint256 private durationSum;
@@ -131,22 +131,28 @@ contract W3bstreamMinter is OwnableUpgradeable {
         durationIndex = (durationIndex + 1) % durations.length;
         if (durationNum < durations.length) {
             durationNum++;
+            return;
+        }
+        if (adhocDifficulty != 0) {
+            return;
+        }
+        uint32 curr = uint32(currentDifficulty);
+        uint40 next = curr;
+        uint256 expectedSum = targetDuration * durationNum;
+        if (durationSum * 5 > expectedSum * 6) {
+            next *= 2;
+        } else if (expectedSum * 4 > durationSum * 5) {
+            next /= 2;
         } else {
-            uint32 curr = uint32(currentDifficulty);
-            uint40 difficulty = curr;
-            if (targetDuration * durationNum < durationSum) {
-                difficulty /= 2;
-            } else if (targetDuration * durationNum > durationSum) {
-                difficulty *= 2;
-            }
-            if (difficulty < uint32(LOWER_BOUND)) {
-                difficulty = uint32(LOWER_BOUND);
-            } else if (difficulty > uint32(UPPER_BOUND)) {
-                difficulty = uint32(UPPER_BOUND);
-            }
-            if (adhocDifficulty == 0 && difficulty != curr) {
-                _setDifficulty(bytes4(uint32(difficulty)));
-            }
+            return;
+        }
+        if (next < LOWER_BOUND) {
+            next = LOWER_BOUND;
+        } else if (next > UPPER_BOUND) {
+            next = UPPER_BOUND;
+        }
+        if (next != curr) {
+            _setDifficulty(bytes4(uint32(next)));
         }
     }
 
