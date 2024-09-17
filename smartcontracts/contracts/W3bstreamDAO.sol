@@ -14,7 +14,7 @@ contract W3bstreamDAO is OwnableUpgradeable {
 
     function initialize(bytes32 genesis) public initializer {
         __Ownable_init();
-        _mint(genesis, block.timestamp);
+        _mint(genesis, block.number);
     }
 
     function mint(bytes32 hash, uint256 timestamp) public onlyOwner {

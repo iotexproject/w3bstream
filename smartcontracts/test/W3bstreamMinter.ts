@@ -19,36 +19,35 @@ describe('W3bstream Minter', function () {
   });
   it('mint block', async function () {
     const tip = await ethers.provider.getBlock('latest');
-    const timestamp = tip.timestamp;
     const [owner, sequencer, prover] = await ethers.getSigners();
     const coinbase = {
       addr: sequencer.address,
       operator: sequencer.address,
       beneficiary: sequencer.address,
     };
-    const merkleRoot = ethers.solidityPackedKeccak256(["uint256", "address", "address", "address"], [timestamp, coinbase.addr, coinbase.operator, coinbase.beneficiary]);
+    await minter.connect(owner).setAdhocDifficulty("0xffffffff");
+    let currentDifficulty = await minter.currentDifficulty();
+    const merkleRoot = ethers.solidityPackedKeccak256(["address", "address", "address"], [coinbase.addr, coinbase.operator, coinbase.beneficiary]);
     const blockinfo = {
       meta: "0x00000000",
       prevhash: genesis,
       merkleRoot: merkleRoot,
-      difficulty: "0xffffffff",
+      difficulty: currentDifficulty,
       nonce: "0x0000000000000000",
     };
     let tipinfo = await dao.tip();
     expect(tipinfo[0]).to.equal(0);
     expect(tipinfo[1]).to.equal(genesis);
+    console.log({tipinfo, blockinfo, currentDifficulty})
     await minter.connect(sequencer).mint(
       blockinfo,
-      timestamp,
       coinbase,
       [],
     );
     tipinfo = await dao.tip();
-    // TODO: adjust timestamp & merkle root
     expect(tipinfo[0]).to.equal(1);
     await expect(minter.connect(sequencer).mint(
       blockinfo,
-      timestamp,
       coinbase,
       [],
     )).to.be.revertedWith("invalid prevhash");
@@ -56,14 +55,12 @@ describe('W3bstream Minter', function () {
     blockinfo.difficulty = "0x00000001";
     await expect(minter.connect(sequencer).mint(
       blockinfo,
-      timestamp,
       coinbase,
       [],
-    )).to.be.revertedWith("invalid proof of work");
-    blockinfo.difficulty = "0xffffffff";
+    )).to.be.revertedWith("invalid difficulty");
+    blockinfo.difficulty = currentDifficulty;
     await minter.connect(sequencer).mint(
       blockinfo,
-      timestamp,
       coinbase,
       [],
     );

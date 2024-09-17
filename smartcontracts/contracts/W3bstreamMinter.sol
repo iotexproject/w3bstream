@@ -33,27 +33,49 @@ struct TaskAssignment {
 }
 
 contract W3bstreamMinter is OwnableUpgradeable {
+    event TaskAllowanceSet(uint256 allowance);
+    event TargetDurationSet(uint256 duration);
+    event DifficultySet(bytes8 difficulty);
+
     IDAO public dao;
     ITaskManager public tm;
+    uint256 public taskAllowance;
+    uint256 public targetDuration;
+    bytes4 public adhocDifficulty;
+    bytes4 public currentDifficulty;
+
+    bytes4 public constant UPPER_BOUND = 0xffffffff;
+    bytes4 public constant LOWER_BOUND = 0x00000001;
+
+    uint256[10] private durations;
+    uint256 private durationSum;
+    uint256 private durationNum;
+    uint256 private durationIndex;
 
     function initialize(IDAO _dao, ITaskManager _tm) public initializer {
         __Ownable_init();
         dao = _dao;
         tm = _tm;
+        _setTaskAllowance(720);
+        _setTargetDuration(12);
+        _setAdhocDifficulty(0x0fffffff);
     }
 
     function mint(
         BlockInfo calldata blockinfo, 
-        uint256 timestamp,
         Sequencer calldata coinbase,
         TaskAssignment[] calldata assignments
     ) public {
         require(coinbase.operator == msg.sender, "invalid operator");
-        (, bytes32 tip, ) = dao.tip();
-        require(blockinfo.prevhash == tip, "invalid prevhash");
-        // TODO: timestamp is not larger than block.timestamp
-        require(timestamp > block.timestamp - 1 minutes, "invalid timestamp");
-        require(blockinfo.merkleRoot == keccak256(abi.encodePacked(timestamp, coinbase.addr, coinbase.operator, coinbase.beneficiary)), "invalid merkle root");
+        if (adhocDifficulty != 0) {
+            require(blockinfo.difficulty == adhocDifficulty, "invalid difficulty");
+        } else {
+            require(blockinfo.difficulty == currentDifficulty, "invalid difficulty");
+        }
+        (, bytes32 tiphash, uint256 tipTimestamp) = dao.tip();
+        require(tipTimestamp != block.number);
+        require(blockinfo.prevhash == tiphash, "invalid prevhash");
+        require(blockinfo.merkleRoot == keccak256(abi.encodePacked(coinbase.addr, coinbase.operator, coinbase.beneficiary)), "invalid merkle root");
         // TODO: review difficulty usage
         require(sha256(abi.encodePacked(blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.difficulty, blockinfo.nonce)) < blockinfo.difficulty, "invalid proof of work");
         bytes32 hash = keccak256(abi.encode(
@@ -62,18 +84,77 @@ contract W3bstreamMinter is OwnableUpgradeable {
             blockinfo.merkleRoot,
             blockinfo.difficulty,
             blockinfo.nonce,
-            timestamp,
             coinbase.addr,
             coinbase.operator,
             coinbase.beneficiary,
             assignments
         ));
-        uint256 deadline = block.timestamp + 1 hours;
+        uint256 deadline = block.number + taskAllowance;
         for (uint i = 0; i < assignments.length; i++) {
             tm.assign(assignments[i].projectId, assignments[i].taskId, assignments[i].prover, deadline);
         }
-        // TODO: adjust difficulty
-        dao.mint(hash, timestamp);
+        _updateDifficulty(tipTimestamp);
+        dao.mint(hash, block.number);
         // TODO: distribute block reward
+    }
+
+    function setTaskAllowance(uint256 allowance) public onlyOwner {
+        _setTaskAllowance(allowance);
+    }
+
+    function _setTaskAllowance(uint256 allowance) internal {
+        taskAllowance = allowance;
+        emit TaskAllowanceSet(allowance);
+    }
+
+    function setTargetDuration(uint256 duration) public onlyOwner {
+        _setTargetDuration(duration);
+    }
+
+    function _setTargetDuration(uint256 duration) internal {
+        targetDuration = duration;
+        emit TargetDurationSet(duration);
+    }
+
+    function setAdhocDifficulty(bytes4 difficulty) public onlyOwner {
+        _setAdhocDifficulty(difficulty);
+    }
+
+    function _setAdhocDifficulty(bytes4 difficulty) internal {
+        if (difficulty != 0) {
+            _setDifficulty(difficulty);
+        }
+        adhocDifficulty = difficulty;
+    }
+
+    function _updateDifficulty(uint256 tipTimestamp) internal {
+        uint256 duration = block.number - tipTimestamp;
+        durationSum += duration - durations[durationIndex];
+        durations[durationIndex] = duration;
+        durationIndex = (durationIndex + 1) % durations.length;
+        if (durationNum < durations.length) {
+            durationNum++;
+        } else {
+            uint32 curr = uint32(currentDifficulty);
+            uint40 difficulty = curr;
+            if (targetDuration * durationNum < durationSum) {
+                difficulty /= 2;
+            } else if (targetDuration * durationNum > durationSum) {
+                difficulty *= 2;
+            }
+            if (difficulty < uint32(LOWER_BOUND)) {
+                difficulty = uint32(LOWER_BOUND);
+            } else if (difficulty > uint32(UPPER_BOUND)) {
+                difficulty = uint32(UPPER_BOUND);
+            }
+            if (adhocDifficulty == 0 && difficulty != curr) {
+                _setDifficulty(bytes4(uint32(difficulty)));
+            }
+        }
+    }
+
+    function _setDifficulty(bytes4 difficulty) internal {
+        currentDifficulty = difficulty;
+        emit DifficultySet(difficulty);
     }
 }
