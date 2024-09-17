@@ -3,10 +3,16 @@ pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-struct TaskAssignment {
+struct Record {
     address prover;
     uint256 deadline;
     bool settled;
+}
+
+struct TaskAssignment {
+    uint64 projectId;
+    uint64 taskId;
+    address prover;
 }
 
 contract W3bstreamTaskManager is OwnableUpgradeable {
@@ -14,7 +20,7 @@ contract W3bstreamTaskManager is OwnableUpgradeable {
     event TaskSettled(uint64 indexed projectId, uint64 indexed taskId, address prover);
     event OperatorAdded(address operator);
     event OperatorRemoved(address operator);
-    mapping(uint64 => mapping(uint64 => TaskAssignment)) public assignments;
+    mapping(uint64 => mapping(uint64 => Record)) public records;
     mapping(address => bool) public operators;
 
     modifier onlyOperator() {
@@ -39,30 +45,46 @@ contract W3bstreamTaskManager is OwnableUpgradeable {
         emit OperatorRemoved(operator);
     }
 
-    function assign(
+    function _assign(
         uint64 projectId,
         uint64 taskId,
         address prover,
         uint256 deadline
-    ) public onlyOperator{
+    ) internal {
         require(prover != address(0), "invalid prover");
-        TaskAssignment storage assignment = assignments[projectId][taskId];
-        require(assignment.settled == false, "task already settled");
-        if (assignment.prover != address(0)) {
-            require(assignment.deadline < block.timestamp, "task already assigned");
+        Record storage record = records[projectId][taskId];
+        require(record.settled == false, "task already settled");
+        if (record.prover != address(0)) {
+            require(record.deadline < block.timestamp, "task already assigned");
         }
-        assignment.prover = prover;
-        assignment.deadline = deadline;
+        record.prover = prover;
+        record.deadline = deadline;
         emit TaskAssigned(projectId, taskId, prover, deadline);
+    }
+
+    function assign(
+        TaskAssignment calldata assignment,
+        uint256 deadline
+    ) public onlyOperator {
+        _assign(assignment.projectId, assignment.taskId, assignment.prover, deadline);
+    }
+
+    function assign(
+        TaskAssignment[] calldata taskAssignments,
+        uint256 deadline
+    ) public onlyOperator {
+        for (uint256 i = 0; i < taskAssignments.length; i++) {
+            _assign(taskAssignments[i].projectId, taskAssignments[i].taskId, taskAssignments[i].prover, deadline);
+        }
     }
 
     function settle(uint64 projectId, uint64 taskId, address prover) public onlyOperator {
         require(prover != address(0), "invalid prover");
-        TaskAssignment storage assignment = assignments[projectId][taskId];
-        require(assignment.prover == prover, "invalid prover");
-        require(assignment.deadline >= block.timestamp, "task assignement expired");
-        require(assignment.settled == false, "task already settled");
-        assignment.settled = true;
+        Record storage record = records[projectId][taskId];
+        require(record.prover == prover, "invalid prover");
+        require(record.deadline >= block.timestamp, "task assignement expired");
+        require(record.settled == false, "task already settled");
+        record.settled = true;
         emit TaskSettled(projectId, taskId, prover);
         // TODO: distribute task reward
     }

@@ -9,7 +9,7 @@ interface IDAO {
 }
 
 interface ITaskManager {
-    function assign(uint64 projectId, uint64 taskId, address prover, uint256 deadline) external;
+    function assign(TaskAssignment[] calldata assignments, uint256 deadline) external;
 }
 
 struct BlockInfo {
@@ -89,10 +89,7 @@ contract W3bstreamMinter is OwnableUpgradeable {
             coinbase.beneficiary,
             assignments
         ));
-        uint256 deadline = block.number + taskAllowance;
-        for (uint i = 0; i < assignments.length; i++) {
-            tm.assign(assignments[i].projectId, assignments[i].taskId, assignments[i].prover, deadline);
-        }
+        tm.assign(assignments, block.number + taskAllowance);
         _updateDifficulty(tipTimestamp);
         dao.mint(hash, block.number);
         // TODO: distribute block reward
