@@ -27,8 +27,7 @@ struct Sequencer {
 }
 
 struct TaskAssignment {
-    uint64 projectId;
-    uint64 taskId;
+    bytes32 taskId;
     address prover;
 }
 
