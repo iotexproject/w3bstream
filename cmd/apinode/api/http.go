@@ -38,7 +38,7 @@ type HandleMessageResp struct {
 type httpServer struct {
 	engine            *gin.Engine
 	p                 *persistence.Persistence
-	aggregationAmount uint
+	aggregationAmount int
 	privateKey        *ecdsa.PrivateKey
 	pubSub            *p2p.PubSub
 }
@@ -77,7 +77,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	addr := crypto.PubkeyToAddress(*sigpk)
 
 	id := uuid.NewString()
-	if err := s.p.Save(
+	if err := s.p.Save(s.pubSub,
 		&persistence.Message{
 			MessageID:      id,
 			DeviceID:       addr.Hex(),
@@ -152,7 +152,7 @@ func (s *httpServer) queryStateLogByID(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, aggregationAmount uint, address string) error {
+func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, aggregationAmount int, address string) error {
 	s := &httpServer{
 		engine:            gin.Default(),
 		p:                 p,
