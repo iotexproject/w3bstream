@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/task"
 	"github.com/pkg/errors"
 	"gorm.io/datatypes"
@@ -42,9 +43,9 @@ func (p *Persistence) createMessageTx(tx *gorm.DB, m *Message) error {
 	return nil
 }
 
-func (p *Persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *Message, prv *ecdsa.PrivateKey) error {
+func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount int, m *Message, prv *ecdsa.PrivateKey) error {
 	messages := make([]*Message, 0)
-	if amount == 0 {
+	if amount <= 0 {
 		amount = 1
 	}
 
@@ -100,15 +101,15 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, amount int, m *Message, prv *
 	if err := tx.Create(mt).Error; err != nil {
 		return errors.Wrap(err, "failed to create Task")
 	}
-	return nil
+	return pubSub.Publish([]byte(taskID))
 }
 
-func (p *Persistence) Save(msg *Message, aggregationAmount uint, prv *ecdsa.PrivateKey) error {
+func (p *Persistence) Save(pubSub *p2p.PubSub, msg *Message, aggregationAmount int, prv *ecdsa.PrivateKey) error {
 	return p.db.Transaction(func(tx *gorm.DB) error {
 		if err := p.createMessageTx(tx, msg); err != nil {
 			return err
 		}
-		if err := p.aggregateTaskTx(tx, int(aggregationAmount), msg, prv); err != nil {
+		if err := p.aggregateTaskTx(tx, pubSub, aggregationAmount, msg, prv); err != nil {
 			return err
 		}
 		return nil
