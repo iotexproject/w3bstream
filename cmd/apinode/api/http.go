@@ -1,15 +1,16 @@
 package api
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
@@ -32,7 +33,7 @@ type HandleMessageReq struct {
 }
 
 type HandleMessageResp struct {
-	MessageID string `json:"messageID"`
+	TaskID string `json:"taskID"`
 }
 
 type httpServer struct {
@@ -76,21 +77,24 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	}
 	addr := crypto.PubkeyToAddress(*sigpk)
 
-	id := uuid.NewString()
-	if err := s.p.Save(s.pubSub,
+	taskID, err := s.p.Save(s.pubSub,
 		&persistence.Message{
-			MessageID:      id,
-			DeviceID:       addr.Hex(),
+			DeviceID:       addr,
 			ProjectID:      req.ProjectID,
 			ProjectVersion: req.ProjectVersion,
 			Data:           []byte(req.Data),
 		}, s.aggregationAmount, s.privateKey,
-	); err != nil {
+	)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, NewErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, &HandleMessageResp{MessageID: id})
+	resp := &HandleMessageResp{}
+	if !bytes.Equal(taskID[:], common.Hash{}.Bytes()) {
+		resp.TaskID = taskID.String()
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 func (s *httpServer) queryStateLogByID(c *gin.Context) {
