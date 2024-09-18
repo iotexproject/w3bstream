@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/task"
@@ -17,19 +19,18 @@ import (
 
 type Message struct {
 	gorm.Model
-	MessageID      string `gorm:"index:message_id,not null"`
-	DeviceID       string `gorm:"index:message_fetch,not null"`
-	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
-	ProjectVersion string `gorm:"index:message_fetch,not null"`
-	TaskID         string `gorm:"index:task_id,not null,default:''"`
-	Data           []byte `gorm:"size:4096"`
+	DeviceID       common.Address `gorm:"index:message_fetch,not null"`
+	ProjectID      uint64         `gorm:"index:message_fetch,not null"`
+	ProjectVersion string         `gorm:"index:message_fetch,not null"`
+	TaskID         common.Hash    `gorm:"index:task_id,not null"`
+	Data           []byte         `gorm:"size:4096"`
 }
 
 type Task struct {
 	gorm.Model
-	TaskID     string         `gorm:"index:task_id,not null"`
+	TaskID     common.Hash    `gorm:"index:task_id,not null"`
 	MessageIDs datatypes.JSON `gorm:"not null"`
-	Signature  string         `gorm:"not null"`
+	Signature  []byte         `gorm:"not null"`
 }
 
 type Persistence struct {
@@ -43,7 +44,7 @@ func (p *Persistence) createMessageTx(tx *gorm.DB, m *Message) error {
 	return nil
 }
 
-func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount int, m *Message, prv *ecdsa.PrivateKey) error {
+func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount int, m *Message, prv *ecdsa.PrivateKey) (common.Hash, error) {
 	messages := make([]*Message, 0)
 	if amount <= 0 {
 		amount = 1
@@ -55,25 +56,25 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount in
 			"project_id = ? AND project_version = ? AND device_id = ? AND task_id = ?",
 			m.ProjectID, m.ProjectVersion, m.DeviceID, "",
 		).Limit(amount).Find(&messages).Error; err != nil {
-		return errors.Wrap(err, "failed to fetch unpacked messages")
+		return common.Hash{}, errors.Wrap(err, "failed to fetch unpacked messages")
 	}
 
 	// no enough message for pack task
 	if len(messages) < amount {
-		return nil
+		return common.Hash{}, nil
 	}
 
-	taskID := uuid.NewString()
-	messageIDs := make([]string, 0, amount)
+	taskID := crypto.Keccak256Hash([]byte(uuid.NewString()))
+	messageIDs := make([]uint, 0, amount)
 	for _, v := range messages {
-		messageIDs = append(messageIDs, v.MessageID)
+		messageIDs = append(messageIDs, v.ID)
 	}
-	if err := tx.Model(&Message{}).Where("message_id IN ?", messageIDs).Update("task_id", taskID).Error; err != nil {
-		return errors.Wrap(err, "failed to update message task id")
+	if err := tx.Model(&Message{}).Where("id IN ?", messageIDs).Update("task_id", taskID).Error; err != nil {
+		return common.Hash{}, errors.Wrap(err, "failed to update message task id")
 	}
 	messageIDsJson, err := json.Marshal(messageIDs)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal message id array")
+		return common.Hash{}, errors.Wrap(err, "failed to marshal message id array")
 	}
 	data := make([][]byte, 0, len(messages))
 	for _, v := range messages {
@@ -89,7 +90,7 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount in
 	}
 	sig, err := t.Sign(prv)
 	if err != nil {
-		return err
+		return common.Hash{}, err
 	}
 
 	mt := &Task{
@@ -99,21 +100,25 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount in
 	}
 
 	if err := tx.Create(mt).Error; err != nil {
-		return errors.Wrap(err, "failed to create Task")
+		return common.Hash{}, errors.Wrap(err, "failed to create Task")
 	}
-	return pubSub.Publish([]byte(taskID))
+	return taskID, pubSub.Publish(taskID.Bytes())
 }
 
-func (p *Persistence) Save(pubSub *p2p.PubSub, msg *Message, aggregationAmount int, prv *ecdsa.PrivateKey) error {
-	return p.db.Transaction(func(tx *gorm.DB) error {
+func (p *Persistence) Save(pubSub *p2p.PubSub, msg *Message, aggregationAmount int, prv *ecdsa.PrivateKey) (common.Hash, error) {
+	taskID := common.Hash{}
+	err := p.db.Transaction(func(tx *gorm.DB) error {
 		if err := p.createMessageTx(tx, msg); err != nil {
 			return err
 		}
-		if err := p.aggregateTaskTx(tx, pubSub, aggregationAmount, msg, prv); err != nil {
+		id, err := p.aggregateTaskTx(tx, pubSub, aggregationAmount, msg, prv)
+		if err != nil {
 			return err
 		}
+		taskID = id
 		return nil
 	})
+	return taskID, err
 }
 
 func (p *Persistence) FetchMessage(messageID string) ([]*Message, error) {

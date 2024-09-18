@@ -14,37 +14,32 @@ import (
 )
 
 type Task struct {
-	ID             string   `json:"id"`
-	ProjectID      uint64   `json:"projectID"`
-	ProjectVersion string   `json:"projectVersion"`
-	DeviceID       string   `json:"deviceID"`
-	Payloads       [][]byte `json:"payloads"`
-	Signature      string   `json:"signature,omitempty"`
+	ID             common.Hash    `json:"id"`
+	ProjectID      uint64         `json:"projectID"`
+	ProjectVersion string         `json:"projectVersion"`
+	DeviceID       common.Address `json:"deviceID"`
+	Payloads       [][]byte       `json:"payloads"`
+	Signature      []byte         `json:"signature,omitempty"`
 }
 
-func (t *Task) Sign(prv *ecdsa.PrivateKey) (string, error) {
+func (t *Task) Sign(prv *ecdsa.PrivateKey) ([]byte, error) {
 	h, err := t.hash()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	sig, err := crypto.Sign(h.Bytes(), prv)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to sign")
+		return nil, errors.Wrap(err, "failed to sign")
 	}
-	return hexutil.Encode(sig), nil
+	return sig, nil
 }
 
 func (t *Task) VerifySignature(pubKey []byte) error {
-	sig, err := hexutil.Decode(t.Signature)
-	if err != nil {
-		return errors.Wrap(err, "failed to decode task signature")
-	}
-
 	h, err := t.hash()
 	if err != nil {
 		return err
 	}
-	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
+	sigpk, err := crypto.Ecrecover(h.Bytes(), t.Signature)
 	if err != nil {
 		return errors.Wrap(err, "failed to recover public key")
 	}
@@ -56,7 +51,7 @@ func (t *Task) VerifySignature(pubKey []byte) error {
 
 func (t *Task) hash() (common.Hash, error) {
 	nt := *t
-	nt.Signature = ""
+	nt.Signature = nil
 	j, err := json.Marshal(&nt)
 	if err != nil {
 		return common.Hash{}, errors.Wrap(err, "failed to marshal task")
