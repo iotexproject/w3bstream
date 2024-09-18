@@ -109,6 +109,27 @@ async function main() {
   });
   await vmtype.waitForDeployment();
   console.log(`W3bstreamVMType deployed to ${vmtype.target}`);
+
+  const W3bstreamDAO = await ethers.getContractFactory('W3bstreamDAO');
+  const dao = await upgrades.deployProxy(W3bstreamDAO, ['0x0000000000000000000000000000000000000000000000000000000000000000'], {
+    initializer: 'initialize',
+  });
+  await dao.waitForDeployment();
+  console.log(`W3bstreamDAO deployed to ${dao.target}`);
+
+  const W3bstreamTaskManager = await ethers.getContractFactory('W3bstreamTaskManager');
+  const taskManager = await upgrades.deployProxy(W3bstreamTaskManager, [], {
+    initializer: 'initialize',
+  });
+  await taskManager.waitForDeployment();
+  console.log(`W3bstreamTaskManager deployed to ${taskManager.target}`);
+
+  const W3bstreamMinter = await ethers.getContractFactory('W3bstreamMinter');
+  const minter = await upgrades.deployProxy(W3bstreamMinter, [dao.target, taskManager.target], {
+    initializer: 'initialize',
+  });
+  await minter.waitForDeployment();
+  console.log(`W3bstreamMinter deployed to ${minter.target}`);
 }
 
 main().catch(err => {
