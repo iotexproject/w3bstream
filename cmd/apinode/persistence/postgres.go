@@ -54,7 +54,7 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount in
 		Order("created_at").
 		Where(
 			"project_id = ? AND project_version = ? AND device_id = ? AND task_id = ?",
-			m.ProjectID, m.ProjectVersion, m.DeviceID, "",
+			m.ProjectID, m.ProjectVersion, m.DeviceID, common.Hash{},
 		).Limit(amount).Find(&messages).Error; err != nil {
 		return common.Hash{}, errors.Wrap(err, "failed to fetch unpacked messages")
 	}

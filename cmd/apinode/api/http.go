@@ -83,6 +83,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 			ProjectID:      req.ProjectID,
 			ProjectVersion: req.ProjectVersion,
 			Data:           []byte(req.Data),
+			TaskID:         common.Hash{},
 		}, s.aggregationAmount, s.privateKey,
 	)
 	if err != nil {
