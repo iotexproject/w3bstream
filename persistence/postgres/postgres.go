@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -9,6 +10,21 @@ import (
 
 	"github.com/iotexproject/w3bstream/task"
 )
+
+type blockNumber struct {
+	gorm.Model
+	Number uint64 `gorm:"not null"`
+}
+
+type currentDifficulty struct {
+	gorm.Model
+	Difficulty [8]byte `gorm:"not null"`
+}
+
+type prevHash struct {
+	gorm.Model
+	PrevHash common.Hash `gorm:"not null"`
+}
 
 type projectProcessedTask struct {
 	gorm.Model
@@ -28,6 +44,81 @@ type taskStateLog struct {
 
 type Postgres struct {
 	db *gorm.DB
+}
+
+func (p *Postgres) BlockNumber() (uint64, error) {
+	t := blockNumber{}
+	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return 0, nil
+		}
+		return 0, errors.Wrap(err, "failed to query block number")
+	}
+	return t.Number, nil
+}
+
+func (p *Postgres) UpsertBlockNumber(number uint64) error {
+	t := blockNumber{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		Number: number,
+	}
+	if err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"number"}),
+	}).Create(&t).Error; err != nil {
+		return errors.Wrap(err, "failed to upsert block number")
+	}
+	return nil
+}
+
+func (p *Postgres) Difficulty() ([8]byte, error) {
+	t := currentDifficulty{}
+	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
+		return [8]byte{}, errors.Wrap(err, "failed to query difficulty")
+	}
+	return t.Difficulty, nil
+}
+
+func (p *Postgres) UpsertDifficulty(difficulty [8]byte) error {
+	t := currentDifficulty{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		Difficulty: difficulty,
+	}
+	if err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"difficulty"}),
+	}).Create(&t).Error; err != nil {
+		return errors.Wrap(err, "failed to upsert difficulty")
+	}
+	return nil
+}
+
+func (p *Postgres) PrevHash() (common.Hash, error) {
+	t := prevHash{}
+	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
+		return common.Hash{}, errors.Wrap(err, "failed to query prev hash")
+	}
+	return t.PrevHash, nil
+}
+
+func (p *Postgres) UpsertPrevHash(hash common.Hash) error {
+	t := prevHash{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		PrevHash: hash,
+	}
+	if err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"prev_hash"}),
+	}).Create(&t).Error; err != nil {
+		return errors.Wrap(err, "failed to upsert prev hash")
+	}
+	return nil
 }
 
 func (p *Postgres) ProcessedTaskID(projectID uint64) (uint64, error) {
@@ -98,7 +189,7 @@ func New(pgEndpoint string) (*Postgres, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&taskStateLog{}, &projectProcessedTask{}); err != nil {
+	if err := db.AutoMigrate(&taskStateLog{}, &projectProcessedTask{}, &blockNumber{}, &currentDifficulty{}, &prevHash{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &Postgres{db}, nil

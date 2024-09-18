@@ -14,29 +14,31 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
 
+	"github.com/iotexproject/w3bstream/persistence/postgres"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/dao"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
 )
 
-var allTopic = []common.Hash{
-	attributeSetTopic,
-	projectPausedTopic,
-	projectResumedTopic,
-	projectConfigUpdatedTopic,
+var (
+	blockAddedTopic    = crypto.Keccak256Hash([]byte("BlockAdded(uint256,bytes32,uint256)"))
+	difficultySetTopic = crypto.Keccak256Hash([]byte("DifficultySet(bytes8)"))
+)
 
-	operatorSetTopic,
-	vmTypeAddedTopic,
-	vmTypeDeletedTopic,
-	proverPausedTopic,
-	proverResumedTopic,
+var allTopic = []common.Hash{
+	blockAddedTopic,
+	difficultySetTopic,
 }
 
 type Contract struct {
 	db                     *pebble.DB
+	pg                     *postgres.Postgres
 	size                   uint64
 	beginningBlockNumber   uint64
 	proverContractAddr     common.Address
@@ -46,6 +48,8 @@ type Contract struct {
 	listStepSize           uint64
 	watchInterval          time.Duration
 	client                 *ethclient.Client
+	daoInstance            *dao.Dao
+	minterInstance         *minter.Minter
 	proverInstance         *prover.Prover
 	projectInstance        *project.Project
 }
@@ -302,39 +306,40 @@ func (c *Contract) processLogs(from, to uint64, logs []types.Log, notify bool) e
 		return logs[i].TxIndex < logs[j].TxIndex
 	})
 
-	projectMap, err := c.processProjectLogs(logs)
-	if err != nil {
-		return err
-	}
-	proverMap, err := c.processProverLogs(logs)
-	if err != nil {
-		return err
-	}
-	for blockNumber := from; blockNumber <= to; blockNumber++ {
-		projects, ok := projectMap[blockNumber]
-		if err := c.updateDB(blockNumber, projects, proverMap[blockNumber]); err != nil {
-			return err
-		}
-		if ok && notify {
-			c.notifyProject(projects)
+	for _, l := range logs {
+		switch l.Topics[0] {
+		case blockAddedTopic:
+			e, err := c.daoInstance.ParseBlockAdded(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse block added event")
+			}
+			if err := c.pg.UpsertPrevHash(e.Hash); err != nil {
+				return err
+			}
+		case difficultySetTopic:
+			e, err := c.minterInstance.ParseDifficultySet(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse difficulty set event")
+			}
+			if err := c.pg.UpsertDifficulty(e.Difficulty); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func (c *Contract) list() (uint64, error) {
-	headBytes, closer, err := c.db.Get(c.dbHead())
-	if err != nil && err != pebble.ErrNotFound {
-		return 0, errors.Wrap(err, "failed to get db chain head")
+func (c *Contract) list() {
+	head, err := c.pg.BlockNumber()
+	if err != nil {
+		// TODO change panic
+		panic(err)
 	}
-	head := c.beginningBlockNumber
-	if err == nil {
-		head = binary.LittleEndian.Uint64(headBytes)
-		head++
-		if err := closer.Close(); err != nil {
-			return 0, errors.Wrap(err, "failed to close result of chain head")
-		}
+	if head < c.beginningBlockNumber {
+		head = c.beginningBlockNumber
 	}
+	head++
+
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{c.proverContractAddr, c.projectContractAddr},
 		Topics:    [][]common.Hash{allTopic},
@@ -344,7 +349,7 @@ func (c *Contract) list() (uint64, error) {
 	for {
 		header, err := c.client.HeaderByNumber(context.Background(), nil)
 		if err != nil {
-			return 0, errors.Wrap(err, "failed to retrieve latest block header")
+			panic(errors.Wrap(err, "failed to retrieve latest block header"))
 		}
 		currentHead := header.Number.Uint64()
 		to = from + c.listStepSize
@@ -352,21 +357,27 @@ func (c *Contract) list() (uint64, error) {
 			to = currentHead
 		}
 		if from > to {
-			break
+			time.Sleep(3 * time.Second)
+			continue
 		}
 		slog.Info("listing chain", "from", from, "to", to)
 		query.FromBlock = new(big.Int).SetUint64(from)
 		query.ToBlock = new(big.Int).SetUint64(to)
 		logs, err := c.client.FilterLogs(context.Background(), query)
 		if err != nil {
-			return 0, errors.Wrap(err, "failed to filter contract logs")
+			slog.Error("failed to filter contract logs", "error", err)
+			continue
 		}
 		if err := c.processLogs(from, to, logs, false); err != nil {
-			return 0, err
+			slog.Error("failed to process contract logs", "error", err)
+			continue
+		}
+		if err := c.pg.UpsertBlockNumber(to); err != nil {
+			slog.Error("failed to upsert block number", "error", err)
+			continue
 		}
 		from = to + 1
 	}
-	return to, nil
 }
 
 func (c *Contract) watch(listedBlockNumber uint64) {
@@ -403,22 +414,23 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 	}()
 }
 
-func New(db *pebble.DB, size, beginningBlockNumber uint64, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
+func New(db *pebble.DB, pg *postgres.Postgres, size, beginningBlockNumber uint64, chainEndpoint string, proverContractAddr, projectContractAddr common.Address, chainHeadNotifications []chan<- uint64, projectNotifications []chan<- uint64) (*Contract, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial chain endpoint")
 	}
-	projectInstance, err := project.NewProject(projectContractAddr, client)
+	daoInstance, err := dao.NewDao(projectContractAddr, client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new project contract instance")
 	}
-	proverInstance, err := prover.NewProver(proverContractAddr, client)
+	minterInstance, err := minter.NewMinter(proverContractAddr, client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new prover contract instance")
 	}
 
 	c := &Contract{
 		db:                     db,
+		pg:                     pg,
 		size:                   size,
 		beginningBlockNumber:   beginningBlockNumber,
 		proverContractAddr:     proverContractAddr,
@@ -428,15 +440,11 @@ func New(db *pebble.DB, size, beginningBlockNumber uint64, chainEndpoint string,
 		listStepSize:           500,
 		watchInterval:          1 * time.Second,
 		client:                 client,
-		proverInstance:         proverInstance,
-		projectInstance:        projectInstance,
+		daoInstance:            daoInstance,
+		minterInstance:         minterInstance,
 	}
 
-	listedBlockNumber, err := c.list()
-	if err != nil {
-		return nil, err
-	}
-	go c.watch(listedBlockNumber)
+	go c.list()
 
 	return c, nil
 }
