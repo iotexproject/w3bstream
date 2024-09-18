@@ -181,7 +181,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 				txHash, err := o.Output(uint64(0), &task.Task{
 					ProjectID: 1,
-					Data:      [][]byte{[]byte(`{"other":""}`)},
+					Payloads:  [][]byte{[]byte(`{"other":""}`)},
 				}, nil)
 				r.Equal(txHash, "")
 				r.Error(err)
@@ -197,7 +197,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 					txHash, err := o.Output(uint64(0), &task.Task{
 						ProjectID: 1,
-						Data:      [][]byte{[]byte(`{"other":"any"}`)},
+						Payloads:  [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
 					r.Equal(txHash, txHashRet)
 					r.NoError(err)
@@ -211,7 +211,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 					txHash, err := o.Output(uint64(0), &task.Task{
 						ProjectID: 1,
-						Data:      [][]byte{[]byte(`{"other":"any"}`)},
+						Payloads:  [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
 					r.Equal(txHash, txHashRet)
 					r.NoError(err)
@@ -225,7 +225,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 					txHash, err := o.Output(uint64(0), &task.Task{
 						ProjectID: 1,
-						Data:      [][]byte{[]byte(`{"other":"any"}`)},
+						Payloads:  [][]byte{[]byte(`{"other":"any"}`)},
 					}, nil)
 					r.NoError(err)
 					r.Equal(txHash, txHashRet)
@@ -249,7 +249,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 			txHash, err := o.Output(uint64(0), &task.Task{
 				ProjectID: 1,
-				Data:      [][]byte{[]byte(`{"other":""}`)},
+				Payloads:  [][]byte{[]byte(`{"other":""}`)},
 			}, nil)
 
 			r.Equal(txHash, "")
@@ -272,7 +272,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 			txHash, err := o.Output(uint64(0), &task.Task{
 				ProjectID: 1,
-				Data:      [][]byte{[]byte(`{"other":""}`)},
+				Payloads:  [][]byte{[]byte(`{"other":""}`)},
 			}, nil)
 
 			r.Equal(txHash, "")
@@ -294,7 +294,7 @@ func Test_ethereumContract_Output(t *testing.T) {
 
 		txHash, err := o.Output(uint64(0), &task.Task{
 			ProjectID: 1,
-			Data:      [][]byte{[]byte(`{"other":""}`)},
+			Payloads:  [][]byte{[]byte(`{"other":""}`)},
 		}, nil)
 		r.NoError(err)
 		r.Equal(txHash, txHashRet)

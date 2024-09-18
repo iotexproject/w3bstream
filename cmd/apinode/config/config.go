@@ -10,7 +10,7 @@ import (
 type Config struct {
 	LogLevel          int    `env:"LOG_LEVEL,optional"`
 	ServiceEndpoint   string `env:"HTTP_SERVICE_ENDPOINT"`
-	AggregationAmount uint   `env:"AGGREGATION_AMOUNT,optional"`
+	AggregationAmount int    `env:"AGGREGATION_AMOUNT,optional"`
 	DatabaseDSN       string `env:"DATABASE_DSN"`
 	PriKey            string `env:"PRIVATE_KEY,optional"`
 	BootNodeMultiAddr string `env:"BOOTNODE_MULTIADDR"`

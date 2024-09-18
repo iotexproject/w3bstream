@@ -90,7 +90,7 @@ func TestProcessor_HandleP2PData(t *testing.T) {
 			ID:             1,
 			ProjectID:      uint64(0x1),
 			ProjectVersion: "0.1",
-			Data:           [][]byte{[]byte("data")},
+			Payloads:       [][]byte{[]byte("data")},
 		},
 		TaskStateLog: nil,
 	}

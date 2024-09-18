@@ -21,7 +21,7 @@ func NewLocal(persistence Persistence, newDatasource NewDatasource,
 		local:              true,
 		projectDispatchers: projectDispatchers,
 	}
-	ps, err := p2p.NewPubSubs(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
+	ps, err := p2p.NewPubSub(d.handleP2PData, bootNodeMultiaddr, iotexChainID)
 	if err != nil {
 		return nil, err
 	}

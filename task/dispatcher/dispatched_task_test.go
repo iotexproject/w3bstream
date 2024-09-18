@@ -47,7 +47,7 @@ func TestDispatchedTask_runWatchdog(t *testing.T) {
 		retryChan := make(chan time.Time, 10)
 		timeoutChan := make(chan time.Time, 10)
 		retryChan <- time.Now()
-		pubSubs := &p2p.PubSubs{}
+		pubSubs := &p2p.PubSub{}
 		p.ApplyMethodFunc(pubSubs, "Publish", func(uint64, *p2p.Data) error { panic(errors.New(t.Name())) })
 		p.ApplyFuncSeq(time.After, []gomonkey.OutputCell{
 			{

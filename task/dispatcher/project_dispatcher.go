@@ -23,7 +23,7 @@ type projectDispatcher struct {
 	startTaskID          uint64
 	projectID            uint64
 	datasource           datasource.Datasource
-	pubSubs              *p2p.PubSubs
+	pubSubs              *p2p.PubSub
 	datasourcePubKey     []byte
 	requiredProverAmount *atomic.Uint64
 	paused               *atomic.Bool
@@ -97,7 +97,7 @@ func (d *projectDispatcher) dispatch(nextTaskID uint64) (uint64, error) {
 	return t.ID + 1, nil
 }
 
-func newProjectDispatcher(persistence Persistence, datasourceURI string, newDatasource NewDatasource, p *contractpkg.Project, pubSubs *p2p.PubSubs, handler *taskStateHandler, datasourcePubKey []byte, contract Contract, vmTypeID uint64) (*projectDispatcher, error) {
+func newProjectDispatcher(persistence Persistence, datasourceURI string, newDatasource NewDatasource, p *contractpkg.Project, pubSubs *p2p.PubSub, handler *taskStateHandler, datasourcePubKey []byte, contract Contract, vmTypeID uint64) (*projectDispatcher, error) {
 	processedTaskID, err := persistence.ProcessedTaskID(p.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch next task_id, project_id %v", p.ID)

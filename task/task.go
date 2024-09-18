@@ -2,7 +2,9 @@ package task
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/binary"
+	"encoding/json"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -12,44 +14,50 @@ import (
 )
 
 type Task struct {
-	ID             uint64   `json:"id"`
-	ProjectID      uint64   `json:"projectID"`
-	ProjectVersion string   `json:"projectVersion"`
-	Data           [][]byte `json:"data"`
-	ClientID       string   `json:"clientID"`
-	Signature      string   `json:"signature"`
+	ID             common.Hash    `json:"id"`
+	ProjectID      uint64         `json:"projectID"`
+	ProjectVersion string         `json:"projectVersion"`
+	DeviceID       common.Address `json:"deviceID"`
+	Payloads       [][]byte       `json:"payloads"`
+	Signature      []byte         `json:"signature,omitempty"`
 }
 
-func (t *Task) VerifySignature(pubkey []byte) error {
-	sig, err := hexutil.Decode(t.Signature)
+func (t *Task) Sign(prv *ecdsa.PrivateKey) ([]byte, error) {
+	h, err := t.hash()
 	if err != nil {
-		return errors.Wrap(err, "failed to decode task signature")
+		return nil, err
 	}
+	sig, err := crypto.Sign(h.Bytes(), prv)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to sign")
+	}
+	return sig, nil
+}
 
-	buf := bytes.NewBuffer(nil)
-
-	if err = binary.Write(buf, binary.BigEndian, t.ID); err != nil {
+func (t *Task) VerifySignature(pubKey []byte) error {
+	h, err := t.hash()
+	if err != nil {
 		return err
 	}
-	if err = binary.Write(buf, binary.BigEndian, t.ProjectID); err != nil {
-		return err
-	}
-	if _, err = buf.WriteString(t.ClientID); err != nil {
-		return err
-	}
-	if _, err = buf.Write(crypto.Keccak256Hash(t.Data...).Bytes()); err != nil {
-		return err
-	}
-
-	h := crypto.Keccak256Hash(buf.Bytes())
-	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
+	sigpk, err := crypto.Ecrecover(h.Bytes(), t.Signature)
 	if err != nil {
 		return errors.Wrap(err, "failed to recover public key")
 	}
-	if !bytes.Equal(sigpk, pubkey) {
+	if !bytes.Equal(sigpk, pubKey) {
 		return errors.New("task signature unmatched")
 	}
 	return nil
+}
+
+func (t *Task) hash() (common.Hash, error) {
+	nt := *t
+	nt.Signature = nil
+	j, err := json.Marshal(&nt)
+	if err != nil {
+		return common.Hash{}, errors.Wrap(err, "failed to marshal task")
+	}
+
+	return crypto.Keccak256Hash(j), nil
 }
 
 type StateLog struct {
@@ -77,10 +85,10 @@ func (l *StateLog) SignerAddress(task *Task) (common.Address, error) {
 	if err = binary.Write(buf, binary.BigEndian, task.ProjectID); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write binary")
 	}
-	if _, err = buf.WriteString(task.ClientID); err != nil {
+	if _, err = buf.WriteString(task.DeviceID); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
-	if _, err = buf.Write(crypto.Keccak256Hash(task.Data...).Bytes()); err != nil {
+	if _, err = buf.Write(crypto.Keccak256Hash(task.Payloads...).Bytes()); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
 	if _, err = buf.Write(l.Result); err != nil {

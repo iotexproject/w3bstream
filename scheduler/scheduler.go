@@ -27,7 +27,7 @@ type scheduler struct {
 	projectManager       ProjectManager
 	projectOffsets       *ProjectEpochOffsets
 	epoch                uint64
-	pubSubs              *p2p.PubSubs
+	pubSubs              *p2p.PubSub
 	proverID             uint64
 	handleProjectProvers HandleProjectProvers
 }
@@ -128,7 +128,7 @@ func (s *scheduler) schedule() {
 	}
 }
 
-func Run(epoch uint64, proverID uint64, pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, chainHead <-chan uint64, contractProject ContractProject, contractProvers ContractProvers, projectOffsets *ProjectEpochOffsets, projectManager ProjectManager) error {
+func Run(epoch uint64, proverID uint64, pubSubs *p2p.PubSub, handleProjectProvers HandleProjectProvers, chainHead <-chan uint64, contractProject ContractProject, contractProvers ContractProvers, projectOffsets *ProjectEpochOffsets, projectManager ProjectManager) error {
 	s := &scheduler{
 		contractProvers:      contractProvers,
 		contractProject:      contractProject,
@@ -144,7 +144,7 @@ func Run(epoch uint64, proverID uint64, pubSubs *p2p.PubSubs, handleProjectProve
 	return nil
 }
 
-func RunLocal(pubSubs *p2p.PubSubs, handleProjectProvers HandleProjectProvers, projectManager ProjectManager) error {
+func RunLocal(pubSubs *p2p.PubSub, handleProjectProvers HandleProjectProvers, projectManager ProjectManager) error {
 	s := &scheduler{
 		pubSubs:              pubSubs,
 		handleProjectProvers: handleProjectProvers,
