@@ -1,7 +1,8 @@
 package api
 
 import (
-	"encoding/hex"
+	"bytes"
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -9,8 +10,12 @@ import (
 	"time"
 
 	solanatypes "github.com/blocto/solana-go-sdk/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -19,7 +24,14 @@ import (
 	"github.com/iotexproject/w3bstream/block"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
 	"github.com/iotexproject/w3bstream/persistence/postgres"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 )
+
+type Sequencer struct {
+	Addr        common.Address
+	Operator    common.Address
+	Beneficiary common.Address
+}
 
 type HttpServer struct {
 	engine          *gin.Engine
@@ -85,20 +97,40 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 	}
 	switch req.Method {
 	case "getblocktemplate":
+		prevHash, err := s.persistence.PrevHash()
+		if err != nil {
+			slog.Error("failed to get prev hash", "error", err)
+			rsp.Error = err.Error()
+			c.JSON(http.StatusInternalServerError, rsp)
+			return
+		}
+		difficulty, err := s.persistence.Difficulty()
+		if err != nil {
+			slog.Error("failed to get difficulty", "error", err)
+			rsp.Error = err.Error()
+			c.JSON(http.StatusInternalServerError, rsp)
+			return
+		}
+		coinbase := Sequencer{}
+		var rootData bytes.Buffer
+		rootData.Write(coinbase.Addr[:])
+		rootData.Write(coinbase.Operator[:])
+		rootData.Write(coinbase.Beneficiary[:])
+
 		h := &block.Header{
 			Meta:       [4]byte{},
-			PrevHash:   common.Hash{},
+			PrevHash:   prevHash,
 			MerkleRoot: [32]byte{},
-			Difficulty: 500,
+			Difficulty: difficulty,
 			Nonce:      [8]byte{},
 		}
 		t := &blockTemplate{
-			Meta:          hex.EncodeToString(h.Meta[:]),
-			PrevBlockHash: hex.EncodeToString(h.PrevHash[:]),
-			MerkleRoot:    hex.EncodeToString(h.MerkleRoot[:]),
-			Difficulty:    h.Difficulty,
+			Meta:          hexutil.Encode(h.Meta[:]),
+			PrevBlockHash: hexutil.Encode(h.PrevHash[:]),
+			MerkleRoot:    hexutil.Encode(crypto.Keccak256Hash(rootData.Bytes()).Bytes()),
+			Difficulty:    hexutil.Encode(h.Difficulty[:]),
 			Ts:            uint64(time.Time{}.Unix()),
-			NonceRange:    hex.EncodeToString(h.Nonce[:]),
+			NonceRange:    hexutil.Encode(h.Nonce[:]),
 		}
 		rsp.Result = t
 		c.JSON(http.StatusOK, rsp)
@@ -137,6 +169,41 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rsp)
 			return
 		}
+		client, err := ethclient.Dial("https://babel-api.testnet.iotex.io")
+		if err != nil {
+			panic(err)
+		}
+		minterInstance, err := minter.NewMinter(common.HexToAddress("0xEe026A4753B551848360e5d6B36F42d2E589b61b"), client)
+		if err != nil {
+			panic(err)
+		}
+		chainID, err := client.ChainID(context.Background())
+		if err != nil {
+			panic(err)
+		}
+		tx, err := minterInstance.Mint(&bind.TransactOpts{
+			From: common.HexToAddress("0x470eb48290776c370ffad6224364a604aedfe7b9"),
+			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
+				return types.SignTx(t, types.NewLondonSigner(chainID), crypto.ToECDSAUnsafe(common.FromHex("33e6ba3e033131026903f34dfa208feb88c284880530cf76280b68d38041c67b")))
+			},
+		},
+			minter.BlockInfo{
+				Meta:       h.Meta,
+				Prevhash:   h.PrevHash,
+				MerkleRoot: h.MerkleRoot,
+				Difficulty: [4]byte{}, // TODO
+				Nonce:      h.Nonce,
+			},
+			minter.Sequencer{},
+			nil,
+		)
+		if err != nil {
+			slog.Error("failed to send tx", "error", err)
+			rsp.Error = err.Error()
+			c.JSON(http.StatusInternalServerError, rsp)
+			return
+		}
+		slog.Info("mint block success", "hash", tx.Hash().Hex())
 		c.JSON(http.StatusOK, rsp)
 	default:
 		slog.Error("illegal method")
