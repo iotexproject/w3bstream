@@ -27,6 +27,7 @@ struct Sequencer {
 }
 
 struct TaskAssignment {
+    uint256 projectId;
     bytes32 taskId;
     address prover;
 }
@@ -34,7 +35,7 @@ struct TaskAssignment {
 contract W3bstreamMinter is OwnableUpgradeable {
     event TaskAllowanceSet(uint256 allowance);
     event TargetDurationSet(uint256 duration);
-    event DifficultySet(bytes8 difficulty);
+    event DifficultySet(bytes4 difficulty);
 
     IDAO public dao;
     ITaskManager public tm;
@@ -76,7 +77,7 @@ contract W3bstreamMinter is OwnableUpgradeable {
         require(blockinfo.prevhash == tiphash, "invalid prevhash");
         require(blockinfo.merkleRoot == keccak256(abi.encodePacked(coinbase.addr, coinbase.operator, coinbase.beneficiary)), "invalid merkle root");
         // TODO: review difficulty usage
-        require(sha256(abi.encodePacked(blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.difficulty, blockinfo.nonce)) < blockinfo.difficulty, "invalid proof of work");
+        require(bytes4(sha256(abi.encodePacked(blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.difficulty, blockinfo.nonce))) < blockinfo.difficulty, "invalid proof of work");
         bytes32 hash = keccak256(abi.encode(
             blockinfo.meta,
             blockinfo.prevhash,

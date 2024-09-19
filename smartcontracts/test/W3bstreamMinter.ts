@@ -38,7 +38,6 @@ describe('W3bstream Minter', function () {
     let tipinfo = await dao.tip();
     expect(tipinfo[0]).to.equal(0);
     expect(tipinfo[1]).to.equal(genesis);
-    console.log({tipinfo, blockinfo, currentDifficulty})
     await minter.connect(sequencer).mint(
       blockinfo,
       coinbase,
@@ -58,6 +57,7 @@ describe('W3bstream Minter', function () {
       coinbase,
       [],
     )).to.be.revertedWith("invalid difficulty");
+    currentDifficulty = await minter.currentDifficulty();
     blockinfo.difficulty = currentDifficulty;
     await minter.connect(sequencer).mint(
       blockinfo,
