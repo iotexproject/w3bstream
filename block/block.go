@@ -14,7 +14,7 @@ type Header struct {
 	Meta       [4]byte
 	PrevHash   common.Hash
 	MerkleRoot [32]byte
-	Difficulty [8]byte
+	Difficulty [4]byte
 	Nonce      [8]byte
 }
 
@@ -35,8 +35,8 @@ func (h *Header) Sha256Hash() common.Hash {
 }
 
 func (h *Header) IsValid() bool {
-	hash := h.Sha256Hash()
-	hashInt := new(big.Int).SetBytes(hash[:])
+	hash := h.Sha256Hash().Bytes()
+	hashInt := new(big.Int).SetBytes(hash[:4])
 	difficulty := new(big.Int).SetBytes(h.Difficulty[:])
 
 	return hashInt.Cmp(difficulty) == -1

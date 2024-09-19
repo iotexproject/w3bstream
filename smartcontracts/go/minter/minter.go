@@ -47,13 +47,14 @@ type Sequencer struct {
 
 // TaskAssignment is an auto generated low-level Go binding around an user-defined struct.
 type TaskAssignment struct {
-	TaskId [32]byte
-	Prover common.Address
+	ProjectId *big.Int
+	TaskId    [32]byte
+	Prover    common.Address
 }
 
 // MinterMetaData contains all meta data concerning the Minter contract.
 var MinterMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes8\",\"name\":\"difficulty\",\"type\":\"bytes8\"}],\"name\":\"DifficultySet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"TargetDurationSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"TaskAllowanceSet\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"adhocDifficulty\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentDifficulty\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dao\",\"outputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"_dao\",\"type\":\"address\"},{\"internalType\":\"contractITaskManager\",\"name\":\"_tm\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"meta\",\"type\":\"bytes4\"},{\"internalType\":\"bytes32\",\"name\":\"prevhash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"internalType\":\"bytes4\",\"name\":\"difficulty\",\"type\":\"bytes4\"},{\"internalType\":\"bytes8\",\"name\":\"nonce\",\"type\":\"bytes8\"}],\"internalType\":\"structBlockInfo\",\"name\":\"blockinfo\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"internalType\":\"structSequencer\",\"name\":\"coinbase\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment[]\",\"name\":\"assignments\",\"type\":\"tuple[]\"}],\"name\":\"mint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"difficulty\",\"type\":\"bytes4\"}],\"name\":\"setAdhocDifficulty\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setTargetDuration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"setTaskAllowance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskAllowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tm\",\"outputs\":[{\"internalType\":\"contractITaskManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes4\",\"name\":\"difficulty\",\"type\":\"bytes4\"}],\"name\":\"DifficultySet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"TargetDurationSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"TaskAllowanceSet\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"adhocDifficulty\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentDifficulty\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dao\",\"outputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"_dao\",\"type\":\"address\"},{\"internalType\":\"contractITaskManager\",\"name\":\"_tm\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"meta\",\"type\":\"bytes4\"},{\"internalType\":\"bytes32\",\"name\":\"prevhash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"internalType\":\"bytes4\",\"name\":\"difficulty\",\"type\":\"bytes4\"},{\"internalType\":\"bytes8\",\"name\":\"nonce\",\"type\":\"bytes8\"}],\"internalType\":\"structBlockInfo\",\"name\":\"blockinfo\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"internalType\":\"structSequencer\",\"name\":\"coinbase\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment[]\",\"name\":\"assignments\",\"type\":\"tuple[]\"}],\"name\":\"mint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"difficulty\",\"type\":\"bytes4\"}],\"name\":\"setAdhocDifficulty\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setTargetDuration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"setTaskAllowance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskAllowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tm\",\"outputs\":[{\"internalType\":\"contractITaskManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // MinterABI is the input ABI used to generate the binding from.
@@ -440,23 +441,23 @@ func (_Minter *MinterTransactorSession) Initialize(_dao common.Address, _tm comm
 	return _Minter.Contract.Initialize(&_Minter.TransactOpts, _dao, _tm)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x22fea4fd.
+// Mint is a paid mutator transaction binding the contract method 0x5e83afcb.
 //
-// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (bytes32,address)[] assignments) returns()
+// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
 func (_Minter *MinterTransactor) Mint(opts *bind.TransactOpts, blockinfo BlockInfo, coinbase Sequencer, assignments []TaskAssignment) (*types.Transaction, error) {
 	return _Minter.contract.Transact(opts, "mint", blockinfo, coinbase, assignments)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x22fea4fd.
+// Mint is a paid mutator transaction binding the contract method 0x5e83afcb.
 //
-// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (bytes32,address)[] assignments) returns()
+// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
 func (_Minter *MinterSession) Mint(blockinfo BlockInfo, coinbase Sequencer, assignments []TaskAssignment) (*types.Transaction, error) {
 	return _Minter.Contract.Mint(&_Minter.TransactOpts, blockinfo, coinbase, assignments)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x22fea4fd.
+// Mint is a paid mutator transaction binding the contract method 0x5e83afcb.
 //
-// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (bytes32,address)[] assignments) returns()
+// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
 func (_Minter *MinterTransactorSession) Mint(blockinfo BlockInfo, coinbase Sequencer, assignments []TaskAssignment) (*types.Transaction, error) {
 	return _Minter.Contract.Mint(&_Minter.TransactOpts, blockinfo, coinbase, assignments)
 }
@@ -635,13 +636,13 @@ func (it *MinterDifficultySetIterator) Close() error {
 
 // MinterDifficultySet represents a DifficultySet event raised by the Minter contract.
 type MinterDifficultySet struct {
-	Difficulty [8]byte
+	Difficulty [4]byte
 	Raw        types.Log // Blockchain specific contextual infos
 }
 
-// FilterDifficultySet is a free log retrieval operation binding the contract event 0xb90c4aace91192bc791f1988a46822c1be07e401e232f7f7a977e2ea503422c0.
+// FilterDifficultySet is a free log retrieval operation binding the contract event 0xff051f56d0d099feca55af838a05490b0f309ce78f78c58d46a7c32059b10ecc.
 //
-// Solidity: event DifficultySet(bytes8 difficulty)
+// Solidity: event DifficultySet(bytes4 difficulty)
 func (_Minter *MinterFilterer) FilterDifficultySet(opts *bind.FilterOpts) (*MinterDifficultySetIterator, error) {
 
 	logs, sub, err := _Minter.contract.FilterLogs(opts, "DifficultySet")
@@ -651,9 +652,9 @@ func (_Minter *MinterFilterer) FilterDifficultySet(opts *bind.FilterOpts) (*Mint
 	return &MinterDifficultySetIterator{contract: _Minter.contract, event: "DifficultySet", logs: logs, sub: sub}, nil
 }
 
-// WatchDifficultySet is a free log subscription operation binding the contract event 0xb90c4aace91192bc791f1988a46822c1be07e401e232f7f7a977e2ea503422c0.
+// WatchDifficultySet is a free log subscription operation binding the contract event 0xff051f56d0d099feca55af838a05490b0f309ce78f78c58d46a7c32059b10ecc.
 //
-// Solidity: event DifficultySet(bytes8 difficulty)
+// Solidity: event DifficultySet(bytes4 difficulty)
 func (_Minter *MinterFilterer) WatchDifficultySet(opts *bind.WatchOpts, sink chan<- *MinterDifficultySet) (event.Subscription, error) {
 
 	logs, sub, err := _Minter.contract.WatchLogs(opts, "DifficultySet")
@@ -688,9 +689,9 @@ func (_Minter *MinterFilterer) WatchDifficultySet(opts *bind.WatchOpts, sink cha
 	}), nil
 }
 
-// ParseDifficultySet is a log parse operation binding the contract event 0xb90c4aace91192bc791f1988a46822c1be07e401e232f7f7a977e2ea503422c0.
+// ParseDifficultySet is a log parse operation binding the contract event 0xff051f56d0d099feca55af838a05490b0f309ce78f78c58d46a7c32059b10ecc.
 //
-// Solidity: event DifficultySet(bytes8 difficulty)
+// Solidity: event DifficultySet(bytes4 difficulty)
 func (_Minter *MinterFilterer) ParseDifficultySet(log types.Log) (*MinterDifficultySet, error) {
 	event := new(MinterDifficultySet)
 	if err := _Minter.contract.UnpackLog(event, "DifficultySet", log); err != nil {

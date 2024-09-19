@@ -18,7 +18,7 @@ type blockNumber struct {
 
 type currentDifficulty struct {
 	gorm.Model
-	Difficulty [8]byte `gorm:"not null"`
+	Difficulty []byte `gorm:"not null"`
 }
 
 type prevHash struct {
@@ -73,20 +73,20 @@ func (p *Postgres) UpsertBlockNumber(number uint64) error {
 	return nil
 }
 
-func (p *Postgres) Difficulty() ([8]byte, error) {
+func (p *Postgres) Difficulty() ([4]byte, error) {
 	t := currentDifficulty{}
 	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
-		return [8]byte{}, errors.Wrap(err, "failed to query difficulty")
+		return [4]byte{}, errors.Wrap(err, "failed to query difficulty")
 	}
-	return t.Difficulty, nil
+	return [4]byte(t.Difficulty), nil
 }
 
-func (p *Postgres) UpsertDifficulty(difficulty [8]byte) error {
+func (p *Postgres) UpsertDifficulty(difficulty [4]byte) error {
 	t := currentDifficulty{
 		Model: gorm.Model{
 			ID: 1,
 		},
-		Difficulty: difficulty,
+		Difficulty: difficulty[:],
 	}
 	if err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},

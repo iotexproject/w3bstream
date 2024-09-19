@@ -37,13 +37,13 @@ var (
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:            2,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
-		ProjectContractAddr:     "0xCBb7a80983Fd3405972F700101A82DB6304C6547",
-		ProverContractAddr:      "0x6B544a7603cead52AdfD99AA64B3d798083cc4CC",
+		ProjectContractAddr:     "0x6924dcDE54e959076def1e7011240692fA69BC80",
+		ProverContractAddr:      "0x604eB97a4b652ed9490409eEf2b47c92A0e610B6",
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
 		LogLevel:                int(slog.LevelDebug),
 		LocalDBDir:              "./local_db",
 		SchedulerEpoch:          720,
-		BeginningBlockNumber:    20000000,
+		BeginningBlockNumber:    28000000,
 		ContractWhitelist:       "0x1AA325E5144f763a520867c56FC77cC1411430d0,0xC9D7D9f25b98119DF5b2303ac0Df6b15C982BbF5",
 	}
 	// local debug default config for coordinator; all config elements come from docker-compose-dev.yaml in root of project

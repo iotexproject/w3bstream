@@ -4,9 +4,9 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "bytes8",
+          "internalType": "bytes4",
           "name": "difficulty",
-          "type": "bytes8"
+          "type": "bytes4"
         }
       ],
       "name": "DifficultySet",
@@ -185,6 +185,11 @@
         },
         {
           "components": [
+            {
+              "internalType": "uint256",
+              "name": "projectId",
+              "type": "uint256"
+            },
             {
               "internalType": "bytes32",
               "name": "taskId",
