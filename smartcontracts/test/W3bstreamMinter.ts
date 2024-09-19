@@ -25,24 +25,35 @@ describe('W3bstream Minter', function () {
       operator: sequencer.address,
       beneficiary: sequencer.address,
     };
-    await minter.connect(owner).setAdhocDifficulty("0xffffffff");
-    let currentDifficulty = await minter.currentDifficulty();
+    await minter.connect(owner).setAdhocNBits("0x1cffff00");
+    let currentNBits = await minter.currentNBits();
     const merkleRoot = ethers.solidityPackedKeccak256(["address", "address", "address"], [coinbase.addr, coinbase.operator, coinbase.beneficiary]);
-    const blockinfo = {
-      meta: "0x00000000",
-      prevhash: genesis,
-      merkleRoot: merkleRoot,
-      difficulty: currentDifficulty,
-      nonce: "0x0000000000000000",
-    };
     let tipinfo = await dao.tip();
     expect(tipinfo[0]).to.equal(0);
     expect(tipinfo[1]).to.equal(genesis);
-    await minter.connect(sequencer).mint(
-      blockinfo,
-      coinbase,
-      [],
-    );
+    let blockinfo = {
+      meta: "0x00000000",
+      prevhash: genesis,
+      merkleRoot: merkleRoot,
+      nbits: currentNBits,
+    };
+    const currentTarget = await minter.currentTarget();
+    for (let nonce = ethers.toBigInt("0x00000000013fbfd3"); nonce < ethers.toBigInt("0x0000010000000000"); nonce++) {
+      let n = nonce.toString(16);
+      while (n.length < 16) {
+        n = "0" + n;
+      }
+      const h = ethers.toBigInt(ethers.solidityPackedSha256(["bytes4", "bytes32", "bytes32", "uint32", "bytes8"], [blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.nbits, "0x" + n]));
+      if (h < currentTarget) {
+        blockinfo.nonce = "0x" + n;
+        await minter.connect(sequencer).mint(
+          blockinfo,
+          coinbase,
+          [],
+        );
+        break;
+      }
+    }
     tipinfo = await dao.tip();
     expect(tipinfo[0]).to.equal(1);
     await expect(minter.connect(sequencer).mint(
@@ -51,14 +62,14 @@ describe('W3bstream Minter', function () {
       [],
     )).to.be.revertedWith("invalid prevhash");
     blockinfo.prevhash = tipinfo[1];
-    blockinfo.difficulty = "0x00000001";
+    blockinfo.nbits = "0x00008000";
     await expect(minter.connect(sequencer).mint(
       blockinfo,
       coinbase,
       [],
-    )).to.be.revertedWith("invalid difficulty");
-    currentDifficulty = await minter.currentDifficulty();
-    blockinfo.difficulty = currentDifficulty;
+    )).to.be.revertedWith("invalid nbits");
+    currentNBits = await minter.currentNBits();
+    blockinfo.nbits = currentNBits;
     await minter.connect(sequencer).mint(
       blockinfo,
       coinbase,

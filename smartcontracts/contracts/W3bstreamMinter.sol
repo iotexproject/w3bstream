@@ -16,7 +16,7 @@ struct BlockInfo {
     bytes4 meta;
     bytes32 prevhash;
     bytes32 merkleRoot;
-    bytes4 difficulty;
+    uint32 nbits;
     bytes8 nonce;
 }
 
@@ -35,18 +35,21 @@ struct TaskAssignment {
 contract W3bstreamMinter is OwnableUpgradeable {
     event TaskAllowanceSet(uint256 allowance);
     event TargetDurationSet(uint256 duration);
-    event DifficultySet(bytes4 difficulty);
+    event NBitsSet(uint32 nbits);
 
     IDAO public dao;
     ITaskManager public tm;
     uint256 public taskAllowance;
     uint256 public targetDuration;
-    bytes4 public adhocDifficulty;
-    bytes4 public currentDifficulty;
+    bool public useAdhocNBits;
+    uint32 public currentNBits;
+    uint256 public currentTarget;
 
-    uint32 private constant UPPER_BOUND = 0xffffffff;
-    uint32 private constant LOWER_BOUND = 0x00000001;
-
+    uint32 private constant MAX_EXPONENT = 0x1c;
+    uint32 private constant UPPER_BOUND = 0xffff00;
+    uint32 private constant LOWER_BOUND = 0x8000;
+    uint256 private constant MAX_TARGET = 0x00000000ffff0000000000000000000000000000000000000000000000000000;
+    
     uint256[10] private durations;
     uint256 private durationSum;
     uint256 private durationNum;
@@ -58,7 +61,7 @@ contract W3bstreamMinter is OwnableUpgradeable {
         tm = _tm;
         _setTaskAllowance(720);
         _setTargetDuration(12);
-        _setAdhocDifficulty(0x0fffffff);
+        _setAdhocNBits(0x0f7fffff);
     }
 
     function mint(
@@ -67,31 +70,19 @@ contract W3bstreamMinter is OwnableUpgradeable {
         TaskAssignment[] calldata assignments
     ) public {
         require(coinbase.operator == msg.sender, "invalid operator");
-        if (adhocDifficulty != 0) {
-            require(blockinfo.difficulty == adhocDifficulty, "invalid difficulty");
-        } else {
-            require(blockinfo.difficulty == currentDifficulty, "invalid difficulty");
-        }
+        uint256 target = nbitsToTarget(blockinfo.nbits);
+        require(target == currentTarget, "invalid nbits");
         (, bytes32 tiphash, uint256 tipTimestamp) = dao.tip();
         require(tipTimestamp != block.number);
         require(blockinfo.prevhash == tiphash, "invalid prevhash");
         require(blockinfo.merkleRoot == keccak256(abi.encodePacked(coinbase.addr, coinbase.operator, coinbase.beneficiary)), "invalid merkle root");
-        // TODO: review difficulty usage
-        require(bytes4(sha256(abi.encodePacked(blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.difficulty, blockinfo.nonce))) < blockinfo.difficulty, "invalid proof of work");
-        bytes32 hash = keccak256(abi.encode(
-            blockinfo.meta,
-            blockinfo.prevhash,
-            blockinfo.merkleRoot,
-            blockinfo.difficulty,
-            blockinfo.nonce,
-            coinbase.addr,
-            coinbase.operator,
-            coinbase.beneficiary,
-            assignments
-        ));
+        // TODO: review target usage
+        bytes memory header = abi.encodePacked(blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.nbits, blockinfo.nonce);
+        require(uint256(sha256(header)) < target, "invalid proof of work");
+        bytes32 h = keccak256(abi.encode(header, assignments));
         tm.assign(assignments, block.number + taskAllowance);
-        _updateDifficulty(tipTimestamp);
-        dao.mint(hash, block.number);
+        _updateTarget(tipTimestamp);
+        dao.mint(h, block.number);
         // TODO: distribute block reward
     }
 
@@ -113,18 +104,20 @@ contract W3bstreamMinter is OwnableUpgradeable {
         emit TargetDurationSet(duration);
     }
 
-    function setAdhocDifficulty(bytes4 difficulty) public onlyOwner {
-        _setAdhocDifficulty(difficulty);
+    function setAdhocNBits(uint32 nbits) public onlyOwner {
+        _setAdhocNBits(nbits);
     }
 
-    function _setAdhocDifficulty(bytes4 difficulty) internal {
-        if (difficulty != 0) {
-            _setDifficulty(difficulty);
+    function _setAdhocNBits(uint32 nbits) internal {
+        if (nbits == 0) {
+            useAdhocNBits = false;
+            return;
         }
-        adhocDifficulty = difficulty;
+        _setNBits(nbits);
+        useAdhocNBits = true;
     }
 
-    function _updateDifficulty(uint256 tipTimestamp) internal {
+    function _updateTarget(uint256 tipTimestamp) internal {
         uint256 duration = block.number - tipTimestamp;
         durationSum += duration - durations[durationIndex];
         durations[durationIndex] = duration;
@@ -133,31 +126,52 @@ contract W3bstreamMinter is OwnableUpgradeable {
             durationNum++;
             return;
         }
-        if (adhocDifficulty != 0) {
+        if (useAdhocNBits) {
             return;
         }
-        uint32 curr = uint32(currentDifficulty);
-        uint40 next = curr;
-        uint256 expectedSum = targetDuration * durationNum;
-        if (durationSum * 5 > expectedSum * 6) {
-            next *= 2;
-        } else if (expectedSum * 4 > durationSum * 5) {
-            next /= 2;
-        } else {
-            return;
-        }
-        if (next < LOWER_BOUND) {
-            next = LOWER_BOUND;
-        } else if (next > UPPER_BOUND) {
-            next = UPPER_BOUND;
-        }
-        if (next != curr) {
-            _setDifficulty(bytes4(uint32(next)));
+        uint32 nbits = uint32(currentNBits);
+        uint32 next = nextNBits(nbits, targetDuration * durationNum, durationSum);
+        if (next != nbits) {
+            _setNBits(next);
         }
     }
 
-    function _setDifficulty(bytes4 difficulty) internal {
-        currentDifficulty = difficulty;
-        emit DifficultySet(difficulty);
+    function nextNBits(uint32 nbits, uint256 expectedSum, uint256 sum) internal pure returns (uint32) {
+        if (sum * 5 > expectedSum * 6) {
+            (uint32 exponent, uint32 coefficient) = decodeNBits(nbits);
+            if (coefficient < UPPER_BOUND) {
+                return (exponent << 24) | uint32(coefficient + 1);
+            }
+            if (exponent < MAX_EXPONENT) {
+                return ((exponent + 1) << 24) | LOWER_BOUND;
+            }
+        } else if (expectedSum * 4 > sum * 5) {
+            (uint32 exponent, uint32 coefficient) = decodeNBits(nbits);
+            if (coefficient > LOWER_BOUND) {
+                return (exponent << 24) | uint32(coefficient - 1);
+            }
+            if (exponent > 0) {
+                return ((exponent - 1) << 24) | UPPER_BOUND;
+            }
+        }
+        return nbits;
+    }
+
+    function _setNBits(uint32 nbits) internal {
+        uint256 target = nbitsToTarget(nbits);
+        currentNBits = nbits;
+        currentTarget = target;
+        emit NBitsSet(nbits);
+    }
+
+    function decodeNBits(uint32 nbits) internal pure returns (uint32, uint32) {
+        return (nbits >> 24, nbits & 0x00ffffff);
+    }
+
+    function nbitsToTarget(uint32 nbits) internal pure returns (uint256) {
+        (uint32 exponent, uint256 coefficient) = decodeNBits(nbits);
+        require(exponent <= MAX_EXPONENT, "invalid nbits");
+        require(coefficient >= LOWER_BOUND && coefficient <= UPPER_BOUND, "invalid nbits");
+        return coefficient << (8 * (exponent - 3));
     }
 }
