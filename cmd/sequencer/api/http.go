@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"strconv"
 	"time"
@@ -26,6 +27,8 @@ import (
 	"github.com/iotexproject/w3bstream/persistence/postgres"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 )
+
+var prv = crypto.ToECDSAUnsafe(common.FromHex("33e6ba3e033131026903f34dfa208feb88c284880530cf76280b68d38041c67b"))
 
 type Sequencer struct {
 	Addr        common.Address
@@ -111,7 +114,9 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, rsp)
 			return
 		}
-		coinbase := Sequencer{}
+		coinbase := Sequencer{
+			Operator: crypto.PubkeyToAddress(prv.PublicKey),
+		}
 		var rootData bytes.Buffer
 		rootData.Write(coinbase.Addr[:])
 		rootData.Write(coinbase.Operator[:])
@@ -173,7 +178,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		if err != nil {
 			panic(err)
 		}
-		minterInstance, err := minter.NewMinter(common.HexToAddress("0xEe026A4753B551848360e5d6B36F42d2E589b61b"), client)
+		minterInstance, err := minter.NewMinter(common.HexToAddress("0x604eB97a4b652ed9490409eEf2b47c92A0e610B6"), client)
 		if err != nil {
 			panic(err)
 		}
@@ -181,20 +186,27 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		if err != nil {
 			panic(err)
 		}
+		nonce, err := client.PendingNonceAt(context.Background(), crypto.PubkeyToAddress(prv.PublicKey))
+		if err != nil {
+			panic(err)
+		}
 		tx, err := minterInstance.Mint(&bind.TransactOpts{
-			From: common.HexToAddress("0x470eb48290776c370ffad6224364a604aedfe7b9"),
+			From: crypto.PubkeyToAddress(prv.PublicKey),
 			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
-				return types.SignTx(t, types.NewLondonSigner(chainID), crypto.ToECDSAUnsafe(common.FromHex("33e6ba3e033131026903f34dfa208feb88c284880530cf76280b68d38041c67b")))
+				return types.SignTx(t, types.NewLondonSigner(chainID), prv)
 			},
+			Nonce: new(big.Int).SetUint64(nonce),
 		},
 			minter.BlockInfo{
 				Meta:       h.Meta,
 				Prevhash:   h.PrevHash,
 				MerkleRoot: h.MerkleRoot,
-				Difficulty: [4]byte{}, // TODO
+				Difficulty: h.Difficulty,
 				Nonce:      h.Nonce,
 			},
-			minter.Sequencer{},
+			minter.Sequencer{
+				Operator: crypto.PubkeyToAddress(prv.PublicKey),
+			},
 			nil,
 		)
 		if err != nil {

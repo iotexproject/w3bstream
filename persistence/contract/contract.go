@@ -28,7 +28,7 @@ import (
 
 var (
 	blockAddedTopic    = crypto.Keccak256Hash([]byte("BlockAdded(uint256,bytes32,uint256)"))
-	difficultySetTopic = crypto.Keccak256Hash([]byte("DifficultySet(bytes8)"))
+	difficultySetTopic = crypto.Keccak256Hash([]byte("DifficultySet(bytes4)"))
 )
 
 var allTopic = []common.Hash{

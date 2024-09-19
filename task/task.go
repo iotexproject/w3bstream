@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 )
@@ -72,31 +71,26 @@ type StateLog struct {
 }
 
 func (l *StateLog) SignerAddress(task *Task) (common.Address, error) {
-	sig, err := hexutil.Decode(task.Signature)
-	if err != nil {
-		return common.Address{}, errors.Wrap(err, "failed to decode task signature")
-	}
-
 	buf := bytes.NewBuffer(nil)
 
-	if err = binary.Write(buf, binary.BigEndian, task.ID); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, task.ID); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write binary")
 	}
-	if err = binary.Write(buf, binary.BigEndian, task.ProjectID); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, task.ProjectID); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write binary")
 	}
-	if _, err = buf.WriteString(task.DeviceID); err != nil {
+	if _, err := buf.Write(task.DeviceID[:]); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
-	if _, err = buf.Write(crypto.Keccak256Hash(task.Payloads...).Bytes()); err != nil {
+	if _, err := buf.Write(crypto.Keccak256Hash(task.Payloads...).Bytes()); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
-	if _, err = buf.Write(l.Result); err != nil {
+	if _, err := buf.Write(l.Result); err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to write bytes buffer")
 	}
 
 	h := crypto.Keccak256Hash(buf.Bytes())
-	sigpk, err := crypto.Ecrecover(h.Bytes(), sig)
+	sigpk, err := crypto.Ecrecover(h.Bytes(), task.Signature)
 	if err != nil {
 		return common.Address{}, errors.Wrap(err, "failed to recover public key")
 	}
