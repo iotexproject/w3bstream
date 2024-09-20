@@ -130,9 +130,14 @@ async function main() {
   });
   await minter.waitForDeployment();
   console.log(`W3bstreamMinter deployed to ${minter.target}`);
+
   tx = await dao.transferOwnership(minter.target);
   await tx.wait();
   console.log(`W3bstreamDAO ownership transferred to ${minter.target}`);
+
+  tx = await taskManager.addOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamTaskManager add operator to ${minter.target}`);
 }
 
 main().catch(err => {
