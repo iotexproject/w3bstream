@@ -147,6 +147,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rsp)
 			return
 		}
+		slog.Info("submitblock data", "data", string(data))
 		params := []*submitBlockParam{}
 		if err := json.Unmarshal(data, &params); err != nil {
 			slog.Error("failed to unmarshal submit block param", "error", err)
