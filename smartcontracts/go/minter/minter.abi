@@ -4,12 +4,12 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "bytes4",
-          "name": "difficulty",
-          "type": "bytes4"
+          "internalType": "uint8",
+          "name": "version",
+          "type": "uint8"
         }
       ],
-      "name": "DifficultySet",
+      "name": "Initialized",
       "type": "event"
     },
     {
@@ -17,12 +17,12 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "uint8",
-          "name": "version",
-          "type": "uint8"
+          "internalType": "uint32",
+          "name": "nbits",
+          "type": "uint32"
         }
       ],
-      "name": "Initialized",
+      "name": "NBitsSet",
       "type": "event"
     },
     {
@@ -72,12 +72,12 @@
     },
     {
       "inputs": [],
-      "name": "adhocDifficulty",
+      "name": "currentNBits",
       "outputs": [
         {
-          "internalType": "bytes4",
+          "internalType": "uint32",
           "name": "",
-          "type": "bytes4"
+          "type": "uint32"
         }
       ],
       "stateMutability": "view",
@@ -85,12 +85,12 @@
     },
     {
       "inputs": [],
-      "name": "currentDifficulty",
+      "name": "currentTarget",
       "outputs": [
         {
-          "internalType": "bytes4",
+          "internalType": "uint256",
           "name": "",
-          "type": "bytes4"
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -147,9 +147,9 @@
               "type": "bytes32"
             },
             {
-              "internalType": "bytes4",
-              "name": "difficulty",
-              "type": "bytes4"
+              "internalType": "uint32",
+              "name": "nbits",
+              "type": "uint32"
             },
             {
               "internalType": "bytes8",
@@ -234,12 +234,12 @@
     {
       "inputs": [
         {
-          "internalType": "bytes4",
-          "name": "difficulty",
-          "type": "bytes4"
+          "internalType": "uint32",
+          "name": "nbits",
+          "type": "uint32"
         }
       ],
-      "name": "setAdhocDifficulty",
+      "name": "setAdhocNBits",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -320,6 +320,19 @@
       "name": "transferOwnership",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "useAdhocNBits",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     }
   ]

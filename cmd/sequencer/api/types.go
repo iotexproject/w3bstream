@@ -24,7 +24,7 @@ type blockTemplate struct {
 	Meta          string `json:"meta"`
 	PrevBlockHash string `json:"previousblockhash"`
 	MerkleRoot    string `json:"merkleroot"`
-	Difficulty    string `json:"difficulty"`
+	NBits         uint32 `json:"nbits"`
 	Ts            uint64 `json:"ts"`
 	NonceRange    string `json:"noncerange"`
 }
@@ -33,7 +33,7 @@ type submitBlockParam struct {
 	Meta          string `json:"meta"`
 	PrevBlockHash string `json:"previousblockhash"`
 	MerkleRoot    string `json:"merkleroot"`
-	Difficulty    string `json:"difficulty"`
+	NBits         uint32 `json:"nbits"`
 	Ts            uint64 `json:"ts"`
 	Nonce         string `json:"nonce"`
 }
@@ -55,20 +55,16 @@ func (p *submitBlockParam) toBlockHeader() (*block.Header, error) {
 	if err != nil {
 		return nil, err
 	}
-	difficulty, err := hexutil.Decode(p.Difficulty)
-	if err != nil {
-		return nil, err
-	}
 	h := &block.Header{
 		Meta:       [4]byte{},
 		PrevHash:   common.Hash{},
 		MerkleRoot: [32]byte{},
 		Nonce:      [8]byte{},
+		NBits:      p.NBits,
 	}
 	copy(h.Meta[:], meta)
 	copy(h.PrevHash[:], prevBlockHash)
 	copy(h.MerkleRoot[:], merkleRoot)
 	copy(h.Nonce[:], nonce)
-	copy(h.Difficulty[:], difficulty)
 	return h, nil
 }

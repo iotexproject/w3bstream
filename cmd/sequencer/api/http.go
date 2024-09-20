@@ -107,9 +107,9 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, rsp)
 			return
 		}
-		difficulty, err := s.persistence.Difficulty()
+		nbits, err := s.persistence.NBits()
 		if err != nil {
-			slog.Error("failed to get difficulty", "error", err)
+			slog.Error("failed to get nbits", "error", err)
 			rsp.Error = err.Error()
 			c.JSON(http.StatusInternalServerError, rsp)
 			return
@@ -126,14 +126,14 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			Meta:       [4]byte{},
 			PrevHash:   prevHash,
 			MerkleRoot: [32]byte{},
-			Difficulty: difficulty,
+			NBits:      nbits,
 			Nonce:      [8]byte{},
 		}
 		t := &blockTemplate{
 			Meta:          hexutil.Encode(h.Meta[:]),
 			PrevBlockHash: hexutil.Encode(h.PrevHash[:]),
 			MerkleRoot:    hexutil.Encode(crypto.Keccak256Hash(rootData.Bytes()).Bytes()),
-			Difficulty:    hexutil.Encode(h.Difficulty[:]),
+			NBits:         h.NBits,
 			Ts:            uint64(time.Time{}.Unix()),
 			NonceRange:    hexutil.Encode(h.Nonce[:]),
 		}
@@ -178,7 +178,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		if err != nil {
 			panic(err)
 		}
-		minterInstance, err := minter.NewMinter(common.HexToAddress("0x604eB97a4b652ed9490409eEf2b47c92A0e610B6"), client)
+		minterInstance, err := minter.NewMinter(common.HexToAddress("0x39d95173C92aadcD47184f770c4a059D8Be66686"), client)
 		if err != nil {
 			panic(err)
 		}
@@ -201,7 +201,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 				Meta:       h.Meta,
 				Prevhash:   h.PrevHash,
 				MerkleRoot: h.MerkleRoot,
-				Difficulty: h.Difficulty,
+				Nbits:      h.NBits,
 				Nonce:      h.Nonce,
 			},
 			minter.Sequencer{

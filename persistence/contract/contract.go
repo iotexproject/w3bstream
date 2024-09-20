@@ -27,13 +27,13 @@ import (
 )
 
 var (
-	blockAddedTopic    = crypto.Keccak256Hash([]byte("BlockAdded(uint256,bytes32,uint256)"))
-	difficultySetTopic = crypto.Keccak256Hash([]byte("DifficultySet(bytes4)"))
+	blockAddedTopic = crypto.Keccak256Hash([]byte("BlockAdded(uint256,bytes32,uint256)"))
+	nbitsSetTopic   = crypto.Keccak256Hash([]byte("NBitsSet(uint32)"))
 )
 
 var allTopic = []common.Hash{
 	blockAddedTopic,
-	difficultySetTopic,
+	nbitsSetTopic,
 }
 
 type Contract struct {
@@ -316,12 +316,12 @@ func (c *Contract) processLogs(from, to uint64, logs []types.Log, notify bool) e
 			if err := c.pg.UpsertPrevHash(e.Hash); err != nil {
 				return err
 			}
-		case difficultySetTopic:
-			e, err := c.minterInstance.ParseDifficultySet(l)
+		case nbitsSetTopic:
+			e, err := c.minterInstance.ParseNBitsSet(l)
 			if err != nil {
-				return errors.Wrap(err, "failed to parse difficulty set event")
+				return errors.Wrap(err, "failed to parse nbits set event")
 			}
-			if err := c.pg.UpsertDifficulty(e.Difficulty); err != nil {
+			if err := c.pg.UpsertNBits(e.Nbits); err != nil {
 				return err
 			}
 		}
