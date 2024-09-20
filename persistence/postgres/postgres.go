@@ -16,9 +16,9 @@ type blockNumber struct {
 	Number uint64 `gorm:"not null"`
 }
 
-type currentDifficulty struct {
+type currentNBits struct {
 	gorm.Model
-	Difficulty []byte `gorm:"not null"`
+	NBits uint32 `gorm:"not null"`
 }
 
 type prevHash struct {
@@ -73,26 +73,26 @@ func (p *Postgres) UpsertBlockNumber(number uint64) error {
 	return nil
 }
 
-func (p *Postgres) Difficulty() ([4]byte, error) {
-	t := currentDifficulty{}
+func (p *Postgres) NBits() (uint32, error) {
+	t := currentNBits{}
 	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
-		return [4]byte{}, errors.Wrap(err, "failed to query difficulty")
+		return 0, errors.Wrap(err, "failed to query nbits")
 	}
-	return [4]byte(t.Difficulty), nil
+	return t.NBits, nil
 }
 
-func (p *Postgres) UpsertDifficulty(difficulty [4]byte) error {
-	t := currentDifficulty{
+func (p *Postgres) UpsertNBits(nbits uint32) error {
+	t := currentNBits{
 		Model: gorm.Model{
 			ID: 1,
 		},
-		Difficulty: difficulty[:],
+		NBits: nbits,
 	}
 	if err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"difficulty"}),
+		DoUpdates: clause.AssignmentColumns([]string{"n_bits"}),
 	}).Create(&t).Error; err != nil {
-		return errors.Wrap(err, "failed to upsert difficulty")
+		return errors.Wrap(err, "failed to upsert nbits")
 	}
 	return nil
 }
@@ -189,7 +189,7 @@ func New(pgEndpoint string) (*Postgres, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&taskStateLog{}, &projectProcessedTask{}, &blockNumber{}, &currentDifficulty{}, &prevHash{}); err != nil {
+	if err := db.AutoMigrate(&taskStateLog{}, &projectProcessedTask{}, &blockNumber{}, &currentNBits{}, &prevHash{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &Postgres{db}, nil

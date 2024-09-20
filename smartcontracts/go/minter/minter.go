@@ -34,7 +34,7 @@ type BlockInfo struct {
 	Meta       [4]byte
 	Prevhash   [32]byte
 	MerkleRoot [32]byte
-	Difficulty [4]byte
+	Nbits      uint32
 	Nonce      [8]byte
 }
 
@@ -54,7 +54,7 @@ type TaskAssignment struct {
 
 // MinterMetaData contains all meta data concerning the Minter contract.
 var MinterMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes4\",\"name\":\"difficulty\",\"type\":\"bytes4\"}],\"name\":\"DifficultySet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"TargetDurationSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"TaskAllowanceSet\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"adhocDifficulty\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentDifficulty\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dao\",\"outputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"_dao\",\"type\":\"address\"},{\"internalType\":\"contractITaskManager\",\"name\":\"_tm\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"meta\",\"type\":\"bytes4\"},{\"internalType\":\"bytes32\",\"name\":\"prevhash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"internalType\":\"bytes4\",\"name\":\"difficulty\",\"type\":\"bytes4\"},{\"internalType\":\"bytes8\",\"name\":\"nonce\",\"type\":\"bytes8\"}],\"internalType\":\"structBlockInfo\",\"name\":\"blockinfo\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"internalType\":\"structSequencer\",\"name\":\"coinbase\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment[]\",\"name\":\"assignments\",\"type\":\"tuple[]\"}],\"name\":\"mint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"difficulty\",\"type\":\"bytes4\"}],\"name\":\"setAdhocDifficulty\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setTargetDuration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"setTaskAllowance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskAllowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tm\",\"outputs\":[{\"internalType\":\"contractITaskManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"}],\"name\":\"NBitsSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"TargetDurationSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"TaskAllowanceSet\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"currentNBits\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentTarget\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dao\",\"outputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"_dao\",\"type\":\"address\"},{\"internalType\":\"contractITaskManager\",\"name\":\"_tm\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"meta\",\"type\":\"bytes4\"},{\"internalType\":\"bytes32\",\"name\":\"prevhash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"},{\"internalType\":\"bytes8\",\"name\":\"nonce\",\"type\":\"bytes8\"}],\"internalType\":\"structBlockInfo\",\"name\":\"blockinfo\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"internalType\":\"structSequencer\",\"name\":\"coinbase\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment[]\",\"name\":\"assignments\",\"type\":\"tuple[]\"}],\"name\":\"mint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"}],\"name\":\"setAdhocNBits\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setTargetDuration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"setTaskAllowance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskAllowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tm\",\"outputs\":[{\"internalType\":\"contractITaskManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"useAdhocNBits\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // MinterABI is the input ABI used to generate the binding from.
@@ -203,66 +203,66 @@ func (_Minter *MinterTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _Minter.Contract.contract.Transact(opts, method, params...)
 }
 
-// AdhocDifficulty is a free data retrieval call binding the contract method 0xeaac9a77.
+// CurrentNBits is a free data retrieval call binding the contract method 0x626a0ccb.
 //
-// Solidity: function adhocDifficulty() view returns(bytes4)
-func (_Minter *MinterCaller) AdhocDifficulty(opts *bind.CallOpts) ([4]byte, error) {
+// Solidity: function currentNBits() view returns(uint32)
+func (_Minter *MinterCaller) CurrentNBits(opts *bind.CallOpts) (uint32, error) {
 	var out []interface{}
-	err := _Minter.contract.Call(opts, &out, "adhocDifficulty")
+	err := _Minter.contract.Call(opts, &out, "currentNBits")
 
 	if err != nil {
-		return *new([4]byte), err
+		return *new(uint32), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([4]byte)).(*[4]byte)
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
 
 	return out0, err
 
 }
 
-// AdhocDifficulty is a free data retrieval call binding the contract method 0xeaac9a77.
+// CurrentNBits is a free data retrieval call binding the contract method 0x626a0ccb.
 //
-// Solidity: function adhocDifficulty() view returns(bytes4)
-func (_Minter *MinterSession) AdhocDifficulty() ([4]byte, error) {
-	return _Minter.Contract.AdhocDifficulty(&_Minter.CallOpts)
+// Solidity: function currentNBits() view returns(uint32)
+func (_Minter *MinterSession) CurrentNBits() (uint32, error) {
+	return _Minter.Contract.CurrentNBits(&_Minter.CallOpts)
 }
 
-// AdhocDifficulty is a free data retrieval call binding the contract method 0xeaac9a77.
+// CurrentNBits is a free data retrieval call binding the contract method 0x626a0ccb.
 //
-// Solidity: function adhocDifficulty() view returns(bytes4)
-func (_Minter *MinterCallerSession) AdhocDifficulty() ([4]byte, error) {
-	return _Minter.Contract.AdhocDifficulty(&_Minter.CallOpts)
+// Solidity: function currentNBits() view returns(uint32)
+func (_Minter *MinterCallerSession) CurrentNBits() (uint32, error) {
+	return _Minter.Contract.CurrentNBits(&_Minter.CallOpts)
 }
 
-// CurrentDifficulty is a free data retrieval call binding the contract method 0x5c062d6c.
+// CurrentTarget is a free data retrieval call binding the contract method 0x39148c53.
 //
-// Solidity: function currentDifficulty() view returns(bytes4)
-func (_Minter *MinterCaller) CurrentDifficulty(opts *bind.CallOpts) ([4]byte, error) {
+// Solidity: function currentTarget() view returns(uint256)
+func (_Minter *MinterCaller) CurrentTarget(opts *bind.CallOpts) (*big.Int, error) {
 	var out []interface{}
-	err := _Minter.contract.Call(opts, &out, "currentDifficulty")
+	err := _Minter.contract.Call(opts, &out, "currentTarget")
 
 	if err != nil {
-		return *new([4]byte), err
+		return *new(*big.Int), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([4]byte)).(*[4]byte)
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
 
 }
 
-// CurrentDifficulty is a free data retrieval call binding the contract method 0x5c062d6c.
+// CurrentTarget is a free data retrieval call binding the contract method 0x39148c53.
 //
-// Solidity: function currentDifficulty() view returns(bytes4)
-func (_Minter *MinterSession) CurrentDifficulty() ([4]byte, error) {
-	return _Minter.Contract.CurrentDifficulty(&_Minter.CallOpts)
+// Solidity: function currentTarget() view returns(uint256)
+func (_Minter *MinterSession) CurrentTarget() (*big.Int, error) {
+	return _Minter.Contract.CurrentTarget(&_Minter.CallOpts)
 }
 
-// CurrentDifficulty is a free data retrieval call binding the contract method 0x5c062d6c.
+// CurrentTarget is a free data retrieval call binding the contract method 0x39148c53.
 //
-// Solidity: function currentDifficulty() view returns(bytes4)
-func (_Minter *MinterCallerSession) CurrentDifficulty() ([4]byte, error) {
-	return _Minter.Contract.CurrentDifficulty(&_Minter.CallOpts)
+// Solidity: function currentTarget() view returns(uint256)
+func (_Minter *MinterCallerSession) CurrentTarget() (*big.Int, error) {
+	return _Minter.Contract.CurrentTarget(&_Minter.CallOpts)
 }
 
 // Dao is a free data retrieval call binding the contract method 0x4162169f.
@@ -420,6 +420,37 @@ func (_Minter *MinterCallerSession) Tm() (common.Address, error) {
 	return _Minter.Contract.Tm(&_Minter.CallOpts)
 }
 
+// UseAdhocNBits is a free data retrieval call binding the contract method 0xb415aa51.
+//
+// Solidity: function useAdhocNBits() view returns(bool)
+func (_Minter *MinterCaller) UseAdhocNBits(opts *bind.CallOpts) (bool, error) {
+	var out []interface{}
+	err := _Minter.contract.Call(opts, &out, "useAdhocNBits")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// UseAdhocNBits is a free data retrieval call binding the contract method 0xb415aa51.
+//
+// Solidity: function useAdhocNBits() view returns(bool)
+func (_Minter *MinterSession) UseAdhocNBits() (bool, error) {
+	return _Minter.Contract.UseAdhocNBits(&_Minter.CallOpts)
+}
+
+// UseAdhocNBits is a free data retrieval call binding the contract method 0xb415aa51.
+//
+// Solidity: function useAdhocNBits() view returns(bool)
+func (_Minter *MinterCallerSession) UseAdhocNBits() (bool, error) {
+	return _Minter.Contract.UseAdhocNBits(&_Minter.CallOpts)
+}
+
 // Initialize is a paid mutator transaction binding the contract method 0x485cc955.
 //
 // Solidity: function initialize(address _dao, address _tm) returns()
@@ -441,23 +472,23 @@ func (_Minter *MinterTransactorSession) Initialize(_dao common.Address, _tm comm
 	return _Minter.Contract.Initialize(&_Minter.TransactOpts, _dao, _tm)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x5e83afcb.
+// Mint is a paid mutator transaction binding the contract method 0x8f7118a7.
 //
-// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
+// Solidity: function mint((bytes4,bytes32,bytes32,uint32,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
 func (_Minter *MinterTransactor) Mint(opts *bind.TransactOpts, blockinfo BlockInfo, coinbase Sequencer, assignments []TaskAssignment) (*types.Transaction, error) {
 	return _Minter.contract.Transact(opts, "mint", blockinfo, coinbase, assignments)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x5e83afcb.
+// Mint is a paid mutator transaction binding the contract method 0x8f7118a7.
 //
-// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
+// Solidity: function mint((bytes4,bytes32,bytes32,uint32,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
 func (_Minter *MinterSession) Mint(blockinfo BlockInfo, coinbase Sequencer, assignments []TaskAssignment) (*types.Transaction, error) {
 	return _Minter.Contract.Mint(&_Minter.TransactOpts, blockinfo, coinbase, assignments)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x5e83afcb.
+// Mint is a paid mutator transaction binding the contract method 0x8f7118a7.
 //
-// Solidity: function mint((bytes4,bytes32,bytes32,bytes4,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
+// Solidity: function mint((bytes4,bytes32,bytes32,uint32,bytes8) blockinfo, (address,address,address) coinbase, (uint256,bytes32,address)[] assignments) returns()
 func (_Minter *MinterTransactorSession) Mint(blockinfo BlockInfo, coinbase Sequencer, assignments []TaskAssignment) (*types.Transaction, error) {
 	return _Minter.Contract.Mint(&_Minter.TransactOpts, blockinfo, coinbase, assignments)
 }
@@ -483,25 +514,25 @@ func (_Minter *MinterTransactorSession) RenounceOwnership() (*types.Transaction,
 	return _Minter.Contract.RenounceOwnership(&_Minter.TransactOpts)
 }
 
-// SetAdhocDifficulty is a paid mutator transaction binding the contract method 0xefdcc949.
+// SetAdhocNBits is a paid mutator transaction binding the contract method 0xe115953c.
 //
-// Solidity: function setAdhocDifficulty(bytes4 difficulty) returns()
-func (_Minter *MinterTransactor) SetAdhocDifficulty(opts *bind.TransactOpts, difficulty [4]byte) (*types.Transaction, error) {
-	return _Minter.contract.Transact(opts, "setAdhocDifficulty", difficulty)
+// Solidity: function setAdhocNBits(uint32 nbits) returns()
+func (_Minter *MinterTransactor) SetAdhocNBits(opts *bind.TransactOpts, nbits uint32) (*types.Transaction, error) {
+	return _Minter.contract.Transact(opts, "setAdhocNBits", nbits)
 }
 
-// SetAdhocDifficulty is a paid mutator transaction binding the contract method 0xefdcc949.
+// SetAdhocNBits is a paid mutator transaction binding the contract method 0xe115953c.
 //
-// Solidity: function setAdhocDifficulty(bytes4 difficulty) returns()
-func (_Minter *MinterSession) SetAdhocDifficulty(difficulty [4]byte) (*types.Transaction, error) {
-	return _Minter.Contract.SetAdhocDifficulty(&_Minter.TransactOpts, difficulty)
+// Solidity: function setAdhocNBits(uint32 nbits) returns()
+func (_Minter *MinterSession) SetAdhocNBits(nbits uint32) (*types.Transaction, error) {
+	return _Minter.Contract.SetAdhocNBits(&_Minter.TransactOpts, nbits)
 }
 
-// SetAdhocDifficulty is a paid mutator transaction binding the contract method 0xefdcc949.
+// SetAdhocNBits is a paid mutator transaction binding the contract method 0xe115953c.
 //
-// Solidity: function setAdhocDifficulty(bytes4 difficulty) returns()
-func (_Minter *MinterTransactorSession) SetAdhocDifficulty(difficulty [4]byte) (*types.Transaction, error) {
-	return _Minter.Contract.SetAdhocDifficulty(&_Minter.TransactOpts, difficulty)
+// Solidity: function setAdhocNBits(uint32 nbits) returns()
+func (_Minter *MinterTransactorSession) SetAdhocNBits(nbits uint32) (*types.Transaction, error) {
+	return _Minter.Contract.SetAdhocNBits(&_Minter.TransactOpts, nbits)
 }
 
 // SetTargetDuration is a paid mutator transaction binding the contract method 0xa00171ea.
@@ -565,140 +596,6 @@ func (_Minter *MinterSession) TransferOwnership(newOwner common.Address) (*types
 // Solidity: function transferOwnership(address newOwner) returns()
 func (_Minter *MinterTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _Minter.Contract.TransferOwnership(&_Minter.TransactOpts, newOwner)
-}
-
-// MinterDifficultySetIterator is returned from FilterDifficultySet and is used to iterate over the raw logs and unpacked data for DifficultySet events raised by the Minter contract.
-type MinterDifficultySetIterator struct {
-	Event *MinterDifficultySet // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *MinterDifficultySetIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(MinterDifficultySet)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(MinterDifficultySet)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *MinterDifficultySetIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *MinterDifficultySetIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// MinterDifficultySet represents a DifficultySet event raised by the Minter contract.
-type MinterDifficultySet struct {
-	Difficulty [4]byte
-	Raw        types.Log // Blockchain specific contextual infos
-}
-
-// FilterDifficultySet is a free log retrieval operation binding the contract event 0xff051f56d0d099feca55af838a05490b0f309ce78f78c58d46a7c32059b10ecc.
-//
-// Solidity: event DifficultySet(bytes4 difficulty)
-func (_Minter *MinterFilterer) FilterDifficultySet(opts *bind.FilterOpts) (*MinterDifficultySetIterator, error) {
-
-	logs, sub, err := _Minter.contract.FilterLogs(opts, "DifficultySet")
-	if err != nil {
-		return nil, err
-	}
-	return &MinterDifficultySetIterator{contract: _Minter.contract, event: "DifficultySet", logs: logs, sub: sub}, nil
-}
-
-// WatchDifficultySet is a free log subscription operation binding the contract event 0xff051f56d0d099feca55af838a05490b0f309ce78f78c58d46a7c32059b10ecc.
-//
-// Solidity: event DifficultySet(bytes4 difficulty)
-func (_Minter *MinterFilterer) WatchDifficultySet(opts *bind.WatchOpts, sink chan<- *MinterDifficultySet) (event.Subscription, error) {
-
-	logs, sub, err := _Minter.contract.WatchLogs(opts, "DifficultySet")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(MinterDifficultySet)
-				if err := _Minter.contract.UnpackLog(event, "DifficultySet", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseDifficultySet is a log parse operation binding the contract event 0xff051f56d0d099feca55af838a05490b0f309ce78f78c58d46a7c32059b10ecc.
-//
-// Solidity: event DifficultySet(bytes4 difficulty)
-func (_Minter *MinterFilterer) ParseDifficultySet(log types.Log) (*MinterDifficultySet, error) {
-	event := new(MinterDifficultySet)
-	if err := _Minter.contract.UnpackLog(event, "DifficultySet", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
 }
 
 // MinterInitializedIterator is returned from FilterInitialized and is used to iterate over the raw logs and unpacked data for Initialized events raised by the Minter contract.
@@ -829,6 +726,140 @@ func (_Minter *MinterFilterer) WatchInitialized(opts *bind.WatchOpts, sink chan<
 func (_Minter *MinterFilterer) ParseInitialized(log types.Log) (*MinterInitialized, error) {
 	event := new(MinterInitialized)
 	if err := _Minter.contract.UnpackLog(event, "Initialized", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// MinterNBitsSetIterator is returned from FilterNBitsSet and is used to iterate over the raw logs and unpacked data for NBitsSet events raised by the Minter contract.
+type MinterNBitsSetIterator struct {
+	Event *MinterNBitsSet // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *MinterNBitsSetIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(MinterNBitsSet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(MinterNBitsSet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *MinterNBitsSetIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *MinterNBitsSetIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// MinterNBitsSet represents a NBitsSet event raised by the Minter contract.
+type MinterNBitsSet struct {
+	Nbits uint32
+	Raw   types.Log // Blockchain specific contextual infos
+}
+
+// FilterNBitsSet is a free log retrieval operation binding the contract event 0xe8dd26f51ea2466f2a2a2bad6b1065a8ba4f43f587f210d03bc7ee3c24b25a98.
+//
+// Solidity: event NBitsSet(uint32 nbits)
+func (_Minter *MinterFilterer) FilterNBitsSet(opts *bind.FilterOpts) (*MinterNBitsSetIterator, error) {
+
+	logs, sub, err := _Minter.contract.FilterLogs(opts, "NBitsSet")
+	if err != nil {
+		return nil, err
+	}
+	return &MinterNBitsSetIterator{contract: _Minter.contract, event: "NBitsSet", logs: logs, sub: sub}, nil
+}
+
+// WatchNBitsSet is a free log subscription operation binding the contract event 0xe8dd26f51ea2466f2a2a2bad6b1065a8ba4f43f587f210d03bc7ee3c24b25a98.
+//
+// Solidity: event NBitsSet(uint32 nbits)
+func (_Minter *MinterFilterer) WatchNBitsSet(opts *bind.WatchOpts, sink chan<- *MinterNBitsSet) (event.Subscription, error) {
+
+	logs, sub, err := _Minter.contract.WatchLogs(opts, "NBitsSet")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(MinterNBitsSet)
+				if err := _Minter.contract.UnpackLog(event, "NBitsSet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNBitsSet is a log parse operation binding the contract event 0xe8dd26f51ea2466f2a2a2bad6b1065a8ba4f43f587f210d03bc7ee3c24b25a98.
+//
+// Solidity: event NBitsSet(uint32 nbits)
+func (_Minter *MinterFilterer) ParseNBitsSet(log types.Log) (*MinterNBitsSet, error) {
+	event := new(MinterNBitsSet)
+	if err := _Minter.contract.UnpackLog(event, "NBitsSet", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
