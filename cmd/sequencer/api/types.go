@@ -20,13 +20,19 @@ type jsonRpcRsp struct {
 	Result  any    `json:"result"`
 }
 
+type blockTip struct {
+	BlockNumber uint64 `json:"blocknumber"`
+	BlockHash   string `json:"blockhash"`
+}
+
 type blockTemplate struct {
-	Meta          string `json:"meta"`
-	PrevBlockHash string `json:"previousblockhash"`
-	MerkleRoot    string `json:"merkleroot"`
-	NBits         uint32 `json:"nbits"`
-	Ts            uint64 `json:"ts"`
-	NonceRange    string `json:"noncerange"`
+	PrevBlockNumber uint64 `json:"previousblocknumber"`
+	Meta            string `json:"meta"`
+	PrevBlockHash   string `json:"previousblockhash"`
+	MerkleRoot      string `json:"merkleroot"`
+	NBits           uint32 `json:"nbits"`
+	Ts              uint64 `json:"ts"`
+	NonceRange      string `json:"noncerange"`
 }
 
 type submitBlockParam struct {

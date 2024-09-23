@@ -21,9 +21,10 @@ type currentNBits struct {
 	NBits uint32 `gorm:"not null"`
 }
 
-type prevHash struct {
+type chainHead struct {
 	gorm.Model
-	PrevHash common.Hash `gorm:"not null"`
+	Hash   common.Hash `gorm:"not null"`
+	Number uint64      `gorm:"not null"`
 }
 
 type projectProcessedTask struct {
@@ -97,26 +98,27 @@ func (p *Postgres) UpsertNBits(nbits uint32) error {
 	return nil
 }
 
-func (p *Postgres) PrevHash() (common.Hash, error) {
-	t := prevHash{}
+func (p *Postgres) ChainHead() (uint64, common.Hash, error) {
+	t := chainHead{}
 	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
-		return common.Hash{}, errors.Wrap(err, "failed to query prev hash")
+		return 0, common.Hash{}, errors.Wrap(err, "failed to query chain head")
 	}
-	return t.PrevHash, nil
+	return t.Number, t.Hash, nil
 }
 
-func (p *Postgres) UpsertPrevHash(hash common.Hash) error {
-	t := prevHash{
+func (p *Postgres) UpsertPrevHash(number uint64, hash common.Hash) error {
+	t := chainHead{
 		Model: gorm.Model{
 			ID: 1,
 		},
-		PrevHash: hash,
+		Hash:   hash,
+		Number: number,
 	}
 	if err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"prev_hash"}),
+		DoUpdates: clause.AssignmentColumns([]string{"hash", "number"}),
 	}).Create(&t).Error; err != nil {
-		return errors.Wrap(err, "failed to upsert prev hash")
+		return errors.Wrap(err, "failed to upsert chain head")
 	}
 	return nil
 }
@@ -189,7 +191,7 @@ func New(pgEndpoint string) (*Postgres, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&taskStateLog{}, &projectProcessedTask{}, &blockNumber{}, &currentNBits{}, &prevHash{}); err != nil {
+	if err := db.AutoMigrate(&taskStateLog{}, &projectProcessedTask{}, &blockNumber{}, &currentNBits{}, &chainHead{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &Postgres{db}, nil

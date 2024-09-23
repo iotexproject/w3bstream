@@ -99,8 +99,22 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		return
 	}
 	switch req.Method {
+	case "gettip":
+		head, hash, err := s.persistence.ChainHead()
+		if err != nil {
+			slog.Error("failed to get prev hash", "error", err)
+			rsp.Error = err.Error()
+			c.JSON(http.StatusInternalServerError, rsp)
+			return
+		}
+		t := &blockTip{
+			BlockNumber: head,
+			BlockHash:   hexutil.Encode(hash[:]),
+		}
+		rsp.Result = t
+		c.JSON(http.StatusOK, rsp)
 	case "getblocktemplate":
-		prevHash, err := s.persistence.PrevHash()
+		head, hash, err := s.persistence.ChainHead()
 		if err != nil {
 			slog.Error("failed to get prev hash", "error", err)
 			rsp.Error = err.Error()
@@ -124,18 +138,19 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 
 		h := &block.Header{
 			Meta:       [4]byte{},
-			PrevHash:   prevHash,
+			PrevHash:   hash,
 			MerkleRoot: [32]byte{},
 			NBits:      nbits,
 			Nonce:      [8]byte{},
 		}
 		t := &blockTemplate{
-			Meta:          hexutil.Encode(h.Meta[:]),
-			PrevBlockHash: hexutil.Encode(h.PrevHash[:]),
-			MerkleRoot:    hexutil.Encode(crypto.Keccak256Hash(rootData.Bytes()).Bytes()),
-			NBits:         h.NBits,
-			Ts:            uint64(time.Time{}.Unix()),
-			NonceRange:    hexutil.Encode(h.Nonce[:]),
+			PrevBlockNumber: head,
+			Meta:            hexutil.Encode(h.Meta[:]),
+			PrevBlockHash:   hexutil.Encode(h.PrevHash[:]),
+			MerkleRoot:      hexutil.Encode(crypto.Keccak256Hash(rootData.Bytes()).Bytes()),
+			NBits:           h.NBits,
+			Ts:              uint64(time.Time{}.Unix()),
+			NonceRange:      hexutil.Encode(h.Nonce[:]),
 		}
 		rsp.Result = t
 		c.JSON(http.StatusOK, rsp)

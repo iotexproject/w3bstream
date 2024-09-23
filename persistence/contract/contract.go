@@ -313,7 +313,7 @@ func (c *Contract) processLogs(from, to uint64, logs []types.Log, notify bool) e
 			if err != nil {
 				return errors.Wrap(err, "failed to parse block added event")
 			}
-			if err := c.pg.UpsertPrevHash(e.Hash); err != nil {
+			if err := c.pg.UpsertPrevHash(e.Num.Uint64(), e.Hash); err != nil {
 				return err
 			}
 		case nbitsSetTopic:
