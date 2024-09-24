@@ -40,7 +40,7 @@ var (
 		ProjectContractAddr:     "0x3168A7BE5ba2d9c3aE6309a66152854142c99B26",
 		ProverContractAddr:      "0x39d95173C92aadcD47184f770c4a059D8Be66686",
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
-		LogLevel:                int(slog.LevelDebug),
+		LogLevel:                int(slog.LevelInfo),
 		LocalDBDir:              "./local_db",
 		SchedulerEpoch:          720,
 		BeginningBlockNumber:    28000000,
@@ -54,7 +54,7 @@ var (
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:            2,
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
-		LogLevel:                int(slog.LevelDebug),
+		LogLevel:                int(slog.LevelInfo),
 		ContractWhitelist:       "0x1AA325E5144f763a520867c56FC77cC1411430d0,0xC9D7D9f25b98119DF5b2303ac0Df6b15C982BbF5",
 	}
 	// integration default config for coordinator; all config elements come from Makefile in `integration_test` entry
@@ -68,7 +68,7 @@ var (
 		ProjectContractAddr:     "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		ProjectFileDir:          "./testdata",
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
-		LogLevel:                int(slog.LevelDebug),
+		LogLevel:                int(slog.LevelInfo),
 	}
 )
 

@@ -360,7 +360,7 @@ func (c *Contract) list() {
 			time.Sleep(3 * time.Second)
 			continue
 		}
-		slog.Info("listing chain", "from", from, "to", to)
+		slog.Debug("listing chain", "from", from, "to", to)
 		query.FromBlock = new(big.Int).SetUint64(from)
 		query.ToBlock = new(big.Int).SetUint64(to)
 		logs, err := c.client.FilterLogs(context.Background(), query)
