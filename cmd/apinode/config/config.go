@@ -21,7 +21,7 @@ type Config struct {
 }
 
 var defaultTestnetConfig = &Config{
-	LogLevel:          int(slog.LevelDebug),
+	LogLevel:          int(slog.LevelInfo),
 	ServiceEndpoint:   ":9000",
 	AggregationAmount: 1,
 	DatabaseDSN:       "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
