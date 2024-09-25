@@ -4,7 +4,11 @@ pragma solidity ^0.8.19;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 struct Record {
+    bytes32 hash;
+    address sequencer;
     address prover;
+    uint256 rewardForProver;
+    uint256 rewardForSequencer;
     uint256 deadline;
     bool settled;
 }
@@ -12,11 +16,19 @@ struct Record {
 struct TaskAssignment {
     uint256 projectId;
     bytes32 taskId;
+    bytes32 hash;
     address prover;
 }
 
+/*
+interface IDebits {
+    function withhold(uint256 id, address owner, uint256 amount) external;
+    function redeem(uint256 id, address owner, uint256 amount) external;
+    function distribute(uint256 id, address owner, address[] calldata recipients, uint256[] calldata amounts) external;
+}
+*/
 contract W3bstreamTaskManager is OwnableUpgradeable {
-    event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address prover, uint256 deadline);
+    event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address indexed prover, uint256 deadline);
     event TaskSettled(uint256 indexed projectId, bytes32 indexed taskId, address prover);
     event OperatorAdded(address operator);
     event OperatorRemoved(address operator);
@@ -48,8 +60,10 @@ contract W3bstreamTaskManager is OwnableUpgradeable {
     function _assign(
         uint256 projectId,
         bytes32 taskId,
+        bytes32 hash,
         address prover,
-        uint256 deadline
+        uint256 deadline,
+        address sequencer
     ) internal {
         require(prover != address(0), "invalid prover");
         Record storage record = records[projectId][taskId];
@@ -57,24 +71,28 @@ contract W3bstreamTaskManager is OwnableUpgradeable {
         if (record.prover != address(0)) {
             require(record.deadline < block.timestamp, "task already assigned");
         }
+        record.hash = hash;
         record.prover = prover;
         record.deadline = deadline;
+        record.sequencer = sequencer;
         emit TaskAssigned(projectId, taskId, prover, deadline);
     }
 
     function assign(
         TaskAssignment calldata assignment,
+        address sequencer,
         uint256 deadline
     ) public onlyOperator {
-        _assign(assignment.projectId, assignment.taskId, assignment.prover, deadline);
+        _assign(assignment.projectId, assignment.taskId, assignment.hash, assignment.prover, deadline, sequencer);
     }
 
     function assign(
         TaskAssignment[] calldata taskAssignments,
+        address sequencer,
         uint256 deadline
     ) public onlyOperator {
         for (uint256 i = 0; i < taskAssignments.length; i++) {
-            _assign(taskAssignments[i].projectId, taskAssignments[i].taskId, taskAssignments[i].prover, deadline);
+            _assign(taskAssignments[i].projectId, taskAssignments[i].taskId, taskAssignments[i].hash, taskAssignments[i].prover, deadline, sequencer);
         }
     }
 

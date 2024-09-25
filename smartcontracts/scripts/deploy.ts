@@ -124,13 +124,19 @@ async function main() {
   await taskManager.waitForDeployment();
   console.log(`W3bstreamTaskManager deployed to ${taskManager.target}`);
 
-  const W3bstreamMinter = await ethers.getContractFactory('W3bstreamMinter');
-  const minter = await upgrades.deployProxy(W3bstreamMinter, [dao.target, taskManager.target], {
+  const W3bstreamBlockRewardDistributor = await ethers.getContractFactory('W3bstreamBlockRewardDistributor');
+  const distributor = await upgrades.deployProxy(W3bstreamBlockRewardDistributor, [], {
+    initializer: 'initialize',
+  });
+  await distributor.waitForDeployment();
+  console.log(`W3bstreamBlockRewardDistributor deployed to ${distributor.target}`);
+
+  const W3bstreamBlockMinter = await ethers.getContractFactory('W3bstreamBlockMinter');
+  const minter = await upgrades.deployProxy(W3bstreamBlockMinter, [dao.target, taskManager.target, distributor.target], {
     initializer: 'initialize',
   });
   await minter.waitForDeployment();
-  console.log(`W3bstreamMinter deployed to ${minter.target}`);
-
+  console.log(`W3bstreamBlockMinter deployed to ${minter.target}`);
   tx = await dao.transferOwnership(minter.target);
   await tx.wait();
   console.log(`W3bstreamDAO ownership transferred to ${minter.target}`);
