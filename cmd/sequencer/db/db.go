@@ -110,7 +110,7 @@ func (p *DB) UpsertBlockHead(number uint64, hash common.Hash) error {
 	return nil
 }
 
-func (p *DB) CreateTask(taskID common.Hash, projectID uint64) error {
+func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
 	t := &task{
 		TaskID:    taskID,
 		ProjectID: projectID,
@@ -122,7 +122,7 @@ func (p *DB) CreateTask(taskID common.Hash, projectID uint64) error {
 	return nil
 }
 
-func (p *DB) AssignTask(taskID common.Hash, projectID uint64) error {
+func (p *DB) AssignTask(projectID uint64, taskID common.Hash) error {
 	t := &task{
 		Assigned: true,
 	}
@@ -132,7 +132,7 @@ func (p *DB) AssignTask(taskID common.Hash, projectID uint64) error {
 	return nil
 }
 
-func (p *DB) DeleteTask(taskID common.Hash, projectID uint64) error {
+func (p *DB) DeleteTask(projectID uint64, taskID common.Hash) error {
 	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error; err != nil {
 		return errors.Wrap(err, "failed to delete task")
 	}

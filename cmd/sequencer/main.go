@@ -17,6 +17,7 @@ import (
 	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/db"
 	"github.com/iotexproject/w3bstream/monitor"
+	"github.com/iotexproject/w3bstream/p2p"
 )
 
 func main() {
@@ -57,6 +58,10 @@ func main() {
 		cfg.ChainEndpoint,
 	); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run contract monitor"))
+	}
+
+	if _, err = p2p.NewPubSub(cfg.BootNodeMultiAddr, cfg.IoTeXChainID, db.CreateTask); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new p2p pubsub"))
 	}
 
 	go func() {
