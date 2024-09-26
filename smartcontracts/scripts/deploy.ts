@@ -131,8 +131,12 @@ async function main() {
   await distributor.waitForDeployment();
   console.log(`W3bstreamBlockRewardDistributor deployed to ${distributor.target}`);
 
+  const scrypt = await ethers.deployContract('Scrypt');
+  await scrypt.waitForDeployment();
+  console.log(`Scrypt deployed to ${scrypt.target}`);
+
   const W3bstreamBlockMinter = await ethers.getContractFactory('W3bstreamBlockMinter');
-  const minter = await upgrades.deployProxy(W3bstreamBlockMinter, [dao.target, taskManager.target, distributor.target], {
+  const minter = await upgrades.deployProxy(W3bstreamBlockMinter, [dao.target, taskManager.target, distributor.target, scrypt.target], {
     initializer: 'initialize',
   });
   await minter.waitForDeployment();

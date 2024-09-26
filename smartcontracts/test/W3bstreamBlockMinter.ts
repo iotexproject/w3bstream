@@ -7,16 +7,18 @@ describe('W3bstream Minter', function () {
   let dao;
   let tm;
   let brd;
-  const genesis = "0x0000000011111111222222223333333344444444555555556666666677777777";
+  let scrypt;
+  const genesis = "0x0000000000000000000000000000000000000000000000000000000000000000";
   beforeEach(async function () {
     minter = await ethers.deployContract('W3bstreamBlockMinter');
     dao = await ethers.deployContract('W3bstreamDAO');
     tm = await ethers.deployContract('W3bstreamTaskManager');
     brd = await ethers.deployContract('W3bstreamBlockRewardDistributor');
+    scrypt = await ethers.deployContract('Scrypt');
     await dao.initialize(genesis);
     await tm.initialize();
     await brd.initialize();
-    await minter.initialize(dao.getAddress(), tm.getAddress(), brd.getAddress());
+    await minter.initialize(dao.getAddress(), tm.getAddress(), brd.getAddress(), scrypt.getAddress());
     // let tx = await minter.scrypt("0x000000020000000000000000000000000000000000000000000000000000000000000000ab04ea90eb7d931cbbaa94a11cb3907809c13262dd37acc526e4b4a628e43b111c7fffff00000089929df805");
     // console.log(tx);
     // exit(0);
@@ -42,25 +44,15 @@ describe('W3bstream Minter', function () {
       prevhash: genesis,
       merkleRoot: merkleRoot,
       nbits: currentNBits,
+      nonce: "0x0000000000000000",
     };
     const nbits = await minter.currentNBits();
     const currentTarget = await minter.nbitsToTarget(nbits);
-    for (let nonce = ethers.toBigInt("0x00000000013fbfd3"); nonce < ethers.toBigInt("0x0000010000000000"); nonce++) {
-      let n = nonce.toString(16);
-      while (n.length < 16) {
-        n = "0" + n;
-      }
-      const h = ethers.toBigInt(ethers.solidityPackedSha256(["bytes4", "bytes32", "bytes32", "uint32", "bytes8"], [blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.nbits, "0x" + n]));
-      if (h < currentTarget) {
-        blockinfo.nonce = "0x" + n;
-        await minter.connect(sequencer).mint(
-          blockinfo,
-          coinbase,
-          [],
-        );
-        break;
-      }
-    }
+    await minter.connect(sequencer).mint(
+      blockinfo,
+      coinbase,
+      [],
+    );
     tipinfo = await dao.tip();
     expect(tipinfo[0]).to.equal(1);
     await expect(minter.connect(sequencer).mint(
