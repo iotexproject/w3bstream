@@ -8,20 +8,20 @@ import (
 )
 
 type Config struct {
-	LogLevel          int    `env:"LOG_LEVEL,optional"`
-	ServiceEndpoint   string `env:"HTTP_SERVICE_ENDPOINT"`
-	AggregationAmount int    `env:"AGGREGATION_AMOUNT,optional"`
-	DatabaseDSN       string `env:"DATABASE_DSN"`
-	PriKey            string `env:"PRIVATE_KEY,optional"`
-	BootNodeMultiAddr string `env:"BOOTNODE_MULTIADDR"`
-	IoTeXChainID      int    `env:"IOTEX_CHAINID"`
-	ChainEndpoint     string `env:"CHAIN_ENDPOINT,optional"`
-	LocalDBDir        string `env:"LOCAL_DB_DIRECTORY,optional"`
-	env               string `env:"-"`
+	LogLevel          slog.Level `env:"LOG_LEVEL,optional"`
+	ServiceEndpoint   string     `env:"HTTP_SERVICE_ENDPOINT"`
+	AggregationAmount int        `env:"AGGREGATION_AMOUNT,optional"`
+	DatabaseDSN       string     `env:"DATABASE_DSN"`
+	PriKey            string     `env:"PRIVATE_KEY,optional"`
+	BootNodeMultiAddr string     `env:"BOOTNODE_MULTIADDR"`
+	IoTeXChainID      int        `env:"IOTEX_CHAINID"`
+	ChainEndpoint     string     `env:"CHAIN_ENDPOINT,optional"`
+	LocalDBDir        string     `env:"LOCAL_DB_DIRECTORY,optional"`
+	env               string     `env:"-"`
 }
 
 var defaultTestnetConfig = &Config{
-	LogLevel:          int(slog.LevelInfo),
+	LogLevel:          slog.LevelInfo,
 	ServiceEndpoint:   ":9000",
 	AggregationAmount: 1,
 	DatabaseDSN:       "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
