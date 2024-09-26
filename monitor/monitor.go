@@ -37,13 +37,14 @@ type Handler struct {
 }
 
 type ContractAddr struct {
-	Prover  common.Address
-	Project common.Address
-	Dao     common.Address
-	Minter  common.Address
+	Prover      common.Address
+	Project     common.Address
+	Dao         common.Address
+	Minter      common.Address
+	TaskManager common.Address
 }
 
-type Contract struct {
+type contract struct {
 	h                    *Handler
 	addr                 *ContractAddr
 	beginningBlockNumber uint64
@@ -69,7 +70,7 @@ var allTopic = []common.Hash{
 }
 
 func (a *ContractAddr) all() []common.Address {
-	all := make([]common.Address, 0, 4)
+	all := make([]common.Address, 0, 5)
 	zero := common.Address{}
 	if !bytes.Equal(a.Dao[:], zero[:]) {
 		all = append(all, a.Dao)
@@ -83,10 +84,13 @@ func (a *ContractAddr) all() []common.Address {
 	if !bytes.Equal(a.Prover[:], zero[:]) {
 		all = append(all, a.Prover)
 	}
+	if !bytes.Equal(a.TaskManager[:], zero[:]) {
+		all = append(all, a.TaskManager)
+	}
 	return all
 }
 
-func (c *Contract) processLogs(logs []types.Log) error {
+func (c *contract) processLogs(logs []types.Log) error {
 	sort.Slice(logs, func(i, j int) bool {
 		if logs[i].BlockNumber != logs[j].BlockNumber {
 			return logs[i].BlockNumber < logs[j].BlockNumber
@@ -117,7 +121,7 @@ func (c *Contract) processLogs(logs []types.Log) error {
 	return nil
 }
 
-func (c *Contract) list() (uint64, error) {
+func (c *contract) list() (uint64, error) {
 	head := c.beginningBlockNumber
 	h, err := c.h.ScannedBlockNumber()
 	if err != nil {
@@ -164,7 +168,7 @@ func (c *Contract) list() (uint64, error) {
 	return to, nil
 }
 
-func (c *Contract) watch(listedBlockNumber uint64) {
+func (c *contract) watch(listedBlockNumber uint64) {
 	scannedBlockNumber := listedBlockNumber
 	query := ethereum.FilterQuery{
 		Addresses: c.addr.all(),
@@ -198,21 +202,21 @@ func (c *Contract) watch(listedBlockNumber uint64) {
 	}()
 }
 
-func New(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpoint string) (*Contract, error) {
+func Run(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpoint string) error {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to dial chain endpoint")
+		return errors.Wrap(err, "failed to dial chain endpoint")
 	}
 	daoInstance, err := dao.NewDao(addr.Dao, client)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to new project contract instance")
+		return errors.Wrap(err, "failed to new project contract instance")
 	}
 	minterInstance, err := minter.NewMinter(addr.Minter, client)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to new prover contract instance")
+		return errors.Wrap(err, "failed to new prover contract instance")
 	}
 
-	c := &Contract{
+	c := &contract{
 		h:                    h,
 		addr:                 addr,
 		beginningBlockNumber: beginningBlockNumber,
@@ -225,9 +229,9 @@ func New(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpo
 
 	listedBlockNumber, err := c.list()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	go c.watch(listedBlockNumber)
 
-	return c, nil
+	return nil
 }
