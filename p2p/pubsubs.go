@@ -2,8 +2,10 @@ package p2p
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -11,10 +13,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-type HandleSubscription func([]byte)
+type HandleSubscription func(projectID uint64, taskID common.Hash) error
 
 type PubSub struct {
 	topic *pubsub.Topic
+}
+
+type data struct {
+	ProjectID uint64
+	TaskID    common.Hash
 }
 
 func run(ctx context.Context, sub *pubsub.Subscription, selfID peer.ID, handle HandleSubscription) {
@@ -27,15 +34,24 @@ func run(ctx context.Context, sub *pubsub.Subscription, selfID peer.ID, handle H
 		if m.ReceivedFrom == selfID {
 			continue
 		}
-		handle(m.Message.Data)
+		d := &data{}
+		if err := json.Unmarshal(m.Message.Data, d); err != nil {
+			slog.Error("failed to unmarshal p2p message", "error", err)
+			continue
+		}
+		if err := handle(d.ProjectID, d.TaskID); err != nil {
+			slog.Error("failed to handle p2p message", "error", err)
+		}
 	}
 }
 
-func (p *PubSub) Publish(data []byte) error {
-	if err := p.topic.Publish(context.Background(), data); err != nil {
-		return errors.Wrap(err, "failed to publish data to p2p network")
+func (p *PubSub) Publish(projectID uint64, taskID common.Hash) error {
+	j, err := json.Marshal(&data{ProjectID: projectID, TaskID: taskID})
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal data")
 	}
-	return nil
+	err = p.topic.Publish(context.Background(), j)
+	return errors.Wrap(err, "failed to publish data to p2p network")
 }
 
 func NewPubSub(bootNodeMultiaddr string, iotexChainID int, handle HandleSubscription) (*PubSub, error) {

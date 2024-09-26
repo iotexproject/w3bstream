@@ -28,7 +28,8 @@ type Message struct {
 
 type Task struct {
 	gorm.Model
-	TaskID     common.Hash    `gorm:"index:task_id,not null"`
+	TaskID     common.Hash    `gorm:"index:message_fetch,not null"`
+	ProjectID  uint64         `gorm:"index:message_fetch,not null"`
 	MessageIDs datatypes.JSON `gorm:"not null"`
 	Signature  []byte         `gorm:"not null"`
 }
@@ -95,6 +96,7 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount in
 
 	mt := &Task{
 		TaskID:     taskID,
+		ProjectID:  m.ProjectID,
 		MessageIDs: messageIDsJson,
 		Signature:  sig,
 	}
@@ -102,7 +104,7 @@ func (p *Persistence) aggregateTaskTx(tx *gorm.DB, pubSub *p2p.PubSub, amount in
 	if err := tx.Create(mt).Error; err != nil {
 		return common.Hash{}, errors.Wrap(err, "failed to create Task")
 	}
-	return taskID, pubSub.Publish(taskID.Bytes())
+	return taskID, pubSub.Publish(m.ProjectID, taskID)
 }
 
 func (p *Persistence) Save(pubSub *p2p.PubSub, msg *Message, aggregationAmount int, prv *ecdsa.PrivateKey) (common.Hash, error) {

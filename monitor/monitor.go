@@ -28,8 +28,8 @@ type (
 	UpsertScannedBlockNumber func(uint64) error
 	UpsertNBits              func(uint32) error
 	UpsertBlockHead          func(uint64, common.Hash) error
-	AssignTask               func(common.Hash, uint64) error
-	DeleteTask               func(common.Hash, uint64) error
+	AssignTask               func(uint64, common.Hash) error
+	DeleteTask               func(uint64, common.Hash) error
 )
 
 type Handler struct {
@@ -139,7 +139,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse task assigned event")
 			}
-			if err := c.h.AssignTask(e.TaskId, e.ProjectId.Uint64()); err != nil {
+			if err := c.h.AssignTask(e.ProjectId.Uint64(), e.TaskId); err != nil {
 				return err
 			}
 		case taskSettledTopic:
@@ -150,7 +150,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse task settled event")
 			}
-			if err := c.h.DeleteTask(e.TaskId, e.ProjectId.Uint64()); err != nil {
+			if err := c.h.DeleteTask(e.ProjectId.Uint64(), e.TaskId); err != nil {
 				return err
 			}
 		}
