@@ -25,7 +25,7 @@ func TestConfig_Init(t *testing.T) {
 			ProjectContractAddr: "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 			ProverContractAddr:  "0x",
 			OperatorPriKey:      "",
-			LocalDBDir:          "./test",
+			OperatorPrvKey       "./test",
 		}
 
 		_ = os.Setenv("HTTP_SERVICE_ENDPOINT", expected.ServiceEndpoint)

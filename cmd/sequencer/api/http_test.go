@@ -28,7 +28,7 @@ func TestNewHttpServer(t *testing.T) {
 	r := require.New(t)
 
 	conf := &config.Config{
-		OperatorPriKey:        "privateKey",
+		OperatorPrvKey:        "privateKey",
 		OperatorPriKeyED25519: "PrivateKeyED25519",
 	}
 	t.Run("InvalidSolanaAddress", func(t *testing.T) {
@@ -60,7 +60,7 @@ func TestNewHttpServer(t *testing.T) {
 func TestHttpServer_Run(t *testing.T) {
 	r := require.New(t)
 
-	s := &HttpServer{
+	s := &httpServer{
 		engine: gin.Default(),
 	}
 
@@ -88,7 +88,7 @@ func TestHttpServer_Run(t *testing.T) {
 func TestHttpServer_liveness(t *testing.T) {
 	r := require.New(t)
 
-	s := &HttpServer{
+	s := &httpServer{
 		engine: gin.Default(),
 	}
 
@@ -107,7 +107,7 @@ func TestHttpServer_liveness(t *testing.T) {
 func TestHttpServer_getCoordinatorConfigInfo(t *testing.T) {
 	r := require.New(t)
 
-	s := &HttpServer{
+	s := &httpServer{
 		engine: gin.Default(),
 		coordinatorConf: &apitypes.CoordinatorConfigRsp{
 			ProjectContractAddress: "projectContractAddress",
@@ -135,9 +135,9 @@ func TestHttpServer_getCoordinatorConfigInfo(t *testing.T) {
 func TestHttpServer_getTaskStateLog(t *testing.T) {
 	r := require.New(t)
 
-	s := &HttpServer{
-		engine:      gin.Default(),
-		persistence: &postgres.Postgres{},
+	s := &httpServer{
+		engine: gin.Default(),
+		db:     &postgres.Postgres{},
 	}
 
 	t.Run("FailedToParseProjectID", func(t *testing.T) {

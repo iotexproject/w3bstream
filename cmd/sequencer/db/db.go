@@ -1,4 +1,4 @@
-package postgres
+package db
 
 import (
 	"github.com/ethereum/go-ethereum/common"

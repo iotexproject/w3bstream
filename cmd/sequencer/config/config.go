@@ -8,25 +8,26 @@ import (
 )
 
 type Config struct {
-	LogLevel             slog.Level `env:"LOG_LEVEL,optional"`
-	ServiceEndpoint      string     `env:"HTTP_SERVICE_ENDPOINT"`
-	DatabaseDSN          string     `env:"DATABASE_DSN"`
-	BootNodeMultiAddr    string     `env:"BOOTNODE_MULTIADDR"`
-	IoTeXChainID         int        `env:"IOTEX_CHAINID"`
-	ChainEndpoint        string     `env:"CHAIN_ENDPOINT,optional"`
-	ProjectContractAddr  string     `env:"PROJECT_CONTRACT_ADDRESS,optional"`
-	ProverContractAddr   string     `env:"PROVER_CONTRACT_ADDRESS,optional"`
-	OperatorPriKey       string     `env:"OPERATOR_PRIVATE_KEY,optional"`
-	LocalDBDir           string     `env:"LOCAL_DB_DIRECTORY,optional"`
-	BeginningBlockNumber uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
-	env                  string     `env:"-"`
+	LogLevel                slog.Level `env:"LOG_LEVEL,optional"`
+	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT"`
+	BootNodeMultiAddr       string     `env:"BOOTNODE_MULTIADDR"`
+	IoTeXChainID            int        `env:"IOTEX_CHAINID"`
+	ChainEndpoint           string     `env:"CHAIN_ENDPOINT,optional"`
+	OperatorPrvKey          string     `env:"OPERATOR_PRIVATE_KEY,optional"`
+	LocalDBDir              string     `env:"LOCAL_DB_DIRECTORY,optional"`
+	BeginningBlockNumber    uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
+	ProjectContractAddr     string     `env:"PROJECT_CONTRACT_ADDRESS,optional"`
+	ProverContractAddr      string     `env:"PROVER_CONTRACT_ADDRESS,optional"`
+	DaoContractAddr         string     `env:"DAO_CONTRACT_ADDRESS,optional"`
+	MinterContractAddr      string     `env:"MINTER_CONTRACT_ADDRESS,optional"`
+	TaskManagerContractAddr string     `env:"TASK_MANAGER_CONTRACT_ADDRESS,optional"`
+	env                     string     `env:"-"`
 }
 
 var (
 	defaultTestnetConfig = &Config{
 		LogLevel:             slog.LevelInfo,
 		ServiceEndpoint:      ":9001",
-		DatabaseDSN:          "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		BootNodeMultiAddr:    "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:         2,
 		ChainEndpoint:        "https://babel-api.testnet.iotex.io",
