@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -23,25 +22,17 @@ func TestConfig_Init(t *testing.T) {
 			ChainEndpoint:        "http://abc.def.com",
 			ProjectContractAddr:  "0x123",
 			DatabaseDSN:          "postgres://root@localhost/abc?ext=666",
-			BootNodeMultiAddr:    "/dsn4/abc/123",
 			ProverContractAddr:   "0x456",
-			IoTeXChainID:         5,
-			SchedulerEpoch:       720,
 			ProverOperatorPriKey: "private key",
-			ProjectFileDir:       "/path/to/project/configs",
 			LocalDBDir:           "./test",
 		}
 
 		_ = os.Setenv("VM_ENDPOINTS", expected.VMEndpoints)
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATABASE_DSN", expected.DatabaseDSN)
-		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
 		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddr)
-		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
-		_ = os.Setenv("SCHEDULER_EPOCH", strconv.FormatUint(expected.SchedulerEpoch, 10))
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
 		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPriKey)
-		_ = os.Setenv("PROJECT_FILE_DIRECTORY", expected.ProjectFileDir)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
 
 		c := &Config{}

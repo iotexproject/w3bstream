@@ -8,15 +8,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cockroachdb/pebble"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/cmd/prover/config"
 	"github.com/iotexproject/w3bstream/p2p"
-	"github.com/iotexproject/w3bstream/persistence/contract"
 	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/scheduler"
 	"github.com/iotexproject/w3bstream/task/processor"
@@ -40,11 +36,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}
 	proverOperatorAddress := crypto.PubkeyToAddress(sk.PublicKey)
-
-	defaultDatasourcePubKey, err := hexutil.Decode(cfg.DefaultDatasourcePubKey)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
-	}
+	slog.Info("my prover", "address", proverOperatorAddress.String())
 
 	vmEndpoints := map[uint64]string{}
 	if err := json.Unmarshal([]byte(cfg.VMEndpoints), &vmEndpoints); err != nil {
@@ -56,47 +48,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new vm handler"))
 	}
 
-	schedulerNotification := make(chan uint64, 10)
-	chainHeadNotification := make(chan uint64, 10)
-
-	projectNotifications := []chan<- uint64{schedulerNotification}
-	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
-
-	local := cfg.ProjectFileDir != ""
-
-	var contractPersistence *contract.Contract
-	var kvDB *pebble.DB
-	if !local {
-		kvDB, err = pebble.Open(cfg.LocalDBDir, &pebble.Options{})
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "failed to open pebble db"))
-		}
-		defer kvDB.Close()
-
-		contractPersistence, err = contract.New(kvDB, cfg.SchedulerEpoch, cfg.BeginningBlockNumber,
-			cfg.ChainEndpoint, common.HexToAddress(cfg.ProverContractAddr),
-			common.HexToAddress(cfg.ProjectContractAddr), chainHeadNotifications, projectNotifications)
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
-		}
-	}
-
-	proverID := uint64(0)
-	if !local {
-		p := contractPersistence.Prover(proverOperatorAddress)
-		if p == nil {
-			log.Fatal(errors.New("failed to query operator's prover id"))
-		}
-		proverID = p.ID
-	}
-	slog.Info("my prover id", "prover_id", proverID)
-
-	var projectManager *project.Manager
-	if local {
-		projectManager, err = project.NewLocalManager(cfg.ProjectFileDir)
-	} else {
-		projectManager = project.NewManager(kvDB, contractPersistence.LatestProject)
-	}
+	projectManager := project.NewManager(kvDB, contractPersistence.LatestProject)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}
