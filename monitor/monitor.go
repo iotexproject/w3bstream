@@ -18,6 +18,9 @@ import (
 
 	"github.com/iotexproject/w3bstream/smartcontracts/go/dao"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/taskmanager"
 )
 
 type (
@@ -25,6 +28,7 @@ type (
 	UpsertScannedBlockNumber func(uint64) error
 	UpsertNBits              func(uint32) error
 	UpsertBlockHead          func(uint64, common.Hash) error
+	AssignTask               func(common.Hash, uint64) error
 	DeleteTask               func(common.Hash, uint64) error
 )
 
@@ -33,6 +37,7 @@ type Handler struct {
 	UpsertScannedBlockNumber
 	UpsertNBits
 	UpsertBlockHead
+	AssignTask
 	DeleteTask
 }
 
@@ -53,6 +58,9 @@ type contract struct {
 	client               *ethclient.Client
 	daoInstance          *dao.Dao
 	minterInstance       *minter.Minter
+	taskManagerInstance  *taskmanager.Taskmanager
+	proverInstance       *prover.Prover
+	projectInstance      *project.Project
 }
 
 var (
@@ -69,22 +77,23 @@ var allTopic = []common.Hash{
 	taskSettledTopic,
 }
 
+var emptyAddr = common.Address{}
+
 func (a *ContractAddr) all() []common.Address {
 	all := make([]common.Address, 0, 5)
-	zero := common.Address{}
-	if !bytes.Equal(a.Dao[:], zero[:]) {
+	if !bytes.Equal(a.Dao[:], emptyAddr[:]) {
 		all = append(all, a.Dao)
 	}
-	if !bytes.Equal(a.Minter[:], zero[:]) {
+	if !bytes.Equal(a.Minter[:], emptyAddr[:]) {
 		all = append(all, a.Minter)
 	}
-	if !bytes.Equal(a.Project[:], zero[:]) {
+	if !bytes.Equal(a.Project[:], emptyAddr[:]) {
 		all = append(all, a.Project)
 	}
-	if !bytes.Equal(a.Prover[:], zero[:]) {
+	if !bytes.Equal(a.Prover[:], emptyAddr[:]) {
 		all = append(all, a.Prover)
 	}
-	if !bytes.Equal(a.TaskManager[:], zero[:]) {
+	if !bytes.Equal(a.TaskManager[:], emptyAddr[:]) {
 		all = append(all, a.TaskManager)
 	}
 	return all
@@ -101,6 +110,9 @@ func (c *contract) processLogs(logs []types.Log) error {
 	for _, l := range logs {
 		switch l.Topics[0] {
 		case blockAddedTopic:
+			if c.daoInstance == nil || c.h.UpsertBlockHead == nil {
+				continue
+			}
 			e, err := c.daoInstance.ParseBlockAdded(l)
 			if err != nil {
 				return errors.Wrap(err, "failed to parse block added event")
@@ -109,11 +121,36 @@ func (c *contract) processLogs(logs []types.Log) error {
 				return err
 			}
 		case nbitsSetTopic:
+			if c.minterInstance == nil || c.h.UpsertNBits == nil {
+				continue
+			}
 			e, err := c.minterInstance.ParseNBitsSet(l)
 			if err != nil {
 				return errors.Wrap(err, "failed to parse nbits set event")
 			}
 			if err := c.h.UpsertNBits(e.Nbits); err != nil {
+				return err
+			}
+		case taskAssignedTopic:
+			if c.taskManagerInstance == nil || c.h.AssignTask == nil {
+				continue
+			}
+			e, err := c.taskManagerInstance.ParseTaskAssigned(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse task assigned event")
+			}
+			if err := c.h.AssignTask(e.TaskId, e.ProjectId.Uint64()); err != nil {
+				return err
+			}
+		case taskSettledTopic:
+			if c.taskManagerInstance == nil || c.h.DeleteTask == nil {
+				continue
+			}
+			e, err := c.taskManagerInstance.ParseTaskSettled(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse task settled event")
+			}
+			if err := c.h.DeleteTask(e.TaskId, e.ProjectId.Uint64()); err != nil {
 				return err
 			}
 		}
@@ -207,14 +244,6 @@ func Run(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpo
 	if err != nil {
 		return errors.Wrap(err, "failed to dial chain endpoint")
 	}
-	daoInstance, err := dao.NewDao(addr.Dao, client)
-	if err != nil {
-		return errors.Wrap(err, "failed to new project contract instance")
-	}
-	minterInstance, err := minter.NewMinter(addr.Minter, client)
-	if err != nil {
-		return errors.Wrap(err, "failed to new prover contract instance")
-	}
 
 	c := &contract{
 		h:                    h,
@@ -223,8 +252,42 @@ func Run(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpo
 		listStepSize:         500,
 		watchInterval:        1 * time.Second,
 		client:               client,
-		daoInstance:          daoInstance,
-		minterInstance:       minterInstance,
+	}
+
+	if !bytes.Equal(addr.Dao[:], emptyAddr[:]) {
+		daoInstance, err := dao.NewDao(addr.Dao, client)
+		if err != nil {
+			return errors.Wrap(err, "failed to new dao contract instance")
+		}
+		c.daoInstance = daoInstance
+	}
+	if !bytes.Equal(addr.Minter[:], emptyAddr[:]) {
+		minterInstance, err := minter.NewMinter(addr.Minter, client)
+		if err != nil {
+			return errors.Wrap(err, "failed to new minter contract instance")
+		}
+		c.minterInstance = minterInstance
+	}
+	if !bytes.Equal(addr.TaskManager[:], emptyAddr[:]) {
+		taskManagerInstance, err := taskmanager.NewTaskmanager(addr.TaskManager, client)
+		if err != nil {
+			return errors.Wrap(err, "failed to new task manager contract instance")
+		}
+		c.taskManagerInstance = taskManagerInstance
+	}
+	if !bytes.Equal(addr.Prover[:], emptyAddr[:]) {
+		proverInstance, err := prover.NewProver(addr.Prover, client)
+		if err != nil {
+			return errors.Wrap(err, "failed to new prover contract instance")
+		}
+		c.proverInstance = proverInstance
+	}
+	if !bytes.Equal(addr.Project[:], emptyAddr[:]) {
+		projectInstance, err := project.NewProject(addr.Project, client)
+		if err != nil {
+			return errors.Wrap(err, "failed to new project contract instance")
+		}
+		c.projectInstance = projectInstance
 	}
 
 	listedBlockNumber, err := c.list()
