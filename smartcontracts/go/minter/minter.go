@@ -54,7 +54,7 @@ type TaskAssignment struct {
 
 // MinterMetaData contains all meta data concerning the Minter contract.
 var MinterMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"}],\"name\":\"NBitsSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"TargetDurationSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"TaskAllowanceSet\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"currentNBits\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentTarget\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dao\",\"outputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"_dao\",\"type\":\"address\"},{\"internalType\":\"contractITaskManager\",\"name\":\"_tm\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"meta\",\"type\":\"bytes4\"},{\"internalType\":\"bytes32\",\"name\":\"prevhash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"},{\"internalType\":\"bytes8\",\"name\":\"nonce\",\"type\":\"bytes8\"}],\"internalType\":\"structBlockInfo\",\"name\":\"blockinfo\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"internalType\":\"structSequencer\",\"name\":\"coinbase\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment[]\",\"name\":\"assignments\",\"type\":\"tuple[]\"}],\"name\":\"mint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"}],\"name\":\"setAdhocNBits\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setTargetDuration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"setTaskAllowance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskAllowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tm\",\"outputs\":[{\"internalType\":\"contractITaskManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"useAdhocNBits\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"}],\"name\":\"BlockRewardfSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"}],\"name\":\"NBitsSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"TargetDurationSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"TaskAllowanceSet\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"blockReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentNBits\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dao\",\"outputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"distributor\",\"outputs\":[{\"internalType\":\"contractIBlockRewardDistributor\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractIDAO\",\"name\":\"_dao\",\"type\":\"address\"},{\"internalType\":\"contractITaskManager\",\"name\":\"_taskManager\",\"type\":\"address\"},{\"internalType\":\"contractIBlockRewardDistributor\",\"name\":\"_distributor\",\"type\":\"address\"},{\"internalType\":\"contractIScrypt\",\"name\":\"_scrypt\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes4\",\"name\":\"meta\",\"type\":\"bytes4\"},{\"internalType\":\"bytes32\",\"name\":\"prevhash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"},{\"internalType\":\"bytes8\",\"name\":\"nonce\",\"type\":\"bytes8\"}],\"internalType\":\"structBlockInfo\",\"name\":\"blockinfo\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"internalType\":\"structSequencer\",\"name\":\"coinbase\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment[]\",\"name\":\"assignments\",\"type\":\"tuple[]\"}],\"name\":\"mint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"}],\"name\":\"nbitsToTarget\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"nbits\",\"type\":\"uint32\"}],\"name\":\"setAdhocNBits\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"}],\"name\":\"setBlockReward\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setTargetDuration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"}],\"name\":\"setTaskAllowance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskAllowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskManager\",\"outputs\":[{\"internalType\":\"contractITaskManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"useAdhocNBits\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // MinterABI is the input ABI used to generate the binding from.
@@ -203,6 +203,37 @@ func (_Minter *MinterTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _Minter.Contract.contract.Transact(opts, method, params...)
 }
 
+// BlockReward is a free data retrieval call binding the contract method 0x0ac168a1.
+//
+// Solidity: function blockReward() view returns(uint256)
+func (_Minter *MinterCaller) BlockReward(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Minter.contract.Call(opts, &out, "blockReward")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// BlockReward is a free data retrieval call binding the contract method 0x0ac168a1.
+//
+// Solidity: function blockReward() view returns(uint256)
+func (_Minter *MinterSession) BlockReward() (*big.Int, error) {
+	return _Minter.Contract.BlockReward(&_Minter.CallOpts)
+}
+
+// BlockReward is a free data retrieval call binding the contract method 0x0ac168a1.
+//
+// Solidity: function blockReward() view returns(uint256)
+func (_Minter *MinterCallerSession) BlockReward() (*big.Int, error) {
+	return _Minter.Contract.BlockReward(&_Minter.CallOpts)
+}
+
 // CurrentNBits is a free data retrieval call binding the contract method 0x626a0ccb.
 //
 // Solidity: function currentNBits() view returns(uint32)
@@ -234,37 +265,6 @@ func (_Minter *MinterCallerSession) CurrentNBits() (uint32, error) {
 	return _Minter.Contract.CurrentNBits(&_Minter.CallOpts)
 }
 
-// CurrentTarget is a free data retrieval call binding the contract method 0x39148c53.
-//
-// Solidity: function currentTarget() view returns(uint256)
-func (_Minter *MinterCaller) CurrentTarget(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _Minter.contract.Call(opts, &out, "currentTarget")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// CurrentTarget is a free data retrieval call binding the contract method 0x39148c53.
-//
-// Solidity: function currentTarget() view returns(uint256)
-func (_Minter *MinterSession) CurrentTarget() (*big.Int, error) {
-	return _Minter.Contract.CurrentTarget(&_Minter.CallOpts)
-}
-
-// CurrentTarget is a free data retrieval call binding the contract method 0x39148c53.
-//
-// Solidity: function currentTarget() view returns(uint256)
-func (_Minter *MinterCallerSession) CurrentTarget() (*big.Int, error) {
-	return _Minter.Contract.CurrentTarget(&_Minter.CallOpts)
-}
-
 // Dao is a free data retrieval call binding the contract method 0x4162169f.
 //
 // Solidity: function dao() view returns(address)
@@ -294,6 +294,68 @@ func (_Minter *MinterSession) Dao() (common.Address, error) {
 // Solidity: function dao() view returns(address)
 func (_Minter *MinterCallerSession) Dao() (common.Address, error) {
 	return _Minter.Contract.Dao(&_Minter.CallOpts)
+}
+
+// Distributor is a free data retrieval call binding the contract method 0xbfe10928.
+//
+// Solidity: function distributor() view returns(address)
+func (_Minter *MinterCaller) Distributor(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _Minter.contract.Call(opts, &out, "distributor")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// Distributor is a free data retrieval call binding the contract method 0xbfe10928.
+//
+// Solidity: function distributor() view returns(address)
+func (_Minter *MinterSession) Distributor() (common.Address, error) {
+	return _Minter.Contract.Distributor(&_Minter.CallOpts)
+}
+
+// Distributor is a free data retrieval call binding the contract method 0xbfe10928.
+//
+// Solidity: function distributor() view returns(address)
+func (_Minter *MinterCallerSession) Distributor() (common.Address, error) {
+	return _Minter.Contract.Distributor(&_Minter.CallOpts)
+}
+
+// NbitsToTarget is a free data retrieval call binding the contract method 0x7b6194c6.
+//
+// Solidity: function nbitsToTarget(uint32 nbits) pure returns(uint256)
+func (_Minter *MinterCaller) NbitsToTarget(opts *bind.CallOpts, nbits uint32) (*big.Int, error) {
+	var out []interface{}
+	err := _Minter.contract.Call(opts, &out, "nbitsToTarget", nbits)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// NbitsToTarget is a free data retrieval call binding the contract method 0x7b6194c6.
+//
+// Solidity: function nbitsToTarget(uint32 nbits) pure returns(uint256)
+func (_Minter *MinterSession) NbitsToTarget(nbits uint32) (*big.Int, error) {
+	return _Minter.Contract.NbitsToTarget(&_Minter.CallOpts, nbits)
+}
+
+// NbitsToTarget is a free data retrieval call binding the contract method 0x7b6194c6.
+//
+// Solidity: function nbitsToTarget(uint32 nbits) pure returns(uint256)
+func (_Minter *MinterCallerSession) NbitsToTarget(nbits uint32) (*big.Int, error) {
+	return _Minter.Contract.NbitsToTarget(&_Minter.CallOpts, nbits)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
@@ -389,12 +451,12 @@ func (_Minter *MinterCallerSession) TaskAllowance() (*big.Int, error) {
 	return _Minter.Contract.TaskAllowance(&_Minter.CallOpts)
 }
 
-// Tm is a free data retrieval call binding the contract method 0xcdb314d3.
+// TaskManager is a free data retrieval call binding the contract method 0xa50a640e.
 //
-// Solidity: function tm() view returns(address)
-func (_Minter *MinterCaller) Tm(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function taskManager() view returns(address)
+func (_Minter *MinterCaller) TaskManager(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _Minter.contract.Call(opts, &out, "tm")
+	err := _Minter.contract.Call(opts, &out, "taskManager")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -406,18 +468,18 @@ func (_Minter *MinterCaller) Tm(opts *bind.CallOpts) (common.Address, error) {
 
 }
 
-// Tm is a free data retrieval call binding the contract method 0xcdb314d3.
+// TaskManager is a free data retrieval call binding the contract method 0xa50a640e.
 //
-// Solidity: function tm() view returns(address)
-func (_Minter *MinterSession) Tm() (common.Address, error) {
-	return _Minter.Contract.Tm(&_Minter.CallOpts)
+// Solidity: function taskManager() view returns(address)
+func (_Minter *MinterSession) TaskManager() (common.Address, error) {
+	return _Minter.Contract.TaskManager(&_Minter.CallOpts)
 }
 
-// Tm is a free data retrieval call binding the contract method 0xcdb314d3.
+// TaskManager is a free data retrieval call binding the contract method 0xa50a640e.
 //
-// Solidity: function tm() view returns(address)
-func (_Minter *MinterCallerSession) Tm() (common.Address, error) {
-	return _Minter.Contract.Tm(&_Minter.CallOpts)
+// Solidity: function taskManager() view returns(address)
+func (_Minter *MinterCallerSession) TaskManager() (common.Address, error) {
+	return _Minter.Contract.TaskManager(&_Minter.CallOpts)
 }
 
 // UseAdhocNBits is a free data retrieval call binding the contract method 0xb415aa51.
@@ -451,25 +513,25 @@ func (_Minter *MinterCallerSession) UseAdhocNBits() (bool, error) {
 	return _Minter.Contract.UseAdhocNBits(&_Minter.CallOpts)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x485cc955.
+// Initialize is a paid mutator transaction binding the contract method 0xf8c8765e.
 //
-// Solidity: function initialize(address _dao, address _tm) returns()
-func (_Minter *MinterTransactor) Initialize(opts *bind.TransactOpts, _dao common.Address, _tm common.Address) (*types.Transaction, error) {
-	return _Minter.contract.Transact(opts, "initialize", _dao, _tm)
+// Solidity: function initialize(address _dao, address _taskManager, address _distributor, address _scrypt) returns()
+func (_Minter *MinterTransactor) Initialize(opts *bind.TransactOpts, _dao common.Address, _taskManager common.Address, _distributor common.Address, _scrypt common.Address) (*types.Transaction, error) {
+	return _Minter.contract.Transact(opts, "initialize", _dao, _taskManager, _distributor, _scrypt)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x485cc955.
+// Initialize is a paid mutator transaction binding the contract method 0xf8c8765e.
 //
-// Solidity: function initialize(address _dao, address _tm) returns()
-func (_Minter *MinterSession) Initialize(_dao common.Address, _tm common.Address) (*types.Transaction, error) {
-	return _Minter.Contract.Initialize(&_Minter.TransactOpts, _dao, _tm)
+// Solidity: function initialize(address _dao, address _taskManager, address _distributor, address _scrypt) returns()
+func (_Minter *MinterSession) Initialize(_dao common.Address, _taskManager common.Address, _distributor common.Address, _scrypt common.Address) (*types.Transaction, error) {
+	return _Minter.Contract.Initialize(&_Minter.TransactOpts, _dao, _taskManager, _distributor, _scrypt)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x485cc955.
+// Initialize is a paid mutator transaction binding the contract method 0xf8c8765e.
 //
-// Solidity: function initialize(address _dao, address _tm) returns()
-func (_Minter *MinterTransactorSession) Initialize(_dao common.Address, _tm common.Address) (*types.Transaction, error) {
-	return _Minter.Contract.Initialize(&_Minter.TransactOpts, _dao, _tm)
+// Solidity: function initialize(address _dao, address _taskManager, address _distributor, address _scrypt) returns()
+func (_Minter *MinterTransactorSession) Initialize(_dao common.Address, _taskManager common.Address, _distributor common.Address, _scrypt common.Address) (*types.Transaction, error) {
+	return _Minter.Contract.Initialize(&_Minter.TransactOpts, _dao, _taskManager, _distributor, _scrypt)
 }
 
 // Mint is a paid mutator transaction binding the contract method 0x8f7118a7.
@@ -535,6 +597,27 @@ func (_Minter *MinterTransactorSession) SetAdhocNBits(nbits uint32) (*types.Tran
 	return _Minter.Contract.SetAdhocNBits(&_Minter.TransactOpts, nbits)
 }
 
+// SetBlockReward is a paid mutator transaction binding the contract method 0x1a18e707.
+//
+// Solidity: function setBlockReward(uint256 reward) returns()
+func (_Minter *MinterTransactor) SetBlockReward(opts *bind.TransactOpts, reward *big.Int) (*types.Transaction, error) {
+	return _Minter.contract.Transact(opts, "setBlockReward", reward)
+}
+
+// SetBlockReward is a paid mutator transaction binding the contract method 0x1a18e707.
+//
+// Solidity: function setBlockReward(uint256 reward) returns()
+func (_Minter *MinterSession) SetBlockReward(reward *big.Int) (*types.Transaction, error) {
+	return _Minter.Contract.SetBlockReward(&_Minter.TransactOpts, reward)
+}
+
+// SetBlockReward is a paid mutator transaction binding the contract method 0x1a18e707.
+//
+// Solidity: function setBlockReward(uint256 reward) returns()
+func (_Minter *MinterTransactorSession) SetBlockReward(reward *big.Int) (*types.Transaction, error) {
+	return _Minter.Contract.SetBlockReward(&_Minter.TransactOpts, reward)
+}
+
 // SetTargetDuration is a paid mutator transaction binding the contract method 0xa00171ea.
 //
 // Solidity: function setTargetDuration(uint256 duration) returns()
@@ -596,6 +679,140 @@ func (_Minter *MinterSession) TransferOwnership(newOwner common.Address) (*types
 // Solidity: function transferOwnership(address newOwner) returns()
 func (_Minter *MinterTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _Minter.Contract.TransferOwnership(&_Minter.TransactOpts, newOwner)
+}
+
+// MinterBlockRewardfSetIterator is returned from FilterBlockRewardfSet and is used to iterate over the raw logs and unpacked data for BlockRewardfSet events raised by the Minter contract.
+type MinterBlockRewardfSetIterator struct {
+	Event *MinterBlockRewardfSet // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *MinterBlockRewardfSetIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(MinterBlockRewardfSet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(MinterBlockRewardfSet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *MinterBlockRewardfSetIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *MinterBlockRewardfSetIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// MinterBlockRewardfSet represents a BlockRewardfSet event raised by the Minter contract.
+type MinterBlockRewardfSet struct {
+	Reward *big.Int
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterBlockRewardfSet is a free log retrieval operation binding the contract event 0x92121bd60c0061b634208f9f1b60e75a6bd603348031e3df06d29d2cbef32a55.
+//
+// Solidity: event BlockRewardfSet(uint256 reward)
+func (_Minter *MinterFilterer) FilterBlockRewardfSet(opts *bind.FilterOpts) (*MinterBlockRewardfSetIterator, error) {
+
+	logs, sub, err := _Minter.contract.FilterLogs(opts, "BlockRewardfSet")
+	if err != nil {
+		return nil, err
+	}
+	return &MinterBlockRewardfSetIterator{contract: _Minter.contract, event: "BlockRewardfSet", logs: logs, sub: sub}, nil
+}
+
+// WatchBlockRewardfSet is a free log subscription operation binding the contract event 0x92121bd60c0061b634208f9f1b60e75a6bd603348031e3df06d29d2cbef32a55.
+//
+// Solidity: event BlockRewardfSet(uint256 reward)
+func (_Minter *MinterFilterer) WatchBlockRewardfSet(opts *bind.WatchOpts, sink chan<- *MinterBlockRewardfSet) (event.Subscription, error) {
+
+	logs, sub, err := _Minter.contract.WatchLogs(opts, "BlockRewardfSet")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(MinterBlockRewardfSet)
+				if err := _Minter.contract.UnpackLog(event, "BlockRewardfSet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseBlockRewardfSet is a log parse operation binding the contract event 0x92121bd60c0061b634208f9f1b60e75a6bd603348031e3df06d29d2cbef32a55.
+//
+// Solidity: event BlockRewardfSet(uint256 reward)
+func (_Minter *MinterFilterer) ParseBlockRewardfSet(log types.Log) (*MinterBlockRewardfSet, error) {
+	event := new(MinterBlockRewardfSet)
+	if err := _Minter.contract.UnpackLog(event, "BlockRewardfSet", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
 
 // MinterInitializedIterator is returned from FilterInitialized and is used to iterate over the raw logs and unpacked data for Initialized events raised by the Minter contract.

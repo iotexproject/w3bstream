@@ -190,11 +190,11 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rsp)
 			return
 		}
-		client, err := ethclient.Dial("https://babel-api.testnet.iotex.io")
+		client, err := ethclient.Dial("https://babel-nightly.iotex.io")
 		if err != nil {
 			panic(err)
 		}
-		minterInstance, err := minter.NewMinter(common.HexToAddress("0x39d95173C92aadcD47184f770c4a059D8Be66686"), client)
+		minterInstance, err := minter.NewMinter(common.HexToAddress("0xa77Be024413F955699E1eC3D0AdbbeAD8b11cFEE"), client)
 		if err != nil {
 			panic(err)
 		}
