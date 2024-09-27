@@ -99,9 +99,9 @@ contract W3bstreamBlockMinter is OwnableUpgradeable {
         (, bytes32 tiphash, uint256 tipTimestamp) = dao.tip();
         require(tipTimestamp != block.number);
         require(blockinfo.prevhash == tiphash, "invalid prevhash");
-        require(blockinfo.merkleRoot == keccak256(abi.encodePacked(coinbase.addr, coinbase.operator, coinbase.beneficiary)), "invalid merkle root");
+        require(blockinfo.merkleRoot == keccak256(abi.encode(coinbase.addr, coinbase.operator, coinbase.beneficiary)), "invalid merkle root");
         // TODO: review target usage
-        bytes memory header = abi.encodePacked(blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.nbits, blockinfo.nonce);
+        bytes memory header = abi.encode(blockinfo.meta, blockinfo.prevhash, blockinfo.merkleRoot, blockinfo.nbits, blockinfo.nonce);
         bytes memory headerHash = scrypt.hash(header, header, 1024, 1, 1, 32, 224);
         require(headerHash.length == 32, "invalid header hash");
         require(uint256(bytes32(headerHash)) <= target, "invalid proof of work");
