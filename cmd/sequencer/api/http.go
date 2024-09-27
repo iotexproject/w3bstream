@@ -129,7 +129,9 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			return
 		}
 		coinbase := Sequencer{
-			Operator: crypto.PubkeyToAddress(prv.PublicKey),
+			Addr:        crypto.PubkeyToAddress(prv.PublicKey),
+			Operator:    crypto.PubkeyToAddress(prv.PublicKey),
+			Beneficiary: crypto.PubkeyToAddress(prv.PublicKey),
 		}
 
 		// coinbaseABI := `[{"name":"coinbase","type":"tuple","components":[{"name":"addr","type":"address"},{"name":"operator","type":"address"},{"name":"beneficiary","type":"address"}]}]`
@@ -215,7 +217,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		if err != nil {
 			panic(err)
 		}
-		minterInstance, err := minter.NewMinter(common.HexToAddress("0xa77Be024413F955699E1eC3D0AdbbeAD8b11cFEE"), client)
+		minterInstance, err := minter.NewMinter(common.HexToAddress("0xa5bE0a5E9E8a0A4cC59adc0FE0d4338DFff68ac4"), client)
 		if err != nil {
 			panic(err)
 		}
@@ -242,7 +244,9 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 				Nonce:      h.Nonce,
 			},
 			minter.Sequencer{
-				Operator: crypto.PubkeyToAddress(prv.PublicKey),
+				Addr:        crypto.PubkeyToAddress(prv.PublicKey),
+				Operator:    crypto.PubkeyToAddress(prv.PublicKey),
+				Beneficiary: crypto.PubkeyToAddress(prv.PublicKey),
 			},
 			nil,
 		)
