@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"log/slog"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	solanatypes "github.com/blocto/solana-go-sdk/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -131,10 +131,21 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		coinbase := Sequencer{
 			Operator: crypto.PubkeyToAddress(prv.PublicKey),
 		}
-		var rootData bytes.Buffer
-		rootData.Write(coinbase.Addr[:])
-		rootData.Write(coinbase.Operator[:])
-		rootData.Write(coinbase.Beneficiary[:])
+
+		abiBytes, err := abi.NewType("bytes", "", nil)
+		if err != nil {
+			panic(err)
+		}
+		args := abi.Arguments{
+			{Type: abiBytes},
+			{Type: abiBytes},
+			{Type: abiBytes},
+		}
+
+		packed, err := args.Pack(coinbase.Addr[:], coinbase.Operator[:], coinbase.Beneficiary[:])
+		if err != nil {
+			panic(err)
+		}
 
 		h := &block.Header{
 			Meta:       [4]byte{},
@@ -147,7 +158,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			PrevBlockNumber: head,
 			Meta:            hexutil.Encode(h.Meta[:]),
 			PrevBlockHash:   hexutil.Encode(h.PrevHash[:]),
-			MerkleRoot:      hexutil.Encode(crypto.Keccak256Hash(rootData.Bytes()).Bytes()),
+			MerkleRoot:      hexutil.Encode(crypto.Keccak256Hash(packed).Bytes()),
 			NBits:           h.NBits,
 			Ts:              uint64(time.Time{}.Unix()),
 			NonceRange:      hexutil.Encode(h.Nonce[:]),
