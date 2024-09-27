@@ -5,6 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 
 contract W3bstreamBlockRewardDistributor is OwnableUpgradeable {
     event Distributed(address indexed recipient, uint256 amount);
+    event Withdrawn(uint256 amount);
     event OperatorSet(address indexed operator);
     event Topup(uint256 amount);
     address public operator;
@@ -37,5 +38,12 @@ contract W3bstreamBlockRewardDistributor is OwnableUpgradeable {
         (bool success, ) = recipient.call{value: amount}("");
         require(success, "transfer failed");
         emit Distributed(recipient, amount);
+    }
+
+    function withdraw(uint256 amount) public onlyOwner {
+        require(amount <= address(this).balance, "insufficient balance");
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "transfer failed");
+        emit Withdrawn(amount);
     }
 }
