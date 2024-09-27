@@ -4,11 +4,18 @@ pragma solidity ^0.8.19;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract W3bstreamBlockRewardDistributor is OwnableUpgradeable {
+    event Distributed(address indexed recipient, uint256 amount);
+    event OperatorSet(address indexed operator);
+    event Topup(uint256 amount);
     address public operator;
 
     modifier onlyOperator() {
         require(msg.sender == operator, "not operator");
         _;
+    }
+
+    receive() external payable {
+        emit Topup(msg.value);
     }
 
     function initialize() public initializer {
@@ -17,10 +24,18 @@ contract W3bstreamBlockRewardDistributor is OwnableUpgradeable {
 
     function setOperator(address _operator) public onlyOwner {
         operator = _operator;
+        emit OperatorSet(_operator);
     }
 
     function distribute(address recipient, uint256 amount) public onlyOperator {
+        if (amount == 0) {
+            return;
+        }
+        if (amount > address(this).balance) {
+            revert("insufficient balance");
+        }
         (bool success, ) = recipient.call{value: amount}("");
         require(success, "transfer failed");
+        emit Distributed(recipient, amount);
     }
 }
