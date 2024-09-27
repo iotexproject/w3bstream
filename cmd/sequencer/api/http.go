@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	solanatypes "github.com/blocto/solana-go-sdk/types"
@@ -133,30 +132,30 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			Operator: crypto.PubkeyToAddress(prv.PublicKey),
 		}
 
-		coinbaseABI := `[{"name":"coinbase","type":"tuple","components":[{"name":"addr","type":"address"},{"name":"operator","type":"address"},{"name":"beneficiary","type":"address"}]}]`
-		parsedABI, err := abi.JSON(strings.NewReader(coinbaseABI))
-		if err != nil {
-			panic(err)
-		}
-		coinbaseData, err := parsedABI.Pack("coinbase", coinbase)
-		if err != nil {
-			panic(err)
-		}
-
-		// abiBytes, err := abi.NewType("bytes", "", nil)
+		// coinbaseABI := `[{"name":"coinbase","type":"tuple","components":[{"name":"addr","type":"address"},{"name":"operator","type":"address"},{"name":"beneficiary","type":"address"}]}]`
+		// parsedABI, err := abi.JSON(strings.NewReader(coinbaseABI))
 		// if err != nil {
 		// 	panic(err)
 		// }
-		// args := abi.Arguments{
-		// 	{Type: abiBytes},
-		// 	{Type: abiBytes},
-		// 	{Type: abiBytes},
-		// }
-
-		// packed, err := args.Pack(coinbase.Addr[:], coinbase.Operator[:], coinbase.Beneficiary[:])
+		// coinbaseData, err := parsedABI.Pack("coinbase", coinbase)
 		// if err != nil {
 		// 	panic(err)
 		// }
+
+		abiBytes, err := abi.NewType("address", "", nil)
+		if err != nil {
+			panic(err)
+		}
+		args := abi.Arguments{
+			{Type: abiBytes, Name: "addr"},
+			{Type: abiBytes, Name: "operator"},
+			{Type: abiBytes, Name: "beneficiary"},
+		}
+
+		packed, err := args.Pack(coinbase.Addr, coinbase.Operator, coinbase.Beneficiary)
+		if err != nil {
+			panic(err)
+		}
 
 		h := &block.Header{
 			Meta:       [4]byte{},
@@ -169,7 +168,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 			PrevBlockNumber: head,
 			Meta:            hexutil.Encode(h.Meta[:]),
 			PrevBlockHash:   hexutil.Encode(h.PrevHash[:]),
-			MerkleRoot:      hexutil.Encode(crypto.Keccak256Hash(coinbaseData).Bytes()),
+			MerkleRoot:      hexutil.Encode(crypto.Keccak256Hash(packed).Bytes()),
 			NBits:           h.NBits,
 			Ts:              uint64(time.Time{}.Unix()),
 			NonceRange:      hexutil.Encode(h.Nonce[:]),
