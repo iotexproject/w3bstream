@@ -25,8 +25,8 @@ type blockHead struct {
 
 type task struct {
 	gorm.Model
-	TaskID    common.Hash `gorm:"index:task_fetch,not null"`
-	ProjectID uint64      `gorm:"index:task_fetch,not null"`
+	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
+	ProjectID uint64      `gorm:"uniqueIndex:task_uniq,not null"`
 	Assigned  bool        `gorm:"index:unassigned_task,not null,default:false"`
 }
 
@@ -114,7 +114,7 @@ func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
 	return errors.Wrap(err, "failed to create task")
 }
 
-func (p *DB) AssignTask(projectID uint64, taskID common.Hash) error {
+func (p *DB) AssignTask(projectID uint64, taskID common.Hash, prover common.Address) error {
 	t := &task{
 		Assigned: true,
 	}
@@ -128,14 +128,14 @@ func (p *DB) DeleteTask(projectID uint64, taskID common.Hash) error {
 }
 
 func (p *DB) UnassignedTask() (common.Hash, uint64, error) {
-	ts := []*task{}
-	if err := p.db.Order("created_at ASC").Where("assigned = false").Find(&ts).Limit(1).Error; err != nil {
+	t := task{}
+	if err := p.db.Order("created_at ASC").Where("assigned = false").First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return common.Hash{}, 0, nil
+		}
 		return common.Hash{}, 0, errors.Wrap(err, "failed to query unassigned task")
 	}
-	if len(ts) == 0 {
-		return common.Hash{}, 0, nil
-	}
-	return ts[0].TaskID, ts[0].ProjectID, nil
+	return t.TaskID, t.ProjectID, nil
 }
 
 func New(db *gorm.DB) (*DB, error) {

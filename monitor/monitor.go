@@ -28,7 +28,7 @@ type (
 	UpsertScannedBlockNumber func(uint64) error
 	UpsertNBits              func(uint32) error
 	UpsertBlockHead          func(uint64, common.Hash) error
-	AssignTask               func(uint64, common.Hash) error
+	AssignTask               func(uint64, common.Hash, common.Address) error
 	DeleteTask               func(uint64, common.Hash) error
 	UpsertProject            func(uint64, string, common.Hash) error
 )
@@ -143,7 +143,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse task assigned event")
 			}
-			if err := c.h.AssignTask(e.ProjectId.Uint64(), e.TaskId); err != nil {
+			if err := c.h.AssignTask(e.ProjectId.Uint64(), e.TaskId, e.Prover); err != nil {
 				return err
 			}
 		case taskSettledTopic:
