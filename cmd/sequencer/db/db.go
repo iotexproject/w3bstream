@@ -52,13 +52,11 @@ func (p *DB) UpsertScannedBlockNumber(number uint64) error {
 		},
 		Number: number,
 	}
-	if err := p.db.Clauses(clause.OnConflict{
+	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"number"}),
-	}).Create(&t).Error; err != nil {
-		return errors.Wrap(err, "failed to upsert scanned block number")
-	}
-	return nil
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert scanned block number")
 }
 
 func (p *DB) NBits() (uint32, error) {
@@ -76,13 +74,11 @@ func (p *DB) UpsertNBits(nbits uint32) error {
 		},
 		NBits: nbits,
 	}
-	if err := p.db.Clauses(clause.OnConflict{
+	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"n_bits"}),
-	}).Create(&t).Error; err != nil {
-		return errors.Wrap(err, "failed to upsert nbits")
-	}
-	return nil
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert nbits")
 }
 
 func (p *DB) BlockHead() (uint64, common.Hash, error) {
@@ -101,13 +97,11 @@ func (p *DB) UpsertBlockHead(number uint64, hash common.Hash) error {
 		Hash:   hash,
 		Number: number,
 	}
-	if err := p.db.Clauses(clause.OnConflict{
+	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"hash", "number"}),
-	}).Create(&t).Error; err != nil {
-		return errors.Wrap(err, "failed to upsert block head")
-	}
-	return nil
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert block head")
 }
 
 func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
@@ -116,27 +110,21 @@ func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
 		ProjectID: projectID,
 		Assigned:  false,
 	}
-	if err := p.db.Create(t).Error; err != nil {
-		return errors.Wrap(err, "failed to create task")
-	}
-	return nil
+	err := p.db.Create(t).Error
+	return errors.Wrap(err, "failed to create task")
 }
 
 func (p *DB) AssignTask(projectID uint64, taskID common.Hash) error {
 	t := &task{
 		Assigned: true,
 	}
-	if err := p.db.Model(t).Where("task_id = ?", taskID).Where("project_id = ?", projectID).Updates(t).Error; err != nil {
-		return errors.Wrap(err, "failed to assign task")
-	}
-	return nil
+	err := p.db.Model(t).Where("task_id = ?", taskID).Where("project_id = ?", projectID).Updates(t).Error
+	return errors.Wrap(err, "failed to assign task")
 }
 
 func (p *DB) DeleteTask(projectID uint64, taskID common.Hash) error {
-	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error; err != nil {
-		return errors.Wrap(err, "failed to delete task")
-	}
-	return nil
+	err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error
+	return errors.Wrap(err, "failed to delete task")
 }
 
 func (p *DB) UnassignedTask() (common.Hash, uint64, error) {

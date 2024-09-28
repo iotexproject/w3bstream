@@ -30,6 +30,7 @@ type (
 	UpsertBlockHead          func(uint64, common.Hash) error
 	AssignTask               func(uint64, common.Hash) error
 	DeleteTask               func(uint64, common.Hash) error
+	UpsertProject            func(uint64, string, common.Hash) error
 )
 
 type Handler struct {
@@ -39,6 +40,7 @@ type Handler struct {
 	UpsertBlockHead
 	AssignTask
 	DeleteTask
+	UpsertProject
 }
 
 type ContractAddr struct {
@@ -64,10 +66,11 @@ type contract struct {
 }
 
 var (
-	blockAddedTopic   = crypto.Keccak256Hash([]byte("BlockAdded(uint256,bytes32,uint256)"))
-	nbitsSetTopic     = crypto.Keccak256Hash([]byte("NBitsSet(uint32)"))
-	taskAssignedTopic = crypto.Keccak256Hash([]byte("TaskAssigned(uint256,bytes32,address,uint256)"))
-	taskSettledTopic  = crypto.Keccak256Hash([]byte("TaskSettled(uint256,bytes32,address)"))
+	blockAddedTopic           = crypto.Keccak256Hash([]byte("BlockAdded(uint256,bytes32,uint256)"))
+	nbitsSetTopic             = crypto.Keccak256Hash([]byte("NBitsSet(uint32)"))
+	taskAssignedTopic         = crypto.Keccak256Hash([]byte("TaskAssigned(uint256,bytes32,address,uint256)"))
+	taskSettledTopic          = crypto.Keccak256Hash([]byte("TaskSettled(uint256,bytes32,address)"))
+	projectConfigUpdatedTopic = crypto.Keccak256Hash([]byte("ProjectConfigUpdated(uint256,string,bytes32)"))
 )
 
 var allTopic = []common.Hash{
@@ -75,6 +78,7 @@ var allTopic = []common.Hash{
 	nbitsSetTopic,
 	taskAssignedTopic,
 	taskSettledTopic,
+	projectConfigUpdatedTopic,
 }
 
 var emptyAddr = common.Address{}
@@ -151,6 +155,17 @@ func (c *contract) processLogs(logs []types.Log) error {
 				return errors.Wrap(err, "failed to parse task settled event")
 			}
 			if err := c.h.DeleteTask(e.ProjectId.Uint64(), e.TaskId); err != nil {
+				return err
+			}
+		case projectConfigUpdatedTopic:
+			if c.projectInstance == nil || c.h.UpsertProject == nil {
+				continue
+			}
+			e, err := c.projectInstance.ParseProjectConfigUpdated(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse project config updated event")
+			}
+			if err := c.h.UpsertProject(e.ProjectId.Uint64(), e.Uri, e.Hash); err != nil {
 				return err
 			}
 		}
