@@ -31,6 +31,7 @@ type (
 	AssignTask               func(uint64, common.Hash, common.Address) error
 	DeleteTask               func(uint64, common.Hash) error
 	UpsertProject            func(uint64, string, common.Hash) error
+	UpsertProver             func(common.Address) error
 )
 
 type Handler struct {
@@ -41,6 +42,7 @@ type Handler struct {
 	AssignTask
 	DeleteTask
 	UpsertProject
+	UpsertProver
 }
 
 type ContractAddr struct {
@@ -71,6 +73,7 @@ var (
 	taskAssignedTopic         = crypto.Keccak256Hash([]byte("TaskAssigned(uint256,bytes32,address,uint256)"))
 	taskSettledTopic          = crypto.Keccak256Hash([]byte("TaskSettled(uint256,bytes32,address)"))
 	projectConfigUpdatedTopic = crypto.Keccak256Hash([]byte("ProjectConfigUpdated(uint256,string,bytes32)"))
+	operatorSetTopic          = crypto.Keccak256Hash([]byte("OperatorSet(uint256,address)"))
 )
 
 var allTopic = []common.Hash{
@@ -79,6 +82,7 @@ var allTopic = []common.Hash{
 	taskAssignedTopic,
 	taskSettledTopic,
 	projectConfigUpdatedTopic,
+	operatorSetTopic,
 }
 
 var emptyAddr = common.Address{}
@@ -166,6 +170,17 @@ func (c *contract) processLogs(logs []types.Log) error {
 				return errors.Wrap(err, "failed to parse project config updated event")
 			}
 			if err := c.h.UpsertProject(e.ProjectId.Uint64(), e.Uri, e.Hash); err != nil {
+				return err
+			}
+		case operatorSetTopic:
+			if c.proverInstance == nil || c.h.UpsertProver == nil {
+				continue
+			}
+			e, err := c.proverInstance.ParseOperatorSet(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse operator set event")
+			}
+			if err := c.h.UpsertProver(e.Operator); err != nil {
 				return err
 			}
 		}

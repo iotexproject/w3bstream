@@ -15,7 +15,7 @@ type Config struct {
 	ProjectContractAddr     string     `env:"PROJECT_CONTRACT_ADDRESS,optional"`
 	RouterContractAddr      string     `env:"ROUTER_CONTRACT_ADDRESS,optional"`
 	TaskManagerContractAddr string     `env:"TASK_MANAGER_CONTRACT_ADDRESS,optional"`
-	ProverOperatorPriKey    string     `env:"PROVER_OPERATOR_PRIVATE_KEY,optional"`
+	ProverOperatorPrvKey    string     `env:"PROVER_OPERATOR_PRIVATE_KEY,optional"`
 	BeginningBlockNumber    uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
 	LocalDBDir              string     `env:"LOCAL_DB_DIRECTORY,optional"`
 	env                     string     `env:"-"`
@@ -28,7 +28,7 @@ var (
 		ChainEndpoint:        "https://babel-api.testnet.iotex.io",
 		DatasourceDSN:        "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
 		ProjectContractAddr:  "0x6B544a7603cead52AdfD99AA64B3d798083cc4CC",
-		ProverOperatorPriKey: "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
+		ProverOperatorPrvKey: "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
 		BeginningBlockNumber: 20000000,
 		LocalDBDir:           "./local_db",
 		env:                  "TESTNET",

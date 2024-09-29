@@ -16,7 +16,6 @@ type Config struct {
 	OperatorPrvKey          string     `env:"OPERATOR_PRIVATE_KEY,optional"`
 	LocalDBDir              string     `env:"LOCAL_DB_DIRECTORY,optional"`
 	BeginningBlockNumber    uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
-	ProjectContractAddr     string     `env:"PROJECT_CONTRACT_ADDRESS,optional"`
 	ProverContractAddr      string     `env:"PROVER_CONTRACT_ADDRESS,optional"`
 	DaoContractAddr         string     `env:"DAO_CONTRACT_ADDRESS,optional"`
 	MinterContractAddr      string     `env:"MINTER_CONTRACT_ADDRESS,optional"`
@@ -31,7 +30,6 @@ var (
 		BootNodeMultiAddr:    "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:         2,
 		ChainEndpoint:        "https://babel-api.testnet.iotex.io",
-		ProjectContractAddr:  "0x3168A7BE5ba2d9c3aE6309a66152854142c99B26",
 		ProverContractAddr:   "0x39d95173C92aadcD47184f770c4a059D8Be66686",
 		LocalDBDir:           "./local_db",
 		BeginningBlockNumber: 28000000,
