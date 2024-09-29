@@ -8,13 +8,15 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/cmd/prover/config"
-	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/cmd/prover/db"
+	"github.com/iotexproject/w3bstream/datasource"
+	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/project"
-	"github.com/iotexproject/w3bstream/scheduler"
 	"github.com/iotexproject/w3bstream/task/processor"
 	"github.com/iotexproject/w3bstream/vm"
 )
@@ -27,15 +29,15 @@ func main() {
 	cfg.Print()
 	slog.Info("prover config loaded")
 
-	if err := migrateDatabase(cfg.DatabaseDSN); err != nil {
+	if err := migrateDatabase(cfg.DatasourceDSN); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to migrate database"))
 	}
 
-	sk, err := crypto.HexToECDSA(cfg.ProverOperatorPriKey)
+	prv, err := crypto.HexToECDSA(cfg.ProverOperatorPriKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}
-	proverOperatorAddress := crypto.PubkeyToAddress(sk.PublicKey)
+	proverOperatorAddress := crypto.PubkeyToAddress(prv.PublicKey)
 	slog.Info("my prover", "address", proverOperatorAddress.String())
 
 	vmEndpoints := map[uint64]string{}
@@ -48,27 +50,41 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new vm handler"))
 	}
 
-	projectManager := project.NewManager(kvDB, contractPersistence.LatestProject)
+	db, err := db.New(cfg.LocalDBDir, proverOperatorAddress)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new db"))
+	}
+
+	if err := monitor.Run(
+		&monitor.Handler{
+			ScannedBlockNumber:       db.ScannedBlockNumber,
+			UpsertScannedBlockNumber: db.UpsertScannedBlockNumber,
+			AssignTask:               db.CreateTask,
+			UpsertProject:            db.UpsertProject,
+			DeleteTask:               db.DeleteTask,
+		},
+		&monitor.ContractAddr{
+			Project:     common.HexToAddress(cfg.ProjectContractAddr),
+			TaskManager: common.HexToAddress(cfg.TaskManagerContractAddr),
+		},
+		cfg.BeginningBlockNumber,
+		cfg.ChainEndpoint,
+	); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run contract monitor"))
+	}
+
+	projectManager := project.NewManager(db.Project, db.ProjectFile, db.UpsertProjectFile)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}
 
-	taskProcessor := processor.NewProcessor(vmHandler, projectManager.Project, sk, defaultDatasourcePubKey, proverID)
-
-	pubSubs, err := p2p.NewPubSub(taskProcessor.HandleP2PData, cfg.BootNodeMultiAddr, cfg.IoTeXChainID)
+	datasource, err := datasource.NewPostgres(cfg.DatasourceDSN)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new pubsubs"))
+		log.Fatal(errors.Wrap(err, "failed to connect datasource"))
 	}
 
-	if local {
-		scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager)
-	} else {
-		projectOffsets := scheduler.NewProjectEpochOffsets(cfg.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
-
-		if err := scheduler.Run(cfg.SchedulerEpoch, proverID, pubSubs, taskProcessor.HandleProjectProvers,
-			chainHeadNotification, contractPersistence.Project, contractPersistence.Provers, projectOffsets, projectManager); err != nil {
-			log.Fatal(errors.Wrap(err, "failed to run scheduler"))
-		}
+	if err := processor.Run(vmHandler.Handle, projectManager.Project, db, datasource.Retrieve, prv, cfg.ChainEndpoint, common.HexToAddress(cfg.RouterContractAddr)); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run task processor"))
 	}
 
 	done := make(chan os.Signal, 1)

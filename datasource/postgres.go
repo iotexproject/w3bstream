@@ -2,11 +2,10 @@ package datasource
 
 import (
 	"encoding/json"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	pgdriver "gorm.io/driver/postgres"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
@@ -14,11 +13,11 @@ import (
 	"github.com/iotexproject/w3bstream/task"
 )
 
-type postgres struct {
+type Postgres struct {
 	db *gorm.DB
 }
 
-func (p *postgres) Retrieve(projectID uint64, taskID common.Hash) (*task.Task, error) {
+func (p *Postgres) Retrieve(projectID uint64, taskID common.Hash) (*task.Task, error) {
 	t := persistence.Task{}
 	if err := p.db.Where("task_id = ? AND project_id = ?", taskID, projectID).First(&t).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to query task")
@@ -51,39 +50,12 @@ func (p *postgres) Retrieve(projectID uint64, taskID common.Hash) (*task.Task, e
 	}, nil
 }
 
-type Postgres struct {
-	mux sync.Mutex
-	ps  map[string]*postgres
-}
-
-func (p *Postgres) New(dsn string) (Datasource, error) {
-	p.mux.Lock()
-	defer p.mux.Unlock()
-
-	d, ok := p.ps[dsn]
-	if ok {
-		return d, nil
-	}
-
-	db, err := gorm.Open(pgdriver.Open(dsn), &gorm.Config{
+func NewPostgres(dsn string) (*Postgres, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to connect postgres, dsn %s", dsn)
+		return nil, errors.Wrapf(err, "failed to connect postgres")
 	}
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get sql db")
-	}
-	sqlDB.SetMaxOpenConns(500)
-
-	d = &postgres{db}
-	p.ps[dsn] = d
-	return d, nil
-}
-
-func NewPostgres() *Postgres {
-	return &Postgres{
-		ps: map[string]*postgres{},
-	}
+	return &Postgres{db}, nil
 }

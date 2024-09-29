@@ -9,9 +9,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
 	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
@@ -28,13 +25,7 @@ func main() {
 	cfg.Print()
 	slog.Info("sequencer config loaded")
 
-	sqliteDB, err := gorm.Open(sqlite.Open(cfg.LocalDBDir), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to connect sqlite"))
-	}
-	db, err := db.New(sqliteDB)
+	db, err := db.New(cfg.LocalDBDir)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new db"))
 	}

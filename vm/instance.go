@@ -31,9 +31,9 @@ func execute(ctx context.Context, conn *grpc.ClientConn, task *task.Task) ([]byt
 	}
 	req := &proto.ExecuteRequest{
 		ProjectID:          task.ProjectID,
-		TaskID:             task.ID,
-		ClientID:           task.DeviceID,
-		SequencerSignature: task.Signature,
+		TaskID:             0,   // TODO
+		ClientID:           "0", // TODO
+		SequencerSignature: string(task.Signature),
 		Datas:              ds,
 	}
 	cli := proto.NewVmRuntimeClient(conn)

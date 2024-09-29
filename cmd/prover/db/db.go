@@ -5,8 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/logger"
 )
 
 type scannedBlockNumber struct {
@@ -147,8 +149,14 @@ func (p *DB) UnprocessedTask() (uint64, common.Hash, error) {
 	return t.ProjectID, t.TaskID, nil
 }
 
-func New(db *gorm.DB, prover common.Address) (*DB, error) {
-	if err := db.AutoMigrate(&task{}, &scannedBlockNumber{}); err != nil {
+func New(localDBDir string, prover common.Address) (*DB, error) {
+	db, err := gorm.Open(sqlite.Open(localDBDir), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect sqlite")
+	}
+	if err := db.AutoMigrate(&task{}, &scannedBlockNumber{}, &project{}, &projectFile{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &DB{db: db, prover: prover}, nil

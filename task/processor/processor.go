@@ -107,19 +107,18 @@ func (r *Processor) run() {
 	}
 }
 
-func NewProcessor(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey, chainEndpoint string, routerAddr common.Address) (*Processor, error) {
+func Run(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey, chainEndpoint string, routerAddr common.Address) error {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to dial chain endpoint")
+		return errors.Wrap(err, "failed to dial chain endpoint")
 	}
-	//common.HexToAddress(cfg.MinterContractAddr)
 	routerInstance, err := router.NewRouter(routerAddr, client)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to new router contract instance")
+		return errors.Wrap(err, "failed to new router contract instance")
 	}
 	chainID, err := client.ChainID(context.Background())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get chain id")
+		return errors.Wrap(err, "failed to get chain id")
 	}
 	p := &Processor{
 		db:             db,
@@ -134,5 +133,5 @@ func NewProcessor(handle HandleTask, project Project, db DB, retrieve RetrieveTa
 		routerInstance: routerInstance,
 	}
 	go p.run()
-	return p, nil
+	return nil
 }

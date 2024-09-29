@@ -3,8 +3,10 @@ package db
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/logger"
 )
 
 type scannedBlockNumber struct {
@@ -138,7 +140,13 @@ func (p *DB) UnassignedTask() (common.Hash, uint64, error) {
 	return t.TaskID, t.ProjectID, nil
 }
 
-func New(db *gorm.DB) (*DB, error) {
+func New(localDBDir string) (*DB, error) {
+	db, err := gorm.Open(sqlite.Open(localDBDir), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect sqlite")
+	}
 	if err := db.AutoMigrate(&task{}, &scannedBlockNumber{}, &currentNBits{}, &blockHead{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}

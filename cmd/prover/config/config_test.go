@@ -20,17 +20,15 @@ func TestConfig_Init(t *testing.T) {
 		expected := Config{
 			VMEndpoints:          `{"1":"halo2:4001","2":"risc0:4001","3":"zkwasm:4001","4":"wasm:4001"}`,
 			ChainEndpoint:        "http://abc.def.com",
-			ProjectContractAddr:  "0x123",
-			DatabaseDSN:          "postgres://root@localhost/abc?ext=666",
-			ProverContractAddr:   "0x456",
+			DatasourceDSN:        "postgres://root@localhost/abc?ext=666",
+			ProjectContractAddr:  "0x456",
 			ProverOperatorPriKey: "private key",
 			LocalDBDir:           "./test",
 		}
 
 		_ = os.Setenv("VM_ENDPOINTS", expected.VMEndpoints)
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
-		_ = os.Setenv("DATABASE_DSN", expected.DatabaseDSN)
-		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddr)
+		_ = os.Setenv("DATASOURCE_DSN", expected.DatasourceDSN)
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
 		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPriKey)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
