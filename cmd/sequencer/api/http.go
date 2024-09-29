@@ -35,6 +35,7 @@ type httpServer struct {
 	engine         *gin.Engine
 	db             *db.DB
 	prv            *ecdsa.PrivateKey
+	account        common.Address
 	client         *ethclient.Client
 	minterInstance *minter.Minter
 	signer         types.Signer
@@ -72,7 +73,7 @@ func (s *httpServer) getBlockTemplate(c *gin.Context, rsp *jsonRpcRsp) {
 		return
 	}
 	coinbase := Sequencer{
-		Operator: crypto.PubkeyToAddress(s.prv.PublicKey),
+		Operator: s.account,
 	}
 	var rootData bytes.Buffer
 	rootData.Write(coinbase.Addr[:])
@@ -135,7 +136,7 @@ func (s *httpServer) submitBlock(c *gin.Context, req *jsonRpcReq, rsp *jsonRpcRs
 		return
 	}
 
-	nonce, err := s.client.PendingNonceAt(context.Background(), crypto.PubkeyToAddress(s.prv.PublicKey))
+	nonce, err := s.client.PendingNonceAt(context.Background(), s.account)
 	if err != nil {
 		slog.Error("failed to get pending nonce", "error", err)
 		rsp.Error = err.Error()
@@ -144,7 +145,7 @@ func (s *httpServer) submitBlock(c *gin.Context, req *jsonRpcReq, rsp *jsonRpcRs
 	}
 	tx, err := s.minterInstance.Mint(
 		&bind.TransactOpts{
-			From: crypto.PubkeyToAddress(s.prv.PublicKey),
+			From: s.account,
 			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
 				return types.SignTx(t, s.signer, s.prv)
 			},
@@ -158,7 +159,7 @@ func (s *httpServer) submitBlock(c *gin.Context, req *jsonRpcReq, rsp *jsonRpcRs
 			Nonce:      h.Nonce,
 		},
 		minter.Sequencer{
-			Operator: crypto.PubkeyToAddress(s.prv.PublicKey),
+			Operator: s.account,
 		},
 		nil,
 	)
@@ -217,10 +218,12 @@ func Run(db *db.DB, cfg *config.Config) error {
 		return errors.Wrap(err, "failed to get chain id")
 	}
 
+	prv := crypto.ToECDSAUnsafe(common.FromHex(cfg.OperatorPrvKey))
 	s := &httpServer{
 		engine:         gin.Default(),
 		db:             db,
-		prv:            crypto.ToECDSAUnsafe(common.FromHex(cfg.OperatorPrvKey)),
+		prv:            prv,
+		account:        crypto.PubkeyToAddress(prv.PublicKey),
 		client:         client,
 		minterInstance: minterInstance,
 		signer:         types.NewLondonSigner(chainID),

@@ -28,8 +28,8 @@ type Message struct {
 
 type Task struct {
 	gorm.Model
-	TaskID     common.Hash    `gorm:"index:message_fetch,not null"`
-	ProjectID  uint64         `gorm:"index:message_fetch,not null"`
+	TaskID     common.Hash    `gorm:"uniqueIndex:task,not null"`
+	ProjectID  uint64         `gorm:"uniqueIndex:task,not null"`
 	MessageIDs datatypes.JSON `gorm:"not null"`
 	Signature  []byte         `gorm:"not null"`
 }
