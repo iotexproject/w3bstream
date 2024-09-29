@@ -204,7 +204,7 @@ func (s *httpServer) jsonRPC(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(db *db.DB, cfg *config.Config) error {
+func Run(db *db.DB, cfg *config.Config, prv *ecdsa.PrivateKey) error {
 	client, err := ethclient.Dial(cfg.ChainEndpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to dial chain endpoint")
@@ -218,7 +218,6 @@ func Run(db *db.DB, cfg *config.Config) error {
 		return errors.Wrap(err, "failed to get chain id")
 	}
 
-	prv := crypto.ToECDSAUnsafe(common.FromHex(cfg.OperatorPrvKey))
 	s := &httpServer{
 		engine:         gin.Default(),
 		db:             db,

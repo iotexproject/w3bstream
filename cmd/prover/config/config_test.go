@@ -22,7 +22,7 @@ func TestConfig_Init(t *testing.T) {
 			ChainEndpoint:        "http://abc.def.com",
 			DatasourceDSN:        "postgres://root@localhost/abc?ext=666",
 			ProjectContractAddr:  "0x456",
-			ProverOperatorPriKey: "private key",
+			ProverOperatorPrvKey: "private key",
 			LocalDBDir:           "./test",
 		}
 
@@ -30,7 +30,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATASOURCE_DSN", expected.DatasourceDSN)
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
-		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPriKey)
+		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPrvKey)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
 
 		c := &Config{}

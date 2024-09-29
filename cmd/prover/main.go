@@ -33,7 +33,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to migrate database"))
 	}
 
-	prv, err := crypto.HexToECDSA(cfg.ProverOperatorPriKey)
+	prv, err := crypto.HexToECDSA(cfg.ProverOperatorPrvKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}

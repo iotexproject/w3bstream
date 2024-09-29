@@ -25,6 +25,11 @@ type blockHead struct {
 	Number uint64      `gorm:"not null"`
 }
 
+type prover struct {
+	gorm.Model
+	ProverID common.Address `gorm:"uniqueIndex:prover_id,not null"`
+}
+
 type task struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
@@ -106,6 +111,29 @@ func (p *DB) UpsertBlockHead(number uint64, hash common.Hash) error {
 	return errors.Wrap(err, "failed to upsert block head")
 }
 
+func (p *DB) Provers() ([]common.Address, error) {
+	ts := []*prover{}
+	if err := p.db.Find(&ts).Error; err != nil {
+		return nil, errors.Wrap(err, "failed to query provers")
+	}
+	res := make([]common.Address, 0, len(ts))
+	for _, t := range ts {
+		res = append(res, t.ProverID)
+	}
+	return res, nil
+}
+
+func (p *DB) UpsertProver(id common.Address) error {
+	t := prover{
+		ProverID: id,
+	}
+	err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "prover_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{}),
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert prover")
+}
+
 func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
 	t := &task{
 		TaskID:    taskID,
@@ -129,15 +157,15 @@ func (p *DB) DeleteTask(projectID uint64, taskID common.Hash) error {
 	return errors.Wrap(err, "failed to delete task")
 }
 
-func (p *DB) UnassignedTask() (common.Hash, uint64, error) {
+func (p *DB) UnassignedTask() (uint64, common.Hash, error) {
 	t := task{}
 	if err := p.db.Order("created_at ASC").Where("assigned = false").First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return common.Hash{}, 0, nil
+			return 0, common.Hash{}, nil
 		}
-		return common.Hash{}, 0, errors.Wrap(err, "failed to query unassigned task")
+		return 0, common.Hash{}, errors.Wrap(err, "failed to query unassigned task")
 	}
-	return t.TaskID, t.ProjectID, nil
+	return t.ProjectID, t.TaskID, nil
 }
 
 func New(localDBDir string) (*DB, error) {
@@ -147,7 +175,7 @@ func New(localDBDir string) (*DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect sqlite")
 	}
-	if err := db.AutoMigrate(&task{}, &scannedBlockNumber{}, &currentNBits{}, &blockHead{}); err != nil {
+	if err := db.AutoMigrate(&task{}, &scannedBlockNumber{}, &currentNBits{}, &blockHead{}, &prover{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &DB{db}, nil
