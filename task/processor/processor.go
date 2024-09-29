@@ -1,13 +1,21 @@
 package processor
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"log/slog"
+	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/router"
 	"github.com/iotexproject/w3bstream/task"
 )
 
@@ -21,12 +29,16 @@ type DB interface {
 }
 
 type Processor struct {
-	db          DB
-	retrieve    RetrieveTask
-	handle      HandleTask
-	project     Project
-	prv         *ecdsa.PrivateKey
-	waitingTime time.Duration
+	db             DB
+	retrieve       RetrieveTask
+	handle         HandleTask
+	project        Project
+	prv            *ecdsa.PrivateKey
+	waitingTime    time.Duration
+	signer         types.Signer
+	account        common.Address
+	client         *ethclient.Client
+	routerInstance *router.Router
 }
 
 func (r *Processor) process(projectID uint64, taskID common.Hash) error {
@@ -48,7 +60,29 @@ func (r *Processor) process(projectID uint64, taskID common.Hash) error {
 	if err != nil {
 		return err
 	}
-	// TODO write proof to router
+
+	nonce, err := r.client.PendingNonceAt(context.Background(), r.account)
+	if err != nil {
+		return errors.Wrap(err, "failed to get pending nonce")
+	}
+	tx, err := r.routerInstance.Route(
+		&bind.TransactOpts{
+			From: r.account,
+			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
+				return types.SignTx(t, r.signer, r.prv)
+			},
+			Nonce: new(big.Int).SetUint64(nonce),
+		},
+		new(big.Int).SetUint64(t.ProjectID),
+		new(big.Int).SetUint64(0),
+		t.DeviceID.String(),
+		proof,
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed to send tx")
+	}
+	slog.Info("send tx to router contract success", "hash", tx.Hash().String())
+	return nil
 }
 
 func (r *Processor) run() {
@@ -73,36 +107,32 @@ func (r *Processor) run() {
 	}
 }
 
-// func (r *Processor) reportSuccess(t *task.Task, state task.State, result []byte, signature string, topic *pubsub.Topic) {
-// 	d, err := json.Marshal(&p2p.Data{
-// 		TaskStateLog: &task.StateLog{
-// 			TaskID:    t.ID,
-// 			ProjectID: t.ProjectID,
-// 			State:     state,
-// 			Result:    result,
-// 			Signature: signature,
-// 			ProverID:  r.proverID,
-// 			CreatedAt: time.Now(),
-// 		},
-// 	})
-// 	if err != nil {
-// 		slog.Error("failed to marshal p2p task state log data to json", "error", err, "task_id", t.ID)
-// 		return
-// 	}
-// 	if err := topic.Publish(context.Background(), d); err != nil {
-// 		slog.Error("failed to publish task state log data to p2p network", "error", err, "task_id", t.ID)
-// 	}
-// }
-
-func NewProcessor(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey) *Processor {
+func NewProcessor(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey, chainEndpoint string, routerAddr common.Address) (*Processor, error) {
+	client, err := ethclient.Dial(chainEndpoint)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to dial chain endpoint")
+	}
+	//common.HexToAddress(cfg.MinterContractAddr)
+	routerInstance, err := router.NewRouter(routerAddr, client)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to new router contract instance")
+	}
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get chain id")
+	}
 	p := &Processor{
-		db:          db,
-		retrieve:    retrieve,
-		handle:      handle,
-		project:     project,
-		prv:         prv,
-		waitingTime: 3 * time.Second,
+		db:             db,
+		retrieve:       retrieve,
+		handle:         handle,
+		project:        project,
+		prv:            prv,
+		waitingTime:    3 * time.Second,
+		signer:         types.NewLondonSigner(chainID),
+		account:        crypto.PubkeyToAddress(prv.PublicKey),
+		client:         client,
+		routerInstance: routerInstance,
 	}
 	go p.run()
-	return p
+	return p, nil
 }
