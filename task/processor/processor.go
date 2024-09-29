@@ -28,7 +28,7 @@ type DB interface {
 	ProcessTask(uint64, common.Hash) error
 }
 
-type Processor struct {
+type processor struct {
 	db             DB
 	retrieve       RetrieveTask
 	handle         HandleTask
@@ -41,7 +41,7 @@ type Processor struct {
 	routerInstance *router.Router
 }
 
-func (r *Processor) process(projectID uint64, taskID common.Hash) error {
+func (r *processor) process(projectID uint64, taskID common.Hash) error {
 	t, err := r.retrieve(projectID, taskID)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (r *Processor) process(projectID uint64, taskID common.Hash) error {
 	return nil
 }
 
-func (r *Processor) run() {
+func (r *processor) run() {
 	for {
 		projectID, taskID, err := r.db.UnprocessedTask()
 		if err != nil {
@@ -120,7 +120,7 @@ func Run(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *
 	if err != nil {
 		return errors.Wrap(err, "failed to get chain id")
 	}
-	p := &Processor{
+	p := &processor{
 		db:             db,
 		retrieve:       retrieve,
 		handle:         handle,

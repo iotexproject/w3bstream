@@ -28,7 +28,7 @@ type DB interface {
 	Provers() ([]common.Address, error)
 }
 
-type Assigner struct {
+type assigner struct {
 	prv            *ecdsa.PrivateKey
 	waitingTime    time.Duration
 	signer         types.Signer
@@ -38,7 +38,7 @@ type Assigner struct {
 	minterInstance *minter.Minter
 }
 
-func (r *Assigner) assign(projectID uint64, taskID common.Hash) error {
+func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 	_, hash, err := r.db.BlockHead()
 	if err != nil {
 		return errors.Wrap(err, "failed to get block head")
@@ -120,7 +120,7 @@ func (r *Assigner) assign(projectID uint64, taskID common.Hash) error {
 	return nil
 }
 
-func (r *Assigner) run() {
+func (r *assigner) run() {
 	for {
 		projectID, taskID, err := r.db.UnassignedTask()
 		if err != nil {
@@ -153,7 +153,7 @@ func Run(db DB, prv *ecdsa.PrivateKey, chainEndpoint string, minterAddr common.A
 	if err != nil {
 		return errors.Wrap(err, "failed to get chain id")
 	}
-	p := &Assigner{
+	p := &assigner{
 		db:             db,
 		prv:            prv,
 		waitingTime:    3 * time.Second,
