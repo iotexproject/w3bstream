@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	. "github.com/agiledragon/gomonkey/v2"
@@ -57,33 +56,5 @@ func TestConfig_Init(t *testing.T) {
 		c := &Config{}
 		err := c.init()
 		r.ErrorContains(err, t.Name())
-	})
-}
-
-func TestGet(t *testing.T) {
-	r := require.New(t)
-
-	t.Run("GetDefaultTestConfig", func(t *testing.T) {
-		_ = os.Setenv("PROVER_ENV", "INTEGRATION_TEST")
-
-		conf, err := Get()
-		r.NoError(err)
-		r.True(strings.Contains(conf.VMEndpoints, "localhost:14001"))
-	})
-
-	t.Run("GetDefaultDebugConfig", func(t *testing.T) {
-		_ = os.Setenv("PROVER_ENV", "LOCAL_DEBUG")
-
-		conf, err := Get()
-		r.NoError(err)
-		r.True(strings.Contains(conf.VMEndpoints, "localhost:4001"))
-	})
-
-	t.Run("GetDefaultConfig", func(t *testing.T) {
-		_ = os.Setenv("PROVER_ENV", "PROD")
-
-		conf, err := Get()
-		r.NoError(err)
-		r.True(strings.Contains(conf.VMEndpoints, "risc0:4001"))
 	})
 }

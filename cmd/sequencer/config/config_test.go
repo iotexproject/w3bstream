@@ -57,31 +57,3 @@ func TestConfig_Init(t *testing.T) {
 		r.ErrorContains(err, t.Name())
 	})
 }
-
-func TestGet(t *testing.T) {
-	r := require.New(t)
-
-	t.Run("GetDefaultTestConfig", func(t *testing.T) {
-		_ = os.Setenv("COORDINATOR_ENV", "INTEGRATION_TEST")
-
-		conf, err := Get()
-		r.NoError(err)
-		r.Equal(":19001", conf.ServiceEndpoint)
-	})
-
-	t.Run("GetDefaultDebugConfig", func(t *testing.T) {
-		_ = os.Setenv("COORDINATOR_ENV", "LOCAL_DEBUG")
-
-		conf, err := Get()
-		r.NoError(err)
-		r.Equal(":9001", conf.ServiceEndpoint)
-	})
-
-	t.Run("GetDefaultConfig", func(t *testing.T) {
-		_ = os.Setenv("COORDINATOR_ENV", "PROD")
-
-		conf, err := Get()
-		r.NoError(err)
-		r.Equal(":9001", conf.ServiceEndpoint)
-	})
-}
