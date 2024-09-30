@@ -40,7 +40,7 @@ type httpServer struct {
 	engine            *gin.Engine
 	p                 *persistence.Persistence
 	aggregationAmount int
-	privateKey        *ecdsa.PrivateKey
+	prv               *ecdsa.PrivateKey
 	pubSub            *p2p.PubSub
 }
 
@@ -84,7 +84,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 			ProjectVersion: req.ProjectVersion,
 			Data:           []byte(req.Data),
 			TaskID:         common.Hash{},
-		}, s.aggregationAmount, s.privateKey,
+		}, s.aggregationAmount, s.prv,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, NewErrResp(err))
@@ -162,7 +162,7 @@ func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, 
 		engine:            gin.Default(),
 		p:                 p,
 		aggregationAmount: aggregationAmount,
-		privateKey:        prv,
+		prv:               prv,
 		pubSub:            pubSub,
 	}
 
