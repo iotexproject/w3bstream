@@ -85,7 +85,7 @@ contract W3bstreamBlockMinter is OwnableUpgradeable {
         _setBlockReward(1000000000000000000);
         _setTaskAllowance(720);
         _setTargetDuration(12);
-        _setAdhocNBits(0x0f7fffff);
+        _setAdhocNBits(0x1c7fffff);
     }
 
     function mint(
