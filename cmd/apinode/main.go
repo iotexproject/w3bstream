@@ -25,7 +25,7 @@ func main() {
 	cfg.Print()
 	slog.Info("apinode config loaded")
 
-	prv, err := crypto.HexToECDSA(cfg.PriKey)
+	prv, err := crypto.HexToECDSA(cfg.PrvKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse private key"))
 	}

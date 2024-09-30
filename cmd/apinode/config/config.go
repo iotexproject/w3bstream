@@ -12,7 +12,7 @@ type Config struct {
 	ServiceEndpoint   string     `env:"HTTP_SERVICE_ENDPOINT"`
 	AggregationAmount int        `env:"AGGREGATION_AMOUNT,optional"`
 	DatabaseDSN       string     `env:"DATABASE_DSN"`
-	PriKey            string     `env:"PRIVATE_KEY,optional"`
+	PrvKey            string     `env:"PRIVATE_KEY,optional"`
 	BootNodeMultiAddr string     `env:"BOOTNODE_MULTIADDR"`
 	IoTeXChainID      int        `env:"IOTEX_CHAINID"`
 	ChainEndpoint     string     `env:"CHAIN_ENDPOINT,optional"`
@@ -25,7 +25,7 @@ var defaultTestnetConfig = &Config{
 	ServiceEndpoint:   ":9000",
 	AggregationAmount: 1,
 	DatabaseDSN:       "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
-	PriKey:            "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
+	PrvKey:            "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
 	BootNodeMultiAddr: "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 	IoTeXChainID:      2,
 	ChainEndpoint:     "https://babel-api.testnet.iotex.io",
