@@ -148,6 +148,14 @@ async function main() {
   tx = await taskManager.addOperator(minter.target);
   await tx.wait();
   console.log(`W3bstreamTaskManager add operator to ${minter.target}`);
+
+  tx = await distributor.setOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamBlockRewardDistributor set operator to ${minter.target}`);
+
+  tx = await minter.setBlockReward(0);
+  await tx.wait();
+  console.log(`W3bstreamBlockMinter set block reward to 0`);
 }
 
 main().catch(err => {
