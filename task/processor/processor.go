@@ -1,185 +1,137 @@
 package processor
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"encoding/binary"
-	"encoding/json"
 	"log/slog"
-	"sync"
+	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/router"
 	"github.com/iotexproject/w3bstream/task"
-	"github.com/iotexproject/w3bstream/util/distance"
 )
 
-type VMHandler interface {
-	Handle(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error)
-}
-
+type HandleTask func(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error)
 type Project func(projectID uint64) (*project.Project, error)
+type RetrieveTask func(projectID uint64, taskID common.Hash) (*task.Task, error)
 
-type Processor struct {
-	vmHandler               VMHandler
-	project                 Project
-	proverPrivateKey        *ecdsa.PrivateKey
-	defaultDatasourcePubKey []byte
-	proverID                uint64
-	projectProvers          sync.Map
+type DB interface {
+	UnprocessedTask() (uint64, common.Hash, error)
+	ProcessTask(uint64, common.Hash) error
 }
 
-func (r *Processor) HandleProjectProvers(projectID uint64, proverIDs []uint64) {
-	r.projectProvers.Store(projectID, proverIDs)
+type processor struct {
+	db             DB
+	retrieve       RetrieveTask
+	handle         HandleTask
+	project        Project
+	prv            *ecdsa.PrivateKey
+	waitingTime    time.Duration
+	signer         types.Signer
+	account        common.Address
+	client         *ethclient.Client
+	routerInstance *router.Router
 }
 
-func (r *Processor) HandleP2PData(d *p2p.Data, topic *pubsub.Topic) {
-	if d.Task == nil {
-		return
+func (r *processor) process(projectID uint64, taskID common.Hash) error {
+	t, err := r.retrieve(projectID, taskID)
+	if err != nil {
+		return err
 	}
-	t := d.Task
-
 	p, err := r.project(t.ProjectID)
 	if err != nil {
-		slog.Error("failed to get project", "error", err, "project_id", t.ProjectID)
-		r.reportFail(t, err, topic)
-		return
+		return err
 	}
-	c, err := p.DefaultConfig()
+	c, err := p.Config(t.ProjectVersion)
 	if err != nil {
-		slog.Error("failed to get project config", "error", err, "project_id", t.ProjectID, "project_version", p.DefaultVersion)
-		r.reportFail(t, err, topic)
-		return
+		return err
 	}
-
-	var provers []uint64
-	proversValue, ok := r.projectProvers.Load(t.ProjectID)
-	if ok {
-		provers = proversValue.([]uint64)
-	}
-	if len(provers) > 1 {
-		workProvers := distance.Sort(provers, t.ID)
-		if workProvers[0] != r.proverID {
-			slog.Info("the task not scheduled to this prover", "project_id", t.ProjectID, "task_id", t.ID)
-			return
-		}
-	}
-
-	pubKey := r.defaultDatasourcePubKey
-	if p.DatasourcePubKey != "" {
-		pubKey, err = hexutil.Decode(p.DatasourcePubKey)
-		if err != nil {
-			slog.Error("failed to decode datasource public key", "error", err, "project_id", t.ProjectID)
-			r.reportFail(t, err, topic)
-			return
-		}
-	}
-
-	if err := t.VerifySignature(pubKey); err != nil {
-		slog.Error("failed to verify task signature", "error", err)
-		return
-	}
-
 	slog.Debug("get a new task", "project_id", t.ProjectID, "task_id", t.ID)
-	r.reportSuccess(t, task.StateDispatched, nil, "", topic)
 
-	res, err := r.vmHandler.Handle(t, c.VMTypeID, c.Code, c.CodeExpParam)
+	proof, err := r.handle(t, c.VMTypeID, c.Code, c.CodeExpParam)
 	if err != nil {
-		slog.Error("failed to generate proof", "error", err)
-		r.reportFail(t, err, topic)
-		return
+		return err
 	}
-	signature, err := r.signProof(t, res)
+
+	nonce, err := r.client.PendingNonceAt(context.Background(), r.account)
 	if err != nil {
-		slog.Error("failed to sign proof", "error", err)
-		r.reportFail(t, err, topic)
-		return
+		return errors.Wrap(err, "failed to get pending nonce")
 	}
-
-	r.reportSuccess(t, task.StateProved, res, signature, topic)
-}
-
-func (r *Processor) signProof(t *task.Task, res []byte) (string, error) {
-	// TODO: use protobuf or json to encode
-	buf := bytes.NewBuffer(nil)
-
-	if err := binary.Write(buf, binary.BigEndian, t.ID); err != nil {
-		return "", err
-	}
-	if err := binary.Write(buf, binary.BigEndian, t.ProjectID); err != nil {
-		return "", err
-	}
-	if _, err := buf.WriteString(t.DeviceID); err != nil {
-		return "", err
-	}
-	if _, err := buf.Write(crypto.Keccak256Hash(t.Payloads...).Bytes()); err != nil {
-		return "", err
-	}
-	if _, err := buf.Write(res); err != nil {
-		return "", err
-	}
-
-	h := crypto.Keccak256Hash(buf.Bytes())
-	sig, err := crypto.Sign(h.Bytes(), r.proverPrivateKey)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to sign proof")
-	}
-	return hexutil.Encode(sig), nil
-}
-
-func (r *Processor) reportFail(t *task.Task, err error, topic *pubsub.Topic) {
-	d, err := json.Marshal(&p2p.Data{
-		TaskStateLog: &task.StateLog{
-			TaskID:    t.ID,
-			ProjectID: t.ProjectID,
-			State:     task.StateFailed,
-			Comment:   err.Error(),
-			CreatedAt: time.Now(),
+	tx, err := r.routerInstance.Route(
+		&bind.TransactOpts{
+			From: r.account,
+			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
+				return types.SignTx(t, r.signer, r.prv)
+			},
+			Nonce: new(big.Int).SetUint64(nonce),
 		},
-	})
+		new(big.Int).SetUint64(t.ProjectID),
+		new(big.Int).SetUint64(0),
+		t.DeviceID.String(),
+		proof,
+	)
 	if err != nil {
-		slog.Error("failed to marshal p2p task state log data to json", "error", err, "task_id", t.ID)
-		return
+		return errors.Wrap(err, "failed to send tx")
 	}
-	if err := topic.Publish(context.Background(), d); err != nil {
-		slog.Error("failed to publish task state log data to p2p network", "error", err, "task_id", t.ID)
+	slog.Info("send tx to router contract success", "hash", tx.Hash().String())
+	return nil
+}
+
+func (r *processor) run() {
+	for {
+		projectID, taskID, err := r.db.UnprocessedTask()
+		if err != nil {
+			slog.Error("failed to get unprocessed task", "error", err)
+			time.Sleep(r.waitingTime)
+			continue
+		}
+		if projectID == 0 {
+			time.Sleep(r.waitingTime)
+			continue
+		}
+		if err := r.process(projectID, taskID); err != nil {
+			slog.Error("failed to process task", "error", err)
+			continue
+		}
+		if err := r.db.ProcessTask(projectID, taskID); err != nil {
+			slog.Error("failed to process db task", "error", err)
+		}
 	}
 }
 
-func (r *Processor) reportSuccess(t *task.Task, state task.State, result []byte, signature string, topic *pubsub.Topic) {
-	d, err := json.Marshal(&p2p.Data{
-		TaskStateLog: &task.StateLog{
-			TaskID:    t.ID,
-			ProjectID: t.ProjectID,
-			State:     state,
-			Result:    result,
-			Signature: signature,
-			ProverID:  r.proverID,
-			CreatedAt: time.Now(),
-		},
-	})
+func Run(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey, chainEndpoint string, routerAddr common.Address) error {
+	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
-		slog.Error("failed to marshal p2p task state log data to json", "error", err, "task_id", t.ID)
-		return
+		return errors.Wrap(err, "failed to dial chain endpoint")
 	}
-	if err := topic.Publish(context.Background(), d); err != nil {
-		slog.Error("failed to publish task state log data to p2p network", "error", err, "task_id", t.ID)
+	routerInstance, err := router.NewRouter(routerAddr, client)
+	if err != nil {
+		return errors.Wrap(err, "failed to new router contract instance")
 	}
-}
-
-func NewProcessor(vmHandler VMHandler, project Project, proverPrivateKey *ecdsa.PrivateKey, defaultDatasourcePubKey []byte, proverID uint64) *Processor {
-	return &Processor{
-		vmHandler:               vmHandler,
-		project:                 project,
-		proverPrivateKey:        proverPrivateKey,
-		defaultDatasourcePubKey: defaultDatasourcePubKey,
-		proverID:                proverID,
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "failed to get chain id")
 	}
+	p := &processor{
+		db:             db,
+		retrieve:       retrieve,
+		handle:         handle,
+		project:        project,
+		prv:            prv,
+		waitingTime:    3 * time.Second,
+		signer:         types.NewLondonSigner(chainID),
+		account:        crypto.PubkeyToAddress(prv.PublicKey),
+		client:         client,
+		routerInstance: routerInstance,
+	}
+	go p.run()
+	return nil
 }

@@ -2,59 +2,37 @@ package datasource
 
 import (
 	"encoding/json"
-	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"gorm.io/datatypes"
-	pgdriver "gorm.io/driver/postgres"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	tasktype "github.com/iotexproject/w3bstream/task"
+	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
+	"github.com/iotexproject/w3bstream/task"
 )
 
-type message struct {
-	gorm.Model
-	MessageID      string `gorm:"index:message_id,not null"`
-	ClientID       string `gorm:"index:message_fetch,not null,default:''"`
-	ProjectID      uint64 `gorm:"index:message_fetch,not null"`
-	ProjectVersion string `gorm:"index:message_fetch,not null,default:'0.0'"`
-	Data           []byte `gorm:"size:4096"`
-	InternalTaskID string `gorm:"index:internal_task_id,not null,default:''"`
-}
-
-type task struct {
-	gorm.Model
-	ProjectID      uint64         `gorm:"index:task_fetch,not null"`
-	InternalTaskID string         `gorm:"index:internal_task_id,not null"`
-	MessageIDs     datatypes.JSON `gorm:"not null"`
-	Signature      string         `gorm:"not null,default:''"`
-}
-
-type postgres struct {
+type Postgres struct {
 	db *gorm.DB
 }
 
-func (p *postgres) Retrieve(projectID, nextTaskID uint64) (*tasktype.Task, error) {
-	t := task{}
-	if err := p.db.Where("id >= ? AND project_id = ?", nextTaskID, projectID).First(&t).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, errors.Wrapf(err, "failed to query task, next_task_id %v", nextTaskID)
+func (p *Postgres) Retrieve(projectID uint64, taskID common.Hash) (*task.Task, error) {
+	t := persistence.Task{}
+	if err := p.db.Where("task_id = ? AND project_id = ?", taskID, projectID).First(&t).Error; err != nil {
+		return nil, errors.Wrap(err, "failed to query task")
 	}
-
 	messageIDs := []string{}
 	if err := json.Unmarshal(t.MessageIDs, &messageIDs); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal task message ids, task_id %v", t.ID)
+		return nil, errors.Wrapf(err, "failed to unmarshal task message ids, task_id %v", t.TaskID)
 	}
 
-	ms := []*message{}
-	if err := p.db.Where("message_id IN ?", messageIDs).Find(&ms).Error; err != nil {
-		return nil, errors.Wrapf(err, "failed to query task messages, task_id %v", t.ID)
+	ms := []*persistence.Message{}
+	if err := p.db.Where("id IN ?", messageIDs).Find(&ms).Error; err != nil {
+		return nil, errors.Wrapf(err, "failed to query task messages, task_id %v", t.TaskID)
 	}
 	if len(ms) == 0 {
-		return nil, errors.Errorf("invalid task, task_id %v", t.ID)
+		return nil, errors.Errorf("invalid task, task_id %v", t.TaskID)
 	}
 
 	ds := [][]byte{}
@@ -62,49 +40,22 @@ func (p *postgres) Retrieve(projectID, nextTaskID uint64) (*tasktype.Task, error
 		ds = append(ds, m.Data)
 	}
 
-	return &tasktype.Task{
-		ID:             uint64(t.ID),
+	return &task.Task{
+		ID:             t.TaskID,
 		ProjectID:      ms[0].ProjectID,
 		ProjectVersion: ms[0].ProjectVersion,
 		Payloads:       ds,
-		DeviceID:       ms[0].ClientID,
+		DeviceID:       ms[0].DeviceID,
 		Signature:      t.Signature,
 	}, nil
 }
 
-type Postgres struct {
-	mux sync.Mutex
-	ps  map[string]*postgres
-}
-
-func (p *Postgres) New(dsn string) (Datasource, error) {
-	p.mux.Lock()
-	defer p.mux.Unlock()
-
-	d, ok := p.ps[dsn]
-	if ok {
-		return d, nil
-	}
-
-	db, err := gorm.Open(pgdriver.Open(dsn), &gorm.Config{
+func NewPostgres(dsn string) (*Postgres, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to connect postgres, dsn %s", dsn)
+		return nil, errors.Wrapf(err, "failed to connect postgres")
 	}
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get sql db")
-	}
-	sqlDB.SetMaxOpenConns(500)
-
-	d = &postgres{db}
-	p.ps[dsn] = d
-	return d, nil
-}
-
-func NewPostgres() *Postgres {
-	return &Postgres{
-		ps: map[string]*postgres{},
-	}
+	return &Postgres{db}, nil
 }

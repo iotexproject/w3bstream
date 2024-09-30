@@ -8,17 +8,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cockroachdb/pebble"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/cmd/prover/config"
-	"github.com/iotexproject/w3bstream/p2p"
-	"github.com/iotexproject/w3bstream/persistence/contract"
+	"github.com/iotexproject/w3bstream/cmd/prover/db"
+	"github.com/iotexproject/w3bstream/datasource"
+	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/project"
-	"github.com/iotexproject/w3bstream/scheduler"
 	"github.com/iotexproject/w3bstream/task/processor"
 	"github.com/iotexproject/w3bstream/vm"
 )
@@ -31,20 +29,16 @@ func main() {
 	cfg.Print()
 	slog.Info("prover config loaded")
 
-	if err := migrateDatabase(cfg.DatabaseDSN); err != nil {
+	if err := migrateDatabase(cfg.DatasourceDSN); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to migrate database"))
 	}
 
-	sk, err := crypto.HexToECDSA(cfg.ProverOperatorPriKey)
+	prv, err := crypto.HexToECDSA(cfg.ProverOperatorPrvKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}
-	proverOperatorAddress := crypto.PubkeyToAddress(sk.PublicKey)
-
-	defaultDatasourcePubKey, err := hexutil.Decode(cfg.DefaultDatasourcePubKey)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
-	}
+	proverOperatorAddress := crypto.PubkeyToAddress(prv.PublicKey)
+	slog.Info("my prover", "address", proverOperatorAddress.String())
 
 	vmEndpoints := map[uint64]string{}
 	if err := json.Unmarshal([]byte(cfg.VMEndpoints), &vmEndpoints); err != nil {
@@ -56,67 +50,41 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new vm handler"))
 	}
 
-	schedulerNotification := make(chan uint64, 10)
-	chainHeadNotification := make(chan uint64, 10)
-
-	projectNotifications := []chan<- uint64{schedulerNotification}
-	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
-
-	local := cfg.ProjectFileDir != ""
-
-	var contractPersistence *contract.Contract
-	var kvDB *pebble.DB
-	if !local {
-		kvDB, err = pebble.Open(cfg.LocalDBDir, &pebble.Options{})
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "failed to open pebble db"))
-		}
-		defer kvDB.Close()
-
-		contractPersistence, err = contract.New(kvDB, cfg.SchedulerEpoch, cfg.BeginningBlockNumber,
-			cfg.ChainEndpoint, common.HexToAddress(cfg.ProverContractAddr),
-			common.HexToAddress(cfg.ProjectContractAddr), chainHeadNotifications, projectNotifications)
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
-		}
+	db, err := db.New(cfg.LocalDBDir, proverOperatorAddress)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new db"))
 	}
 
-	proverID := uint64(0)
-	if !local {
-		p := contractPersistence.Prover(proverOperatorAddress)
-		if p == nil {
-			log.Fatal(errors.New("failed to query operator's prover id"))
-		}
-		proverID = p.ID
+	if err := monitor.Run(
+		&monitor.Handler{
+			ScannedBlockNumber:       db.ScannedBlockNumber,
+			UpsertScannedBlockNumber: db.UpsertScannedBlockNumber,
+			AssignTask:               db.CreateTask,
+			UpsertProject:            db.UpsertProject,
+			DeleteTask:               db.DeleteTask,
+		},
+		&monitor.ContractAddr{
+			Project:     common.HexToAddress(cfg.ProjectContractAddr),
+			TaskManager: common.HexToAddress(cfg.TaskManagerContractAddr),
+		},
+		cfg.BeginningBlockNumber,
+		cfg.ChainEndpoint,
+	); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run contract monitor"))
 	}
-	slog.Info("my prover id", "prover_id", proverID)
 
-	var projectManager *project.Manager
-	if local {
-		projectManager, err = project.NewLocalManager(cfg.ProjectFileDir)
-	} else {
-		projectManager = project.NewManager(kvDB, contractPersistence.LatestProject)
-	}
+	projectManager := project.NewManager(db.Project, db.ProjectFile, db.UpsertProjectFile)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to new project manager"))
 	}
 
-	taskProcessor := processor.NewProcessor(vmHandler, projectManager.Project, sk, defaultDatasourcePubKey, proverID)
-
-	pubSubs, err := p2p.NewPubSub(taskProcessor.HandleP2PData, cfg.BootNodeMultiAddr, cfg.IoTeXChainID)
+	datasource, err := datasource.NewPostgres(cfg.DatasourceDSN)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new pubsubs"))
+		log.Fatal(errors.Wrap(err, "failed to connect datasource"))
 	}
 
-	if local {
-		scheduler.RunLocal(pubSubs, taskProcessor.HandleProjectProvers, projectManager)
-	} else {
-		projectOffsets := scheduler.NewProjectEpochOffsets(cfg.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
-
-		if err := scheduler.Run(cfg.SchedulerEpoch, proverID, pubSubs, taskProcessor.HandleProjectProvers,
-			chainHeadNotification, contractPersistence.Project, contractPersistence.Provers, projectOffsets, projectManager); err != nil {
-			log.Fatal(errors.Wrap(err, "failed to run scheduler"))
-		}
+	if err := processor.Run(vmHandler.Handle, projectManager.Project, db, datasource.Retrieve, prv, cfg.ChainEndpoint, common.HexToAddress(cfg.RouterContractAddr)); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run task processor"))
 	}
 
 	done := make(chan os.Signal, 1)

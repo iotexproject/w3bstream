@@ -7,19 +7,16 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cockroachdb/pebble"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
-	"github.com/iotexproject/w3bstream/datasource"
-	"github.com/iotexproject/w3bstream/persistence/contract"
-	"github.com/iotexproject/w3bstream/persistence/postgres"
-	"github.com/iotexproject/w3bstream/project"
-	"github.com/iotexproject/w3bstream/scheduler"
-	"github.com/iotexproject/w3bstream/task/dispatcher"
+	"github.com/iotexproject/w3bstream/cmd/sequencer/db"
+	"github.com/iotexproject/w3bstream/monitor"
+	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/task/assigner"
 )
 
 func main() {
@@ -28,73 +25,49 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to get config"))
 	}
 	cfg.Print()
-	slog.Info("coordinator config loaded")
+	slog.Info("sequencer config loaded")
 
-	defaultDatasourcePubKey, err := hexutil.Decode(cfg.DefaultDatasourcePubKey)
+	prv, err := crypto.HexToECDSA(cfg.OperatorPrvKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to decode default datasource public key"))
+		log.Fatal(errors.Wrap(err, "failed to parse private key"))
 	}
 
-	persistence, err := postgres.New(cfg.DatabaseDSN)
+	db, err := db.New(cfg.LocalDBDir)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new postgres persistence"))
+		log.Fatal(errors.Wrap(err, "failed to new db"))
 	}
 
-	schedulerNotification := make(chan uint64, 10)
-	dispatcherNotification := make(chan uint64, 10)
-	chainHeadNotification := make(chan uint64, 10)
-
-	projectNotifications := []chan<- uint64{dispatcherNotification, schedulerNotification}
-	chainHeadNotifications := []chan<- uint64{chainHeadNotification}
-
-	local := cfg.ProjectFileDir != ""
-
-	var contractPersistence *contract.Contract
-	var kvDB *pebble.DB
-	if !local {
-		kvDB, err = pebble.Open(cfg.LocalDBDir, &pebble.Options{})
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "failed to open pebble db"))
-		}
-		defer kvDB.Close()
-
-		contractPersistence, err = contract.New(kvDB, cfg.SchedulerEpoch, cfg.BeginningBlockNumber,
-			cfg.ChainEndpoint, common.HexToAddress(cfg.ProverContractAddr),
-			common.HexToAddress(cfg.ProjectContractAddr), chainHeadNotifications, projectNotifications)
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
-		}
+	if err := monitor.Run(
+		&monitor.Handler{
+			ScannedBlockNumber:       db.ScannedBlockNumber,
+			UpsertScannedBlockNumber: db.UpsertScannedBlockNumber,
+			UpsertNBits:              db.UpsertNBits,
+			UpsertBlockHead:          db.UpsertBlockHead,
+			UpsertProver:             db.UpsertProver,
+			DeleteTask:               db.DeleteTask,
+		},
+		&monitor.ContractAddr{
+			Prover:      common.HexToAddress(cfg.ProverContractAddr),
+			Dao:         common.HexToAddress(cfg.DaoContractAddr),
+			Minter:      common.HexToAddress(cfg.MinterContractAddr),
+			TaskManager: common.HexToAddress(cfg.TaskManagerContractAddr),
+		},
+		cfg.BeginningBlockNumber,
+		cfg.ChainEndpoint,
+	); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run contract monitor"))
 	}
 
-	var projectManager *project.Manager
-	if local {
-		projectManager, err = project.NewLocalManager(cfg.ProjectFileDir)
-	} else {
-		projectManager = project.NewManager(kvDB, contractPersistence.LatestProject)
-	}
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new project manager"))
+	if _, err := p2p.NewPubSub(cfg.BootNodeMultiAddr, cfg.IoTeXChainID, db.CreateTask); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to new p2p pubsub"))
 	}
 
-	datasourcePG := datasource.NewPostgres()
-	var taskDispatcher *dispatcher.Dispatcher
-	if local {
-		taskDispatcher, err = dispatcher.NewLocal(persistence, datasourcePG.New, projectManager, cfg.DefaultDatasourceURI,
-			cfg.OperatorPriKey, cfg.OperatorPriKeyED25519, cfg.BootNodeMultiAddr, cfg.ContractWhitelist, defaultDatasourcePubKey, cfg.IoTeXChainID)
-	} else {
-		projectOffsets := scheduler.NewProjectEpochOffsets(cfg.SchedulerEpoch, contractPersistence.LatestProjects, schedulerNotification)
-
-		taskDispatcher, err = dispatcher.New(persistence, datasourcePG.New, projectManager, cfg.DefaultDatasourceURI, cfg.BootNodeMultiAddr,
-			cfg.OperatorPriKey, cfg.OperatorPriKeyED25519, cfg.ContractWhitelist, defaultDatasourcePubKey, cfg.IoTeXChainID,
-			dispatcherNotification, chainHeadNotification, contractPersistence, projectOffsets)
+	if err := assigner.Run(db, prv, cfg.ChainEndpoint, common.HexToAddress(cfg.MinterContractAddr)); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run task assigner"))
 	}
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new dispatcher"))
-	}
-	taskDispatcher.Run()
 
 	go func() {
-		if err := api.NewHttpServer(persistence, cfg).Run(cfg.ServiceEndpoint); err != nil {
+		if err := api.Run(db, cfg, prv); err != nil {
 			log.Fatal(errors.Wrap(err, "failed to run http server"))
 		}
 	}()

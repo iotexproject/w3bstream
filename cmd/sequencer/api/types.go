@@ -1,9 +1,8 @@
 package api
 
 import (
-	"encoding/hex"
-
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/iotexproject/w3bstream/block"
 )
 
@@ -21,38 +20,44 @@ type jsonRpcRsp struct {
 	Result  any    `json:"result"`
 }
 
+type blockTip struct {
+	BlockNumber uint64 `json:"blocknumber"`
+	BlockHash   string `json:"blockhash"`
+}
+
 type blockTemplate struct {
-	Meta          string `json:"meta"`
-	PrevBlockHash string `json:"previousblockhash"`
-	MerkleRoot    string `json:"merkleroot"`
-	Difficulty    uint32 `json:"difficulty"`
-	Ts            uint64 `json:"ts"`
-	NonceRange    string `json:"noncerange"`
+	PrevBlockNumber uint64 `json:"previousblocknumber"`
+	Meta            string `json:"meta"`
+	PrevBlockHash   string `json:"previousblockhash"`
+	MerkleRoot      string `json:"merkleroot"`
+	NBits           uint32 `json:"nbits"`
+	Ts              uint64 `json:"ts"`
+	NonceRange      string `json:"noncerange"`
 }
 
 type submitBlockParam struct {
 	Meta          string `json:"meta"`
 	PrevBlockHash string `json:"previousblockhash"`
 	MerkleRoot    string `json:"merkleroot"`
-	Difficulty    uint32 `json:"difficulty"`
+	NBits         uint32 `json:"nbits"`
 	Ts            uint64 `json:"ts"`
 	Nonce         string `json:"nonce"`
 }
 
 func (p *submitBlockParam) toBlockHeader() (*block.Header, error) {
-	meta, err := hex.DecodeString(p.Meta)
+	meta, err := hexutil.Decode(p.Meta)
 	if err != nil {
 		return nil, err
 	}
-	prevBlockHash, err := hex.DecodeString(p.PrevBlockHash)
+	prevBlockHash, err := hexutil.Decode(p.PrevBlockHash)
 	if err != nil {
 		return nil, err
 	}
-	merkleRoot, err := hex.DecodeString(p.MerkleRoot)
+	merkleRoot, err := hexutil.Decode(p.MerkleRoot)
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := hex.DecodeString(p.Nonce)
+	nonce, err := hexutil.Decode(p.Nonce)
 	if err != nil {
 		return nil, err
 	}
@@ -61,11 +66,11 @@ func (p *submitBlockParam) toBlockHeader() (*block.Header, error) {
 		PrevHash:   common.Hash{},
 		MerkleRoot: [32]byte{},
 		Nonce:      [8]byte{},
+		NBits:      p.NBits,
 	}
 	copy(h.Meta[:], meta)
 	copy(h.PrevHash[:], prevBlockHash)
 	copy(h.MerkleRoot[:], merkleRoot)
 	copy(h.Nonce[:], nonce)
-	h.Difficulty = p.Difficulty
 	return h, nil
 }
