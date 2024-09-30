@@ -217,7 +217,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		if err != nil {
 			panic(err)
 		}
-		minterInstance, err := minter.NewMinter(common.HexToAddress("0xa5bE0a5E9E8a0A4cC59adc0FE0d4338DFff68ac4"), client)
+		minterInstance, err := minter.NewMinter(common.HexToAddress("0xD9FF4f2Ad2d2323e41B42507429F164B5E3A8dB9"), client)
 		if err != nil {
 			panic(err)
 		}
