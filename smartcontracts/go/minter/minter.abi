@@ -232,6 +232,11 @@
               "type": "bytes32"
             },
             {
+              "internalType": "bytes32",
+              "name": "hash",
+              "type": "bytes32"
+            },
+            {
               "internalType": "address",
               "name": "prover",
               "type": "address"
