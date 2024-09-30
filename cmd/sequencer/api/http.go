@@ -248,7 +248,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 				Operator:    crypto.PubkeyToAddress(prv.PublicKey),
 				Beneficiary: crypto.PubkeyToAddress(prv.PublicKey),
 			},
-			nil,
+			[]minter.TaskAssignment{},
 		)
 		if err != nil {
 			slog.Error("failed to send tx", "error", err)
