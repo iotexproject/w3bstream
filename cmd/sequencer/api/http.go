@@ -51,7 +51,7 @@ func NewHttpServer(persistence *postgres.Postgres, conf *config.Config) *HttpSer
 	}
 
 	s.coordinatorConf = &apitypes.CoordinatorConfigRsp{
-		ProjectContractAddress: s.conf.ProjectContractAddr,
+		ProjectContractAddress: s.conf.DaoContractAddr,
 	}
 
 	if len(s.conf.OperatorPriKey) > 0 {
@@ -217,7 +217,7 @@ func (s *HttpServer) jsonRPC(c *gin.Context) {
 		if err != nil {
 			panic(err)
 		}
-		minterInstance, err := minter.NewMinter(common.HexToAddress("0xD9FF4f2Ad2d2323e41B42507429F164B5E3A8dB9"), client)
+		minterInstance, err := minter.NewMinter(common.HexToAddress(s.conf.MinterContractAddr), client)
 		if err != nil {
 			panic(err)
 		}

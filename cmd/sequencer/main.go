@@ -53,8 +53,8 @@ func main() {
 		defer kvDB.Close()
 
 		_, err = contract.New(kvDB, persistence, cfg.SchedulerEpoch, cfg.BeginningBlockNumber,
-			cfg.ChainEndpoint, common.HexToAddress(cfg.ProverContractAddr),
-			common.HexToAddress(cfg.ProjectContractAddr), chainHeadNotifications, projectNotifications)
+			cfg.ChainEndpoint, common.HexToAddress(cfg.MinterContractAddr),
+			common.HexToAddress(cfg.DaoContractAddr), chainHeadNotifications, projectNotifications)
 		if err != nil {
 			log.Fatal(errors.Wrap(err, "failed to new contract persistence"))
 		}

@@ -23,8 +23,8 @@ func TestConfig_Init(t *testing.T) {
 			DefaultDatasourceURI:  "postgres://username:password@host:port/database?ext=1",
 			BootNodeMultiAddr:     "/dns4/a.b.com/tcp/1000/ipfs/123123123",
 			IoTeXChainID:          100,
-			ProjectContractAddr:   "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
-			ProverContractAddr:    "0x",
+			DaoContractAddr:       "0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
+			MinterContractAddr:    "0x",
 			OperatorPriKey:        "",
 			OperatorPriKeyED25519: "",
 			ProjectFileDir:        "/path/to/project/configs",
@@ -38,8 +38,8 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("DEFAULT_DATASOURCE_URI", expected.DefaultDatasourceURI)
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
-		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
-		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddr)
+		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.DaoContractAddr)
+		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.MinterContractAddr)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
 		// missing some env
 		// _ = os.Setenv("OPERATOR_PRIVATE_KEY", expected.OperatorPrivateKey)

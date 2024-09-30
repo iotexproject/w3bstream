@@ -14,8 +14,8 @@ type Config struct {
 	BootNodeMultiAddr       string `env:"BOOTNODE_MULTIADDR"`
 	IoTeXChainID            int    `env:"IOTEX_CHAINID"`
 	ChainEndpoint           string `env:"CHAIN_ENDPOINT,optional"`
-	ProjectContractAddr     string `env:"PROJECT_CONTRACT_ADDRESS,optional"`
-	ProverContractAddr      string `env:"PROVER_CONTRACT_ADDRESS,optional"`
+	DaoContractAddr         string `env:"DAO_CONTRACT_ADDRESS,optional"`
+	MinterContractAddr      string `env:"MINTER_CONTRACT_ADDRESS,optional"`
 	OperatorPriKey          string `env:"OPERATOR_PRIVATE_KEY,optional"`
 	OperatorPriKeyED25519   string `env:"OPERATOR_PRIVATE_KEY_ED25519,optional"`
 	ProjectFileDir          string `env:"PROJECT_FILE_DIRECTORY,optional"`
@@ -37,8 +37,8 @@ var (
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:            2,
 		ChainEndpoint:           "https://babel-nightly.iotex.io",
-		ProjectContractAddr:     "0x2B5f53B5a7d05E677A1a8e6Eb01346cF900b39FF",
-		ProverContractAddr:      "0xD9FF4f2Ad2d2323e41B42507429F164B5E3A8dB9",
+		DaoContractAddr:         "0x2B5f53B5a7d05E677A1a8e6Eb01346cF900b39FF",
+		MinterContractAddr:      "0xD9FF4f2Ad2d2323e41B42507429F164B5E3A8dB9",
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
 		LogLevel:                int(slog.LevelInfo),
 		LocalDBDir:              "./local_db",
@@ -65,7 +65,7 @@ var (
 		DefaultDatasourceURI:    "postgres://test_user:test_passwd@localhost:15432/test?sslmode=disable",
 		BootNodeMultiAddr:       "/dns4/localhost/tcp/18000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML",
 		IoTeXChainID:            2,
-		ProjectContractAddr:     "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
+		DaoContractAddr:         "", //"0x02feBE78F3A740b3e9a1CaFAA1b23a2ac0793D26",
 		ProjectFileDir:          "./testdata",
 		DefaultDatasourcePubKey: "0x04df6acbc5b355aabfb2145b36b20b7942c831c245c423a20b189fab4cf3a3dba3d564080841f2eb4890c118ca5e0b80b25f81269621c5e28273a962996c109afa",
 		LogLevel:                int(slog.LevelInfo),
