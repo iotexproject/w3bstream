@@ -25,15 +25,18 @@ type Config struct {
 
 var (
 	defaultTestnetConfig = &Config{
-		LogLevel:             slog.LevelInfo,
-		ServiceEndpoint:      ":9001",
-		BootNodeMultiAddr:    "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
-		IoTeXChainID:         2,
-		ChainEndpoint:        "https://babel-api.testnet.iotex.io",
-		ProverContractAddr:   "0xD7B23d74A662Bb8b1d0e98C333641405bE406523",
-		LocalDBDir:           "./local_db",
-		BeginningBlockNumber: 28000000,
-		env:                  "TESTNET",
+		LogLevel:                slog.LevelInfo,
+		ServiceEndpoint:         ":9001",
+		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
+		IoTeXChainID:            2,
+		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
+		ProverContractAddr:      "0xE5abfa428046642C0b67C412dE2D1468AB195BcC",
+		DaoContractAddr:         "0x3AbD770Ee7400F4F067d9FeC41a798764f8DCbC9",
+		MinterContractAddr:      "0x5f733ffAE7FdE6797d36eE8Aee02a480eD9b8F85",
+		TaskManagerContractAddr: "0x1641C60Ea5a8B251843273518Ce3b2C4D869fBA1",
+		LocalDBDir:              "./local_db",
+		BeginningBlockNumber:    28000000,
+		env:                     "TESTNET",
 	}
 )
 

@@ -31,7 +31,7 @@ type (
 	AssignTask               func(uint64, common.Hash, common.Address) error
 	DeleteTask               func(uint64, common.Hash) error
 	UpsertProject            func(uint64, string, common.Hash) error
-	UpsertProver             func(common.Address) error
+	UpsertProver             func(uint64, common.Address) error
 )
 
 type Handler struct {
@@ -180,7 +180,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse operator set event")
 			}
-			if err := c.h.UpsertProver(e.Operator); err != nil {
+			if err := c.h.UpsertProver(e.Id.Uint64(), e.Operator); err != nil {
 				return err
 			}
 		}
@@ -256,6 +256,7 @@ func (c *contract) watch(listedBlockNumber uint64) {
 				}
 				continue
 			}
+			slog.Debug("listing chain", "from", target, "to", target)
 			if err := c.processLogs(logs); err != nil {
 				slog.Error("failed to process logs", "error", err)
 				continue
