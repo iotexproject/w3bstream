@@ -1,4 +1,3 @@
-# ghcr.io/machinefi/sequencer:latest
 FROM golang:1.22-alpine AS builder
 
 ENV GO111MODULE=on
@@ -6,9 +5,9 @@ ENV GO111MODULE=on
 WORKDIR /go/src
 COPY ./ ./
 
-RUN cd ./cmd/sequencer && go build -o sequencer
+RUN cd ./cmd/sequencer && CGO_ENABLED=1 go build -o sequencer
 
-FROM --platform=linux/amd64 alpine:3.20 AS runtime
+FROM alpine:3.20 AS runtime
 
 RUN apk add --no-cache ca-certificates
 
