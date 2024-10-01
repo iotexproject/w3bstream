@@ -2,6 +2,7 @@ package env
 
 import (
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 
@@ -46,7 +47,12 @@ func ParseEnv(c any) error {
 		case reflect.String:
 			fv.Set(reflect.ValueOf(viper.GetString(key)))
 		case reflect.Int:
-			fv.Set(reflect.ValueOf(viper.GetInt(key)))
+			if fi.Type == reflect.TypeOf(slog.Level(0)) {
+				level := slog.Level(viper.GetInt(key))
+				fv.Set(reflect.ValueOf(level))
+			} else {
+				fv.Set(reflect.ValueOf(viper.GetInt(key)))
+			}
 		case reflect.Uint64:
 			fv.Set(reflect.ValueOf(viper.GetUint64(key)))
 		}
