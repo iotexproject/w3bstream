@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import { keccak256 } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('W3bstream Minter', function () {
@@ -7,6 +6,7 @@ describe('W3bstream Minter', function () {
   let dao;
   let tm;
   let brd;
+  let bhv;
   let scrypt;
   const genesis = "0x0000000000000000000000000000000000000000000000000000000000000000";
   beforeEach(async function () {
@@ -14,16 +14,17 @@ describe('W3bstream Minter', function () {
     dao = await ethers.deployContract('W3bstreamDAO');
     tm = await ethers.deployContract('W3bstreamTaskManager');
     brd = await ethers.deployContract('W3bstreamBlockRewardDistributor');
-    scrypt = await ethers.deployContract('Scrypt');
+    scrypt = await ethers.deployContract('MockScrypt');
+    bhv = await ethers.deployContract('W3bstreamBlockHeaderValidator', [scrypt.getAddress()]);
     await dao.initialize(genesis);
     await tm.initialize();
     await brd.initialize();
-    await minter.initialize(dao.getAddress(), tm.getAddress(), brd.getAddress(), scrypt.getAddress());
-    // let tx = await minter.scrypt("0x000000020000000000000000000000000000000000000000000000000000000000000000ab04ea90eb7d931cbbaa94a11cb3907809c13262dd37acc526e4b4a628e43b111c7fffff00000089929df805");
-    // console.log(tx);
-    // exit(0);
+    await minter.initialize(dao.getAddress(), tm.getAddress(), brd.getAddress(), bhv.getAddress());
     await dao.transferOwnership(minter.getAddress());
     await tm.addOperator(minter.getAddress());
+    await brd.setOperator(minter.getAddress());
+    await bhv.setOperator(minter.getAddress());
+    await minter.setBlockReward(0);
   });
   it('mint block', async function () {
     const tip = await ethers.provider.getBlock('latest');
@@ -33,12 +34,16 @@ describe('W3bstream Minter', function () {
       operator: sequencer.address,
       beneficiary: sequencer.address,
     };
-    await minter.connect(owner).setAdhocNBits("0x1cffff00");
-    let currentNBits = await minter.currentNBits();
-    const merkleRoot = ethers.solidityPackedKeccak256(["address", "address", "address"], [coinbase.addr, coinbase.operator, coinbase.beneficiary]);
+    await bhv.connect(owner).setAdhocNBits("0x1cffff00");
+    let currentNBits = await bhv.currentNBits();
+    const merkleRoot = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
+      ["address", "address", "address"],
+      [coinbase.addr, coinbase.operator, coinbase.beneficiary]
+    ));
     let tipinfo = await dao.tip();
     expect(tipinfo[0]).to.equal(0);
     expect(tipinfo[1]).to.equal(genesis);
+    await scrypt.setHash("0x00000000ffff0000000000000000000000000000000000000000000000000000");
     let blockinfo = {
       meta: "0x00000000",
       prevhash: genesis,
@@ -46,8 +51,8 @@ describe('W3bstream Minter', function () {
       nbits: currentNBits,
       nonce: "0x0000000000000000",
     };
-    const nbits = await minter.currentNBits();
-    const currentTarget = await minter.nbitsToTarget(nbits);
+    const nbits = await bhv.currentNBits();
+    const currentTarget = await bhv.nbitsToTarget(nbits);
     await minter.connect(sequencer).mint(
       blockinfo,
       coinbase,
@@ -67,7 +72,7 @@ describe('W3bstream Minter', function () {
       coinbase,
       [],
     )).to.be.revertedWith("invalid nbits");
-    currentNBits = await minter.currentNBits();
+    currentNBits = await bhv.currentNBits();
     blockinfo.nbits = currentNBits;
     await minter.connect(sequencer).mint(
       blockinfo,

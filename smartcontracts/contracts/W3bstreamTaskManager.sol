@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ITaskManager, TaskAssignment} from "./interfaces/ITaskManager.sol";
 
 struct Record {
     bytes32 hash;
@@ -13,13 +14,6 @@ struct Record {
     bool settled;
 }
 
-struct TaskAssignment {
-    uint256 projectId;
-    bytes32 taskId;
-    bytes32 hash;
-    address prover;
-}
-
 /*
 interface IDebits {
     function withhold(uint256 id, address owner, uint256 amount) external;
@@ -27,7 +21,7 @@ interface IDebits {
     function distribute(uint256 id, address owner, address[] calldata recipients, uint256[] calldata amounts) external;
 }
 */
-contract W3bstreamTaskManager is OwnableUpgradeable {
+contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
     event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address indexed prover, uint256 deadline);
     event TaskSettled(uint256 indexed projectId, bytes32 indexed taskId, address prover);
     event OperatorAdded(address operator);

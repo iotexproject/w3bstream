@@ -135,8 +135,12 @@ async function main() {
   await scrypt.waitForDeployment();
   console.log(`Scrypt deployed to ${scrypt.target}`);
 
+  const headerValidator = await ethers.deployContract('W3bstreamBlockHeaderValidator', [scrypt.target]);
+  await headerValidator.waitForDeployment();
+  console.log(`W3bstreamBlockHeaderValidator deployed to ${headerValidator.target}`);
+
   const W3bstreamBlockMinter = await ethers.getContractFactory('W3bstreamBlockMinter');
-  const minter = await upgrades.deployProxy(W3bstreamBlockMinter, [dao.target, taskManager.target, distributor.target, scrypt.target], {
+  const minter = await upgrades.deployProxy(W3bstreamBlockMinter, [dao.target, taskManager.target, distributor.target, headerValidator.target], {
     initializer: 'initialize',
   });
   await minter.waitForDeployment();
@@ -144,6 +148,14 @@ async function main() {
   tx = await dao.transferOwnership(minter.target);
   await tx.wait();
   console.log(`W3bstreamDAO ownership transferred to ${minter.target}`);
+
+  tx = await headerValidator.setOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamBlockHeaderValidator add operator to ${minter.target}`);
+
+  tx = await distributor.setOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamBlockRewardDistributor add operator to ${minter.target}`);
 
   tx = await taskManager.addOperator(minter.target);
   await tx.wait();
