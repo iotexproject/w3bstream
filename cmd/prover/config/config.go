@@ -23,15 +23,17 @@ type Config struct {
 
 var (
 	defaultTestnetConfig = &Config{
-		LogLevel:             slog.LevelInfo,
-		VMEndpoints:          `{"1":"risc0:4001","2":"halo2:4001","3":"zkwasm:4001","4":"wasm:4001"}`,
-		ChainEndpoint:        "https://babel-api.testnet.iotex.io",
-		DatasourceDSN:        "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
-		ProjectContractAddr:  "0x6B544a7603cead52AdfD99AA64B3d798083cc4CC",
-		ProverOperatorPrvKey: "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
-		BeginningBlockNumber: 20000000,
-		LocalDBDir:           "./local_db",
-		env:                  "TESTNET",
+		LogLevel:                slog.LevelInfo,
+		VMEndpoints:             `{"1":"localhost:4001","2":"localhost:4002","3":"zkwasm:4001","4":"wasm:4001"}`,
+		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
+		DatasourceDSN:           "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
+		ProjectContractAddr:     "0x4804e93c2A0A44BC055aA6e4b6d5Ead3FC2596Cd",
+		RouterContractAddr:      "0x145C282cCc7f60c6B19664b01e08c5Cae7C97CbB",
+		TaskManagerContractAddr: "0x65aF86776CCFc60781a70c38F44625853d7A842A",
+		ProverOperatorPrvKey:    "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
+		BeginningBlockNumber:    28345000,
+		LocalDBDir:              "./local_db",
+		env:                     "TESTNET",
 	}
 )
 

@@ -73,7 +73,7 @@
           "type": "bytes32"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "address",
           "name": "prover",
           "type": "address"
@@ -141,6 +141,11 @@
               "type": "bytes32"
             },
             {
+              "internalType": "bytes32",
+              "name": "hash",
+              "type": "bytes32"
+            },
+            {
               "internalType": "address",
               "name": "prover",
               "type": "address"
@@ -149,6 +154,11 @@
           "internalType": "struct TaskAssignment[]",
           "name": "taskAssignments",
           "type": "tuple[]"
+        },
+        {
+          "internalType": "address",
+          "name": "sequencer",
+          "type": "address"
         },
         {
           "internalType": "uint256",
@@ -176,6 +186,11 @@
               "type": "bytes32"
             },
             {
+              "internalType": "bytes32",
+              "name": "hash",
+              "type": "bytes32"
+            },
+            {
               "internalType": "address",
               "name": "prover",
               "type": "address"
@@ -184,6 +199,11 @@
           "internalType": "struct TaskAssignment",
           "name": "assignment",
           "type": "tuple"
+        },
+        {
+          "internalType": "address",
+          "name": "sequencer",
+          "type": "address"
         },
         {
           "internalType": "uint256",
@@ -251,9 +271,29 @@
       "name": "records",
       "outputs": [
         {
+          "internalType": "bytes32",
+          "name": "hash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "sequencer",
+          "type": "address"
+        },
+        {
           "internalType": "address",
           "name": "prover",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "rewardForProver",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "rewardForSequencer",
+          "type": "uint256"
         },
         {
           "internalType": "uint256",

@@ -74,7 +74,7 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 			Nonce: new(big.Int).SetUint64(nonce),
 		},
 		new(big.Int).SetUint64(t.ProjectID),
-		new(big.Int).SetUint64(0),
+		new(big.Int).SetUint64(1),
 		t.DeviceID.String(),
 		proof,
 	)
@@ -99,6 +99,7 @@ func (r *processor) run() {
 		}
 		if err := r.process(projectID, taskID); err != nil {
 			slog.Error("failed to process task", "error", err)
+			time.Sleep(r.waitingTime)
 			continue
 		}
 		if err := r.db.ProcessTask(projectID, taskID); err != nil {

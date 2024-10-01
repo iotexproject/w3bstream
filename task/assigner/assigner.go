@@ -25,6 +25,7 @@ type DB interface {
 	BlockHead() (uint64, common.Hash, error)
 	NBits() (uint32, error)
 	UnassignedTask() (uint64, common.Hash, error)
+	AssignTask(projectID uint64, taskID common.Hash, prover common.Address) error
 	Provers() ([]common.Address, error)
 }
 
@@ -84,7 +85,7 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to get pending nonce")
 	}
-
+	prover := provers[rand.Intn(len(provers))]
 	tx, err := r.minterInstance.Mint(
 		&bind.TransactOpts{
 			From: r.account,
@@ -109,7 +110,8 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 			{
 				ProjectId: new(big.Int).SetUint64(projectID),
 				TaskId:    taskID,
-				Prover:    provers[rand.Intn(len(provers))],
+				Prover:    prover,
+				Hash:      common.Hash{},
 			},
 		},
 	)
@@ -117,6 +119,9 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 		return errors.Wrap(err, "failed to send tx")
 	}
 	slog.Info("send tx to minter contract success", "hash", tx.Hash().String())
+	if err := r.db.AssignTask(projectID, taskID, prover); err != nil {
+		return err
+	}
 	return nil
 }
 

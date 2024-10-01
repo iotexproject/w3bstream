@@ -22,7 +22,7 @@ func (p *Postgres) Retrieve(projectID uint64, taskID common.Hash) (*task.Task, e
 	if err := p.db.Where("task_id = ? AND project_id = ?", taskID, projectID).First(&t).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to query task")
 	}
-	messageIDs := []string{}
+	messageIDs := []uint64{}
 	if err := json.Unmarshal(t.MessageIDs, &messageIDs); err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal task message ids, task_id %v", t.TaskID)
 	}
