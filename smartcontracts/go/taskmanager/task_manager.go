@@ -33,12 +33,13 @@ var (
 type TaskAssignment struct {
 	ProjectId *big.Int
 	TaskId    [32]byte
+	Hash      [32]byte
 	Prover    common.Address
 }
 
 // TaskmanagerMetaData contains all meta data concerning the Taskmanager contract.
 var TaskmanagerMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"TaskAssigned\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"name\":\"TaskSettled\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment[]\",\"name\":\"taskAssignments\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"assign\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment\",\"name\":\"assignment\",\"type\":\"tuple\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"assign\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"operators\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"records\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"settled\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"name\":\"settle\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"OperatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"TaskAssigned\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"name\":\"TaskSettled\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment[]\",\"name\":\"taskAssignments\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"sequencer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"assign\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"internalType\":\"structTaskAssignment\",\"name\":\"assignment\",\"type\":\"tuple\"},{\"internalType\":\"address\",\"name\":\"sequencer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"assign\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"operators\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"records\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"sequencer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"rewardForProver\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rewardForSequencer\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"settled\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"prover\",\"type\":\"address\"}],\"name\":\"settle\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // TaskmanagerABI is the input ABI used to generate the binding from.
@@ -251,27 +252,39 @@ func (_Taskmanager *TaskmanagerCallerSession) Owner() (common.Address, error) {
 
 // Records is a free data retrieval call binding the contract method 0x63c7a7c8.
 //
-// Solidity: function records(uint256 , bytes32 ) view returns(address prover, uint256 deadline, bool settled)
+// Solidity: function records(uint256 , bytes32 ) view returns(bytes32 hash, address sequencer, address prover, uint256 rewardForProver, uint256 rewardForSequencer, uint256 deadline, bool settled)
 func (_Taskmanager *TaskmanagerCaller) Records(opts *bind.CallOpts, arg0 *big.Int, arg1 [32]byte) (struct {
-	Prover   common.Address
-	Deadline *big.Int
-	Settled  bool
+	Hash               [32]byte
+	Sequencer          common.Address
+	Prover             common.Address
+	RewardForProver    *big.Int
+	RewardForSequencer *big.Int
+	Deadline           *big.Int
+	Settled            bool
 }, error) {
 	var out []interface{}
 	err := _Taskmanager.contract.Call(opts, &out, "records", arg0, arg1)
 
 	outstruct := new(struct {
-		Prover   common.Address
-		Deadline *big.Int
-		Settled  bool
+		Hash               [32]byte
+		Sequencer          common.Address
+		Prover             common.Address
+		RewardForProver    *big.Int
+		RewardForSequencer *big.Int
+		Deadline           *big.Int
+		Settled            bool
 	})
 	if err != nil {
 		return *outstruct, err
 	}
 
-	outstruct.Prover = *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-	outstruct.Deadline = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
-	outstruct.Settled = *abi.ConvertType(out[2], new(bool)).(*bool)
+	outstruct.Hash = *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+	outstruct.Sequencer = *abi.ConvertType(out[1], new(common.Address)).(*common.Address)
+	outstruct.Prover = *abi.ConvertType(out[2], new(common.Address)).(*common.Address)
+	outstruct.RewardForProver = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
+	outstruct.RewardForSequencer = *abi.ConvertType(out[4], new(*big.Int)).(**big.Int)
+	outstruct.Deadline = *abi.ConvertType(out[5], new(*big.Int)).(**big.Int)
+	outstruct.Settled = *abi.ConvertType(out[6], new(bool)).(*bool)
 
 	return *outstruct, err
 
@@ -279,22 +292,30 @@ func (_Taskmanager *TaskmanagerCaller) Records(opts *bind.CallOpts, arg0 *big.In
 
 // Records is a free data retrieval call binding the contract method 0x63c7a7c8.
 //
-// Solidity: function records(uint256 , bytes32 ) view returns(address prover, uint256 deadline, bool settled)
+// Solidity: function records(uint256 , bytes32 ) view returns(bytes32 hash, address sequencer, address prover, uint256 rewardForProver, uint256 rewardForSequencer, uint256 deadline, bool settled)
 func (_Taskmanager *TaskmanagerSession) Records(arg0 *big.Int, arg1 [32]byte) (struct {
-	Prover   common.Address
-	Deadline *big.Int
-	Settled  bool
+	Hash               [32]byte
+	Sequencer          common.Address
+	Prover             common.Address
+	RewardForProver    *big.Int
+	RewardForSequencer *big.Int
+	Deadline           *big.Int
+	Settled            bool
 }, error) {
 	return _Taskmanager.Contract.Records(&_Taskmanager.CallOpts, arg0, arg1)
 }
 
 // Records is a free data retrieval call binding the contract method 0x63c7a7c8.
 //
-// Solidity: function records(uint256 , bytes32 ) view returns(address prover, uint256 deadline, bool settled)
+// Solidity: function records(uint256 , bytes32 ) view returns(bytes32 hash, address sequencer, address prover, uint256 rewardForProver, uint256 rewardForSequencer, uint256 deadline, bool settled)
 func (_Taskmanager *TaskmanagerCallerSession) Records(arg0 *big.Int, arg1 [32]byte) (struct {
-	Prover   common.Address
-	Deadline *big.Int
-	Settled  bool
+	Hash               [32]byte
+	Sequencer          common.Address
+	Prover             common.Address
+	RewardForProver    *big.Int
+	RewardForSequencer *big.Int
+	Deadline           *big.Int
+	Settled            bool
 }, error) {
 	return _Taskmanager.Contract.Records(&_Taskmanager.CallOpts, arg0, arg1)
 }
@@ -320,46 +341,46 @@ func (_Taskmanager *TaskmanagerTransactorSession) AddOperator(operator common.Ad
 	return _Taskmanager.Contract.AddOperator(&_Taskmanager.TransactOpts, operator)
 }
 
-// Assign is a paid mutator transaction binding the contract method 0x6f5cd010.
+// Assign is a paid mutator transaction binding the contract method 0x1c6b5243.
 //
-// Solidity: function assign((uint256,bytes32,address)[] taskAssignments, uint256 deadline) returns()
-func (_Taskmanager *TaskmanagerTransactor) Assign(opts *bind.TransactOpts, taskAssignments []TaskAssignment, deadline *big.Int) (*types.Transaction, error) {
-	return _Taskmanager.contract.Transact(opts, "assign", taskAssignments, deadline)
+// Solidity: function assign((uint256,bytes32,bytes32,address)[] taskAssignments, address sequencer, uint256 deadline) returns()
+func (_Taskmanager *TaskmanagerTransactor) Assign(opts *bind.TransactOpts, taskAssignments []TaskAssignment, sequencer common.Address, deadline *big.Int) (*types.Transaction, error) {
+	return _Taskmanager.contract.Transact(opts, "assign", taskAssignments, sequencer, deadline)
 }
 
-// Assign is a paid mutator transaction binding the contract method 0x6f5cd010.
+// Assign is a paid mutator transaction binding the contract method 0x1c6b5243.
 //
-// Solidity: function assign((uint256,bytes32,address)[] taskAssignments, uint256 deadline) returns()
-func (_Taskmanager *TaskmanagerSession) Assign(taskAssignments []TaskAssignment, deadline *big.Int) (*types.Transaction, error) {
-	return _Taskmanager.Contract.Assign(&_Taskmanager.TransactOpts, taskAssignments, deadline)
+// Solidity: function assign((uint256,bytes32,bytes32,address)[] taskAssignments, address sequencer, uint256 deadline) returns()
+func (_Taskmanager *TaskmanagerSession) Assign(taskAssignments []TaskAssignment, sequencer common.Address, deadline *big.Int) (*types.Transaction, error) {
+	return _Taskmanager.Contract.Assign(&_Taskmanager.TransactOpts, taskAssignments, sequencer, deadline)
 }
 
-// Assign is a paid mutator transaction binding the contract method 0x6f5cd010.
+// Assign is a paid mutator transaction binding the contract method 0x1c6b5243.
 //
-// Solidity: function assign((uint256,bytes32,address)[] taskAssignments, uint256 deadline) returns()
-func (_Taskmanager *TaskmanagerTransactorSession) Assign(taskAssignments []TaskAssignment, deadline *big.Int) (*types.Transaction, error) {
-	return _Taskmanager.Contract.Assign(&_Taskmanager.TransactOpts, taskAssignments, deadline)
+// Solidity: function assign((uint256,bytes32,bytes32,address)[] taskAssignments, address sequencer, uint256 deadline) returns()
+func (_Taskmanager *TaskmanagerTransactorSession) Assign(taskAssignments []TaskAssignment, sequencer common.Address, deadline *big.Int) (*types.Transaction, error) {
+	return _Taskmanager.Contract.Assign(&_Taskmanager.TransactOpts, taskAssignments, sequencer, deadline)
 }
 
-// Assign0 is a paid mutator transaction binding the contract method 0xadf51901.
+// Assign0 is a paid mutator transaction binding the contract method 0xc7c323f1.
 //
-// Solidity: function assign((uint256,bytes32,address) assignment, uint256 deadline) returns()
-func (_Taskmanager *TaskmanagerTransactor) Assign0(opts *bind.TransactOpts, assignment TaskAssignment, deadline *big.Int) (*types.Transaction, error) {
-	return _Taskmanager.contract.Transact(opts, "assign0", assignment, deadline)
+// Solidity: function assign((uint256,bytes32,bytes32,address) assignment, address sequencer, uint256 deadline) returns()
+func (_Taskmanager *TaskmanagerTransactor) Assign0(opts *bind.TransactOpts, assignment TaskAssignment, sequencer common.Address, deadline *big.Int) (*types.Transaction, error) {
+	return _Taskmanager.contract.Transact(opts, "assign0", assignment, sequencer, deadline)
 }
 
-// Assign0 is a paid mutator transaction binding the contract method 0xadf51901.
+// Assign0 is a paid mutator transaction binding the contract method 0xc7c323f1.
 //
-// Solidity: function assign((uint256,bytes32,address) assignment, uint256 deadline) returns()
-func (_Taskmanager *TaskmanagerSession) Assign0(assignment TaskAssignment, deadline *big.Int) (*types.Transaction, error) {
-	return _Taskmanager.Contract.Assign0(&_Taskmanager.TransactOpts, assignment, deadline)
+// Solidity: function assign((uint256,bytes32,bytes32,address) assignment, address sequencer, uint256 deadline) returns()
+func (_Taskmanager *TaskmanagerSession) Assign0(assignment TaskAssignment, sequencer common.Address, deadline *big.Int) (*types.Transaction, error) {
+	return _Taskmanager.Contract.Assign0(&_Taskmanager.TransactOpts, assignment, sequencer, deadline)
 }
 
-// Assign0 is a paid mutator transaction binding the contract method 0xadf51901.
+// Assign0 is a paid mutator transaction binding the contract method 0xc7c323f1.
 //
-// Solidity: function assign((uint256,bytes32,address) assignment, uint256 deadline) returns()
-func (_Taskmanager *TaskmanagerTransactorSession) Assign0(assignment TaskAssignment, deadline *big.Int) (*types.Transaction, error) {
-	return _Taskmanager.Contract.Assign0(&_Taskmanager.TransactOpts, assignment, deadline)
+// Solidity: function assign((uint256,bytes32,bytes32,address) assignment, address sequencer, uint256 deadline) returns()
+func (_Taskmanager *TaskmanagerTransactorSession) Assign0(assignment TaskAssignment, sequencer common.Address, deadline *big.Int) (*types.Transaction, error) {
+	return _Taskmanager.Contract.Assign0(&_Taskmanager.TransactOpts, assignment, sequencer, deadline)
 }
 
 // Initialize is a paid mutator transaction binding the contract method 0x8129fc1c.
@@ -1100,8 +1121,8 @@ type TaskmanagerTaskAssigned struct {
 
 // FilterTaskAssigned is a free log retrieval operation binding the contract event 0x45fbdf2605d3db829aa556ebcbe72c28b04d5ac864de9f5352854b761feb0e2b.
 //
-// Solidity: event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address prover, uint256 deadline)
-func (_Taskmanager *TaskmanagerFilterer) FilterTaskAssigned(opts *bind.FilterOpts, projectId []*big.Int, taskId [][32]byte) (*TaskmanagerTaskAssignedIterator, error) {
+// Solidity: event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address indexed prover, uint256 deadline)
+func (_Taskmanager *TaskmanagerFilterer) FilterTaskAssigned(opts *bind.FilterOpts, projectId []*big.Int, taskId [][32]byte, prover []common.Address) (*TaskmanagerTaskAssignedIterator, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1111,8 +1132,12 @@ func (_Taskmanager *TaskmanagerFilterer) FilterTaskAssigned(opts *bind.FilterOpt
 	for _, taskIdItem := range taskId {
 		taskIdRule = append(taskIdRule, taskIdItem)
 	}
+	var proverRule []interface{}
+	for _, proverItem := range prover {
+		proverRule = append(proverRule, proverItem)
+	}
 
-	logs, sub, err := _Taskmanager.contract.FilterLogs(opts, "TaskAssigned", projectIdRule, taskIdRule)
+	logs, sub, err := _Taskmanager.contract.FilterLogs(opts, "TaskAssigned", projectIdRule, taskIdRule, proverRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1121,8 +1146,8 @@ func (_Taskmanager *TaskmanagerFilterer) FilterTaskAssigned(opts *bind.FilterOpt
 
 // WatchTaskAssigned is a free log subscription operation binding the contract event 0x45fbdf2605d3db829aa556ebcbe72c28b04d5ac864de9f5352854b761feb0e2b.
 //
-// Solidity: event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address prover, uint256 deadline)
-func (_Taskmanager *TaskmanagerFilterer) WatchTaskAssigned(opts *bind.WatchOpts, sink chan<- *TaskmanagerTaskAssigned, projectId []*big.Int, taskId [][32]byte) (event.Subscription, error) {
+// Solidity: event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address indexed prover, uint256 deadline)
+func (_Taskmanager *TaskmanagerFilterer) WatchTaskAssigned(opts *bind.WatchOpts, sink chan<- *TaskmanagerTaskAssigned, projectId []*big.Int, taskId [][32]byte, prover []common.Address) (event.Subscription, error) {
 
 	var projectIdRule []interface{}
 	for _, projectIdItem := range projectId {
@@ -1132,8 +1157,12 @@ func (_Taskmanager *TaskmanagerFilterer) WatchTaskAssigned(opts *bind.WatchOpts,
 	for _, taskIdItem := range taskId {
 		taskIdRule = append(taskIdRule, taskIdItem)
 	}
+	var proverRule []interface{}
+	for _, proverItem := range prover {
+		proverRule = append(proverRule, proverItem)
+	}
 
-	logs, sub, err := _Taskmanager.contract.WatchLogs(opts, "TaskAssigned", projectIdRule, taskIdRule)
+	logs, sub, err := _Taskmanager.contract.WatchLogs(opts, "TaskAssigned", projectIdRule, taskIdRule, proverRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1167,7 +1196,7 @@ func (_Taskmanager *TaskmanagerFilterer) WatchTaskAssigned(opts *bind.WatchOpts,
 
 // ParseTaskAssigned is a log parse operation binding the contract event 0x45fbdf2605d3db829aa556ebcbe72c28b04d5ac864de9f5352854b761feb0e2b.
 //
-// Solidity: event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address prover, uint256 deadline)
+// Solidity: event TaskAssigned(uint256 indexed projectId, bytes32 indexed taskId, address indexed prover, uint256 deadline)
 func (_Taskmanager *TaskmanagerFilterer) ParseTaskAssigned(log types.Log) (*TaskmanagerTaskAssigned, error) {
 	event := new(TaskmanagerTaskAssigned)
 	if err := _Taskmanager.contract.UnpackLog(event, "TaskAssigned", log); err != nil {

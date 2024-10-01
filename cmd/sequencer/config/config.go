@@ -30,12 +30,12 @@ var (
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:            2,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
-		ProverContractAddr:      "0xE5abfa428046642C0b67C412dE2D1468AB195BcC",
-		DaoContractAddr:         "0x3AbD770Ee7400F4F067d9FeC41a798764f8DCbC9",
-		MinterContractAddr:      "0x5f733ffAE7FdE6797d36eE8Aee02a480eD9b8F85",
-		TaskManagerContractAddr: "0x1641C60Ea5a8B251843273518Ce3b2C4D869fBA1",
+		ProverContractAddr:      "0xf9b850A50Ef236CADf4406Edf5a0B588142D238D",
+		DaoContractAddr:         "0xA7b3c2a257693363a9f043CC9338DbA88E1f83aF",
+		MinterContractAddr:      "0x102a1352557B3f6c65FBb44bF7959F8eacC30992",
+		TaskManagerContractAddr: "0x65aF86776CCFc60781a70c38F44625853d7A842A",
 		LocalDBDir:              "./local_db",
-		BeginningBlockNumber:    28000000,
+		BeginningBlockNumber:    28345000,
 		env:                     "TESTNET",
 	}
 )

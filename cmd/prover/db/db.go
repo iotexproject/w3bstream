@@ -18,14 +18,14 @@ type scannedBlockNumber struct {
 
 type project struct {
 	gorm.Model
-	ProjectID uint64      `gorm:"uniqueIndex:project_id,not null"`
+	ProjectID uint64      `gorm:"uniqueIndex:project_id_project,not null"`
 	URI       string      `gorm:"not null"`
 	Hash      common.Hash `gorm:"not null"`
 }
 
 type projectFile struct {
 	gorm.Model
-	ProjectID uint64      `gorm:"uniqueIndex:project_id,not null"`
+	ProjectID uint64      `gorm:"uniqueIndex:project_id_project_file,not null"`
 	File      []byte      `gorm:"not null"`
 	Hash      common.Hash `gorm:"not null"`
 }
@@ -121,8 +121,11 @@ func (p *DB) CreateTask(projectID uint64, taskID common.Hash, prover common.Addr
 		ProjectID: projectID,
 		Processed: false,
 	}
-	err := p.db.Create(t).Error
-	return errors.Wrap(err, "failed to create task")
+	err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "task_id"}, {Name: "project_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{}),
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert task")
 }
 
 func (p *DB) ProcessTask(projectID uint64, taskID common.Hash) error {

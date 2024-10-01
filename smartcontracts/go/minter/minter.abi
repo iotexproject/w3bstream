@@ -4,6 +4,19 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "reward",
+          "type": "uint256"
+        }
+      ],
+      "name": "BlockRewardfSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "uint8",
           "name": "version",
           "type": "uint8"
@@ -72,12 +85,12 @@
     },
     {
       "inputs": [],
-      "name": "currentNBits",
+      "name": "blockReward",
       "outputs": [
         {
-          "internalType": "uint32",
+          "internalType": "uint256",
           "name": "",
-          "type": "uint32"
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -85,12 +98,12 @@
     },
     {
       "inputs": [],
-      "name": "currentTarget",
+      "name": "currentNBits",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint32",
           "name": "",
-          "type": "uint256"
+          "type": "uint32"
         }
       ],
       "stateMutability": "view",
@@ -110,6 +123,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "distributor",
+      "outputs": [
+        {
+          "internalType": "contract IBlockRewardDistributor",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "contract IDAO",
@@ -118,7 +144,17 @@
         },
         {
           "internalType": "contract ITaskManager",
-          "name": "_tm",
+          "name": "_taskManager",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IBlockRewardDistributor",
+          "name": "_distributor",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IScrypt",
+          "name": "_scrypt",
           "type": "address"
         }
       ],
@@ -196,6 +232,11 @@
               "type": "bytes32"
             },
             {
+              "internalType": "bytes32",
+              "name": "hash",
+              "type": "bytes32"
+            },
+            {
               "internalType": "address",
               "name": "prover",
               "type": "address"
@@ -209,6 +250,25 @@
       "name": "mint",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "nbits",
+          "type": "uint32"
+        }
+      ],
+      "name": "nbitsToTarget",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
       "type": "function"
     },
     {
@@ -240,6 +300,19 @@
         }
       ],
       "name": "setAdhocNBits",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "reward",
+          "type": "uint256"
+        }
+      ],
+      "name": "setBlockReward",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -298,7 +371,7 @@
     },
     {
       "inputs": [],
-      "name": "tm",
+      "name": "taskManager",
       "outputs": [
         {
           "internalType": "contract ITaskManager",

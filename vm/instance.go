@@ -33,7 +33,7 @@ func execute(ctx context.Context, conn *grpc.ClientConn, task *task.Task) ([]byt
 		ProjectID:          task.ProjectID,
 		TaskID:             0,   // TODO
 		ClientID:           "0", // TODO
-		SequencerSignature: string(task.Signature),
+		SequencerSignature: "",  // TODO
 		Datas:              ds,
 	}
 	cli := proto.NewVmRuntimeClient(conn)
