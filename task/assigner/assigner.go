@@ -134,6 +134,7 @@ func (r *assigner) run() {
 		}
 		if err := r.assign(projectID, taskID); err != nil {
 			slog.Error("failed to assign task", "error", err)
+			time.Sleep(r.waitingTime)
 			continue
 		}
 		time.Sleep(1 * time.Second) // TODO after assign tx success, then get next task
