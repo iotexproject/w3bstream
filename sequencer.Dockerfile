@@ -6,6 +6,8 @@ ENV CGO_ENABLED=1
 WORKDIR /go/src
 COPY ./ ./
 
+RUN apk add --no-cache gcc musl-dev
+
 RUN cd ./cmd/sequencer && go build -o sequencer
 
 FROM alpine:3.20 AS runtime
