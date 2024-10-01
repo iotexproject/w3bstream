@@ -30,7 +30,7 @@ var (
 		BootNodeMultiAddr:    "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:         2,
 		ChainEndpoint:        "https://babel-api.testnet.iotex.io",
-		ProverContractAddr:   "0x39d95173C92aadcD47184f770c4a059D8Be66686",
+		ProverContractAddr:   "0xD7B23d74A662Bb8b1d0e98C333641405bE406523",
 		LocalDBDir:           "./local_db",
 		BeginningBlockNumber: 28000000,
 		env:                  "TESTNET",
