@@ -1,11 +1,12 @@
 FROM golang:1.22-alpine AS builder
 
 ENV GO111MODULE=on
+ENV CGO_ENABLED=1
 
 WORKDIR /go/src
 COPY ./ ./
 
-RUN cd ./cmd/prover && CGO_ENABLED=1 go build -o prover
+RUN cd ./cmd/prover && go build -o prover
 
 FROM alpine:3.20 AS runtime
 
