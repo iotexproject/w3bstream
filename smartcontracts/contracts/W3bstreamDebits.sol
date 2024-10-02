@@ -5,8 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract W3bstreamDebits is OwnableUpgradeable {
-    event OperatorSet(uint256 indexed id, address indexed operator);
-    event RewardTokenSet(uint256 indexed id, address indexed rewardToken);
+    event OperatorSet(address indexed operator);
     event Deposited(address indexed token, address indexed owner, uint256 amount);
     event Withheld(address indexed token, address indexed owner, uint256 amount);
     event Distributed(address indexed token, address indexed owner, address[] recipients, uint256[] amounts);
@@ -15,9 +14,8 @@ contract W3bstreamDebits is OwnableUpgradeable {
 
     address public operator;
 
-    mapping(uint256 => address) _rewardTokens;
-    mapping(address => mapping(address => uint256)) _balances;
-    mapping(address => mapping(address => uint256)) _withholdings;
+    mapping(address => mapping(address => uint256)) balances;
+    mapping(address => mapping(address => uint256)) withholdings;
 
     modifier onlyOperator() {
         require(msg.sender == operator, "not operator");
@@ -28,64 +26,62 @@ contract W3bstreamDebits is OwnableUpgradeable {
         __Ownable_init();
     }
 
-    function rewardToken(uint256 _id) external view returns (address) {
-        return _rewardTokens[_id];
+    function setOperator(address _operator) external onlyOwner {
+        operator = _operator;
+        emit OperatorSet(_operator);
     }
 
-    function setRewardToken(uint256 _id, address _rewardToken) external onlyOwner {
-        require(_rewardToken != address(0), "zero address");
-        require(_rewardTokens[_id] == address(0), "already set");
-        _rewardTokens[_id] = _rewardToken;
-        emit RewardTokenSet(_id, _rewardToken);
-    }
-
-    function deposit(uint256 _id, uint256 _amount) external {
-        address token = _rewardTokens[_id];
-        require(token != address(0), "reward token not set");
-        bool success = IERC20(token).transferFrom(msg.sender, address(this), _amount);
+    function deposit(address token, uint256 amount) external {
+        require(token != address(0), "invalid token");
+        bool success = IERC20(token).transferFrom(msg.sender, address(this), amount);
         require(success, "transfer failed");
-        _balances[token][msg.sender] += _amount;
-        emit Deposited(token, msg.sender, _amount);
+        balances[token][msg.sender] += amount;
+        emit Deposited(token, msg.sender, amount);
     }
 
-    function withhold(uint256 _id, address _owner, uint256 _amount) external {
-        address token = _rewardTokens[_id];
+    function withhold(address token, address owner, uint256 amount) external onlyOperator {
         require(token != address(0), "reward token not set");
-        require(_balances[token][_owner] - _withholdings[token][_owner] >= _amount, "insufficient balance");
-        _withholdings[token][_owner] += _amount;
-        _balances[token][_owner] -= _amount;
-        emit Withheld(token, _owner, _amount);
+        require(balances[token][owner] - withholdings[token][owner] >= amount, "insufficient balance");
+        withholdings[token][owner] += amount;
+        balances[token][owner] -= amount;
+        emit Withheld(token, owner, amount);
     }
 
-    function distribute(uint256 _id, address _owner, address[] calldata _recipients, uint256[] calldata _amounts) external onlyOperator {
-        address token = _rewardTokens[_id];
+    function distribute(address token, address _owner, address[] calldata _recipients, uint256[] calldata _amounts) external onlyOperator {
         require(token != address(0), "reward token not set");
         require(_recipients.length == _amounts.length, "length mismatch");
         for (uint256 i = 0; i < _recipients.length; i++) {
-            require(_withholdings[token][_owner] >= _amounts[i], "insufficient balance");
-            _withholdings[token][_owner] -= _amounts[i];
+            require(withholdings[token][_owner] >= _amounts[i], "insufficient balance");
+            withholdings[token][_owner] -= _amounts[i];
             bool success = IERC20(token).transfer(_recipients[i], _amounts[i]);
             require(success, "transfer failed");
         }
         emit Distributed(token, _owner, _recipients, _amounts);
     }
 
-    function redeem(uint256 _id, address _owner, uint256 _amount) external onlyOperator {
-        address token = _rewardTokens[_id];
-        require(token != address(0), "reward token not set");
-        require(_withholdings[token][_owner] >= _amount, "insufficient balance");
-        _withholdings[token][_owner] -= _amount;
-        _balances[token][_owner] += _amount;
+    function redeem(address token, address _owner, uint256 _amount) external onlyOperator {
+        require(token != address(0), "invalid token");
+        require(withholdings[token][_owner] >= _amount, "insufficient balance");
+        withholdings[token][_owner] -= _amount;
+        balances[token][_owner] += _amount;
         emit Redeemed(token, _owner, _amount);
     }
 
     function withdraw(address _token, uint256 _amount) external {
         address sender = msg.sender;
         require(_token != address(0), "zero address");
-        require(_balances[_token][sender] >= _amount, "insufficient balance");
-        _balances[_token][sender] -= _amount;
+        require(balances[_token][sender] >= _amount, "insufficient balance");
+        balances[_token][sender] -= _amount;
         bool success = IERC20(_token).transfer(sender, _amount);
         require(success, "transfer failed");
         emit Withdrawn(_token, sender, _amount);
+    }
+
+    function balanceOf(address token, address owner) external view returns (uint256) {
+        return balances[token][owner];
+    }
+
+    function withholdingOf(address token, address owner) external view returns (uint256) {
+        return withholdings[token][owner];
     }
 }

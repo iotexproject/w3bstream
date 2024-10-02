@@ -9,5 +9,6 @@ struct TaskAssignment {
     uint256 projectId;
     bytes32 taskId;
     bytes32 hash;
+    bytes signature;
     address prover;
 }

@@ -12,16 +12,14 @@ describe('W3bstream Minter', function () {
   beforeEach(async function () {
     minter = await ethers.deployContract('W3bstreamBlockMinter');
     dao = await ethers.deployContract('W3bstreamDAO');
-    tm = await ethers.deployContract('W3bstreamTaskManager');
+    tm = await ethers.deployContract('MockTaskManager');
     brd = await ethers.deployContract('W3bstreamBlockRewardDistributor');
     scrypt = await ethers.deployContract('MockScrypt');
     bhv = await ethers.deployContract('W3bstreamBlockHeaderValidator', [scrypt.getAddress()]);
     await dao.initialize(genesis);
-    await tm.initialize();
     await brd.initialize();
     await minter.initialize(dao.getAddress(), tm.getAddress(), brd.getAddress(), bhv.getAddress());
     await dao.transferOwnership(minter.getAddress());
-    await tm.addOperator(minter.getAddress());
     await brd.setOperator(minter.getAddress());
     await bhv.setOperator(minter.getAddress());
     await minter.setBlockReward(0);
