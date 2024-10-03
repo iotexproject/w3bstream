@@ -51,10 +51,8 @@ contract W3bstreamDebits is OwnableUpgradeable {
         require(token != address(0), "reward token not set");
         require(_recipients.length == _amounts.length, "length mismatch");
         for (uint256 i = 0; i < _recipients.length; i++) {
-            require(withholdings[token][_owner] >= _amounts[i], "insufficient balance");
-            withholdings[token][_owner] -= _amounts[i];
-            bool success = IERC20(token).transfer(_recipients[i], _amounts[i]);
-            require(success, "transfer failed");
+            withholdings[token][_owner] -= _amounts[i]; // overflow protected
+            balances[token][_recipients[i]] += _amounts[i];
         }
         emit Distributed(token, _owner, _recipients, _amounts);
     }
