@@ -1,29 +1,21 @@
 syntax = "proto3";
-package vm_runtime;
+package vm;
 option go_package = "./proto";
 
-service VmRuntime {
-    rpc Create(CreateRequest) returns (CreateResponse);
-    rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+service VM {
+    rpc Execute(Request) returns (Response);
 }
 
-message CreateRequest {
+message Request {
     uint64 projectID = 1;
-    string content = 2;
-    string expParam = 3;
+    bytes code = 2;
+    bytes expParam = 3;
+    bytes taskID = 4;
+    bytes deviceID = 5;
+    bytes apinodeSignature = 6;
+    repeated bytes payloads = 7;
 }
 
-message CreateResponse {
-}
-
-message ExecuteRequest {
-    uint64 projectID = 1;
-    uint64 taskID = 2;
-    string clientID = 3;
-    string sequencerSignature = 4;
-    repeated string datas = 5;
-}
-
-message ExecuteResponse {
+message Response {
     bytes result = 1;
 }
