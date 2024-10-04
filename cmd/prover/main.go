@@ -29,10 +29,6 @@ func main() {
 	cfg.Print()
 	slog.Info("prover config loaded")
 
-	if err := migrateDatabase(cfg.DatasourceDSN); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to migrate database"))
-	}
-
 	prv, err := crypto.HexToECDSA(cfg.ProverOperatorPrvKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
