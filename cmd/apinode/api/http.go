@@ -47,8 +47,8 @@ type httpServer struct {
 func (s *httpServer) handleMessage(c *gin.Context) {
 	req := &HandleMessageReq{}
 	if err := c.ShouldBind(req); err != nil {
-		slog.Error("failed to bind request", "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(err))
+		slog.Error("Failed to bind request to HandleMessageReq struct", "error", err)
+		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
 		return
 	}
 
@@ -57,24 +57,26 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 
 	reqJson, err := json.Marshal(req)
 	if err != nil {
-		slog.Error("failed to marshal request", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(err))
+		slog.Error("Failed to marshal request into JSON format", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to process request data")))
 		return
 	}
 
 	sig, err := hexutil.Decode(sigStr)
 	if err != nil {
-		slog.Error("failed to decode signature", "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(err))
+                slog.Error("Failed to decode signature from hex format", "signature", sigStr, "error", err)
+                c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature format")))
 		return
 	}
+	
 	h := crypto.Keccak256Hash(reqJson)
 	sigpk, err := crypto.SigToPub(h.Bytes(), sig)
 	if err != nil {
-		slog.Error("failed to recover public key", "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(err))
+		slog.Error("Failed to recover public key from signature", "error", err)
+                c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
 		return
 	}
+	
 	addr := crypto.PubkeyToAddress(*sigpk)
 
 	taskID, err := s.p.Save(s.pubSub,
@@ -87,7 +89,8 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		}, s.aggregationAmount, s.prv,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, NewErrResp(err))
+		slog.Error("Failed to save message to persistence layer", "error", err)
+                c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "internal server error; could not save task")))
 		return
 	}
 
@@ -95,6 +98,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	if !bytes.Equal(taskID[:], common.Hash{}.Bytes()) {
 		resp.TaskID = taskID.String()
 	}
+	slog.Info("Successfully processed message", "taskID", resp.TaskID)
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -170,7 +174,8 @@ func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, 
 	s.engine.GET("/message/:id", s.queryStateLogByID)
 
 	if err := s.engine.Run(address); err != nil {
-		return errors.Wrap(err, "failed to run http server")
+	        slog.Error("Failed to start HTTP server", "address", address, "error", err)
+                return errors.Wrap(err, "could not start HTTP server; check if the address is in use or network is accessible")
 	}
 	return nil
 }
