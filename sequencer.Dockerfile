@@ -15,7 +15,6 @@ FROM alpine:3.20 AS runtime
 RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /go/src/cmd/sequencer/sequencer /go/bin/sequencer
-EXPOSE 9001
 
 WORKDIR /go/bin
 ENTRYPOINT ["/go/bin/sequencer"]

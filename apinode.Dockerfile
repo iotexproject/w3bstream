@@ -1,5 +1,5 @@
 # ghcr.io/machinefi/apinode:latest
-FROM --platform=linux/amd64 golang:1.22-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 ENV GO111MODULE=on
 
@@ -8,7 +8,7 @@ COPY ./ ./
 
 RUN cd ./cmd/apinode && go build -o apinode
 
-FROM --platform=linux/amd64 alpine:3.20 AS runtime
+FROM alpine:3.20 AS runtime
 
 ENV LANG en_US.UTF-8
 
