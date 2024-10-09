@@ -1,17 +1,12 @@
-permissions:
-  packages: write
-
-name: build_image
+name: build images
 
 on:
   push:
     tags: [ "v*.*.*" ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  APINODE_IMAGE_NAME: iotexproject/w3bstream-apinode
-  PROVER_IMAGE_NAME: iotexproject/w3bstream-prover
-  SEQUENCER_IMAGE_NAME: iotexproject/w3bstream-sequencer
 
 jobs:
   build_prover_image:
@@ -19,7 +14,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ubuntu-latest, macos-latest]
+        name: [apinode, bootnode, prover, sequencer]
+        include:
+          - name: apinode
+            image_name: iotexproject/w3bstream-apinode
+            dockerfile: apinode.Dockerfile
+          - name: bootnode
+            image_name: iotexproject/w3bstream-bootnode
+            dockerfile: bootnode.Dockerfile
+          - name: prover
+            image_name: iotexproject/w3bstream-prover
+            dockerfile: prover.Dockerfile
+          - name: sequencer
+            image_name: iotexproject/w3bstream-sequencer
+            dockerfile: sequencer.Dockerfile
+
     permissions:
       contents: read
       packages: write
@@ -30,13 +40,16 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+      
       - name: Setup Docker and Colima
-        if: startsWith(matrix.os, 'macos-latest') == true
+        if: runner.os == 'macOS'
         run: |
           brew install docker colima
           colima start
+
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v2
+
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
@@ -44,113 +57,20 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract Docker metadata
-        id: meta-prover
+        id: meta
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ env.PROVER_IMAGE_NAME }}
-      - name: Build and push Docker image prover
-        id: build-and-push-prover
+            ${{ env.REGISTRY }}/${{ matrix.image_name }}
+
+      - name: Build and push Docker image ${{ matrix.name }}
         uses: docker/build-push-action@v4
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          file: ./prover.Dockerfile
+          file: ./${{ matrix.dockerfile }}
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-prover.outputs.tags }}
-          labels: ${{ steps.meta-prover.outputs.labels }}
-
-  build_sequencer_image:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - name: Setup Docker and Colima
-        if: startsWith(matrix.os, 'macos-latest') == true
-        run: |
-          brew install docker colima
-          colima start
-      - name: Setup Docker buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract Docker metadata
-        id: meta-sequencer
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ env.REGISTRY }}/${{ env.SEQUENCER_IMAGE_NAME }}
-      - name: Build and push Docker image sequencer
-        id: build-and-push-sequencer
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          file: ./sequencer.Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-sequencer.outputs.tags }}
-          labels: ${{ steps.meta-sequencer.outputs.labels }}
-
-  build_apinode_image:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - name: Setup Docker and Colima
-        if: startsWith(matrix.os, 'macos-latest') == true
-        run: |
-          brew install docker colima
-          colima start
-      - name: Setup Docker buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract Docker metadata
-        id: meta-apinode
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ env.REGISTRY }}/${{ env.APINODE_IMAGE_NAME }}
-      - name: Build and push Docker image apinode
-        id: build-and-push-apinode
-        uses: docker/build-push-action@v4
-        with:
-          platforms: linux/amd64,linux/arm64
-          context: .
-          file: ./apinode.Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-apinode.outputs.tags }}
-          labels: ${{ steps.meta-apinode.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
