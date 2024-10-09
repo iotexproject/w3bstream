@@ -2,13 +2,10 @@
 
 W3bstream is an integral part of the IoTeX network. It is a Layer-2 protocol orchestrated by the IoTeX Blockchain, dedicated to facilitating decentralized data processing in blockchain ecosystems. W3bstream nodes fetch raw data messages from supported data infrastructures and process them through project-specific ZK circuits to generate Zero-Knowledge (ZK) Proofs. These proofs are then dispatched to dApps on different blockchains and verified on-chain, enabling dApps to securely act on validated data insights. W3bstream enhances scalability and trust in blockchain applications, particularly where actions depend on the integrity of real-world data, such as in supply chain management, IoT, or any DePIN network where data authenticity triggers significant incentives on the blockchain.
 
-## Task Flow
+## Workflow
 
 <p align="center">
-  <img src="./docs/sequencer.png"/>
-</p>
-<p align="center">
-  <img src="./docs/task_flow_diagram.png"/>
+  <img src="./docs/arch_new.png"/>
 </p>
 
 The diagram represents the main components of the software and how they interact with each other. Note that this reflects a single entity running a sequencer and a prover. However, there are many entities running nodes in the network. More on this later.
@@ -28,9 +25,8 @@ The diagram represents the main components of the software and how they interact
 
 ## Docker images
 
-* [sequencer](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-sequencer)
-* [prover](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-prover)
-* [coordinator](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-coordinator)
+* [Sequencer](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-sequencer)
+* [Prover](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-prover)
 
 
 ## Running
@@ -39,27 +35,10 @@ For users who just want to give it a try, please refer to [Quick Start →](./do
 
 Developers looking to build circuits and deploy W3bstream projects should consult the [DEVELOPER_GUIDE →](./docs/DEVELOPER_GUIDE.md)
 
-## Sandbox
-The DePIN Sandbox is an initial deployment of Layer 1 contracts that facilitate the deployment od DePIN Projects on IoTeX using W3bstream
+## Contract Deployments
 
-https://github.com/iotexproject/w3bstream/tree/develop/smartcontracts/sandbox#depin-sandbox-contracts
+Coming
 
 ## Contributing
 
 We welcome contributions! Please read our [contributing guidelines](./docs/CONTRIBUTING.md) and submit pull requests to our GitHub repository.
-
-## Community and Support
-
-We encourage you to seek support and ask questions on one of the following platforms:
-
-### Join Our Discord Community
-
-For real-time discussions and community support, join our Discord server where we have a dedicated Developers Lounge category. This is a great place to get quick help, discuss features, and connect with other community members:
-
-[Join the IoTeX Discord →](https://iotex.io/devdiscord)
-
-### Ask on Stack Overflow
-
-For more structured and detailed questions, consider using **Stack Overflow**. Many of IoTeX's core and expert developers prefer this platform for its non-real-time format, which encourages well-structured and comprehensive questions. Ask your question here:
-
-[Stack Overflow - IoTeX Tag →](https://stackoverflow.com/questions/tagged/iotex) and make sure it's tagged [`IOTEX`].
