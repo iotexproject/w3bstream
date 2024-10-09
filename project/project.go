@@ -11,7 +11,6 @@ import (
 	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/output"
 	"github.com/iotexproject/w3bstream/util/ipfs"
 )
 
@@ -21,10 +20,8 @@ var (
 )
 
 type Project struct {
-	DatasourceURI    string    `json:"datasourceURI,omitempty"`
-	DatasourcePubKey string    `json:"datasourcePublicKey,omitempty"`
-	DefaultVersion   string    `json:"defaultVersion"`
-	Versions         []*Config `json:"versions"`
+	DefaultVersion string    `json:"defaultVersion"`
+	Versions       []*Config `json:"versions"`
 }
 
 type Meta struct {
@@ -39,11 +36,10 @@ type Attribute struct {
 }
 
 type Config struct {
-	Version      string        `json:"version"`
-	VMTypeID     uint64        `json:"vmTypeID"`
-	Output       output.Config `json:"output"`
-	CodeExpParam string        `json:"codeExpParam,omitempty"`
-	Code         string        `json:"code"`
+	Version      string `json:"version"`
+	VMTypeID     uint64 `json:"vmTypeID"`
+	CodeExpParam string `json:"codeExpParam,omitempty"`
+	Code         string `json:"code"`
 }
 
 func (p *Project) Config(version string) (*Config, error) {

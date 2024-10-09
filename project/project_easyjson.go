@@ -4,7 +4,6 @@ package project
 
 import (
 	json "encoding/json"
-	output "github.com/iotexproject/w3bstream/output"
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -37,10 +36,6 @@ func easyjson7b166cadDecodeGithubComIotexprojectW3bstreamProject(in *jlexer.Lexe
 			continue
 		}
 		switch key {
-		case "datasourceURI":
-			out.DatasourceURI = string(in.String())
-		case "datasourcePublicKey":
-			out.DatasourcePubKey = string(in.String())
 		case "defaultVersion":
 			out.DefaultVersion = string(in.String())
 		case "versions":
@@ -88,30 +83,9 @@ func easyjson7b166cadEncodeGithubComIotexprojectW3bstreamProject(out *jwriter.Wr
 	out.RawByte('{')
 	first := true
 	_ = first
-	if in.DatasourceURI != "" {
-		const prefix string = ",\"datasourceURI\":"
-		first = false
-		out.RawString(prefix[1:])
-		out.String(string(in.DatasourceURI))
-	}
-	if in.DatasourcePubKey != "" {
-		const prefix string = ",\"datasourcePublicKey\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.DatasourcePubKey))
-	}
 	{
 		const prefix string = ",\"defaultVersion\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.DefaultVersion))
 	}
 	{
@@ -267,8 +241,6 @@ func easyjson7b166cadDecodeGithubComIotexprojectW3bstreamProject2(in *jlexer.Lex
 			out.Version = string(in.String())
 		case "vmTypeID":
 			out.VMTypeID = uint64(in.Uint64())
-		case "output":
-			easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput(in, &out.Output)
 		case "codeExpParam":
 			out.CodeExpParam = string(in.String())
 		case "code":
@@ -296,11 +268,6 @@ func easyjson7b166cadEncodeGithubComIotexprojectW3bstreamProject2(out *jwriter.W
 		const prefix string = ",\"vmTypeID\":"
 		out.RawString(prefix)
 		out.Uint64(uint64(in.VMTypeID))
-	}
-	{
-		const prefix string = ",\"output\":"
-		out.RawString(prefix)
-		easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput(out, in.Output)
 	}
 	if in.CodeExpParam != "" {
 		const prefix string = ",\"codeExpParam\":"
@@ -337,237 +304,6 @@ func (v *Config) UnmarshalJSON(data []byte) error {
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Config) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson7b166cadDecodeGithubComIotexprojectW3bstreamProject2(l, v)
-}
-func easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput(in *jlexer.Lexer, out *output.Config) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "type":
-			out.Type = output.Type(in.String())
-		case "ethereum":
-			easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput1(in, &out.Ethereum)
-		case "solana":
-			easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput2(in, &out.Solana)
-		case "textile":
-			easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput3(in, &out.Textile)
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput(out *jwriter.Writer, in output.Config) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"type\":"
-		out.RawString(prefix[1:])
-		out.String(string(in.Type))
-	}
-	{
-		const prefix string = ",\"ethereum\":"
-		out.RawString(prefix)
-		easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput1(out, in.Ethereum)
-	}
-	{
-		const prefix string = ",\"solana\":"
-		out.RawString(prefix)
-		easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput2(out, in.Solana)
-	}
-	{
-		const prefix string = ",\"textile\":"
-		out.RawString(prefix)
-		easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput3(out, in.Textile)
-	}
-	out.RawByte('}')
-}
-func easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput3(in *jlexer.Lexer, out *output.TextileConfig) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "vaultID":
-			out.VaultID = string(in.String())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput3(out *jwriter.Writer, in output.TextileConfig) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"vaultID\":"
-		out.RawString(prefix[1:])
-		out.String(string(in.VaultID))
-	}
-	out.RawByte('}')
-}
-func easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput2(in *jlexer.Lexer, out *output.SolanaConfig) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "chainEndpoint":
-			out.ChainEndpoint = string(in.String())
-		case "programID":
-			out.ProgramID = string(in.String())
-		case "stateAccountPK":
-			out.StateAccountPK = string(in.String())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput2(out *jwriter.Writer, in output.SolanaConfig) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"chainEndpoint\":"
-		out.RawString(prefix[1:])
-		out.String(string(in.ChainEndpoint))
-	}
-	{
-		const prefix string = ",\"programID\":"
-		out.RawString(prefix)
-		out.String(string(in.ProgramID))
-	}
-	{
-		const prefix string = ",\"stateAccountPK\":"
-		out.RawString(prefix)
-		out.String(string(in.StateAccountPK))
-	}
-	out.RawByte('}')
-}
-func easyjson7b166cadDecodeGithubComIotexprojectW3bstreamOutput1(in *jlexer.Lexer, out *output.EthereumConfig) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "chainEndpoint":
-			out.ChainEndpoint = string(in.String())
-		case "contractAddress":
-			out.ContractAddress = string(in.String())
-		case "receiverAddress":
-			out.ReceiverAddress = string(in.String())
-		case "contractMethod":
-			out.ContractMethod = string(in.String())
-		case "contractAbiJSON":
-			out.ContractAbiJSON = string(in.String())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjson7b166cadEncodeGithubComIotexprojectW3bstreamOutput1(out *jwriter.Writer, in output.EthereumConfig) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"chainEndpoint\":"
-		out.RawString(prefix[1:])
-		out.String(string(in.ChainEndpoint))
-	}
-	{
-		const prefix string = ",\"contractAddress\":"
-		out.RawString(prefix)
-		out.String(string(in.ContractAddress))
-	}
-	if in.ReceiverAddress != "" {
-		const prefix string = ",\"receiverAddress\":"
-		out.RawString(prefix)
-		out.String(string(in.ReceiverAddress))
-	}
-	{
-		const prefix string = ",\"contractMethod\":"
-		out.RawString(prefix)
-		out.String(string(in.ContractMethod))
-	}
-	{
-		const prefix string = ",\"contractAbiJSON\":"
-		out.RawString(prefix)
-		out.String(string(in.ContractAbiJSON))
-	}
-	out.RawByte('}')
 }
 func easyjson7b166cadDecodeGithubComIotexprojectW3bstreamProject3(in *jlexer.Lexer, out *Attribute) {
 	isTopLevel := in.IsStart()
