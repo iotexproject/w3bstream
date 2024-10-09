@@ -1,65 +1,47 @@
+# Variables
+BUILD_DIR=build
+DOCKER_APINODE_TARGET=ghcr.io/iotexproject/w3bstream-apinode:latest
+DOCKER_PROVER_TARGET=ghcr.io/iotexproject/w3bstream-prover:latest
+DOCKER_BOOTNODE_TARGET=ghcr.io/iotexproject/w3bstream-bootnode:latest
+DOCKER_SEQUENCER_TARGET=ghcr.io/iotexproject/w3bstream-sequencer:latest
 
-DOCKER_COMPOSE_TEST_FILE=./docker-compose-test.yaml
+# Build targets
+.PHONY: build
+build: build-apinode build-prover build-bootnode build-sequencer
 
-e2e_test_depends_stop:
-	@docker compose -f ${DOCKER_COMPOSE_TEST_FILE} down
+.PHONY: build-apinode
+build-apinode:
+	go build -o $(BUILD_DIR)/apinode cmd/apinode/main.go
 
-e2e_test_depends_start:
-	@docker compose -p w3bstream-sprout -f ${DOCKER_COMPOSE_TEST_FILE} up -d
+.PHONY: build-prover
+build-prover:
+	go build -o $(BUILD_DIR)/prover cmd/prover/main.go
 
-.PHONY: e2e_test_depends
-e2e_test_depends: e2e_test_depends_stop e2e_test_depends_start
+.PHONY: build-bootnode
+build-bootnode:
+	go build -o $(BUILD_DIR)/bootnode cmd/bootnode/main.go
 
-e2e_test: e2e_test_depends
-	@cd cmd/e2etest/ && CGO_LDFLAGS='-L../sequencer/lib/linux-x86_64 -lioConnectCore' go test ./... -v
+.PHONY: build-sequencer
+build-sequencer:
+	go build -o $(BUILD_DIR)/sequencer cmd/sequencer/main.go
 
-unit_test:
-	GOARCH=amd64 go test -gcflags="all=-N -l" ./... -covermode=atomic -coverprofile cover.out
-
-.PHONY: contract_test_depends
-contract_test_depends:
-	@cd smartcontracts && npm install --save-dev hardhat
-
-contract_test: contract_test_depends
-	@cd smartcontracts && npx hardhat test
-
+# Docker targets
 .PHONY: images
 images:
-	@for target in 'sequencer' 'prover' 'coordinator' ; \
-	do \
-		echo build $$target image; \
-		if [ -e $$target.Dockerfile ]; then \
-			echo $$target.Dockerfile; \
-			docker build -f $$target.Dockerfile . -t $$target; \
-		else \
-			echo "no entry"; \
-		fi; \
-		echo "done!"; \
-	done
+	docker build -f apinode.Dockerfile -t $(DOCKER_APINODE_TARGET) .
+	docker build -f prover.Dockerfile -t $(DOCKER_PROVER_TARGET) .
+	docker build -f bootnode.Dockerfile -t $(DOCKER_BOOTNODE_TARGET) .
+	docker build -f sequencer.Dockerfile -t $(DOCKER_SEQUENCER_TARGET) .
 
-.PHONY: prover_image
-prover_image:
-	@docker build -f prover.Dockerfile . -t prover
+.PHONY: test
+test:
+	go test -gcflags="all=-N -l" ./...
 
-.PHONY: sequencer_image
-sequencer_image:
-	@docker build -f sequencer.Dockerfile . -t sequencer
+# Clean targets
+.PHONY: clean
+clean:
+	@rm -rf $(BUILD_DIR)
 
-.PHONY: coordinator_image
-coordinator_image:
-	@docker build -f coordinator.Dockerfile . -t coordinator
-
-MOD=$(shell cat go.mod | grep ^module -m 1 | awk '{ print $$2; }' || '')
-
-.PHONY: fmt
-fmt:
-	@echo ${MOD}
-	@for item in `find . -type f -name '*.go' -not -path '*.pb.go'` ; \
-	do \
-		if [ -z ${MOD} ]; then \
-			goimports -w $$item ; \
-		else \
-			goimports -w -local "${MOD}" $$item ; \
-		fi \
-	done
-
+contract-test:
+	@cd smartcontracts && npm install --save-dev hardhat
+	@cd smartcontracts && npx hardhat test

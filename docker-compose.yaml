@@ -2,46 +2,30 @@ version: "3.6"
 
 services:
   bootnode:
-    image: huangzhiran/bootnode:v1.0.0
+    image: ghcr.io/iotexproject/w3bstream-bootnode:latest
     container_name: w3bstream-bootnode
-    platform: linux/x86_64
     restart: always
+    build:
+      context: .
+      dockerfile: bootnode.Dockerfile
     ports:
       - "8000:8000"
 
   sequencer:
-    image: ghcr.io/machinefi/sequencer:v0.12.1
+    image: ghcr.io/iotexproject/w3bstream-sequencer:latest
     depends_on:
       - "postgres"
-      - "coordinator"
     container_name: w3bstream-sequencer
-    platform: linux/amd64
     restart: always
+    build:
+      context: .
+      dockerfile: sequencer.Dockerfile
     ports:
       - "9000:9000"
-    command: [ "-coordinatorAddress", "coordinator:9001", "-databaseDSN", "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable" ]
-
-  coordinator:
-    image: ghcr.io/machinefi/coordinator:v0.12.1
-    depends_on:
-      - "postgres"
-      - "bootnode"
-    container_name: w3bstream-coordinator
-    platform: linux/x86_64
-    restart: always
-    ports:
-      - "9001:9001"
-    environment:
-      COORDINATOR_ENV: PROD
-      PROJECT_FILE_DIRECTORY: "/data"
-      BOOTNODE_MULTIADDR: "/dns4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
-      OPERATOR_PRIVATE_KEY: ${PRIVATE_KEY:-}
-      OPERATOR_PRIVATE_KEY_ED25519: ${PRIVATE_KEY_ED25519:-}
-    volumes:
-      - ./test/project:/data
+    command: [ "-coordinatorAddress", "-databaseDSN", "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable" ]
 
   prover:
-    image: ghcr.io/machinefi/prover:v0.12.1
+    image: ghcr.io/iotexproject/w3bstream-prover:latest
     depends_on:
       - "risc0"
       - "halo2"
@@ -52,6 +36,9 @@ services:
     container_name: w3bstream-prover
     platform: linux/x86_64
     restart: always
+    build:
+      context: .
+      dockerfile: prover.Dockerfile
     environment:
       PROVER_ENV: PROD
       PROJECT_FILE_DIRECTORY: "/data"
@@ -72,14 +59,13 @@ services:
     restart: always
 
   risc0:
-    image: ghcr.io/iotexproject/risc0server:v0.0.7
+    image: ghcr.io/iotexproject/risc0server:latest
     depends_on:
       - "postgres"
     container_name: risc0-service
-    platform: linux/x86_64
     restart: always
     environment:
-      DATABASE_URL: postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable
+      DATABASE_URL: postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable
       BONSAI_URL: https://api.bonsai.xyz
       BONSAI_KEY: "${BONSAI_KEY:-}"
 
@@ -91,7 +77,7 @@ services:
 
   postgres:
     image: postgres:14
-    container_name: w3bstream-sprout-postgres
+    container_name: w3bstream-postgres
     restart: always
     command:
       [
@@ -99,8 +85,8 @@ services:
         "-cshared_preload_libraries=pg_stat_statements"
       ]
     environment:
-      POSTGRES_USER: test_user
-      POSTGRES_PASSWORD: test_passwd
-      POSTGRES_DB: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: w3bstream
     volumes:
       - ./postgres:/var/lib/postgresql/data
