@@ -23,13 +23,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      # - name: Setup Node.js
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '21.x'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21.x'
 
-      # - name: Run tests for smart-contract
-      #   run: make contract_test
+      - name: Run tests for smart-contract
+        run: make contract-test
 
       - name: Setup Go
         uses: actions/setup-go@v3

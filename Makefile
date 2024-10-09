@@ -41,3 +41,7 @@ test:
 .PHONY: clean
 clean:
 	@rm -rf $(BUILD_DIR)
+
+contract-test:
+	@cd smartcontracts && npm install --save-dev hardhat
+	@cd smartcontracts && npx hardhat test
