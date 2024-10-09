@@ -45,7 +45,9 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install docker colima
-          colima start
+          LIMACTL_PATH=$(brew --prefix)/bin/limactl
+          sudo curl -L -o $LIMACTL_PATH https://github.com/mikekazakov/lima-nohvf/raw/master/limactl && sudo chmod +x $LIMACTL_PATH
+          colima start --network-address --arch arm64 --vm-type=qemu
 
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v2
