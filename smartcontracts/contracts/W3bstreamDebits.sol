@@ -41,7 +41,7 @@ contract W3bstreamDebits is OwnableUpgradeable {
 
     function withhold(address token, address owner, uint256 amount) external onlyOperator {
         require(token != address(0), "reward token not set");
-        require(balances[token][owner] - withholdings[token][owner] >= amount, "insufficient balance");
+        require(balances[token][owner] >= amount, "insufficient balance");
         withholdings[token][owner] += amount;
         balances[token][owner] -= amount;
         emit Withheld(token, owner, amount);

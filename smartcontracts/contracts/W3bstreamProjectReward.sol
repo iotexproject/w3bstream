@@ -39,7 +39,7 @@ contract W3bstreamDebits is OwnableUpgradeable {
     }
 
     function setRewardToken(uint256 _id, address _rewardToken) external {
-        require(IProject(project).ownerOf(_id) != msg.sender, "invalid project");
+        require(IProject(project).ownerOf(_id) == msg.sender, "invalid project");
         require(_rewardToken != address(0), "zero address");
         require(_rewardTokens[_id] == address(0), "already set");
         _rewardTokens[_id] = _rewardToken;
