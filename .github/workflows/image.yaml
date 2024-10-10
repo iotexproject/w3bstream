@@ -9,7 +9,7 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  build_prover_image:
+  build_image:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
