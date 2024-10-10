@@ -9,7 +9,7 @@ interface IProject {
     function isPaused(uint256 _projectId) external view returns (bool);
 }
 
-contract W3bstreamDebits is OwnableUpgradeable {
+contract W3bstreamProjectReward is OwnableUpgradeable {
     event OperatorSet(address indexed operator);
     event RewardTokenSet(uint256 indexed id, address indexed rewardToken);
     event RewardAmountSet(address indexed owner, uint256 indexed id, uint256 amount);
