@@ -20,6 +20,8 @@ services:
     build:
       context: .
       dockerfile: sequencer.Dockerfile
+    environment:
+      - OPERATOR_PRIVATE_KEY=${OPERATOR_PRIVATE_KEY}
     ports:
       - "9000:9000"
     command: [ "-coordinatorAddress", "-databaseDSN", "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable" ]
@@ -89,4 +91,7 @@ services:
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: w3bstream
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
