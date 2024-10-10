@@ -117,8 +117,22 @@ async function main() {
   await dao.waitForDeployment();
   console.log(`W3bstreamDAO deployed to ${dao.target}`);
 
+  const W3bstreamDebits = await ethers.getContractFactory('W3bstreamDebits');
+  const debits = await upgrades.deployProxy(W3bstreamDebits, [], {
+    initializer: 'initialize',
+  });
+  await debits.waitForDeployment();
+  console.log(`W3bstreamDebits deployed to ${debits.target}`);
+
+  const W3bstreamProjectReward = await ethers.getContractFactory('W3bstreamProjectReward');
+  const projectReward = await upgrades.deployProxy(W3bstreamProjectReward, [project.target], {
+    initializer: 'initialize',
+  });
+  await projectReward.waitForDeployment();
+  console.log(`W3bstreamProjectReward deployed to ${projectReward.target}`);
+
   const W3bstreamTaskManager = await ethers.getContractFactory('W3bstreamTaskManager');
-  const taskManager = await upgrades.deployProxy(W3bstreamTaskManager, [], {
+  const taskManager = await upgrades.deployProxy(W3bstreamTaskManager, [debits.target, projectReward.target], {
     initializer: 'initialize',
   });
   await taskManager.waitForDeployment();
