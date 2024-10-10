@@ -17,6 +17,10 @@ const config: HardhatUserConfig = {
       url: 'http://127.0.0.1:8545',
       accounts: accounts,
     },
+    nightly: {
+      url: 'https://babel-nightly.iotex.io',
+      accounts: accounts,
+    },
     mainnet: {
       url: 'https://babel-api.mainnet.iotex.io/',
       accounts: accounts,

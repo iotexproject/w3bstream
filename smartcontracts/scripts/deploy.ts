@@ -109,6 +109,65 @@ async function main() {
   });
   await vmtype.waitForDeployment();
   console.log(`W3bstreamVMType deployed to ${vmtype.target}`);
+
+  const W3bstreamDAO = await ethers.getContractFactory('W3bstreamDAO');
+  const dao = await upgrades.deployProxy(W3bstreamDAO, ['0x0000000000000000000000000000000000000000000000000000000000000000'], {
+    initializer: 'initialize',
+  });
+  await dao.waitForDeployment();
+  console.log(`W3bstreamDAO deployed to ${dao.target}`);
+
+  const W3bstreamTaskManager = await ethers.getContractFactory('W3bstreamTaskManager');
+  const taskManager = await upgrades.deployProxy(W3bstreamTaskManager, [], {
+    initializer: 'initialize',
+  });
+  await taskManager.waitForDeployment();
+  console.log(`W3bstreamTaskManager deployed to ${taskManager.target}`);
+
+  const W3bstreamBlockRewardDistributor = await ethers.getContractFactory('W3bstreamBlockRewardDistributor');
+  const distributor = await upgrades.deployProxy(W3bstreamBlockRewardDistributor, [], {
+    initializer: 'initialize',
+  });
+  await distributor.waitForDeployment();
+  console.log(`W3bstreamBlockRewardDistributor deployed to ${distributor.target}`);
+
+  const scrypt = await ethers.deployContract('Scrypt');
+  await scrypt.waitForDeployment();
+  console.log(`Scrypt deployed to ${scrypt.target}`);
+
+  const headerValidator = await ethers.deployContract('W3bstreamBlockHeaderValidator', [scrypt.target]);
+  await headerValidator.waitForDeployment();
+  console.log(`W3bstreamBlockHeaderValidator deployed to ${headerValidator.target}`);
+
+  const W3bstreamBlockMinter = await ethers.getContractFactory('W3bstreamBlockMinter');
+  const minter = await upgrades.deployProxy(W3bstreamBlockMinter, [dao.target, taskManager.target, distributor.target, headerValidator.target], {
+    initializer: 'initialize',
+  });
+  await minter.waitForDeployment();
+  console.log(`W3bstreamBlockMinter deployed to ${minter.target}`);
+  tx = await dao.transferOwnership(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamDAO ownership transferred to ${minter.target}`);
+
+  tx = await headerValidator.setOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamBlockHeaderValidator add operator to ${minter.target}`);
+
+  tx = await distributor.setOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamBlockRewardDistributor add operator to ${minter.target}`);
+
+  tx = await taskManager.addOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamTaskManager add operator to ${minter.target}`);
+
+  tx = await distributor.setOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamBlockRewardDistributor set operator to ${minter.target}`);
+
+  tx = await minter.setBlockReward(0);
+  await tx.wait();
+  console.log(`W3bstreamBlockMinter set block reward to 0`);
 }
 
 main().catch(err => {
