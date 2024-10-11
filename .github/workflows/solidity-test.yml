@@ -1,4 +1,4 @@
-name: run tests
+name: Solidity unit tests
 
 on:
   push:
@@ -28,19 +28,5 @@ jobs:
         with:
           node-version: '21.x'
 
-      - name: Run tests for smart-contract
+      - name: Run unit tests
         run: make contract-test
-
-      - name: Setup Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.22
-
-      - name: Run unit tests.
-        run: make test
-
-      - name: Upload Coverage report to CodeCov
-        uses: codecov/codecov-action@v1.0.0
-        with:
-          token: ${{secrets.CODECOV_TOKEN}}
-          file: ./cover.out
