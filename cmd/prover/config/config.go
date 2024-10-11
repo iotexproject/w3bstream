@@ -26,7 +26,7 @@ var (
 		LogLevel:                slog.LevelInfo,
 		VMEndpoints:             `{"1":"localhost:4001","2":"localhost:4002","3":"zkwasm:4001","4":"wasm:4001"}`,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
-		DatasourceDSN:           "postgres://test_user:test_passwd@postgres:5432/test?sslmode=disable",
+		DatasourceDSN:           "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",
 		ProjectContractAddr:     "0x4804e93c2A0A44BC055aA6e4b6d5Ead3FC2596Cd",
 		RouterContractAddr:      "0x145C282cCc7f60c6B19664b01e08c5Cae7C97CbB",
 		TaskManagerContractAddr: "0x65aF86776CCFc60781a70c38F44625853d7A842A",
