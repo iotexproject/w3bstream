@@ -4,32 +4,25 @@ option go_package = "./proto";
 
 service VmRuntime {
     rpc NewProject(NewProjectRequest) returns (NewProjectResponse);
-    rpc CheckProject(CheckProjectRequest) returns (CheckProjectResponse);
     rpc ExecuteTask(ExecuteTaskRequest) returns (ExecuteTaskResponse);
 }
 
 message NewProjectRequest {
     uint64 projectID = 1;
-    bytes binary = 2;
-    bytes metadata = 3;
+    uint64 version = 2;
+    bytes binary = 3;
+    bytes metadata = 4;
 }
 
 message NewProjectResponse {
 }
 
 
-message CheckProjectRequest {
-    uint64 projectID = 1;
-}
-
-message CheckProjectResponse {
-    bool exist = 1;
-}
-
 message ExecuteTaskRequest {
     uint64 projectID = 1;
-    bytes taskID = 2;
-    repeated bytes data = 3;
+    uint64 version = 2;
+    bytes taskID = 3;
+    repeated bytes data = 4;
 }
 
 message ExecuteTaskResponse {
