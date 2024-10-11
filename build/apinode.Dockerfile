@@ -1,4 +1,3 @@
-# ghcr.io/machinefi/apinode:latest
 FROM golang:1.22-alpine AS builder
 
 ENV GO111MODULE=on

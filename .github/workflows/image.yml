@@ -18,16 +18,16 @@ jobs:
         include:
           - name: apinode
             image_name: iotexproject/w3bstream-apinode
-            dockerfile: apinode.Dockerfile
+            dockerfile: build/apinode.Dockerfile
           - name: bootnode
             image_name: iotexproject/w3bstream-bootnode
-            dockerfile: bootnode.Dockerfile
+            dockerfile: build/bootnode.Dockerfile
           - name: prover
             image_name: iotexproject/w3bstream-prover
-            dockerfile: prover.Dockerfile
+            dockerfile: build/prover.Dockerfile
           - name: sequencer
             image_name: iotexproject/w3bstream-sequencer
-            dockerfile: sequencer.Dockerfile
+            dockerfile: build/sequencer.Dockerfile
 
     permissions:
       contents: read

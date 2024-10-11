@@ -1,4 +1,3 @@
-# ghcr.io/machinefi/bootnode:latest
 FROM golang:1.22-alpine AS builder
 
 ENV GO111MODULE=on

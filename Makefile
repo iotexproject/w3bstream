@@ -28,14 +28,14 @@ build-sequencer:
 # Docker targets
 .PHONY: images
 images:
-	docker build -f apinode.Dockerfile -t $(DOCKER_APINODE_TARGET) .
-	docker build -f prover.Dockerfile -t $(DOCKER_PROVER_TARGET) .
-	docker build -f bootnode.Dockerfile -t $(DOCKER_BOOTNODE_TARGET) .
-	docker build -f sequencer.Dockerfile -t $(DOCKER_SEQUENCER_TARGET) .
+	docker build -f build/apinode.Dockerfile -t $(DOCKER_APINODE_TARGET) .
+	docker build -f build/prover.Dockerfile -t $(DOCKER_PROVER_TARGET) .
+	docker build -f build/bootnode.Dockerfile -t $(DOCKER_BOOTNODE_TARGET) .
+	docker build -f build/sequencer.Dockerfile -t $(DOCKER_SEQUENCER_TARGET) .
 
-.PHONY: test
-test:
-	go test -gcflags="all=-N -l" ./...
+.PHONY: unit_test
+unit_test:
+	GOARCH=amd64 go test -gcflags="all=-N -l" ./... -covermode=atomic -coverprofile cover.out
 
 # Clean targets
 .PHONY: clean
