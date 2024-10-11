@@ -64,7 +64,7 @@ More details and options for `zkWasm circuit` are given in [its README](./exampl
 ```bash
 ioctl ws project config -t 2 -i "halo2_wasm_bg.wasm"
 # if you need set datasource, you should add -s 
-ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable" -t 2 -i "halo2_wasm_bg.wasm"
+ioctl ws project config -s "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable" -t 2 -i "halo2_wasm_bg.wasm"
 ```
 
 This command will generate a file named `halo2-config.json` in the current folder. 
@@ -75,7 +75,7 @@ Or you can run `ioctl ws project config -t 2 -i "halo2_wasm_bg.wasm" -o "path/fi
 ```bash
 ioctl ws project config -t 1 -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
 # if you need set datasource, you should add -s 
-ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable" -t 1 -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
+ioctl ws project config -s "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable" -t 1 -i "methods.rs" -e "{\"image_id\":\"RANGE_ID\", \"elf\":\"RANGE_ELF\"}"
 ```
 The values of `image_id` and `elf` are variable names, and will be found in the `methods.rs`.
 
@@ -87,7 +87,7 @@ Or you can run `ioctl ws project config -t 1 -i "methods.rs" -o "path/filename.j
 ```bash
 ioctl ws project config -t 3 -i "zkwasm_demo.wasm"
 # if you need set datasource, you should add -s 
-ioctl ws project config -s "postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable" -t 3 -i "zkwasm_demo.wasm"
+ioctl ws project config -s "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable" -t 3 -i "zkwasm_demo.wasm"
 ```
 
 This command will generate a file named `zkwasm-config.json` in the current folder.

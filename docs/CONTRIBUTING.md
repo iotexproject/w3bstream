@@ -36,7 +36,7 @@ There are many ways to contribute to this project:
     # coordinator env
 
     export HTTP_SERVICE_ENDPOINT=:9000
-    export DATABASE_DSN=postgres://test_user:test_passwd@localhost:5432/test?sslmode=disable
+    export DATABASE_DSN=postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable
     export BOOTNODE_MULTIADDR="/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o"
     export IOTEX_CHAINID=2
     export PROJECT_FILE_DIRECTORY=./test/data
