@@ -3,27 +3,28 @@ package vm_runtime;
 option go_package = "./proto";
 
 service VmRuntime {
-    rpc Create(CreateRequest) returns (CreateResponse);
-    rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+    rpc NewProject(NewProjectRequest) returns (NewProjectResponse);
+    rpc ExecuteTask(ExecuteTaskRequest) returns (ExecuteTaskResponse);
 }
 
-message CreateRequest {
+message NewProjectRequest {
     uint64 projectID = 1;
-    string content = 2;
-    string expParam = 3;
+    uint64 version = 2;
+    bytes binary = 3;
+    bytes metadata = 4;
 }
 
-message CreateResponse {
+message NewProjectResponse {
 }
 
-message ExecuteRequest {
+
+message ExecuteTaskRequest {
     uint64 projectID = 1;
-    uint64 taskID = 2;
-    string clientID = 3;
-    string sequencerSignature = 4;
-    repeated string datas = 5;
+    uint64 version = 2;
+    bytes taskID = 3;
+    repeated bytes data = 4;
 }
 
-message ExecuteResponse {
+message ExecuteTaskResponse {
     bytes result = 1;
 }
