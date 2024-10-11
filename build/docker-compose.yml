@@ -1,0 +1,95 @@
+services:
+  bootnode:
+    image: ghcr.io/iotexproject/w3bstream-bootnode:latest
+    container_name: w3bstream-bootnode
+    restart: always
+    build:
+      context: .
+      dockerfile: bootnode.Dockerfile
+    ports:
+      - "8000:8000"
+
+  sequencer:
+    image: ghcr.io/iotexproject/w3bstream-sequencer:latest
+    depends_on:
+      - "postgres"
+    container_name: w3bstream-sequencer
+    restart: always
+    build:
+      context: .
+      dockerfile: sequencer.Dockerfile
+    environment:
+      - OPERATOR_PRIVATE_KEY=${OPERATOR_PRIVATE_KEY}
+    ports:
+      - "9000:9000"
+    command: [ "-coordinatorAddress", "-databaseDSN", "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable" ]
+
+  prover:
+    image: ghcr.io/iotexproject/w3bstream-prover:latest
+    depends_on:
+      - "risc0"
+      - "halo2"
+      - "zkwasm"
+      - "wasm"
+      - "postgres"
+      - "bootnode"
+    container_name: w3bstream-prover
+    platform: linux/x86_64
+    restart: always
+    build:
+      context: .
+      dockerfile: prover.Dockerfile
+    environment:
+      PROVER_ENV: PROD
+      PROJECT_FILE_DIRECTORY: "/data"
+      BOOTNODE_MULTIADDR: "/dns4/bootnode/tcp/8000/p2p/12D3KooWJkfxZL1dx74yM1afWof6ka4uW5jMsoGasCSBwGyCUJML"
+    volumes:
+      - ./test/project:/data
+
+  halo2:
+    image: ghcr.io/iotexproject/halo2server:v0.0.7
+    container_name: halo2-service
+    platform: linux/x86_64
+    restart: always
+
+  zkwasm:
+    image: wangweixiaohao2944/zkwasmserver:v0.0.6
+    container_name: zkwasm-service
+    platform: linux/x86_64
+    restart: always
+
+  risc0:
+    image: ghcr.io/iotexproject/risc0server:latest
+    depends_on:
+      - "postgres"
+    container_name: risc0-service
+    restart: always
+    environment:
+      DATABASE_URL: postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable
+      BONSAI_URL: https://api.bonsai.xyz
+      BONSAI_KEY: "${BONSAI_KEY:-}"
+
+  wasm:
+    image: ghcr.io/iotexproject/wasmserver:v0.0.7
+    container_name: wasm-service
+    platform: linux/x86_64
+    restart: always
+
+  postgres:
+    image: postgres:14
+    container_name: w3bstream-postgres
+    restart: always
+    command:
+      [
+        "postgres",
+        "-cshared_preload_libraries=pg_stat_statements"
+      ]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: w3bstream
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
