@@ -11,7 +11,7 @@ service VmRuntime {
 message NewProjectRequest {
     uint64 projectID = 1;
     bytes binary = 2;
-    bytes parameter = 3;
+    bytes metadata = 3;
 }
 
 message NewProjectResponse {
