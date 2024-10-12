@@ -39,14 +39,14 @@ type Task struct {
 	Signature  []byte         `gorm:"not null"`
 }
 
-type TaskAssigned struct {
+type AssignedTask struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:task,not null"`
 	ProjectID uint64      `gorm:"uniqueIndex:task,not null"`
 	Prover    common.Address
 }
 
-type TaskSettled struct {
+type SettledTask struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:task,not null"`
 	ProjectID uint64      `gorm:"uniqueIndex:task,not null"`
@@ -153,32 +153,32 @@ func (p *Persistence) FetchTask(projectID uint64, taskID common.Hash) (*Task, er
 }
 
 func (p *Persistence) UpsertAssignedTask(projectID uint64, taskID common.Hash, prover common.Address) error {
-	t := TaskAssigned{
+	t := AssignedTask{
 		ProjectID: projectID,
 		TaskID:    taskID,
 		Prover:    prover,
 	}
 	err := p.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "project_id"}, {Name: "task_id"}},
+		Columns:   []clause.Column{{Name: "task_id"}, {Name: "project_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"prover"}),
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert assigned task")
 }
 
 func (p *Persistence) UpsertSettledTask(projectID uint64, taskID common.Hash) error {
-	t := TaskSettled{
+	t := SettledTask{
 		ProjectID: projectID,
 		TaskID:    taskID,
 	}
 	err := p.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "project_id"}, {Name: "task_id"}},
+		Columns:   []clause.Column{{Name: "task_id"}, {Name: "project_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{}),
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert settled task")
 }
 
-func (p *Persistence) FetchAssignedTask(projectID uint64, taskID common.Hash) (*TaskAssigned, error) {
-	t := TaskAssigned{}
+func (p *Persistence) FetchAssignedTask(projectID uint64, taskID common.Hash) (*AssignedTask, error) {
+	t := AssignedTask{}
 	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -188,8 +188,8 @@ func (p *Persistence) FetchAssignedTask(projectID uint64, taskID common.Hash) (*
 	return &t, nil
 }
 
-func (p *Persistence) FetchSettledTask(projectID uint64, taskID common.Hash) (*TaskSettled, error) {
-	t := TaskSettled{}
+func (p *Persistence) FetchSettledTask(projectID uint64, taskID common.Hash) (*SettledTask, error) {
+	t := SettledTask{}
 	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -231,7 +231,7 @@ func NewPersistence(pgEndpoint string) (*Persistence, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&scannedBlockNumber{}, &Message{}, &Task{}, &TaskAssigned{}, &TaskSettled{}); err != nil {
+	if err := db.AutoMigrate(&scannedBlockNumber{}, &Message{}, &Task{}, &AssignedTask{}, &SettledTask{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &Persistence{db}, nil
