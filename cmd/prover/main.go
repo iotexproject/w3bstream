@@ -57,7 +57,7 @@ func main() {
 			UpsertScannedBlockNumber: db.UpsertScannedBlockNumber,
 			AssignTask:               db.CreateTask,
 			UpsertProject:            db.UpsertProject,
-			DeleteTask:               db.DeleteTask,
+			SettleTask:               db.DeleteTask,
 		},
 		&monitor.ContractAddr{
 			Project:     common.HexToAddress(cfg.ProjectContractAddr),
@@ -79,7 +79,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to connect datasource"))
 	}
 
-	if err := processor.Run(vmHandler.Handle, projectManager.Project, db, datasource.Retrieve, prv, cfg.ChainEndpoint, common.HexToAddress(cfg.RouterContractAddr)); err != nil {
+	if err := processor.Run(vmHandler.Handle, projectManager.Project, db, datasource.Retrieve, prv, cfg.ChainEndpoint, common.HexToAddress(cfg.RouterContractAddr), common.HexToAddress(cfg.TaskManagerContractAddr)); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run task processor"))
 	}
 

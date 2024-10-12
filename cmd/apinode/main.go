@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
@@ -14,6 +15,7 @@ import (
 	"github.com/iotexproject/w3bstream/cmd/apinode/api"
 	"github.com/iotexproject/w3bstream/cmd/apinode/config"
 	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
+	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/p2p"
 )
 
@@ -40,6 +42,22 @@ func main() {
 	p, err := persistence.NewPersistence(cfg.DatabaseDSN)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if err := monitor.Run(
+		&monitor.Handler{
+			ScannedBlockNumber:       p.ScannedBlockNumber,
+			UpsertScannedBlockNumber: p.UpsertScannedBlockNumber,
+			AssignTask:               p.UpsertAssignedTask,
+			SettleTask:               p.UpsertSettledTask,
+		},
+		&monitor.ContractAddr{
+			TaskManager: common.HexToAddress(cfg.TaskManagerContractAddr),
+		},
+		cfg.BeginningBlockNumber,
+		cfg.ChainEndpoint,
+	); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to run contract monitor"))
 	}
 
 	go func() {

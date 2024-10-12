@@ -44,7 +44,7 @@ func main() {
 			UpsertNBits:              db.UpsertNBits,
 			UpsertBlockHead:          db.UpsertBlockHead,
 			UpsertProver:             db.UpsertProver,
-			DeleteTask:               db.DeleteTask,
+			SettleTask:               db.DeleteTask,
 		},
 		&monitor.ContractAddr{
 			Prover:      common.HexToAddress(cfg.ProverContractAddr),

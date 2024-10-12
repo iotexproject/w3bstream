@@ -17,6 +17,11 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+type scannedBlockNumber struct {
+	gorm.Model
+	Number uint64 `gorm:"not null"`
+}
+
 type Message struct {
 	gorm.Model
 	DeviceID       common.Address `gorm:"index:message_fetch,not null"`
@@ -32,6 +37,19 @@ type Task struct {
 	ProjectID  uint64         `gorm:"uniqueIndex:task,not null"`
 	MessageIDs datatypes.JSON `gorm:"not null"`
 	Signature  []byte         `gorm:"not null"`
+}
+
+type TaskAssigned struct {
+	gorm.Model
+	TaskID    common.Hash `gorm:"uniqueIndex:task,not null"`
+	ProjectID uint64      `gorm:"uniqueIndex:task,not null"`
+	Prover    common.Address
+}
+
+type TaskSettled struct {
+	gorm.Model
+	TaskID    common.Hash `gorm:"uniqueIndex:task,not null"`
+	ProjectID uint64      `gorm:"uniqueIndex:task,not null"`
 }
 
 type Persistence struct {
@@ -123,22 +141,87 @@ func (p *Persistence) Save(pubSub *p2p.PubSub, msg *Message, aggregationAmount i
 	return taskID, err
 }
 
-func (p *Persistence) FetchMessage(messageID string) ([]*Message, error) {
-	ms := []*Message{}
-	if err := p.db.Where("message_id = ?", messageID).Find(&ms).Error; err != nil {
-		return nil, errors.Wrapf(err, "query message by messageID failed, messageID %s", messageID)
+func (p *Persistence) FetchTask(projectID uint64, taskID common.Hash) (*Task, error) {
+	t := Task{}
+	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "failed to query task")
 	}
-
-	return ms, nil
+	return &t, nil
 }
 
-func (p *Persistence) FetchTask(internalTaskID string) ([]*Task, error) {
-	ts := []*Task{}
-	if err := p.db.Where("internal_task_id = ?", internalTaskID).Find(&ts).Error; err != nil {
-		return nil, errors.Wrapf(err, "query Task by internal Task id failed, internal_task_id %s", internalTaskID)
+func (p *Persistence) UpsertAssignedTask(projectID uint64, taskID common.Hash, prover common.Address) error {
+	t := TaskAssigned{
+		ProjectID: projectID,
+		TaskID:    taskID,
+		Prover:    prover,
 	}
+	err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "project_id"}, {Name: "task_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"prover"}),
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert assigned task")
+}
 
-	return ts, nil
+func (p *Persistence) UpsertSettledTask(projectID uint64, taskID common.Hash) error {
+	t := TaskSettled{
+		ProjectID: projectID,
+		TaskID:    taskID,
+	}
+	err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "project_id"}, {Name: "task_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{}),
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert settled task")
+}
+
+func (p *Persistence) FetchAssignedTask(projectID uint64, taskID common.Hash) (*TaskAssigned, error) {
+	t := TaskAssigned{}
+	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "failed to query assigned task")
+	}
+	return &t, nil
+}
+
+func (p *Persistence) FetchSettledTask(projectID uint64, taskID common.Hash) (*TaskSettled, error) {
+	t := TaskSettled{}
+	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "failed to query settled task")
+	}
+	return &t, nil
+}
+
+func (p *Persistence) ScannedBlockNumber() (uint64, error) {
+	t := scannedBlockNumber{}
+	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return 0, nil
+		}
+		return 0, errors.Wrap(err, "failed to query scanned block number")
+	}
+	return t.Number, nil
+}
+
+func (p *Persistence) UpsertScannedBlockNumber(number uint64) error {
+	t := scannedBlockNumber{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		Number: number,
+	}
+	err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"number"}),
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert scanned block number")
 }
 
 func NewPersistence(pgEndpoint string) (*Persistence, error) {
@@ -148,7 +231,7 @@ func NewPersistence(pgEndpoint string) (*Persistence, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&Message{}, &Task{}); err != nil {
+	if err := db.AutoMigrate(&scannedBlockNumber{}, &Message{}, &Task{}, &TaskAssigned{}, &TaskSettled{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &Persistence{db}, nil
