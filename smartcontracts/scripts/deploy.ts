@@ -149,9 +149,16 @@ async function main() {
   await scrypt.waitForDeployment();
   console.log(`Scrypt deployed to ${scrypt.target}`);
 
-  const headerValidator = await ethers.deployContract('W3bstreamBlockHeaderValidator', [scrypt.target]);
+  // const headerValidator = await ethers.deployContract('W3bstreamBlockHeaderValidator', [scrypt.target]);
+  // await headerValidator.waitForDeployment();
+  // console.log(`W3bstreamBlockHeaderValidator deployed to ${headerValidator.target}`);
+
+  const headerValidator = await ethers.deployContract('MockBlockHeaderValidator', []);
   await headerValidator.waitForDeployment();
-  console.log(`W3bstreamBlockHeaderValidator deployed to ${headerValidator.target}`);
+  console.log(`MockBlockHeaderValidator deployed to ${headerValidator.target}`);
+  tx = await headerValidator.setAdhocNBits(0);
+  await tx.wait();
+  console.log(`MockBlockHeaderValidator set adhoc nbits to 0`);
 
   const W3bstreamBlockMinter = await ethers.getContractFactory('W3bstreamBlockMinter');
   const minter = await upgrades.deployProxy(W3bstreamBlockMinter, [dao.target, taskManager.target, distributor.target, headerValidator.target], {
