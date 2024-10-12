@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -36,6 +38,24 @@ type HandleMessageResp struct {
 	TaskID string `json:"taskID"`
 }
 
+type QueryTaskReq struct {
+	ProjectID uint64 `json:"projectID"                  binding:"required"`
+	TaskID    string `json:"taskID"                     binding:"required"`
+}
+
+type StateLog struct {
+	State    string    `json:"state"`
+	Time     time.Time `json:"time"`
+	Comment  string    `json:"comment,omitempty"`
+	ProverID string    `json:"prover_id,omitempty"`
+}
+
+type QueryTaskResp struct {
+	ProjectID uint64      `json:"projectID"`
+	TaskID    string      `json:"taskID"`
+	States    []*StateLog `json:"states"`
+}
+
 type httpServer struct {
 	engine            *gin.Engine
 	p                 *persistence.Persistence
@@ -47,7 +67,7 @@ type httpServer struct {
 func (s *httpServer) handleMessage(c *gin.Context) {
 	req := &HandleMessageReq{}
 	if err := c.ShouldBind(req); err != nil {
-		slog.Error("Failed to bind request to HandleMessageReq struct", "error", err)
+		slog.Error("failed to bind request", "error", err)
 		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
 		return
 	}
@@ -57,26 +77,26 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 
 	reqJson, err := json.Marshal(req)
 	if err != nil {
-		slog.Error("Failed to marshal request into JSON format", "error", err)
+		slog.Error("failed to marshal request into json format", "error", err)
 		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to process request data")))
 		return
 	}
 
 	sig, err := hexutil.Decode(sigStr)
 	if err != nil {
-                slog.Error("Failed to decode signature from hex format", "signature", sigStr, "error", err)
-                c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature format")))
+		slog.Error("failed to decode signature from hex format", "signature", sigStr, "error", err)
+		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature format")))
 		return
 	}
-	
+
 	h := crypto.Keccak256Hash(reqJson)
 	sigpk, err := crypto.SigToPub(h.Bytes(), sig)
 	if err != nil {
-		slog.Error("Failed to recover public key from signature", "error", err)
-                c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
+		slog.Error("failed to recover public key from signature", "error", err)
+		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
 		return
 	}
-	
+
 	addr := crypto.PubkeyToAddress(*sigpk)
 
 	taskID, err := s.p.Save(s.pubSub,
@@ -89,8 +109,8 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		}, s.aggregationAmount, s.prv,
 	)
 	if err != nil {
-		slog.Error("Failed to save message to persistence layer", "error", err)
-                c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "internal server error; could not save task")))
+		slog.Error("failed to save message to persistence layer", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "internal server error; could not save task")))
 		return
 	}
 
@@ -98,66 +118,72 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	if !bytes.Equal(taskID[:], common.Hash{}.Bytes()) {
 		resp.TaskID = taskID.String()
 	}
-	slog.Info("Successfully processed message", "taskID", resp.TaskID)
+	slog.Info("successfully processed message", "taskID", resp.TaskID)
 	c.JSON(http.StatusOK, resp)
 }
 
-func (s *httpServer) queryStateLogByID(c *gin.Context) {
-	// messageID := c.Param("id")
+func (s *httpServer) queryTask(c *gin.Context) {
+	req := &QueryTaskReq{}
+	if err := c.ShouldBind(req); err != nil {
+		slog.Error("failed to bind request", "error", err)
+		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
+		return
+	}
 
-	// ms, err := s.p.FetchMessage(messageID)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
-	// 	return
-	// }
-	// if len(ms) == 0 {
-	// 	c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID})
-	// 	return
-	// }
-	// m := ms[0]
+	taskID := common.HexToHash(req.TaskID)
+	resp := &QueryTaskResp{
+		ProjectID: req.ProjectID,
+		TaskID:    req.TaskID,
+		States:    []*StateLog{},
+	}
 
-	// ss := []*apitypes.StateLog{
-	// 	{
-	// 		State: "received",
-	// 		Time:  m.CreatedAt,
-	// 	},
-	// }
+	t, err := s.p.FetchTask(req.ProjectID, taskID)
+	if err != nil {
+		slog.Error("failed to query task", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to query task")))
+		return
+	}
+	if t == nil {
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	resp.States = append(resp.States, &StateLog{
+		State: "packed",
+		Time:  t.CreatedAt,
+	})
 
-	// if m.InternalTaskID != "" {
-	// 	ts, err := s.p.FetchTask(m.InternalTaskID)
-	// 	if err != nil {
-	// 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
-	// 		return
-	// 	}
-	// 	if len(ts) == 0 {
-	// 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(errors.New("cannot find task by internal task id")))
-	// 		return
-	// 	}
-	// 	ss = append(ss, &apitypes.StateLog{
-	// 		State: task.StatePacked.String(),
-	// 		Time:  ts[0].CreatedAt,
-	// 	})
-	// 	resp, err := http.Get(fmt.Sprintf("http://%s/%s/%d/%d", "mock http endpoint", "task", m.ProjectID, ts[0].ID))
-	// 	if err != nil {
-	// 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
-	// 		return
-	// 	}
-	// 	defer resp.Body.Close()
+	ta, err := s.p.FetchAssignedTask(req.ProjectID, taskID)
+	if err != nil {
+		slog.Error("failed to query assigned task", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to query assigned task")))
+		return
+	}
+	if ta == nil {
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	resp.States = append(resp.States, &StateLog{
+		State:    "assigned",
+		Time:     t.CreatedAt,
+		ProverID: "did:io:" + strings.TrimPrefix(ta.Prover.String(), "0x"),
+	})
 
-	// 	body, err := io.ReadAll(resp.Body)
-	// 	if err != nil {
-	// 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
-	// 		return
-	// 	}
-	// 	taskStateLog := &apitypes.QueryTaskStateLogRsp{}
-	// 	if err := json.Unmarshal(body, &taskStateLog); err != nil {
-	// 		c.JSON(http.StatusInternalServerError, apitypes.NewErrRsp(err))
-	// 		return
-	// 	}
-	// 	ss = append(ss, taskStateLog.States...)
-	// }
-
-	// c.JSON(http.StatusOK, &apitypes.QueryMessageStateLogRsp{MessageID: messageID, States: ss})
+	ts, err := s.p.FetchSettledTask(req.ProjectID, taskID)
+	if err != nil {
+		slog.Error("failed to query settled task", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to query settled task")))
+		return
+	}
+	if ts == nil {
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	resp.States = append(resp.States, &StateLog{
+		State:   "settled",
+		Time:    t.CreatedAt,
+		Comment: "The task has been completed. Please check the generated proof in the corresponding DApp contract.",
+	})
+	c.JSON(http.StatusOK, resp)
 }
 
 // this func will block caller
@@ -171,11 +197,11 @@ func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, 
 	}
 
 	s.engine.POST("/message", s.handleMessage)
-	s.engine.GET("/message/:id", s.queryStateLogByID)
+	s.engine.GET("/task", s.queryTask)
 
 	if err := s.engine.Run(address); err != nil {
-	        slog.Error("Failed to start HTTP server", "address", address, "error", err)
-                return errors.Wrap(err, "could not start HTTP server; check if the address is in use or network is accessible")
+		slog.Error("failed to start http server", "address", address, "error", err)
+		return errors.Wrap(err, "could not start http server; check if the address is in use or network is accessible")
 	}
 	return nil
 }

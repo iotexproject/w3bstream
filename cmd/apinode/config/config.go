@@ -8,29 +8,31 @@ import (
 )
 
 type Config struct {
-	LogLevel          slog.Level `env:"LOG_LEVEL,optional"`
-	ServiceEndpoint   string     `env:"HTTP_SERVICE_ENDPOINT"`
-	AggregationAmount int        `env:"AGGREGATION_AMOUNT,optional"`
-	DatabaseDSN       string     `env:"DATABASE_DSN"`
-	PrvKey            string     `env:"PRIVATE_KEY,optional"`
-	BootNodeMultiAddr string     `env:"BOOTNODE_MULTIADDR"`
-	IoTeXChainID      int        `env:"IOTEX_CHAINID"`
-	ChainEndpoint     string     `env:"CHAIN_ENDPOINT,optional"`
-	LocalDBDir        string     `env:"LOCAL_DB_DIRECTORY,optional"`
-	env               string     `env:"-"`
+	LogLevel                slog.Level `env:"LOG_LEVEL,optional"`
+	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT"`
+	AggregationAmount       int        `env:"AGGREGATION_AMOUNT,optional"`
+	DatabaseDSN             string     `env:"DATABASE_DSN"`
+	PrvKey                  string     `env:"PRIVATE_KEY,optional"`
+	BootNodeMultiAddr       string     `env:"BOOTNODE_MULTIADDR"`
+	IoTeXChainID            int        `env:"IOTEX_CHAINID"`
+	ChainEndpoint           string     `env:"CHAIN_ENDPOINT,optional"`
+	BeginningBlockNumber    uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
+	TaskManagerContractAddr string     `env:"TASK_MANAGER_CONTRACT_ADDRESS,optional"`
+	env                     string     `env:"-"`
 }
 
 var defaultTestnetConfig = &Config{
-	LogLevel:          slog.LevelInfo,
-	ServiceEndpoint:   ":9000",
-	AggregationAmount: 1,
-	DatabaseDSN:       "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",
-	PrvKey:            "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
-	BootNodeMultiAddr: "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
-	IoTeXChainID:      2,
-	ChainEndpoint:     "https://babel-api.testnet.iotex.io",
-	LocalDBDir:        "./local_db",
-	env:               "TESTNET",
+	LogLevel:                slog.LevelInfo,
+	ServiceEndpoint:         ":9000",
+	AggregationAmount:       1,
+	DatabaseDSN:             "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",
+	PrvKey:                  "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
+	BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
+	IoTeXChainID:            2,
+	ChainEndpoint:           "https://babel-api.testnet.iotex.io",
+	BeginningBlockNumber:    28345000,
+	TaskManagerContractAddr: "0x65aF86776CCFc60781a70c38F44625853d7A842A",
+	env:                     "TESTNET",
 }
 
 func (c *Config) init() error {
