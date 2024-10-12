@@ -33,23 +33,23 @@ type Message struct {
 
 type Task struct {
 	gorm.Model
-	TaskID     common.Hash    `gorm:"uniqueIndex:task,not null"`
-	ProjectID  uint64         `gorm:"uniqueIndex:task,not null"`
+	TaskID     common.Hash    `gorm:"uniqueIndex:task_uniq,not null"`
+	ProjectID  uint64         `gorm:"uniqueIndex:task_uniq,not null"`
 	MessageIDs datatypes.JSON `gorm:"not null"`
 	Signature  []byte         `gorm:"not null"`
 }
 
 type AssignedTask struct {
 	gorm.Model
-	TaskID    common.Hash `gorm:"uniqueIndex:task,not null"`
-	ProjectID uint64      `gorm:"uniqueIndex:task,not null"`
+	TaskID    common.Hash `gorm:"uniqueIndex:assigned_task_uniq,not null"`
+	ProjectID uint64      `gorm:"uniqueIndex:assigned_task_uniq,not null"`
 	Prover    common.Address
 }
 
 type SettledTask struct {
 	gorm.Model
-	TaskID    common.Hash `gorm:"uniqueIndex:task,not null"`
-	ProjectID uint64      `gorm:"uniqueIndex:task,not null"`
+	TaskID    common.Hash `gorm:"uniqueIndex:settled_task_uniq,not null"`
+	ProjectID uint64      `gorm:"uniqueIndex:settled_task_uniq,not null"`
 }
 
 type Persistence struct {
