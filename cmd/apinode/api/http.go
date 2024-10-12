@@ -66,7 +66,7 @@ type httpServer struct {
 
 func (s *httpServer) handleMessage(c *gin.Context) {
 	req := &HandleMessageReq{}
-	if err := c.ShouldBind(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		slog.Error("failed to bind request", "error", err)
 		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
 		return
@@ -124,7 +124,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 
 func (s *httpServer) queryTask(c *gin.Context) {
 	req := &QueryTaskReq{}
-	if err := c.ShouldBind(req); err != nil {
+	if err := c.ShouldBindJSON(req); err != nil {
 		slog.Error("failed to bind request", "error", err)
 		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
 		return
