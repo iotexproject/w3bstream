@@ -122,7 +122,7 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (s *httpServer) queryStateLogByID(c *gin.Context) {
+func (s *httpServer) queryTask(c *gin.Context) {
 	req := &QueryTaskReq{}
 	if err := c.ShouldBind(req); err != nil {
 		slog.Error("failed to bind request", "error", err)
@@ -197,11 +197,11 @@ func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, 
 	}
 
 	s.engine.POST("/message", s.handleMessage)
-	s.engine.GET("/message/:id", s.queryStateLogByID)
+	s.engine.GET("/task", s.queryTask)
 
 	if err := s.engine.Run(address); err != nil {
-		slog.Error("Failed to start HTTP server", "address", address, "error", err)
-		return errors.Wrap(err, "could not start HTTP server; check if the address is in use or network is accessible")
+		slog.Error("failed to start http server", "address", address, "error", err)
+		return errors.Wrap(err, "could not start http server; check if the address is in use or network is accessible")
 	}
 	return nil
 }
