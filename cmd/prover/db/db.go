@@ -123,7 +123,7 @@ func (p *DB) CreateTask(projectID uint64, taskID common.Hash, prover common.Addr
 	}
 	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}, {Name: "project_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{}),
+		DoNothing: true,
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert task")
 }
