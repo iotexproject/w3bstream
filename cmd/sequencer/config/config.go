@@ -30,6 +30,7 @@ var (
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		IoTeXChainID:            2,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
+		OperatorPrvKey:          "33e6ba3e033131026903f34dfa208feb88c284880530cf76280b68d38041c67b",
 		ProverContractAddr:      "0xf9b850A50Ef236CADf4406Edf5a0B588142D238D",
 		DaoContractAddr:         "0xA7b3c2a257693363a9f043CC9338DbA88E1f83aF",
 		MinterContractAddr:      "0x102a1352557B3f6c65FBb44bF7959F8eacC30992",

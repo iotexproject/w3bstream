@@ -172,7 +172,7 @@ func (p *Persistence) UpsertSettledTask(projectID uint64, taskID common.Hash) er
 	}
 	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}, {Name: "project_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{}),
+		DoNothing: true,
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert settled task")
 }

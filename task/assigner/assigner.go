@@ -16,15 +16,10 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/rand"
 
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/iotexproject/w3bstream/block"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 )
-
-func init() {
-	log.Root().SetHandler(log.StdoutHandler)
-}
 
 type DB interface {
 	BlockHead() (uint64, common.Hash, error)
