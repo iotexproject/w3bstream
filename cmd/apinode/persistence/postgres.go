@@ -50,6 +50,7 @@ type SettledTask struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:settled_task_uniq,not null"`
 	ProjectID uint64      `gorm:"uniqueIndex:settled_task_uniq,not null"`
+	Tx        common.Hash `gorm:"not null"`
 }
 
 type Persistence struct {
@@ -165,14 +166,15 @@ func (p *Persistence) UpsertAssignedTask(projectID uint64, taskID common.Hash, p
 	return errors.Wrap(err, "failed to upsert assigned task")
 }
 
-func (p *Persistence) UpsertSettledTask(projectID uint64, taskID common.Hash) error {
+func (p *Persistence) UpsertSettledTask(projectID uint64, taskID, tx common.Hash) error {
 	t := SettledTask{
 		ProjectID: projectID,
 		TaskID:    taskID,
+		Tx:        tx,
 	}
 	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}, {Name: "project_id"}},
-		DoNothing: true,
+		DoUpdates: clause.AssignmentColumns([]string{"tx"}),
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert settled task")
 }

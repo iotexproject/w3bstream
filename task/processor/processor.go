@@ -16,7 +16,6 @@ import (
 
 	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/router"
-	"github.com/iotexproject/w3bstream/smartcontracts/go/taskmanager"
 	"github.com/iotexproject/w3bstream/task"
 )
 
@@ -30,17 +29,16 @@ type DB interface {
 }
 
 type processor struct {
-	db                  DB
-	retrieve            RetrieveTask
-	handle              HandleTask
-	project             Project
-	prv                 *ecdsa.PrivateKey
-	waitingTime         time.Duration
-	signer              types.Signer
-	account             common.Address
-	client              *ethclient.Client
-	routerInstance      *router.Router
-	taskManagerInstance *taskmanager.Taskmanager
+	db             DB
+	retrieve       RetrieveTask
+	handle         HandleTask
+	project        Project
+	prv            *ecdsa.PrivateKey
+	waitingTime    time.Duration
+	signer         types.Signer
+	account        common.Address
+	client         *ethclient.Client
+	routerInstance *router.Router
 }
 
 func (r *processor) process(projectID uint64, taskID common.Hash) error {
@@ -79,33 +77,12 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 		new(big.Int).SetUint64(1),
 		t.DeviceID.String(),
 		proof,
+		taskID,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to send tx")
 	}
 	slog.Info("send tx to router contract success", "hash", tx.Hash().String())
-
-	nonce, err = r.client.PendingNonceAt(context.Background(), r.account)
-	if err != nil {
-		return errors.Wrap(err, "failed to get pending nonce")
-	}
-	tx, err = r.taskManagerInstance.Settle(
-		&bind.TransactOpts{
-			From: r.account,
-			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
-				return types.SignTx(t, r.signer, r.prv)
-			},
-			Nonce: new(big.Int).SetUint64(nonce),
-		},
-		new(big.Int).SetUint64(t.ProjectID),
-		taskID,
-		r.account,
-	)
-	if err != nil {
-		return errors.Wrap(err, "failed to send tx")
-	}
-	slog.Info("send tx to task manager contract success", "hash", tx.Hash().String())
-
 	return nil
 }
 
@@ -132,7 +109,7 @@ func (r *processor) run() {
 	}
 }
 
-func Run(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey, chainEndpoint string, routerAddr, taskManagerAddr common.Address) error {
+func Run(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey, chainEndpoint string, routerAddr common.Address) error {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to dial chain endpoint")
@@ -141,26 +118,21 @@ func Run(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *
 	if err != nil {
 		return errors.Wrap(err, "failed to new router contract instance")
 	}
-	taskManagerInstance, err := taskmanager.NewTaskmanager(taskManagerAddr, client)
-	if err != nil {
-		return errors.Wrap(err, "failed to new task manager contract instance")
-	}
 	chainID, err := client.ChainID(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "failed to get chain id")
 	}
 	p := &processor{
-		db:                  db,
-		retrieve:            retrieve,
-		handle:              handle,
-		project:             project,
-		prv:                 prv,
-		waitingTime:         3 * time.Second,
-		signer:              types.NewLondonSigner(chainID),
-		account:             crypto.PubkeyToAddress(prv.PublicKey),
-		client:              client,
-		routerInstance:      routerInstance,
-		taskManagerInstance: taskManagerInstance,
+		db:             db,
+		retrieve:       retrieve,
+		handle:         handle,
+		project:        project,
+		prv:            prv,
+		waitingTime:    3 * time.Second,
+		signer:         types.NewLondonSigner(chainID),
+		account:        crypto.PubkeyToAddress(prv.PublicKey),
+		client:         client,
+		routerInstance: routerInstance,
 	}
 	go p.run()
 	return nil

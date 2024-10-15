@@ -31,7 +31,7 @@ var (
 
 // RouterMetaData contains all meta data concerning the Router contract.
 var RouterMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"dapp\",\"type\":\"address\"}],\"name\":\"DappBound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"DappUnbound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"router\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"error\",\"type\":\"bytes\"}],\"name\":\"DataProcessed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_dapp\",\"type\":\"address\"}],\"name\":\"bindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"dapp\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"fleetManagement\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_fleetManagement\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_projectStore\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"projectStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_proverId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_clientId\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"route\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"}],\"name\":\"unbindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"dapp\",\"type\":\"address\"}],\"name\":\"DappBound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"DappUnbound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"router\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"error\",\"type\":\"bytes\"}],\"name\":\"DataProcessed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_dapp\",\"type\":\"address\"}],\"name\":\"bindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"dapp\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"fleetManagement\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_fleetManagement\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_projectStore\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"projectStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_proverId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_clientId\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"_taskId\",\"type\":\"bytes32\"}],\"name\":\"route\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_add\",\"type\":\"address\"}],\"name\":\"setTaskManager\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskManager\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"}],\"name\":\"unbindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // RouterABI is the input ABI used to generate the binding from.
@@ -273,6 +273,37 @@ func (_Router *RouterCallerSession) ProjectStore() (common.Address, error) {
 	return _Router.Contract.ProjectStore(&_Router.CallOpts)
 }
 
+// TaskManager is a free data retrieval call binding the contract method 0xa50a640e.
+//
+// Solidity: function taskManager() view returns(address)
+func (_Router *RouterCaller) TaskManager(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _Router.contract.Call(opts, &out, "taskManager")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// TaskManager is a free data retrieval call binding the contract method 0xa50a640e.
+//
+// Solidity: function taskManager() view returns(address)
+func (_Router *RouterSession) TaskManager() (common.Address, error) {
+	return _Router.Contract.TaskManager(&_Router.CallOpts)
+}
+
+// TaskManager is a free data retrieval call binding the contract method 0xa50a640e.
+//
+// Solidity: function taskManager() view returns(address)
+func (_Router *RouterCallerSession) TaskManager() (common.Address, error) {
+	return _Router.Contract.TaskManager(&_Router.CallOpts)
+}
+
 // BindDapp is a paid mutator transaction binding the contract method 0x85a7d275.
 //
 // Solidity: function bindDapp(uint256 _projectId, address _dapp) returns()
@@ -315,25 +346,46 @@ func (_Router *RouterTransactorSession) Initialize(_fleetManagement common.Addre
 	return _Router.Contract.Initialize(&_Router.TransactOpts, _fleetManagement, _projectStore)
 }
 
-// Route is a paid mutator transaction binding the contract method 0xc6675469.
+// Route is a paid mutator transaction binding the contract method 0x0cb7f523.
 //
-// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data) returns()
-func (_Router *RouterTransactor) Route(opts *bind.TransactOpts, _projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte) (*types.Transaction, error) {
-	return _Router.contract.Transact(opts, "route", _projectId, _proverId, _clientId, _data)
+// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data, bytes32 _taskId) returns()
+func (_Router *RouterTransactor) Route(opts *bind.TransactOpts, _projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte, _taskId [32]byte) (*types.Transaction, error) {
+	return _Router.contract.Transact(opts, "route", _projectId, _proverId, _clientId, _data, _taskId)
 }
 
-// Route is a paid mutator transaction binding the contract method 0xc6675469.
+// Route is a paid mutator transaction binding the contract method 0x0cb7f523.
 //
-// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data) returns()
-func (_Router *RouterSession) Route(_projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte) (*types.Transaction, error) {
-	return _Router.Contract.Route(&_Router.TransactOpts, _projectId, _proverId, _clientId, _data)
+// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data, bytes32 _taskId) returns()
+func (_Router *RouterSession) Route(_projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte, _taskId [32]byte) (*types.Transaction, error) {
+	return _Router.Contract.Route(&_Router.TransactOpts, _projectId, _proverId, _clientId, _data, _taskId)
 }
 
-// Route is a paid mutator transaction binding the contract method 0xc6675469.
+// Route is a paid mutator transaction binding the contract method 0x0cb7f523.
 //
-// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data) returns()
-func (_Router *RouterTransactorSession) Route(_projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte) (*types.Transaction, error) {
-	return _Router.Contract.Route(&_Router.TransactOpts, _projectId, _proverId, _clientId, _data)
+// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data, bytes32 _taskId) returns()
+func (_Router *RouterTransactorSession) Route(_projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte, _taskId [32]byte) (*types.Transaction, error) {
+	return _Router.Contract.Route(&_Router.TransactOpts, _projectId, _proverId, _clientId, _data, _taskId)
+}
+
+// SetTaskManager is a paid mutator transaction binding the contract method 0x327d0a60.
+//
+// Solidity: function setTaskManager(address _add) returns()
+func (_Router *RouterTransactor) SetTaskManager(opts *bind.TransactOpts, _add common.Address) (*types.Transaction, error) {
+	return _Router.contract.Transact(opts, "setTaskManager", _add)
+}
+
+// SetTaskManager is a paid mutator transaction binding the contract method 0x327d0a60.
+//
+// Solidity: function setTaskManager(address _add) returns()
+func (_Router *RouterSession) SetTaskManager(_add common.Address) (*types.Transaction, error) {
+	return _Router.Contract.SetTaskManager(&_Router.TransactOpts, _add)
+}
+
+// SetTaskManager is a paid mutator transaction binding the contract method 0x327d0a60.
+//
+// Solidity: function setTaskManager(address _add) returns()
+func (_Router *RouterTransactorSession) SetTaskManager(_add common.Address) (*types.Transaction, error) {
+	return _Router.Contract.SetTaskManager(&_Router.TransactOpts, _add)
 }
 
 // UnbindDapp is a paid mutator transaction binding the contract method 0xd869758c.
