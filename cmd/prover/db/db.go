@@ -136,7 +136,7 @@ func (p *DB) ProcessTask(projectID uint64, taskID common.Hash) error {
 	return errors.Wrap(err, "failed to update task")
 }
 
-func (p *DB) DeleteTask(projectID uint64, taskID common.Hash) error {
+func (p *DB) DeleteTask(projectID uint64, taskID, tx common.Hash) error {
 	err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error
 	return errors.Wrap(err, "failed to delete task")
 }

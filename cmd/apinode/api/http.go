@@ -47,6 +47,7 @@ type StateLog struct {
 	State    string    `json:"state"`
 	Time     time.Time `json:"time"`
 	Comment  string    `json:"comment,omitempty"`
+	Tx       string    `json:"transaction_hash,omitempty"`
 	ProverID string    `json:"prover_id,omitempty"`
 }
 
@@ -164,7 +165,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	}
 	resp.States = append(resp.States, &StateLog{
 		State:    "assigned",
-		Time:     t.CreatedAt,
+		Time:     ta.CreatedAt,
 		ProverID: "did:io:" + strings.TrimPrefix(ta.Prover.String(), "0x"),
 	})
 
@@ -180,8 +181,9 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	}
 	resp.States = append(resp.States, &StateLog{
 		State:   "settled",
-		Time:    t.CreatedAt,
+		Time:    ts.CreatedAt,
 		Comment: "The task has been completed. Please check the generated proof in the corresponding DApp contract.",
+		Tx:      ts.Tx.String(),
 	})
 	c.JSON(http.StatusOK, resp)
 }

@@ -154,7 +154,7 @@ func (p *DB) AssignTask(projectID uint64, taskID common.Hash, prover common.Addr
 	return errors.Wrap(err, "failed to assign task")
 }
 
-func (p *DB) DeleteTask(projectID uint64, taskID common.Hash) error {
+func (p *DB) DeleteTask(projectID uint64, taskID, tx common.Hash) error {
 	err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error
 	return errors.Wrap(err, "failed to delete task")
 }

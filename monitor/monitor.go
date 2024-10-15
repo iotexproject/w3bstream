@@ -29,7 +29,7 @@ type (
 	UpsertNBits              func(uint32) error
 	UpsertBlockHead          func(uint64, common.Hash) error
 	AssignTask               func(uint64, common.Hash, common.Address) error
-	SettleTask               func(uint64, common.Hash) error
+	SettleTask               func(uint64, common.Hash, common.Hash) error
 	UpsertProject            func(uint64, string, common.Hash) error
 	UpsertProver             func(uint64, common.Address) error
 )
@@ -158,7 +158,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse task settled event")
 			}
-			if err := c.h.SettleTask(e.ProjectId.Uint64(), e.TaskId); err != nil {
+			if err := c.h.SettleTask(e.ProjectId.Uint64(), e.TaskId, l.TxHash); err != nil {
 				return err
 			}
 		case projectConfigUpdatedTopic:
