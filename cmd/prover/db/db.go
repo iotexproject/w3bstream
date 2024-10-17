@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -35,6 +36,7 @@ type task struct {
 	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
 	ProjectID uint64      `gorm:"uniqueIndex:task_uniq,not null"`
 	Processed bool        `gorm:"index:unprocessed_task,not null,default:false"`
+	Error     string      `gorm:"not null,default:''"`
 }
 
 type DB struct {
@@ -128,17 +130,31 @@ func (p *DB) CreateTask(projectID uint64, taskID common.Hash, prover common.Addr
 	return errors.Wrap(err, "failed to upsert task")
 }
 
-func (p *DB) ProcessTask(projectID uint64, taskID common.Hash) error {
+func (p *DB) ProcessTask(projectID uint64, taskID common.Hash, err error) error {
 	t := &task{
 		Processed: true,
 	}
-	err := p.db.Model(t).Where("task_id = ?", taskID).Where("project_id = ?", projectID).Updates(t).Error
+	if err != nil {
+		t.Error = err.Error()
+	}
+	err = p.db.Model(t).Where("task_id = ?", taskID).Where("project_id = ?", projectID).Updates(t).Error
 	return errors.Wrap(err, "failed to update task")
 }
 
 func (p *DB) DeleteTask(projectID uint64, taskID, tx common.Hash) error {
 	err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error
 	return errors.Wrap(err, "failed to delete task")
+}
+
+func (p *DB) ProcessedTask(projectID uint64, taskID common.Hash) (bool, string, time.Time, error) {
+	t := task{}
+	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return false, "", time.Now(), nil
+		}
+		return false, "", time.Time{}, errors.Wrap(err, "failed to query processed task")
+	}
+	return t.Processed, t.Error, t.CreatedAt, nil
 }
 
 func (p *DB) UnprocessedTask() (uint64, common.Hash, error) {

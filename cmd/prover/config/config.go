@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	LogLevel                slog.Level `env:"LOG_LEVEL,optional"`
+	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT"`
 	VMEndpoints             string     `env:"VM_ENDPOINTS"`
 	DatasourceDSN           string     `env:"DATASOURCE_DSN"`
 	ChainEndpoint           string     `env:"CHAIN_ENDPOINT,optional"`
@@ -24,6 +25,7 @@ type Config struct {
 var (
 	defaultTestnetConfig = &Config{
 		LogLevel:                slog.LevelInfo,
+		ServiceEndpoint:         ":9002",
 		VMEndpoints:             `{"1":"localhost:4001","2":"localhost:4002","3":"zkwasm:4001","4":"wasm:4001"}`,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
 		DatasourceDSN:           "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",

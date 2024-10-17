@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -16,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
+	proverapi "github.com/iotexproject/w3bstream/cmd/prover/api"
 	"github.com/iotexproject/w3bstream/p2p"
 )
 
@@ -47,6 +50,7 @@ type StateLog struct {
 	State    string    `json:"state"`
 	Time     time.Time `json:"time"`
 	Comment  string    `json:"comment,omitempty"`
+	Error    string    `json:"error,omitempty"`
 	Tx       string    `json:"transaction_hash,omitempty"`
 	ProverID string    `json:"prover_id,omitempty"`
 }
@@ -63,6 +67,7 @@ type httpServer struct {
 	aggregationAmount int
 	prv               *ecdsa.PrivateKey
 	pubSub            *p2p.PubSub
+	proverAddr        string
 }
 
 func (s *httpServer) handleMessage(c *gin.Context) {
@@ -176,6 +181,50 @@ func (s *httpServer) queryTask(c *gin.Context) {
 		return
 	}
 	if ts == nil {
+		reqJ, err := json.Marshal(proverapi.QueryTaskReq{
+			ProjectID: req.ProjectID,
+			TaskID:    req.TaskID,
+		})
+		if err != nil {
+			slog.Error("failed to marshal prover request", "error", err)
+			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to marshal prover request")))
+			return
+		}
+		req, err := http.NewRequest("GET", fmt.Sprintf("http://%s/task", s.proverAddr), bytes.NewBuffer(reqJ))
+		if err != nil {
+			slog.Error("failed to build http request", "error", err)
+			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to build http request")))
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		proverResp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			slog.Error("failed to call prover http server", "error", err)
+			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to call prover http server")))
+			return
+		}
+		defer proverResp.Body.Close()
+
+		body, err := io.ReadAll(proverResp.Body)
+		if err != nil {
+			slog.Error("failed to read prover http server response", "error", err)
+			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to read prover http server response")))
+			return
+		}
+		taskResp := &proverapi.QueryTaskResp{}
+		if err := json.Unmarshal(body, &taskResp); err != nil {
+			slog.Error("failed to unmarshal prover http server response", "error", err)
+			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to unmarshal prover http server response")))
+			return
+		}
+		if taskResp.Processed && taskResp.Error != "" {
+			resp.States = append(resp.States, &StateLog{
+				State: "failed",
+				Error: taskResp.Error,
+				Time:  taskResp.Time,
+			})
+		}
 		c.JSON(http.StatusOK, resp)
 		return
 	}
@@ -189,20 +238,21 @@ func (s *httpServer) queryTask(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, aggregationAmount int, address string) error {
+func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, aggregationAmount int, addr, proverAddr string) error {
 	s := &httpServer{
 		engine:            gin.Default(),
 		p:                 p,
 		aggregationAmount: aggregationAmount,
 		prv:               prv,
 		pubSub:            pubSub,
+		proverAddr:        proverAddr,
 	}
 
 	s.engine.POST("/message", s.handleMessage)
 	s.engine.GET("/task", s.queryTask)
 
-	if err := s.engine.Run(address); err != nil {
-		slog.Error("failed to start http server", "address", address, "error", err)
+	if err := s.engine.Run(addr); err != nil {
+		slog.Error("failed to start http server", "address", addr, "error", err)
 		return errors.Wrap(err, "could not start http server; check if the address is in use or network is accessible")
 	}
 	return nil
