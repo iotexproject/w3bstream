@@ -1,27 +1,36 @@
 import { ethers, upgrades } from 'hardhat';
 
 async function main() {
-  if (!process.env.PROJECT_ADDRESS) {
-    console.log(`Please provide project address`);
-    return;
+  let projectAddr: string = ''
+  let projectRegistrationFee: string = '0.0'
+  let proverRegistrationFee: string = '0.0'
+  let minStake: string = '0.0'
+
+  if (process.env.PROJECT_ADDRESS) {
+    projectAddr = process.env.PROJECT_ADDRESS
   }
-  if (!process.env.PROJECT_REGISTRATION_FEE) {
-    console.log(`Please provide project registration fee`);
-    return;
+  if (process.env.PROJECT_REGISTRATION_FEE) {
+    projectRegistrationFee = process.env.PROJECT_REGISTRATION_FEE
   }
-  if (!process.env.PROVER_REGISTRATION_FEE) {
-    console.log(`Please provide prover registration fee`);
-    return;
+  if (process.env.PROVER_REGISTRATION_FEE) {
+    proverRegistrationFee = process.env.PROVER_REGISTRATION_FEE
   }
-  if (!process.env.MIN_STAKE) {
-    console.log(`Please provide prover min stake`);
-    return;
+  if (process.env.MIN_STAKE) {
+    minStake = process.env.MIN_STAKE
   }
 
   const [deployer] = await ethers.getSigners();
 
+  if (!process.env.PROJECT_ADDRESS) {
+    const MockProject = await ethers.deployContract('MockProject', []);
+    await MockProject.waitForDeployment();
+    console.log(`MockProject deployed to ${MockProject.target}`);
+
+    projectAddr = MockProject.target.toString()
+  }
+
   const W3bstreamProject = await ethers.getContractFactory('W3bstreamProject');
-  const project = await upgrades.deployProxy(W3bstreamProject, [process.env.PROJECT_ADDRESS], {
+  const project = await upgrades.deployProxy(W3bstreamProject, [projectAddr], {
     initializer: 'initialize',
   });
   await project.waitForDeployment();
@@ -36,9 +45,9 @@ async function main() {
   let tx = await project.setBinder(projectRegistrar.target);
   await tx.wait();
   console.log(`W3bstreamProject binder set to ProjectRegistrar ${projectRegistrar.target}`);
-  tx = await projectRegistrar.setRegistrationFee(ethers.parseEther(process.env.PROJECT_REGISTRATION_FEE));
+  tx = await projectRegistrar.setRegistrationFee(ethers.parseEther(projectRegistrationFee));
   await tx.wait();
-  console.log(`ProjectRegistrar registration fee set to ${process.env.PROJECT_REGISTRATION_FEE}`);
+  console.log(`ProjectRegistrar registration fee set to ${projectRegistrationFee}`);
 
   const W3bstreamProver = await ethers.getContractFactory('W3bstreamProver');
   const prover = await upgrades.deployProxy(W3bstreamProver, ['W3bstream Prover', 'WPRN'], {
@@ -55,7 +64,7 @@ async function main() {
   console.log(`W3bstreamCredit deployed to ${credit.target}`);
 
   const FleetManagement = await ethers.getContractFactory('FleetManagement');
-  const fleetManagement = await upgrades.deployProxy(FleetManagement, [ethers.parseEther(process.env.MIN_STAKE)], {
+  const fleetManagement = await upgrades.deployProxy(FleetManagement, [ethers.parseEther(minStake)], {
     initializer: 'initialize',
   });
   await fleetManagement.waitForDeployment();
@@ -82,7 +91,7 @@ async function main() {
   console.log(`FleetManagement set coordinator to ${coordinator}`);
 
   // TODO deploy mock StakingHub
-  const stakingHub = await ethers.deployContract('MockStakingHub', [ethers.parseEther(process.env.MIN_STAKE)]);
+  const stakingHub = await ethers.deployContract('MockStakingHub', [ethers.parseEther(minStake)]);
   await stakingHub.waitForDeployment();
   console.log(`MockStakingHub deployed to ${stakingHub.target}`);
   tx = await fleetManagement.setStakingHub(stakingHub.target);
@@ -92,9 +101,9 @@ async function main() {
   tx = await fleetManagement.setProverStore(prover.target);
   await tx.wait();
   console.log(`FleetManagement set ProverStore to ${prover.target}`);
-  tx = await fleetManagement.setRegistrationFee(ethers.parseEther(process.env.PROVER_REGISTRATION_FEE));
+  tx = await fleetManagement.setRegistrationFee(ethers.parseEther(proverRegistrationFee));
   await tx.wait();
-  console.log(`FleetManagement set prover registration fee to ${process.env.PROVER_REGISTRATION_FEE}`);
+  console.log(`FleetManagement set prover registration fee to ${proverRegistrationFee}`);
 
   const W3bstreamRouter = await ethers.getContractFactory('W3bstreamRouter');
   const router = await upgrades.deployProxy(W3bstreamRouter, [fleetManagement.target, project.target], {
