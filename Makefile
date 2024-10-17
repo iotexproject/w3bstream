@@ -50,4 +50,4 @@ contract-test:
 .PHONY: e2e-test
 e2e-test:
 	@cd smartcontracts && yarn install
-	@go test ./e2e -v -tags=e2e
+	@TEST_E2E=true go test ./e2e -v

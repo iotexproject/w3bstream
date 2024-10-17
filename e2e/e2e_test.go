@@ -1,11 +1,9 @@
-//go:build e2e
-// +build e2e
-
 package e2e
 
 import (
 	"context"
 	"log"
+	"os"
 	"runtime"
 	"testing"
 
@@ -14,6 +12,9 @@ import (
 )
 
 func TestE2E(t *testing.T) {
+	if os.Getenv("TEST_E2E") != "true" {
+		t.Skip("Skipping TestE2E as requested.")
+	}
 	if runtime.GOARCH == "arm64" {
 		log.Println("Skipping tests: Unsupported architecture (arm64)")
 		t.Skip()
