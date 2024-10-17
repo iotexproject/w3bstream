@@ -26,7 +26,7 @@ services:
       - 4003:4001
 
   risc0:
-    image: ghcr.io/iotexproject/risc0server:v0.0.7
+    image: ghcr.io/iotexproject/risc0server:v0.0.8
     depends_on:
       - "postgres"
     container_name: risc0-service

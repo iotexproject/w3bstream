@@ -10,34 +10,28 @@ import (
 	"github.com/iotexproject/w3bstream/vm/proto"
 )
 
-func create(ctx context.Context, conn *grpc.ClientConn, projectID uint64, executeBinary, expParam string) error {
-	cli := proto.NewVmRuntimeClient(conn)
+func create(ctx context.Context, conn *grpc.ClientConn, projectID uint64, executeBinary, expParam []byte) error {
+	cli := proto.NewVMClient(conn)
 
-	req := &proto.CreateRequest{
+	req := &proto.NewProjectRequest{
 		ProjectID: projectID,
-		Content:   executeBinary,
-		ExpParam:  expParam,
+		Binary:    executeBinary,
+		Metadata:  expParam,
 	}
-	if _, err := cli.Create(ctx, req); err != nil {
+	if _, err := cli.NewProject(ctx, req); err != nil {
 		return errors.Wrap(err, "failed to create vm instance")
 	}
 	return nil
 }
 
 func execute(ctx context.Context, conn *grpc.ClientConn, task *task.Task) ([]byte, error) {
-	ds := []string{}
-	for _, d := range task.Payloads {
-		ds = append(ds, string(d))
+	req := &proto.ExecuteTaskRequest{
+		ProjectID: task.ProjectID,
+		TaskID:    task.ID.Bytes(),
+		Payloads:  task.Payloads,
 	}
-	req := &proto.ExecuteRequest{
-		ProjectID:          task.ProjectID,
-		TaskID:             0,   // TODO
-		ClientID:           "0", // TODO
-		SequencerSignature: "",  // TODO
-		Datas:              ds,
-	}
-	cli := proto.NewVmRuntimeClient(conn)
-	resp, err := cli.Execute(ctx, req)
+	cli := proto.NewVMClient(conn)
+	resp, err := cli.ExecuteTask(ctx, req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
