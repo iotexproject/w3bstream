@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
       allowUnlimitedContractSize: true,
     },
     dev: {
-      url: 'http://127.0.0.1:8545',
+      url: process.env.URL != undefined ? process.env.URL : 'http://127.0.0.1:8545',
       accounts: accounts,
     },
     nightly: {

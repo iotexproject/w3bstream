@@ -1,0 +1,32 @@
+name: E2E tests
+
+on:
+  push:
+    branches: [ "develop"]
+  pull_request:
+    branches: [ "develop"]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21.x'
+
+      - name: Run e2e tests
+        run: make e2e-test
