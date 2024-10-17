@@ -61,7 +61,7 @@ func main() {
 	}
 
 	go func() {
-		if err := api.Run(p, prv, pubSub, cfg.AggregationAmount, cfg.ServiceEndpoint); err != nil {
+		if err := api.Run(p, prv, pubSub, cfg.AggregationAmount, cfg.ServiceEndpoint, cfg.ProverServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()

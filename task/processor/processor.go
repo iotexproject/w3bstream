@@ -25,7 +25,7 @@ type RetrieveTask func(projectID uint64, taskID common.Hash) (*task.Task, error)
 
 type DB interface {
 	UnprocessedTask() (uint64, common.Hash, error)
-	ProcessTask(uint64, common.Hash) error
+	ProcessTask(uint64, common.Hash, error) error
 }
 
 type processor struct {
@@ -98,12 +98,11 @@ func (r *processor) run() {
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		if err := r.process(projectID, taskID); err != nil {
+		err = r.process(projectID, taskID)
+		if err != nil {
 			slog.Error("failed to process task", "error", err)
-			time.Sleep(r.waitingTime)
-			continue
 		}
-		if err := r.db.ProcessTask(projectID, taskID); err != nil {
+		if err := r.db.ProcessTask(projectID, taskID, err); err != nil {
 			slog.Error("failed to process db task", "error", err)
 		}
 	}

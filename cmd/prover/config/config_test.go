@@ -17,6 +17,7 @@ func TestConfig_Init(t *testing.T) {
 	t.Run("UseEnvConfig", func(t *testing.T) {
 		os.Clearenv()
 		expected := Config{
+			ServiceEndpoint:      "test",
 			VMEndpoints:          `{"1":"halo2:4001","2":"risc0:4001","3":"zkwasm:4001","4":"wasm:4001"}`,
 			ChainEndpoint:        "http://abc.def.com",
 			DatasourceDSN:        "postgres://root@localhost/abc?ext=666",
@@ -25,6 +26,7 @@ func TestConfig_Init(t *testing.T) {
 			LocalDBDir:           "./test",
 		}
 
+		_ = os.Setenv("HTTP_SERVICE_ENDPOINT", expected.ServiceEndpoint)
 		_ = os.Setenv("VM_ENDPOINTS", expected.VMEndpoints)
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATASOURCE_DSN", expected.DatasourceDSN)

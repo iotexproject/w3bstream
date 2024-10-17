@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
+	"github.com/iotexproject/w3bstream/cmd/prover/api"
 	"github.com/iotexproject/w3bstream/cmd/prover/config"
 	"github.com/iotexproject/w3bstream/cmd/prover/db"
 	"github.com/iotexproject/w3bstream/datasource"
@@ -82,6 +83,12 @@ func main() {
 	if err := processor.Run(vmHandler.Handle, projectManager.Project, db, datasource.Retrieve, prv, cfg.ChainEndpoint, common.HexToAddress(cfg.RouterContractAddr)); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run task processor"))
 	}
+
+	go func() {
+		if err := api.Run(db, cfg.ServiceEndpoint); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)

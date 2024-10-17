@@ -10,6 +10,7 @@ import (
 type Config struct {
 	LogLevel                slog.Level `env:"LOG_LEVEL,optional"`
 	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT"`
+	ProverServiceEndpoint   string     `env:"PROVER_SERVICE_ENDPOINT"`
 	AggregationAmount       int        `env:"AGGREGATION_AMOUNT,optional"`
 	DatabaseDSN             string     `env:"DATABASE_DSN"`
 	PrvKey                  string     `env:"PRIVATE_KEY,optional"`
@@ -24,6 +25,7 @@ type Config struct {
 var defaultTestnetConfig = &Config{
 	LogLevel:                slog.LevelInfo,
 	ServiceEndpoint:         ":9000",
+	ProverServiceEndpoint:   "localhost:9002",
 	AggregationAmount:       1,
 	DatabaseDSN:             "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",
 	PrvKey:                  "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
