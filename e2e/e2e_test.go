@@ -13,7 +13,7 @@ import (
 
 func TestE2E(t *testing.T) {
 	if os.Getenv("TEST_E2E") != "true" {
-		t.Skip("Skipping TestE2E as requested.")
+		t.Skip("Skipping E2E tests.")
 	}
 	if runtime.GOARCH == "arm64" {
 		log.Println("Skipping tests: Unsupported architecture (arm64)")
@@ -21,12 +21,12 @@ func TestE2E(t *testing.T) {
 	}
 
 	chainContainer, endpoint, err := utils.SetupLocalChain(context.Background())
-	require.NoError(t, err)
 	t.Cleanup(func() {
 		if err := chainContainer.Terminate(context.Background()); err != nil {
 			t.Logf("failed to terminate chain container: %v", err)
 		}
 	})
+	require.NoError(t, err)
 
 	log.Printf("Chain endpoint: %s\n", endpoint)
 
