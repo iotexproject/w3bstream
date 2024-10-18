@@ -18,7 +18,7 @@ func DeployContract(endpoint string) error {
 	os.Setenv("PRIVATE_KEY", "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6")
 	os.Setenv("URL", endpoint)
 
-	cmd := exec.Command("bash", "-c", "./deploy.sh")
+	cmd := exec.Command("bash", "-c", "./deploy.sh --network dev")
 	cmd.Dir = smartcontractsPath
 
 	stdout, err := cmd.StdoutPipe()

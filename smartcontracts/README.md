@@ -7,7 +7,7 @@ export PROJECT_ADDRESS=0xf07336E1c77319B4e740b666eb0C2B19D11fc14F
 export PROJECT_REGISTRATION_FEE=1.0
 export PROVER_REGISTRATION_FEE=1.0
 export MIN_STAKE=1.0
-./deploy.sh
+./deploy.sh --network mainnet|testnet|dev
 ```
 
 ### Deployment

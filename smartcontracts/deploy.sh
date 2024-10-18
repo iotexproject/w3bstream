@@ -24,9 +24,28 @@ if [[ -z "${PRIVATE_KEY}" ]]; then
     exit 1
 fi
 
+# Default network
+NETWORK="mainnet"
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        --network)
+        NETWORK="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        *)
+        echo "Missing --network option: $1"
+        exit 1
+        ;;
+    esac
+done
+
 # Run the Hardhat deployment script
 echo "Running Hardhat deployment..."
-yarn hardhat run scripts/deploy.ts --network dev
+yarn hardhat run scripts/deploy.ts --network $NETWORK
 
 # Check if the previous command was successful
 if [ $? -eq 0 ]; then
