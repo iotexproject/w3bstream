@@ -42,6 +42,12 @@ unit_test:
 clean:
 	@rm -rf $(BUILD_DIR)
 
+.PHONY: contract-test
 contract-test:
 	@cd smartcontracts && npm install --save-dev hardhat
 	@cd smartcontracts && npx hardhat test
+
+.PHONY: e2e-test
+e2e-test:
+	@cd smartcontracts && yarn install
+	@TEST_E2E=true go test ./e2e -v

@@ -8,6 +8,12 @@ async function main() {
 
   if (process.env.PROJECT_ADDRESS) {
     projectAddr = process.env.PROJECT_ADDRESS
+  } else {
+    const MockProject = await ethers.deployContract('MockProject', []);
+    await MockProject.waitForDeployment();
+    console.log(`MockProject deployed to ${MockProject.target}`);
+
+    projectAddr = MockProject.target.toString()
   }
   if (process.env.PROJECT_REGISTRATION_FEE) {
     projectRegistrationFee = process.env.PROJECT_REGISTRATION_FEE
@@ -20,14 +26,6 @@ async function main() {
   }
 
   const [deployer] = await ethers.getSigners();
-
-  if (!process.env.PROJECT_ADDRESS) {
-    const MockProject = await ethers.deployContract('MockProject', []);
-    await MockProject.waitForDeployment();
-    console.log(`MockProject deployed to ${MockProject.target}`);
-
-    projectAddr = MockProject.target.toString()
-  }
 
   const W3bstreamProject = await ethers.getContractFactory('W3bstreamProject');
   const project = await upgrades.deployProxy(W3bstreamProject, [projectAddr], {
