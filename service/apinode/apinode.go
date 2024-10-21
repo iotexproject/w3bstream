@@ -1,21 +1,21 @@
-package main
+package apinode
 
 import (
 	"crypto/ecdsa"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/iotexproject/w3bstream/cmd/apinode/api"
-	"github.com/iotexproject/w3bstream/cmd/apinode/config"
-	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
 	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/service/apinode/api"
+	"github.com/iotexproject/w3bstream/service/apinode/config"
+	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 	"github.com/pkg/errors"
 )
 
 type (
 	APINode struct {
-		config     *config.Config
+		Config     *config.Config
 		db         *persistence.Persistence
 		privatekey *ecdsa.PrivateKey
 	}
@@ -23,16 +23,16 @@ type (
 
 func NewAPINode(config *config.Config, db *persistence.Persistence, privatekey *ecdsa.PrivateKey) *APINode {
 	return &APINode{
-		config:     config,
+		Config:     config,
 		db:         db,
 		privatekey: privatekey,
 	}
 }
 
 func (n *APINode) Start() error {
-	pubSub, err := p2p.NewPubSub(n.config.BootNodeMultiAddr, n.config.IoTeXChainID, nil)
+	pubSub, err := p2p.NewPubSub(n.Config.BootNodeMultiAddr, n.Config.IoTeXChainID, nil)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new p2p pubsub"))
+		return errors.Wrap(err, "failed to create pubsub")
 	}
 
 	if err := monitor.Run(
@@ -43,16 +43,16 @@ func (n *APINode) Start() error {
 			SettleTask:               n.db.UpsertSettledTask,
 		},
 		&monitor.ContractAddr{
-			TaskManager: common.HexToAddress(n.config.TaskManagerContractAddr),
+			TaskManager: common.HexToAddress(n.Config.TaskManagerContractAddr),
 		},
-		n.config.BeginningBlockNumber,
-		n.config.ChainEndpoint,
+		n.Config.BeginningBlockNumber,
+		n.Config.ChainEndpoint,
 	); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to run contract monitor"))
+		return errors.Wrap(err, "failed to start monitor")
 	}
 
 	go func() {
-		if err := api.Run(n.db, n.privatekey, pubSub, n.config.AggregationAmount, n.config.ServiceEndpoint, n.config.ProverServiceEndpoint); err != nil {
+		if err := api.Run(n.db, n.privatekey, pubSub, n.Config.AggregationAmount, n.Config.ServiceEndpoint, n.Config.ProverServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()

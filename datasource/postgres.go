@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
+	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 	"github.com/iotexproject/w3bstream/task"
 )
 

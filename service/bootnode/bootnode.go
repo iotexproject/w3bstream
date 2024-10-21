@@ -1,4 +1,4 @@
-package main
+package bootnode
 
 import (
 	"context"
@@ -38,10 +38,6 @@ func NewBootNode(config BootNodeConfig) *BootNode {
 		log.Fatal(errors.Wrap(err, "failed to create libp2p host"))
 	}
 
-	for _, a := range h.Addrs() {
-		slog.Info(fmt.Sprintf("listening on %s/p2p/%s", a, h.ID().String()))
-	}
-
 	ctx := context.Background()
 	dht, err := dht.New(ctx, h, dht.ProtocolPrefix(protocol.ID("/iotex"+strconv.Itoa(config.IoTeXChainID))), dht.Mode(dht.ModeServer))
 	if err != nil {
@@ -56,6 +52,11 @@ func NewBootNode(config BootNodeConfig) *BootNode {
 }
 
 func (b *BootNode) Start() error {
+	slog.Info("bootnode started")
+
+	for _, addr := range b.Addrs() {
+		slog.Info("listening on", "addr", addr)
+	}
 	return b.dht.Bootstrap(context.Background())
 }
 
@@ -64,4 +65,12 @@ func (b *BootNode) Stop() error {
 		return err
 	}
 	return b.host.Close()
+}
+
+func (b *BootNode) Addrs() []string {
+	var addrs []string
+	for _, addr := range b.host.Addrs() {
+		addrs = append(addrs, fmt.Sprintf("%s/p2p/%s", addr.String(), b.host.ID().String()))
+	}
+	return addrs
 }

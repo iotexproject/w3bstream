@@ -10,8 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/cmd/prover/config"
-	"github.com/iotexproject/w3bstream/cmd/prover/db"
+	"github.com/iotexproject/w3bstream/service/prover"
+	"github.com/iotexproject/w3bstream/service/prover/config"
+	"github.com/iotexproject/w3bstream/service/prover/db"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new db"))
 	}
 
-	prover := NewProver(cfg, prv, db)
+	prover := prover.NewProver(cfg, db, prv)
 	if err := prover.Start(); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to start prover"))
 	}

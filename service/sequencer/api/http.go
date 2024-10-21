@@ -20,8 +20,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/block"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/db"
+	"github.com/iotexproject/w3bstream/service/sequencer/config"
+	"github.com/iotexproject/w3bstream/service/sequencer/db"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 )
 
