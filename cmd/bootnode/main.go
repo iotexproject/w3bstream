@@ -1,22 +1,14 @@
 package main
 
 import (
-	"context"
 	"encoding/hex"
 	"flag"
-	"fmt"
 	"log"
-	"log/slog"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
-	"github.com/libp2p/go-libp2p"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/protocol"
-	"github.com/libp2p/go-libp2p/p2p/muxer/yamux"
 	"github.com/pkg/errors"
 )
 
@@ -41,23 +33,21 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to unmarshal private key"))
 	}
-	h, err := libp2p.New(libp2p.Identity(priKey), libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/8000"), libp2p.Muxer("/yamux/2.0.0", yamux.DefaultTransport))
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to create libp2p host"))
-	}
 
-	for _, a := range h.Addrs() {
-		slog.Info(fmt.Sprintf("listening on %s/p2p/%s", a, h.ID().String()))
-	}
+	bootnode := NewBootNode(BootNodeConfig{
+		PrivateKey:   priKey,
+		Port:         8000,
+		IoTeXChainID: ioTeXChainID,
+	})
 
-	ctx := context.Background()
-	dht, err := dht.New(ctx, h, dht.ProtocolPrefix(protocol.ID("/iotex"+strconv.Itoa(ioTeXChainID))), dht.Mode(dht.ModeServer))
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new dht"))
+	if err := bootnode.Start(); err != nil {
+		log.Fatal(errors.Wrap(err, "failed to start bootnode"))
 	}
-	if err = dht.Bootstrap(ctx); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to bootstrap dht"))
-	}
+	defer func() {
+		if err := bootnode.Stop(); err != nil {
+			log.Fatal(errors.Wrap(err, "failed to stop bootnode"))
+		}
+	}()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
