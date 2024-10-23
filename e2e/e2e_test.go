@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -37,19 +36,24 @@ func TestE2E(t *testing.T) {
 	// if os.Getenv("TEST_E2E") != "true" {
 	// 	t.Skip("Skipping E2E tests.")
 	// }
+	var chainEndpoint string
 	if runtime.GOARCH == "arm64" {
-		log.Println("Skipping tests: Unsupported architecture (arm64)")
-		t.Skip()
-	}
-
-	// Setup local chain
-	chainContainer, chainEndpoint, err := utils.SetupLocalChain()
-	t.Cleanup(func() {
-		if err := chainContainer.Terminate(context.Background()); err != nil {
-			t.Logf("failed to terminate chain container: %v", err)
+		chainEndpoint = "http://localhost:8545"
+		log.Printf("Using local chain at %s", chainEndpoint)
+		if err := utils.TestChain(chainEndpoint); err != nil {
+			t.Fatalf("failed to test chain %s: %v", chainEndpoint, err)
 		}
-	})
-	require.NoError(t, err)
+	} else {
+		// Setup local chain
+		chainContainer, endpoint, err := utils.SetupLocalChain()
+		t.Cleanup(func() {
+			if err := chainContainer.Terminate(context.Background()); err != nil {
+				t.Logf("failed to terminate chain container: %v", err)
+			}
+		})
+		require.NoError(t, err)
+		chainEndpoint = endpoint
+	}
 
 	// Deploy contract to local chain
 	contracts, err := utils.DeployContract(chainEndpoint, payerHex)
@@ -185,7 +189,7 @@ func sendETH(t *testing.T, chainEndpoint string, payerHex string, toAddress comm
 	err = client.SendTransaction(context.Background(), signedTx)
 	require.NoError(t, err)
 
-	_, err = bind.WaitMined(context.Background(), client, signedTx)
+	_, err = utils.WaitForTransactionReceipt(client, signedTx.Hash())
 	require.NoError(t, err)
 
 	return nil

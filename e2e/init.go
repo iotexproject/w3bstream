@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotexproject/w3bstream/e2e/utils"
@@ -34,7 +35,6 @@ import (
 	"github.com/iotexproject/w3bstream/smartcontracts/go/projectregistrar"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/router"
 	"github.com/iotexproject/w3bstream/util/ipfs"
-	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
 )
 
 func bootNodeInit() (*bootnode.BootNode, error) {
@@ -168,7 +168,7 @@ func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, project
 	projectRegistrarContract, err := projectregistrar.NewProjectRegistrar(
 		common.HexToAddress(contractDeployments.Registrar), client)
 	require.NoError(t, err)
-	projectID := big.NewInt(1)
+	newProjectID := big.NewInt(1)
 
 	registerFee, err := projectRegistrarContract.RegistrationFee(nil)
 	require.NoError(t, err)
@@ -177,7 +177,7 @@ func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, project
 	require.NoError(t, err)
 	tOpts.Value = registerFee
 
-	tx, err = projectRegistrarContract.Register(tOpts, projectID)
+	tx, err = projectRegistrarContract.Register(tOpts, newProjectID)
 	require.NoError(t, err)
 
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
@@ -197,13 +197,13 @@ func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, project
 	tOpts, err = bind.NewKeyedTransactorWithChainID(payer, chainID)
 	require.NoError(t, err)
 
-	tx, err = wsProject.UpdateConfig(tOpts, projectID, projectFileURL, hash256)
+	tx, err = wsProject.UpdateConfig(tOpts, newProjectID, projectFileURL, hash256)
 	require.NoError(t, err)
 
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
 
-	tx, err = wsProject.Resume(tOpts, projectID)
+	tx, err = wsProject.Resume(tOpts, newProjectID)
 	require.NoError(t, err)
 
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
@@ -213,13 +213,13 @@ func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, project
 	router, err := router.NewRouter(common.HexToAddress(contractDeployments.Router), client)
 	require.NoError(t, err)
 
-	tx, err = router.BindDapp(tOpts, projectID, common.HexToAddress(contractDeployments.MockDapp))
+	tx, err = router.BindDapp(tOpts, newProjectID, common.HexToAddress(contractDeployments.MockDapp))
 	require.NoError(t, err)
 
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
 
-	return projectID, nil
+	return newProjectID, nil
 }
 
 func registerProver(t *testing.T, chainEndpoint string,
@@ -243,5 +243,4 @@ func registerProver(t *testing.T, chainEndpoint string,
 	require.NoError(t, err)
 
 	return nil
-
 }

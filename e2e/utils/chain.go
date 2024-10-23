@@ -47,17 +47,24 @@ func SetupLocalChain() (*chainContainer, string, error) {
 
 	endpoint := fmt.Sprintf("http://%s:%s", ip, mapPort.Port())
 
-	ethClient, err := ethclient.Dial(endpoint)
-	if err != nil {
+	if err := TestChain(endpoint); err != nil {
 		return nil, "", err
-	}
-	_, err = ethClient.NetworkID(ctx)
-	if err != nil {
-		return nil, "", err
-
 	}
 
 	return &chainContainer{Container: container}, endpoint, nil
+}
+
+func TestChain(endpoint string) error {
+	ethClient, err := ethclient.Dial(endpoint)
+	if err != nil {
+		return err
+	}
+	_, err = ethClient.NetworkID(context.Background())
+	if err != nil {
+		return err
+
+	}
+	return nil
 }
 
 var (
@@ -79,7 +86,9 @@ func WaitForTransactionReceipt(client *ethclient.Client, txHash common.Hash) (*t
 		case <-ticker.C:
 			receipt, err := client.TransactionReceipt(context.Background(), txHash)
 			if err == nil && receipt != nil {
-				// TODO: require error status
+				if receipt.Status != types.ReceiptStatusSuccessful {
+					return nil, errors.New("transaction failed")
+				}
 				return receipt, nil
 			}
 		}

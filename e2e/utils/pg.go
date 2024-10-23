@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	_ "github.com/lib/pq"
-
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )

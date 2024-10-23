@@ -9,7 +9,7 @@
           "type": "uint256"
         }
       ],
-      "name": "BlockRewardfSet",
+      "name": "BlockRewardSet",
       "type": "event"
     },
     {
@@ -98,19 +98,6 @@
     },
     {
       "inputs": [],
-      "name": "currentNBits",
-      "outputs": [
-        {
-          "internalType": "uint32",
-          "name": "",
-          "type": "uint32"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "dao",
       "outputs": [
         {
@@ -136,6 +123,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "headerValidator",
+      "outputs": [
+        {
+          "internalType": "contract IBlockHeaderValidator",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "contract IDAO",
@@ -153,8 +153,8 @@
           "type": "address"
         },
         {
-          "internalType": "contract IScrypt",
-          "name": "_scrypt",
+          "internalType": "contract IBlockHeaderValidator",
+          "name": "_headerValidator",
           "type": "address"
         }
       ],
@@ -193,8 +193,8 @@
               "type": "bytes8"
             }
           ],
-          "internalType": "struct BlockInfo",
-          "name": "blockinfo",
+          "internalType": "struct BlockHeader",
+          "name": "header",
           "type": "tuple"
         },
         {
@@ -237,6 +237,11 @@
               "type": "bytes32"
             },
             {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            },
+            {
               "internalType": "address",
               "name": "prover",
               "type": "address"
@@ -250,25 +255,6 @@
       "name": "mint",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint32",
-          "name": "nbits",
-          "type": "uint32"
-        }
-      ],
-      "name": "nbitsToTarget",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "pure",
       "type": "function"
     },
     {
@@ -294,38 +280,12 @@
     {
       "inputs": [
         {
-          "internalType": "uint32",
-          "name": "nbits",
-          "type": "uint32"
-        }
-      ],
-      "name": "setAdhocNBits",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint256",
           "name": "reward",
           "type": "uint256"
         }
       ],
       "name": "setBlockReward",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "duration",
-          "type": "uint256"
-        }
-      ],
-      "name": "setTargetDuration",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -341,19 +301,6 @@
       "name": "setTaskAllowance",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "targetDuration",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -393,19 +340,6 @@
       "name": "transferOwnership",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "useAdhocNBits",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     }
   ]
