@@ -30,6 +30,7 @@ func (t *Task) Sign(prv *ecdsa.PrivateKey) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to sign")
 	}
+	sig[64] += 27
 	return sig, nil
 }
 

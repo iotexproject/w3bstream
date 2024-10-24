@@ -189,6 +189,10 @@ async function main() {
   await tx.wait();
   console.log(`W3bstreamBlockRewardDistributor set operator to ${minter.target}`);
 
+  tx = await debits.setOperator(minter.target);
+  await tx.wait();
+  console.log(`W3bstreamDebits set operator to ${minter.target}`);
+
   tx = await minter.setBlockReward(0);
   await tx.wait();
   console.log(`W3bstreamBlockMinter set block reward to 0`);

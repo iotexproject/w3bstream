@@ -18,9 +18,9 @@ contract W3bstreamDebits is OwnableUpgradeable {
     mapping(address => mapping(address => uint256)) withholdings;
 
     modifier onlyOperator() {
-        require(msg.sender == operator, "not operator");
+        require(msg.sender == operator, "not debits operator");
         _;
-    } 
+    }
 
     function initialize() public initializer {
         __Ownable_init();
@@ -47,7 +47,12 @@ contract W3bstreamDebits is OwnableUpgradeable {
         emit Withheld(token, owner, amount);
     }
 
-    function distribute(address token, address _owner, address[] calldata _recipients, uint256[] calldata _amounts) external onlyOperator {
+    function distribute(
+        address token,
+        address _owner,
+        address[] calldata _recipients,
+        uint256[] calldata _amounts
+    ) external onlyOperator {
         require(token != address(0), "reward token not set");
         require(_recipients.length == _amounts.length, "length mismatch");
         for (uint256 i = 0; i < _recipients.length; i++) {

@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
+	"github.com/iotexproject/w3bstream/smartcontracts/go/blockheadervalidator"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/dao"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
@@ -31,7 +32,7 @@ type (
 	AssignTask               func(uint64, common.Hash, common.Address) error
 	SettleTask               func(uint64, common.Hash, common.Hash) error
 	UpsertProject            func(uint64, string, common.Hash) error
-	UpsertProver             func(uint64, common.Address) error
+	UpsertProver             func(common.Address) error
 )
 
 type Handler struct {
@@ -46,25 +47,27 @@ type Handler struct {
 }
 
 type ContractAddr struct {
-	Prover      common.Address
-	Project     common.Address
-	Dao         common.Address
-	Minter      common.Address
-	TaskManager common.Address
+	Prover               common.Address
+	Project              common.Address
+	Dao                  common.Address
+	Minter               common.Address
+	TaskManager          common.Address
+	BlockHeaderValidator common.Address
 }
 
 type contract struct {
-	h                    *Handler
-	addr                 *ContractAddr
-	beginningBlockNumber uint64
-	listStepSize         uint64
-	watchInterval        time.Duration
-	client               *ethclient.Client
-	daoInstance          *dao.Dao
-	minterInstance       *minter.Minter
-	taskManagerInstance  *taskmanager.Taskmanager
-	proverInstance       *prover.Prover
-	projectInstance      *project.Project
+	h                            *Handler
+	addr                         *ContractAddr
+	beginningBlockNumber         uint64
+	listStepSize                 uint64
+	watchInterval                time.Duration
+	client                       *ethclient.Client
+	daoInstance                  *dao.Dao
+	minterInstance               *minter.Minter
+	taskManagerInstance          *taskmanager.Taskmanager
+	proverInstance               *prover.Prover
+	projectInstance              *project.Project
+	blockHeaderValidatorInstance *blockheadervalidator.Blockheadervalidator
 }
 
 var (
@@ -73,7 +76,7 @@ var (
 	taskAssignedTopic         = crypto.Keccak256Hash([]byte("TaskAssigned(uint256,bytes32,address,uint256)"))
 	taskSettledTopic          = crypto.Keccak256Hash([]byte("TaskSettled(uint256,bytes32,address)"))
 	projectConfigUpdatedTopic = crypto.Keccak256Hash([]byte("ProjectConfigUpdated(uint256,string,bytes32)"))
-	operatorSetTopic          = crypto.Keccak256Hash([]byte("OperatorSet(uint256,address)"))
+	proverSetTopic            = crypto.Keccak256Hash([]byte("BeneficiarySet(address,address)"))
 )
 
 var allTopic = []common.Hash{
@@ -82,7 +85,7 @@ var allTopic = []common.Hash{
 	taskAssignedTopic,
 	taskSettledTopic,
 	projectConfigUpdatedTopic,
-	operatorSetTopic,
+	proverSetTopic,
 }
 
 var emptyAddr = common.Address{}
@@ -103,6 +106,9 @@ func (a *ContractAddr) all() []common.Address {
 	}
 	if !bytes.Equal(a.TaskManager[:], emptyAddr[:]) {
 		all = append(all, a.TaskManager)
+	}
+	if !bytes.Equal(a.BlockHeaderValidator[:], emptyAddr[:]) {
+		all = append(all, a.BlockHeaderValidator)
 	}
 	return all
 }
@@ -129,10 +135,10 @@ func (c *contract) processLogs(logs []types.Log) error {
 				return err
 			}
 		case nbitsSetTopic:
-			if c.minterInstance == nil || c.h.UpsertNBits == nil {
+			if c.blockHeaderValidatorInstance == nil || c.h.UpsertNBits == nil {
 				continue
 			}
-			e, err := c.minterInstance.ParseNBitsSet(l)
+			e, err := c.blockHeaderValidatorInstance.ParseNBitsSet(l)
 			if err != nil {
 				return errors.Wrap(err, "failed to parse nbits set event")
 			}
@@ -172,15 +178,15 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err := c.h.UpsertProject(e.ProjectId.Uint64(), e.Uri, e.Hash); err != nil {
 				return err
 			}
-		case operatorSetTopic:
+		case proverSetTopic:
 			if c.proverInstance == nil || c.h.UpsertProver == nil {
 				continue
 			}
-			e, err := c.proverInstance.ParseOperatorSet(l)
+			e, err := c.proverInstance.ParseBeneficiarySet(l)
 			if err != nil {
-				return errors.Wrap(err, "failed to parse operator set event")
+				return errors.Wrap(err, "failed to parse prover set event")
 			}
-			if err := c.h.UpsertProver(e.Id.Uint64(), e.Operator); err != nil {
+			if err := c.h.UpsertProver(e.Prover); err != nil {
 				return err
 			}
 		}
@@ -319,6 +325,13 @@ func Run(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpo
 			return errors.Wrap(err, "failed to new project contract instance")
 		}
 		c.projectInstance = projectInstance
+	}
+	if !bytes.Equal(addr.BlockHeaderValidator[:], emptyAddr[:]) {
+		blockHeaderValidatorInstance, err := blockheadervalidator.NewBlockheadervalidator(addr.BlockHeaderValidator, client)
+		if err != nil {
+			return errors.Wrap(err, "failed to new block header validator contract instance")
+		}
+		c.blockHeaderValidatorInstance = blockHeaderValidatorInstance
 	}
 
 	listedBlockNumber, err := c.list()

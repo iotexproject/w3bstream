@@ -32,8 +32,8 @@ var defaultTestnetConfig = &Config{
 	BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 	IoTeXChainID:            2,
 	ChainEndpoint:           "https://babel-api.testnet.iotex.io",
-	BeginningBlockNumber:    28345000,
-	TaskManagerContractAddr: "0x65aF86776CCFc60781a70c38F44625853d7A842A",
+	BeginningBlockNumber:    28685000,
+	TaskManagerContractAddr: "0x7AEF1Ed51c1EF3f9e118e25De5D65Ff9F7E2fd29",
 	env:                     "TESTNET",
 }
 

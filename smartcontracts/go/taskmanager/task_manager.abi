@@ -146,6 +146,11 @@
               "type": "bytes32"
             },
             {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            },
+            {
               "internalType": "address",
               "name": "prover",
               "type": "address"
@@ -191,6 +196,11 @@
               "type": "bytes32"
             },
             {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            },
+            {
               "internalType": "address",
               "name": "prover",
               "type": "address"
@@ -218,6 +228,35 @@
     },
     {
       "inputs": [],
+      "name": "debits",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_debits",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_projectReward",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_proverStore",
+          "type": "address"
+        }
+      ],
       "name": "initialize",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -256,6 +295,50 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "projectReward",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "proverStore",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "projectId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "taskId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "recall",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -274,6 +357,11 @@
           "internalType": "bytes32",
           "name": "hash",
           "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
         },
         {
           "internalType": "address",
