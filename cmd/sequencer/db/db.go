@@ -27,8 +27,7 @@ type blockHead struct {
 
 type prover struct {
 	gorm.Model
-	ProverID     uint64         `gorm:"uniqueIndex:prover_id,not null"`
-	OperatorAddr common.Address `gorm:"index:prover_operator,not null"`
+	Prover common.Address `gorm:"uniqueIndex:prover,not null"`
 }
 
 type task struct {
@@ -119,19 +118,18 @@ func (p *DB) Provers() ([]common.Address, error) {
 	}
 	res := make([]common.Address, 0, len(ts))
 	for _, t := range ts {
-		res = append(res, t.OperatorAddr)
+		res = append(res, t.Prover)
 	}
 	return res, nil
 }
 
-func (p *DB) UpsertProver(id uint64, operator common.Address) error {
+func (p *DB) UpsertProver(addr common.Address) error {
 	t := prover{
-		ProverID:     id,
-		OperatorAddr: operator,
+		Prover: addr,
 	}
 	err := p.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "prover_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"operator_addr"}),
+		Columns:   []clause.Column{{Name: "prover"}},
+		DoNothing: true,
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert prover")
 }

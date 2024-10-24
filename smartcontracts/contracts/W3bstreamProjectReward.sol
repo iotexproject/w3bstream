@@ -22,7 +22,7 @@ contract W3bstreamProjectReward is OwnableUpgradeable {
     mapping(address => mapping(uint256 => uint256)) _rewardAmounts;
 
     modifier onlyOperator() {
-        require(msg.sender == operator, "not operator");
+        require(msg.sender == operator, "not project reward operator");
         _;
     }
 

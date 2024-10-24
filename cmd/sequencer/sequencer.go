@@ -10,6 +10,7 @@ import (
 	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/db"
+	"github.com/iotexproject/w3bstream/datasource"
 	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/task/assigner"
@@ -42,10 +43,11 @@ func (s *Sequencer) Start() error {
 			SettleTask:               s.database.DeleteTask,
 		},
 		&monitor.ContractAddr{
-			Prover:      common.HexToAddress(s.config.ProverContractAddr),
-			Dao:         common.HexToAddress(s.config.DaoContractAddr),
-			Minter:      common.HexToAddress(s.config.MinterContractAddr),
-			TaskManager: common.HexToAddress(s.config.TaskManagerContractAddr),
+			Prover:               common.HexToAddress(s.config.ProverContractAddr),
+			Dao:                  common.HexToAddress(s.config.DaoContractAddr),
+			Minter:               common.HexToAddress(s.config.MinterContractAddr),
+			TaskManager:          common.HexToAddress(s.config.TaskManagerContractAddr),
+			BlockHeaderValidator: common.HexToAddress(s.config.BlockHeaderValidatorContractAddr),
 		},
 		s.config.BeginningBlockNumber,
 		s.config.ChainEndpoint,
@@ -57,7 +59,12 @@ func (s *Sequencer) Start() error {
 		log.Fatal(errors.Wrap(err, "failed to new p2p pubsub"))
 	}
 
-	if err := assigner.Run(s.database, s.privateKey, s.config.ChainEndpoint, common.HexToAddress(s.config.MinterContractAddr)); err != nil {
+	datasource, err := datasource.NewPostgres(s.config.DatasourceDSN)
+	if err != nil {
+		return errors.Wrap(err, "failed to new datasource")
+	}
+
+	if err := assigner.Run(s.database, s.privateKey, s.config.ChainEndpoint, datasource.Retrieve, common.HexToAddress(s.config.MinterContractAddr)); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to run task assigner"))
 	}
 

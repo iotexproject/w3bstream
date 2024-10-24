@@ -58,7 +58,7 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
     address public proverStore;
 
     modifier onlyOperator() {
-        require(operators[msg.sender], "not operator");
+        require(operators[msg.sender], "not task manager operator");
         _;
     }
 

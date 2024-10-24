@@ -34,7 +34,13 @@ contract W3bstreamBlockHeaderValidator is IBlockHeaderValidator, Ownable {
 
     function validate(BlockHeader calldata header) public view returns (bytes memory) {
         require(header.nbits == currentNBits, "invalid nbits");
-        bytes memory encodedHeader = abi.encodePacked(header.meta, header.prevhash, header.merkleRoot, header.nbits, header.nonce);
+        bytes memory encodedHeader = abi.encodePacked(
+            header.meta,
+            header.prevhash,
+            header.merkleRoot,
+            header.nbits,
+            header.nonce
+        );
         bytes memory headerHash = scrypt.hash(encodedHeader, encodedHeader, 1024, 1, 1, 32, 224);
         require(headerHash.length == 32, "invalid header hash length");
         require(uint256(bytes32(headerHash)) <= _currentTarget, "invalid proof of work");
@@ -69,7 +75,7 @@ contract W3bstreamBlockHeaderValidator is IBlockHeaderValidator, Ownable {
     }
 
     function updateDuration(uint256 duration) public {
-        require(msg.sender == operator, "not operator");
+        require(msg.sender == operator, "not block header validator operator");
         _durationSum += duration - _durations[_durationIndex];
         _durations[_durationIndex] = duration;
         _durationIndex = (_durationIndex + 1) % _durations.length;

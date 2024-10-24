@@ -151,7 +151,7 @@ func (s *httpServer) submitBlock(c *gin.Context, req *jsonRpcReq, rsp *jsonRpcRs
 			},
 			Nonce: new(big.Int).SetUint64(nonce),
 		},
-		minter.BlockInfo{
+		minter.BlockHeader{
 			Meta:       h.Meta,
 			Prevhash:   h.PrevHash,
 			MerkleRoot: h.MerkleRoot,

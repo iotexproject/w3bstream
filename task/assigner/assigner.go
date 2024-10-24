@@ -3,6 +3,8 @@ package assigner
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"math/big"
 	"time"
@@ -10,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -19,7 +22,10 @@ import (
 	"github.com/iotexproject/w3bstream/block"
 	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
+	"github.com/iotexproject/w3bstream/task"
 )
+
+type RetrieveTask func(projectID uint64, taskID common.Hash) (*task.Task, error)
 
 type DB interface {
 	BlockHead() (uint64, common.Hash, error)
@@ -36,10 +42,16 @@ type assigner struct {
 	account        common.Address
 	client         *ethclient.Client
 	db             DB
+	retrieve       RetrieveTask
 	minterInstance *minter.Minter
 }
 
 func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
+	t, err := r.retrieve(projectID, taskID)
+	if err != nil {
+		return err
+	}
+	fmt.Println(hexutil.Encode(t.Signature))
 	_, hash, err := r.db.BlockHead()
 	if err != nil {
 		return errors.Wrap(err, "failed to get block head")
@@ -94,7 +106,7 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 			},
 			Nonce: new(big.Int).SetUint64(nonce),
 		},
-		minter.BlockInfo{
+		minter.BlockHeader{
 			Meta:       h.Meta,
 			Prevhash:   h.PrevHash,
 			MerkleRoot: h.MerkleRoot,
@@ -112,11 +124,24 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 				TaskId:    taskID,
 				Prover:    prover,
 				Hash:      common.Hash{},
+				Signature: t.Signature,
 			},
 		},
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to send tx")
+		jsonErr := &struct {
+			Code    int         `json:"code"`
+			Message string      `json:"message"`
+			Data    interface{} `json:"data,omitempty"`
+		}{}
+		je, nerr := json.Marshal(err)
+		if nerr != nil {
+			return errors.Wrap(err, "failed to marshal send tx error")
+		}
+		if err := json.Unmarshal(je, jsonErr); err != nil {
+			return errors.Wrap(err, "failed to unmarshal send tx error")
+		}
+		return errors.Errorf("failed to send tx, error_code: %v, error_message: %v, error_data: %v", jsonErr.Code, jsonErr.Message, jsonErr.Data)
 	}
 	slog.Info("send tx to minter contract success", "hash", tx.Hash().String())
 	if err := r.db.AssignTask(projectID, taskID, prover); err != nil {
@@ -146,7 +171,7 @@ func (r *assigner) run() {
 	}
 }
 
-func Run(db DB, prv *ecdsa.PrivateKey, chainEndpoint string, minterAddr common.Address) error {
+func Run(db DB, prv *ecdsa.PrivateKey, chainEndpoint string, retrieve RetrieveTask, minterAddr common.Address) error {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to dial chain endpoint")
@@ -166,6 +191,7 @@ func Run(db DB, prv *ecdsa.PrivateKey, chainEndpoint string, minterAddr common.A
 		signer:         types.NewLondonSigner(chainID),
 		account:        crypto.PubkeyToAddress(prv.PublicKey),
 		client:         client,
+		retrieve:       retrieve,
 		minterInstance: minterInstance,
 	}
 	go p.run()

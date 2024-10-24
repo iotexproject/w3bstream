@@ -55,6 +55,7 @@ contract W3bstreamBlockMinter is OwnableUpgradeable {
         Sequencer calldata coinbase,
         TaskAssignment[] calldata assignments
     ) public {
+        //require(false, "i am here 1");
         require(coinbase.operator == msg.sender, "invalid operator");
         (uint256 tipBlockNumber, bytes32 tiphash, ) = dao.tip();
         require(tipBlockNumber != block.number);
@@ -64,6 +65,7 @@ contract W3bstreamBlockMinter is OwnableUpgradeable {
             "invalid merkle root"
         );
         bytes memory encodedHeader = headerValidator.validate(header);
+        //require(1 < 0, "i am here 2");
         bytes32 blockHash = keccak256(abi.encode(encodedHeader, assignments));
         taskManager.assign(assignments, coinbase.beneficiary, block.number + taskAllowance);
         headerValidator.updateDuration(block.number - tipBlockNumber);
