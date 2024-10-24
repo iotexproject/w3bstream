@@ -10,8 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/db"
+	"github.com/iotexproject/w3bstream/service/sequencer"
+	"github.com/iotexproject/w3bstream/service/sequencer/config"
+	"github.com/iotexproject/w3bstream/service/sequencer/db"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to new db"))
 	}
 
-	s := NewSequencer(cfg, db, prv)
+	s := sequencer.NewSequencer(cfg, db, prv)
 	if err := s.Start(); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to start sequencer"))
 	}

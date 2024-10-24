@@ -17,7 +17,7 @@ import (
 	"golang.org/x/exp/rand"
 
 	"github.com/iotexproject/w3bstream/block"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
+	"github.com/iotexproject/w3bstream/service/sequencer/api"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 )
 
@@ -92,9 +92,11 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
 				return types.SignTx(t, r.signer, r.prv)
 			},
-			Nonce: new(big.Int).SetUint64(nonce),
+			// TODO: remove this when err is fixed
+			GasLimit: 100000,
+			Nonce:    new(big.Int).SetUint64(nonce),
 		},
-		minter.BlockInfo{
+		minter.BlockHeader{
 			Meta:       h.Meta,
 			Prevhash:   h.PrevHash,
 			MerkleRoot: h.MerkleRoot,

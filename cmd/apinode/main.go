@@ -11,8 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/cmd/apinode/config"
-	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
+	"github.com/iotexproject/w3bstream/service/apinode"
+	"github.com/iotexproject/w3bstream/service/apinode/config"
+	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	apinode := NewAPINode(cfg, p, prv)
+	apinode := apinode.NewAPINode(cfg, p, prv)
 
 	if err := apinode.Start(); err != nil {
 		log.Fatal(err)

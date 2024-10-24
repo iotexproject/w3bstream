@@ -1,17 +1,18 @@
-package main
+package sequencer
 
 import (
 	"crypto/ecdsa"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/cmd/sequencer/api"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/config"
-	"github.com/iotexproject/w3bstream/cmd/sequencer/db"
 	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/service/sequencer/api"
+	"github.com/iotexproject/w3bstream/service/sequencer/config"
+	"github.com/iotexproject/w3bstream/service/sequencer/db"
 	"github.com/iotexproject/w3bstream/task/assigner"
 )
 
@@ -50,15 +51,15 @@ func (s *Sequencer) Start() error {
 		s.config.BeginningBlockNumber,
 		s.config.ChainEndpoint,
 	); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to run contract monitor"))
+		return errors.Wrap(err, "failed to start monitor")
 	}
 
 	if _, err := p2p.NewPubSub(s.config.BootNodeMultiAddr, s.config.IoTeXChainID, s.database.CreateTask); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new p2p pubsub"))
+		return errors.Wrap(err, "failed to create pubsub")
 	}
 
 	if err := assigner.Run(s.database, s.privateKey, s.config.ChainEndpoint, common.HexToAddress(s.config.MinterContractAddr)); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to run task assigner"))
+		return errors.Wrap(err, "failed to start assigner")
 	}
 
 	go func() {
@@ -72,4 +73,11 @@ func (s *Sequencer) Start() error {
 
 func (s *Sequencer) Stop() error {
 	return nil
+}
+
+func (s *Sequencer) Address() common.Address {
+	if s.privateKey == nil {
+		log.Fatal("private key is nil")
+	}
+	return crypto.PubkeyToAddress(s.privateKey.PublicKey)
 }

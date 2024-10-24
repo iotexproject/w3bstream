@@ -17,9 +17,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
-	proverapi "github.com/iotexproject/w3bstream/cmd/prover/api"
 	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/service/apinode/persistence"
+	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
 )
 
 type ErrResp struct {
