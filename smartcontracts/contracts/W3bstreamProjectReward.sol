@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IProject {
     function ownerOf(uint256 _projectId) external view returns (address);
+
     function isPaused(uint256 _projectId) external view returns (bool);
 }
 
@@ -23,7 +24,7 @@ contract W3bstreamProjectReward is OwnableUpgradeable {
     modifier onlyOperator() {
         require(msg.sender == operator, "not operator");
         _;
-    } 
+    }
 
     function initialize(address _project) public initializer {
         __Ownable_init();
@@ -32,6 +33,10 @@ contract W3bstreamProjectReward is OwnableUpgradeable {
 
     function rewardToken(uint256 _id) external view returns (address) {
         return _rewardTokens[_id];
+    }
+
+    function rewardAmount(address owner, uint256 id) external view returns (uint256) {
+        return _rewardAmounts[owner][id];
     }
 
     function isPaused(uint256 _projectId) external view returns (bool) {
@@ -51,5 +56,4 @@ contract W3bstreamProjectReward is OwnableUpgradeable {
         _rewardAmounts[sender][_id] = _amount;
         emit RewardAmountSet(sender, _id, _amount);
     }
-
 }

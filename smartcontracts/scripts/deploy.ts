@@ -48,7 +48,7 @@ async function main() {
   console.log(`ProjectRegistrar registration fee set to ${projectRegistrationFee}`);
 
   const W3bstreamProver = await ethers.getContractFactory('W3bstreamProver');
-  const prover = await upgrades.deployProxy(W3bstreamProver, ['W3bstream Prover', 'WPRN'], {
+  const prover = await upgrades.deployProxy(W3bstreamProver, [], {
     initializer: 'initialize',
   });
   await prover.waitForDeployment();
@@ -71,10 +71,6 @@ async function main() {
   tx = await credit.setMinter(fleetManagement.target);
   await tx.wait();
   console.log(`W3bstreamCredit minter set to ${fleetManagement.target}`);
-
-  tx = await prover.setMinter(fleetManagement.target);
-  await tx.wait();
-  console.log(`W3bstreamProver minter set to ${fleetManagement.target}`);
 
   tx = await fleetManagement.setCreditCenter(credit.target);
   await tx.wait();
@@ -139,7 +135,7 @@ async function main() {
   console.log(`W3bstreamProjectReward deployed to ${projectReward.target}`);
 
   const W3bstreamTaskManager = await ethers.getContractFactory('W3bstreamTaskManager');
-  const taskManager = await upgrades.deployProxy(W3bstreamTaskManager, [debits.target, projectReward.target], {
+  const taskManager = await upgrades.deployProxy(W3bstreamTaskManager, [debits.target, projectReward.target, prover.target], {
     initializer: 'initialize',
   });
   await taskManager.waitForDeployment();

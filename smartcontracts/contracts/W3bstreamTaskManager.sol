@@ -18,19 +18,30 @@ struct Record {
 
 interface IDebits {
     function withhold(address token, address owner, uint256 amount) external;
+
     function redeem(address token, address owner, uint256 amount) external;
-    function distribute(address token, address owner, address[] calldata recipients, uint256[] calldata amounts) external;
+
+    function distribute(
+        address token,
+        address owner,
+        address[] calldata recipients,
+        uint256[] calldata amounts
+    ) external;
 }
 
 interface IProjectReward {
     function isPaused(uint256 _id) external view returns (bool);
+
     function rewardToken(uint256 _id) external view returns (address);
+
     function rewardAmount(address owner, uint256 id) external view returns (uint256);
 }
 
 interface IProverStore {
     function isPaused(address prover) external view returns (bool);
+
     function rebateRatio(address prover) external view returns (uint16);
+
     function beneficiary(address prover) external view returns (address);
 }
 
@@ -51,10 +62,11 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         _;
     }
 
-    function initialize(address _debits, address _projectReward) public initializer {
+    function initialize(address _debits, address _projectReward, address _proverStore) public initializer {
         __Ownable_init();
         debits = _debits;
         projectReward = _projectReward;
+        proverStore = _proverStore;
     }
 
     function addOperator(address operator) public onlyOwner {
@@ -100,17 +112,21 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         record.prover = prover;
         record.deadline = deadline;
         record.sequencer = sequencer;
-        record.rewardForSequencer = rewardAmount * rebateRatio / 10000;
+        record.rewardForSequencer = (rewardAmount * rebateRatio) / 10000;
         record.rewardForProver = rewardAmount - record.rewardForSequencer;
         emit TaskAssigned(projectId, taskId, prover, deadline);
     }
 
-    function assign(
-        TaskAssignment calldata assignment,
-        address sequencer,
-        uint256 deadline
-    ) public onlyOperator {
-        _assign(assignment.projectId, assignment.taskId, assignment.hash, assignment.signature, assignment.prover, deadline, sequencer);
+    function assign(TaskAssignment calldata assignment, address sequencer, uint256 deadline) public onlyOperator {
+        _assign(
+            assignment.projectId,
+            assignment.taskId,
+            assignment.hash,
+            assignment.signature,
+            assignment.prover,
+            deadline,
+            sequencer
+        );
     }
 
     function assign(
@@ -119,7 +135,15 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         uint256 deadline
     ) public onlyOperator {
         for (uint256 i = 0; i < taskAssignments.length; i++) {
-            _assign(taskAssignments[i].projectId, taskAssignments[i].taskId, taskAssignments[i].hash, taskAssignments[i].signature, taskAssignments[i].prover, deadline, sequencer);
+            _assign(
+                taskAssignments[i].projectId,
+                taskAssignments[i].taskId,
+                taskAssignments[i].hash,
+                taskAssignments[i].signature,
+                taskAssignments[i].prover,
+                deadline,
+                sequencer
+            );
         }
     }
 
@@ -127,7 +151,7 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         require(prover != address(0), "invalid prover");
         Record storage record = records[projectId][taskId];
         require(record.prover == prover, "invalid prover");
-        require(record.deadline >= block.timestamp, "task assignement expired");
+        require(record.deadline >= block.number, "task assignement expired");
         require(record.settled == false, "task already settled");
         record.settled = true;
         emit TaskSettled(projectId, taskId, prover);
@@ -151,5 +175,4 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         address rewardToken = IProjectReward(projectReward).rewardToken(projectId);
         IDebits(debits).redeem(rewardToken, record.owner, record.rewardForProver + record.rewardForSequencer);
     }
-
 }
