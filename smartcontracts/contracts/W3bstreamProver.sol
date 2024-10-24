@@ -2,117 +2,85 @@
 pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract W3bstreamProver is OwnableUpgradeable, ERC721Upgradeable {
-    event OperatorSet(uint256 indexed id, address indexed operator);
-    event VMTypeAdded(uint256 indexed id, uint256 typ);
-    event VMTypeDeleted(uint256 indexed id, uint256 typ);
-    event ProverPaused(uint256 indexed id);
-    event ProverResumed(uint256 indexed id);
-    event MinterSet(address minter);
+contract W3bstreamProver is OwnableUpgradeable {
+    event BeneficiarySet(address indexed prover, address indexed beneficiary);
+    event VMTypeAdded(address indexed prover, uint256 typ);
+    event VMTypeDeleted(address indexed prover, uint256 typ);
+    event ProverPaused(address indexed prover);
+    event ProverResumed(address indexed prover);
+    event RebateRatioSet(address indexed prover, uint16 ratio);
 
-    address public minter;
-    uint256 nextProverId;
+    mapping(address => mapping(uint256 => bool)) vmTypes;
+    mapping(address => uint16) rebateRatios;
+    mapping(address => address) beneficiaries;
+    mapping(address => bool) paused;
 
-    mapping(uint256 => mapping(uint256 => bool)) _vmTypes;
-    mapping(uint256 => address) _operators;
-    mapping(uint256 => bool) _paused;
-    mapping(address => uint256) operatorToProver;
-
-    modifier onlyProverOwner(uint256 _id) {
-        require(ownerOf(_id) == msg.sender, "not owner");
-        _;
-    }
-
-    function initialize(string memory _name, string memory _symbol) public initializer {
+    function initialize() public initializer {
         __Ownable_init();
-        __ERC721_init(_name, _symbol);
-        setMinter(msg.sender);
     }
 
-    function count() external view returns (uint256) {
-        return nextProverId;
+    function isVMTypeSupported(address _prover, uint256 _type) external view returns (bool) {
+        return vmTypes[_prover][_type];
     }
 
-    function isVMTypeSupported(uint256 _id, uint256 _type) external view returns (bool) {
-        _requireMinted(_id);
-        return _vmTypes[_id][_type];
+    function beneficiary(address _prover) external view returns (address) {
+        return beneficiaries[_prover];
     }
 
-    function operator(uint256 _id) external view returns (address) {
-        _requireMinted(_id);
-        return _operators[_id];
+    function isPaused(address _prover) external view returns (bool) {
+        return paused[_prover];
     }
 
-    function prover(uint256 _id) external view returns (address) {
-        _requireMinted(_id);
-        return ownerOf(_id);
+    function rebateRatio(address _prover) external view returns (uint16) {
+        return rebateRatios[_prover];
     }
 
-    function ownerOfOperator(address _operator) external view returns (uint256, address) {
-        uint256 id = operatorToProver[_operator];
-        require(id != 0, "invalid operator");
-        return (id, ownerOf(id));
+    function register() external {
+        address sender = msg.sender;
+        require(beneficiaries[sender] == address(0), "already registered");
+        beneficiaries[sender] = sender;
+        emit BeneficiarySet(sender, sender);
     }
 
-    function isPaused(uint256 _id) external view returns (bool) {
-        _requireMinted(_id);
-        return _paused[_id];
+    function setRebateRatio(uint16 _ratio) external {
+        address sender = msg.sender;
+        rebateRatios[sender] = _ratio;
+        emit RebateRatioSet(sender, _ratio);
     }
 
-    function mint(address _account) external returns (uint256 id_) {
-        require(msg.sender == minter, "not minter");
-
-        id_ = ++nextProverId;
-        _mint(_account, id_);
-
-        _paused[id_] = true;
-        updateOperatorInternal(id_, _account);
+    function addVMType(uint256 _type) external {
+        address sender = msg.sender;
+        vmTypes[sender][_type] = true;
+        emit VMTypeAdded(sender, _type);
     }
 
-    function updateOperatorInternal(uint256 _id, address _operator) internal {
-        uint256 proverId = operatorToProver[_operator];
-        require(proverId == 0, "invalid operator");
-        address oldOperator = _operators[_id];
-        _operators[_id] = _operator;
-        delete operatorToProver[oldOperator];
-        operatorToProver[_operator] = _id;
-        emit OperatorSet(_id, _operator);
+    function delVMType(uint256 _type) external {
+        address sender = msg.sender;
+        vmTypes[sender][_type] = false;
+        emit VMTypeDeleted(sender, _type);
     }
 
-    function addVMType(uint256 _id, uint256 _type) external onlyProverOwner(_id) {
-        _vmTypes[_id][_type] = true;
-        emit VMTypeAdded(_id, _type);
+    function changeBeneficiary(address _beneficiary) external {
+        address sender = msg.sender;
+        require(_beneficiary != address(0), "zero address");
+        beneficiaries[sender] = _beneficiary;
+        emit BeneficiarySet(sender, _beneficiary);
     }
 
-    function delVMType(uint256 _id, uint256 _type) external onlyProverOwner(_id) {
-        _vmTypes[_id][_type] = false;
-        emit VMTypeDeleted(_id, _type);
+    function pause() external {
+        address sender = msg.sender;
+        require(!paused[sender], "already paused");
+
+        paused[sender] = true;
+        emit ProverPaused(sender);
     }
 
-    function changeOperator(uint256 _id, address _operator) external onlyProverOwner(_id) {
-        require(_operator != address(0), "zero address");
-        updateOperatorInternal(_id, _operator);
-    }
+    function resume() external {
+        address sender = msg.sender;
+        require(paused[sender], "already actived");
 
-    function pause(uint256 _id) external onlyProverOwner(_id) {
-        require(!_paused[_id], "already paused");
-
-        _paused[_id] = true;
-        emit ProverPaused(_id);
-    }
-
-    function resume(uint256 _id) external onlyProverOwner(_id) {
-        require(_paused[_id], "already actived");
-
-        _paused[_id] = false;
-        emit ProverResumed(_id);
-    }
-
-    function setMinter(address _minter) public onlyOwner {
-        minter = _minter;
-
-        emit MinterSet(_minter);
+        paused[sender] = false;
+        emit ProverResumed(sender);
     }
 }

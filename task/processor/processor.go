@@ -3,6 +3,7 @@ package processor
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"log/slog"
 	"math/big"
 	"time"
@@ -61,17 +62,12 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 		return err
 	}
 
-	nonce, err := r.client.PendingNonceAt(context.Background(), r.account)
-	if err != nil {
-		return errors.Wrap(err, "failed to get pending nonce")
-	}
 	tx, err := r.routerInstance.Route(
 		&bind.TransactOpts{
 			From: r.account,
 			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
 				return types.SignTx(t, r.signer, r.prv)
 			},
-			Nonce: new(big.Int).SetUint64(nonce),
 		},
 		new(big.Int).SetUint64(t.ProjectID),
 		new(big.Int).SetUint64(1),
@@ -80,7 +76,19 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 		taskID,
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to send tx")
+		jsonErr := &struct {
+			Code    int         `json:"code"`
+			Message string      `json:"message"`
+			Data    interface{} `json:"data,omitempty"`
+		}{}
+		je, nerr := json.Marshal(err)
+		if nerr != nil {
+			return errors.Wrap(err, "failed to marshal send tx error")
+		}
+		if err := json.Unmarshal(je, jsonErr); err != nil {
+			return errors.Wrap(err, "failed to unmarshal send tx error")
+		}
+		return errors.Errorf("failed to send tx, error_code: %v, error_message: %v, error_data: %v", jsonErr.Code, jsonErr.Message, jsonErr.Data)
 	}
 	slog.Info("send tx to router contract success", "hash", tx.Hash().String())
 	return nil

@@ -7,6 +7,7 @@ import {ITaskManager, TaskAssignment} from "./interfaces/ITaskManager.sol";
 
 interface IDAO {
     function tip() external view returns (uint256, bytes32, uint256);
+
     function mint(bytes32 hash, uint256 timestamp) external;
 }
 
@@ -34,7 +35,12 @@ contract W3bstreamBlockMinter is OwnableUpgradeable {
     uint256 public blockReward;
     uint256 public taskAllowance;
 
-    function initialize(IDAO _dao, ITaskManager _taskManager, IBlockRewardDistributor _distributor, IBlockHeaderValidator _headerValidator) public initializer {
+    function initialize(
+        IDAO _dao,
+        ITaskManager _taskManager,
+        IBlockRewardDistributor _distributor,
+        IBlockHeaderValidator _headerValidator
+    ) public initializer {
         __Ownable_init();
         dao = _dao;
         taskManager = _taskManager;
@@ -50,14 +56,17 @@ contract W3bstreamBlockMinter is OwnableUpgradeable {
         TaskAssignment[] calldata assignments
     ) public {
         require(coinbase.operator == msg.sender, "invalid operator");
-        (, bytes32 tiphash, uint256 tipTimestamp) = dao.tip();
-        require(tipTimestamp != block.number);
+        (uint256 tipBlockNumber, bytes32 tiphash, ) = dao.tip();
+        require(tipBlockNumber != block.number);
         require(header.prevhash == tiphash, "invalid prevhash");
-        require(header.merkleRoot == keccak256(abi.encode(coinbase.addr, coinbase.operator, coinbase.beneficiary)), "invalid merkle root");
+        require(
+            header.merkleRoot == keccak256(abi.encode(coinbase.addr, coinbase.operator, coinbase.beneficiary)),
+            "invalid merkle root"
+        );
         bytes memory encodedHeader = headerValidator.validate(header);
         bytes32 blockHash = keccak256(abi.encode(encodedHeader, assignments));
         taskManager.assign(assignments, coinbase.beneficiary, block.number + taskAllowance);
-        headerValidator.updateDuration(block.number - tipTimestamp);
+        headerValidator.updateDuration(block.number - tipBlockNumber);
         dao.mint(blockHash, block.number);
         distributor.distribute(coinbase.beneficiary, blockReward);
     }
