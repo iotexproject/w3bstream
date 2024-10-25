@@ -231,7 +231,7 @@
       "name": "debits",
       "outputs": [
         {
-          "internalType": "address",
+          "internalType": "contract IDebits",
           "name": "",
           "type": "address"
         }
@@ -242,17 +242,17 @@
     {
       "inputs": [
         {
-          "internalType": "address",
+          "internalType": "contract IDebits",
           "name": "_debits",
           "type": "address"
         },
         {
-          "internalType": "address",
+          "internalType": "contract IProjectReward",
           "name": "_projectReward",
           "type": "address"
         },
         {
-          "internalType": "address",
+          "internalType": "contract IProverStore",
           "name": "_proverStore",
           "type": "address"
         }
@@ -299,7 +299,7 @@
       "name": "projectReward",
       "outputs": [
         {
-          "internalType": "address",
+          "internalType": "contract IProjectReward",
           "name": "",
           "type": "address"
         }
@@ -312,7 +312,7 @@
       "name": "proverStore",
       "outputs": [
         {
-          "internalType": "address",
+          "internalType": "contract IProverStore",
           "name": "",
           "type": "address"
         }

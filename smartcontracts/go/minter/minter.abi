@@ -4,38 +4,12 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "uint256",
-          "name": "reward",
-          "type": "uint256"
-        }
-      ],
-      "name": "BlockRewardSet",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
           "internalType": "uint8",
           "name": "version",
           "type": "uint8"
         }
       ],
       "name": "Initialized",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint32",
-          "name": "nbits",
-          "type": "uint32"
-        }
-      ],
-      "name": "NBitsSet",
       "type": "event"
     },
     {
@@ -55,6 +29,19 @@
         }
       ],
       "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "reward",
+          "type": "uint256"
+        }
+      ],
+      "name": "RewardSet",
       "type": "event"
     },
     {
@@ -85,49 +72,10 @@
     },
     {
       "inputs": [],
-      "name": "blockReward",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "dao",
-      "outputs": [
-        {
-          "internalType": "contract IDAO",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "distributor",
       "outputs": [
         {
-          "internalType": "contract IBlockRewardDistributor",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "headerValidator",
-      "outputs": [
-        {
-          "internalType": "contract IBlockHeaderValidator",
+          "internalType": "contract IRewardDistributor",
           "name": "",
           "type": "address"
         }
@@ -138,23 +86,13 @@
     {
       "inputs": [
         {
-          "internalType": "contract IDAO",
-          "name": "_dao",
-          "type": "address"
-        },
-        {
           "internalType": "contract ITaskManager",
           "name": "_taskManager",
           "type": "address"
         },
         {
-          "internalType": "contract IBlockRewardDistributor",
+          "internalType": "contract IRewardDistributor",
           "name": "_distributor",
-          "type": "address"
-        },
-        {
-          "internalType": "contract IBlockHeaderValidator",
-          "name": "_headerValidator",
           "type": "address"
         }
       ],
@@ -165,38 +103,6 @@
     },
     {
       "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes4",
-              "name": "meta",
-              "type": "bytes4"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "prevhash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "merkleRoot",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "nbits",
-              "type": "uint32"
-            },
-            {
-              "internalType": "bytes8",
-              "name": "nonce",
-              "type": "bytes8"
-            }
-          ],
-          "internalType": "struct BlockHeader",
-          "name": "header",
-          "type": "tuple"
-        },
         {
           "components": [
             {
@@ -278,14 +184,27 @@
       "type": "function"
     },
     {
-      "inputs": [
+      "inputs": [],
+      "name": "reward",
+      "outputs": [
         {
           "internalType": "uint256",
-          "name": "reward",
+          "name": "",
           "type": "uint256"
         }
       ],
-      "name": "setBlockReward",
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_reward",
+          "type": "uint256"
+        }
+      ],
+      "name": "setReward",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

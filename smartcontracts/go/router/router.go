@@ -31,7 +31,7 @@ var (
 
 // RouterMetaData contains all meta data concerning the Router contract.
 var RouterMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"dapp\",\"type\":\"address\"}],\"name\":\"DappBound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"DappUnbound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"router\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"error\",\"type\":\"bytes\"}],\"name\":\"DataProcessed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_dapp\",\"type\":\"address\"}],\"name\":\"bindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"dapp\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"fleetManagement\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_fleetManagement\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_projectStore\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"projectStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_proverId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_clientId\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"_taskId\",\"type\":\"bytes32\"}],\"name\":\"route\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_add\",\"type\":\"address\"}],\"name\":\"setTaskManager\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskManager\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"}],\"name\":\"unbindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"dapp\",\"type\":\"address\"}],\"name\":\"DappBound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"projectId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"DappUnbound\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_dapp\",\"type\":\"address\"}],\"name\":\"bindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"dapp\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractITaskManager\",\"name\":\"_taskManager\",\"type\":\"address\"},{\"internalType\":\"contractIProverStore\",\"name\":\"_proverStore\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_projectStore\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"projectStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proverStore\",\"outputs\":[{\"internalType\":\"contractIProverStore\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_taskId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"_prover\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_deviceId\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"route\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"taskManager\",\"outputs\":[{\"internalType\":\"contractITaskManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"}],\"name\":\"unbindDapp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // RouterABI is the input ABI used to generate the binding from.
@@ -211,37 +211,6 @@ func (_Router *RouterCallerSession) Dapp(arg0 *big.Int) (common.Address, error) 
 	return _Router.Contract.Dapp(&_Router.CallOpts, arg0)
 }
 
-// FleetManagement is a free data retrieval call binding the contract method 0x53ef0542.
-//
-// Solidity: function fleetManagement() view returns(address)
-func (_Router *RouterCaller) FleetManagement(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _Router.contract.Call(opts, &out, "fleetManagement")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// FleetManagement is a free data retrieval call binding the contract method 0x53ef0542.
-//
-// Solidity: function fleetManagement() view returns(address)
-func (_Router *RouterSession) FleetManagement() (common.Address, error) {
-	return _Router.Contract.FleetManagement(&_Router.CallOpts)
-}
-
-// FleetManagement is a free data retrieval call binding the contract method 0x53ef0542.
-//
-// Solidity: function fleetManagement() view returns(address)
-func (_Router *RouterCallerSession) FleetManagement() (common.Address, error) {
-	return _Router.Contract.FleetManagement(&_Router.CallOpts)
-}
-
 // ProjectStore is a free data retrieval call binding the contract method 0xa0fadaaa.
 //
 // Solidity: function projectStore() view returns(address)
@@ -271,6 +240,37 @@ func (_Router *RouterSession) ProjectStore() (common.Address, error) {
 // Solidity: function projectStore() view returns(address)
 func (_Router *RouterCallerSession) ProjectStore() (common.Address, error) {
 	return _Router.Contract.ProjectStore(&_Router.CallOpts)
+}
+
+// ProverStore is a free data retrieval call binding the contract method 0x79b851f6.
+//
+// Solidity: function proverStore() view returns(address)
+func (_Router *RouterCaller) ProverStore(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _Router.contract.Call(opts, &out, "proverStore")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// ProverStore is a free data retrieval call binding the contract method 0x79b851f6.
+//
+// Solidity: function proverStore() view returns(address)
+func (_Router *RouterSession) ProverStore() (common.Address, error) {
+	return _Router.Contract.ProverStore(&_Router.CallOpts)
+}
+
+// ProverStore is a free data retrieval call binding the contract method 0x79b851f6.
+//
+// Solidity: function proverStore() view returns(address)
+func (_Router *RouterCallerSession) ProverStore() (common.Address, error) {
+	return _Router.Contract.ProverStore(&_Router.CallOpts)
 }
 
 // TaskManager is a free data retrieval call binding the contract method 0xa50a640e.
@@ -325,67 +325,46 @@ func (_Router *RouterTransactorSession) BindDapp(_projectId *big.Int, _dapp comm
 	return _Router.Contract.BindDapp(&_Router.TransactOpts, _projectId, _dapp)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x485cc955.
+// Initialize is a paid mutator transaction binding the contract method 0xc0c53b8b.
 //
-// Solidity: function initialize(address _fleetManagement, address _projectStore) returns()
-func (_Router *RouterTransactor) Initialize(opts *bind.TransactOpts, _fleetManagement common.Address, _projectStore common.Address) (*types.Transaction, error) {
-	return _Router.contract.Transact(opts, "initialize", _fleetManagement, _projectStore)
+// Solidity: function initialize(address _taskManager, address _proverStore, address _projectStore) returns()
+func (_Router *RouterTransactor) Initialize(opts *bind.TransactOpts, _taskManager common.Address, _proverStore common.Address, _projectStore common.Address) (*types.Transaction, error) {
+	return _Router.contract.Transact(opts, "initialize", _taskManager, _proverStore, _projectStore)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x485cc955.
+// Initialize is a paid mutator transaction binding the contract method 0xc0c53b8b.
 //
-// Solidity: function initialize(address _fleetManagement, address _projectStore) returns()
-func (_Router *RouterSession) Initialize(_fleetManagement common.Address, _projectStore common.Address) (*types.Transaction, error) {
-	return _Router.Contract.Initialize(&_Router.TransactOpts, _fleetManagement, _projectStore)
+// Solidity: function initialize(address _taskManager, address _proverStore, address _projectStore) returns()
+func (_Router *RouterSession) Initialize(_taskManager common.Address, _proverStore common.Address, _projectStore common.Address) (*types.Transaction, error) {
+	return _Router.Contract.Initialize(&_Router.TransactOpts, _taskManager, _proverStore, _projectStore)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x485cc955.
+// Initialize is a paid mutator transaction binding the contract method 0xc0c53b8b.
 //
-// Solidity: function initialize(address _fleetManagement, address _projectStore) returns()
-func (_Router *RouterTransactorSession) Initialize(_fleetManagement common.Address, _projectStore common.Address) (*types.Transaction, error) {
-	return _Router.Contract.Initialize(&_Router.TransactOpts, _fleetManagement, _projectStore)
+// Solidity: function initialize(address _taskManager, address _proverStore, address _projectStore) returns()
+func (_Router *RouterTransactorSession) Initialize(_taskManager common.Address, _proverStore common.Address, _projectStore common.Address) (*types.Transaction, error) {
+	return _Router.Contract.Initialize(&_Router.TransactOpts, _taskManager, _proverStore, _projectStore)
 }
 
-// Route is a paid mutator transaction binding the contract method 0x0cb7f523.
+// Route is a paid mutator transaction binding the contract method 0xb72ae9d9.
 //
-// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data, bytes32 _taskId) returns()
-func (_Router *RouterTransactor) Route(opts *bind.TransactOpts, _projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte, _taskId [32]byte) (*types.Transaction, error) {
-	return _Router.contract.Transact(opts, "route", _projectId, _proverId, _clientId, _data, _taskId)
+// Solidity: function route(uint256 _projectId, bytes32 _taskId, address _prover, address _deviceId, bytes _data) returns()
+func (_Router *RouterTransactor) Route(opts *bind.TransactOpts, _projectId *big.Int, _taskId [32]byte, _prover common.Address, _deviceId common.Address, _data []byte) (*types.Transaction, error) {
+	return _Router.contract.Transact(opts, "route", _projectId, _taskId, _prover, _deviceId, _data)
 }
 
-// Route is a paid mutator transaction binding the contract method 0x0cb7f523.
+// Route is a paid mutator transaction binding the contract method 0xb72ae9d9.
 //
-// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data, bytes32 _taskId) returns()
-func (_Router *RouterSession) Route(_projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte, _taskId [32]byte) (*types.Transaction, error) {
-	return _Router.Contract.Route(&_Router.TransactOpts, _projectId, _proverId, _clientId, _data, _taskId)
+// Solidity: function route(uint256 _projectId, bytes32 _taskId, address _prover, address _deviceId, bytes _data) returns()
+func (_Router *RouterSession) Route(_projectId *big.Int, _taskId [32]byte, _prover common.Address, _deviceId common.Address, _data []byte) (*types.Transaction, error) {
+	return _Router.Contract.Route(&_Router.TransactOpts, _projectId, _taskId, _prover, _deviceId, _data)
 }
 
-// Route is a paid mutator transaction binding the contract method 0x0cb7f523.
+// Route is a paid mutator transaction binding the contract method 0xb72ae9d9.
 //
-// Solidity: function route(uint256 _projectId, uint256 _proverId, string _clientId, bytes _data, bytes32 _taskId) returns()
-func (_Router *RouterTransactorSession) Route(_projectId *big.Int, _proverId *big.Int, _clientId string, _data []byte, _taskId [32]byte) (*types.Transaction, error) {
-	return _Router.Contract.Route(&_Router.TransactOpts, _projectId, _proverId, _clientId, _data, _taskId)
-}
-
-// SetTaskManager is a paid mutator transaction binding the contract method 0x327d0a60.
-//
-// Solidity: function setTaskManager(address _add) returns()
-func (_Router *RouterTransactor) SetTaskManager(opts *bind.TransactOpts, _add common.Address) (*types.Transaction, error) {
-	return _Router.contract.Transact(opts, "setTaskManager", _add)
-}
-
-// SetTaskManager is a paid mutator transaction binding the contract method 0x327d0a60.
-//
-// Solidity: function setTaskManager(address _add) returns()
-func (_Router *RouterSession) SetTaskManager(_add common.Address) (*types.Transaction, error) {
-	return _Router.Contract.SetTaskManager(&_Router.TransactOpts, _add)
-}
-
-// SetTaskManager is a paid mutator transaction binding the contract method 0x327d0a60.
-//
-// Solidity: function setTaskManager(address _add) returns()
-func (_Router *RouterTransactorSession) SetTaskManager(_add common.Address) (*types.Transaction, error) {
-	return _Router.Contract.SetTaskManager(&_Router.TransactOpts, _add)
+// Solidity: function route(uint256 _projectId, bytes32 _taskId, address _prover, address _deviceId, bytes _data) returns()
+func (_Router *RouterTransactorSession) Route(_projectId *big.Int, _taskId [32]byte, _prover common.Address, _deviceId common.Address, _data []byte) (*types.Transaction, error) {
+	return _Router.Contract.Route(&_Router.TransactOpts, _projectId, _taskId, _prover, _deviceId, _data)
 }
 
 // UnbindDapp is a paid mutator transaction binding the contract method 0xd869758c.
@@ -710,170 +689,6 @@ func (_Router *RouterFilterer) WatchDappUnbound(opts *bind.WatchOpts, sink chan<
 func (_Router *RouterFilterer) ParseDappUnbound(log types.Log) (*RouterDappUnbound, error) {
 	event := new(RouterDappUnbound)
 	if err := _Router.contract.UnpackLog(event, "DappUnbound", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// RouterDataProcessedIterator is returned from FilterDataProcessed and is used to iterate over the raw logs and unpacked data for DataProcessed events raised by the Router contract.
-type RouterDataProcessedIterator struct {
-	Event *RouterDataProcessed // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *RouterDataProcessedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(RouterDataProcessed)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(RouterDataProcessed)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *RouterDataProcessedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *RouterDataProcessedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// RouterDataProcessed represents a DataProcessed event raised by the Router contract.
-type RouterDataProcessed struct {
-	ProjectId *big.Int
-	Router    *big.Int
-	Operator  common.Address
-	Success   bool
-	Error     []byte
-	Raw       types.Log // Blockchain specific contextual infos
-}
-
-// FilterDataProcessed is a free log retrieval operation binding the contract event 0x588bd93a32d237b3f0595fb64f6e8d7f74c1a5a893cd1094db2a31ac584480f7.
-//
-// Solidity: event DataProcessed(uint256 indexed projectId, uint256 indexed router, address indexed operator, bool success, bytes error)
-func (_Router *RouterFilterer) FilterDataProcessed(opts *bind.FilterOpts, projectId []*big.Int, router []*big.Int, operator []common.Address) (*RouterDataProcessedIterator, error) {
-
-	var projectIdRule []interface{}
-	for _, projectIdItem := range projectId {
-		projectIdRule = append(projectIdRule, projectIdItem)
-	}
-	var routerRule []interface{}
-	for _, routerItem := range router {
-		routerRule = append(routerRule, routerItem)
-	}
-	var operatorRule []interface{}
-	for _, operatorItem := range operator {
-		operatorRule = append(operatorRule, operatorItem)
-	}
-
-	logs, sub, err := _Router.contract.FilterLogs(opts, "DataProcessed", projectIdRule, routerRule, operatorRule)
-	if err != nil {
-		return nil, err
-	}
-	return &RouterDataProcessedIterator{contract: _Router.contract, event: "DataProcessed", logs: logs, sub: sub}, nil
-}
-
-// WatchDataProcessed is a free log subscription operation binding the contract event 0x588bd93a32d237b3f0595fb64f6e8d7f74c1a5a893cd1094db2a31ac584480f7.
-//
-// Solidity: event DataProcessed(uint256 indexed projectId, uint256 indexed router, address indexed operator, bool success, bytes error)
-func (_Router *RouterFilterer) WatchDataProcessed(opts *bind.WatchOpts, sink chan<- *RouterDataProcessed, projectId []*big.Int, router []*big.Int, operator []common.Address) (event.Subscription, error) {
-
-	var projectIdRule []interface{}
-	for _, projectIdItem := range projectId {
-		projectIdRule = append(projectIdRule, projectIdItem)
-	}
-	var routerRule []interface{}
-	for _, routerItem := range router {
-		routerRule = append(routerRule, routerItem)
-	}
-	var operatorRule []interface{}
-	for _, operatorItem := range operator {
-		operatorRule = append(operatorRule, operatorItem)
-	}
-
-	logs, sub, err := _Router.contract.WatchLogs(opts, "DataProcessed", projectIdRule, routerRule, operatorRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(RouterDataProcessed)
-				if err := _Router.contract.UnpackLog(event, "DataProcessed", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseDataProcessed is a log parse operation binding the contract event 0x588bd93a32d237b3f0595fb64f6e8d7f74c1a5a893cd1094db2a31ac584480f7.
-//
-// Solidity: event DataProcessed(uint256 indexed projectId, uint256 indexed router, address indexed operator, bool success, bytes error)
-func (_Router *RouterFilterer) ParseDataProcessed(log types.Log) (*RouterDataProcessed, error) {
-	event := new(RouterDataProcessed)
-	if err := _Router.contract.UnpackLog(event, "DataProcessed", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

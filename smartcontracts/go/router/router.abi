@@ -47,43 +47,6 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "projectId",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "router",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "operator",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "bool",
-          "name": "success",
-          "type": "bool"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes",
-          "name": "error",
-          "type": "bytes"
-        }
-      ],
-      "name": "DataProcessed",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
           "indexed": false,
           "internalType": "uint8",
           "name": "version",
@@ -131,23 +94,15 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "fleetManagement",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_fleetManagement",
+          "internalType": "contract ITaskManager",
+          "name": "_taskManager",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IProverStore",
+          "name": "_proverStore",
           "type": "address"
         },
         {
@@ -175,6 +130,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "proverStore",
+      "outputs": [
+        {
+          "internalType": "contract IProverStore",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -182,40 +150,27 @@
           "type": "uint256"
         },
         {
-          "internalType": "uint256",
-          "name": "_proverId",
-          "type": "uint256"
+          "internalType": "bytes32",
+          "name": "_taskId",
+          "type": "bytes32"
         },
         {
-          "internalType": "string",
-          "name": "_clientId",
-          "type": "string"
+          "internalType": "address",
+          "name": "_prover",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_deviceId",
+          "type": "address"
         },
         {
           "internalType": "bytes",
           "name": "_data",
           "type": "bytes"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "_taskId",
-          "type": "bytes32"
         }
       ],
       "name": "route",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_add",
-          "type": "address"
-        }
-      ],
-      "name": "setTaskManager",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -225,7 +180,7 @@
       "name": "taskManager",
       "outputs": [
         {
-          "internalType": "address",
+          "internalType": "contract ITaskManager",
           "name": "",
           "type": "address"
         }
