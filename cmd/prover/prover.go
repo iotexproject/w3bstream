@@ -17,19 +17,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-type (
-	Prover struct {
-		db     *db.DB
-		config *config.Config
+type Prover struct {
+	db        *db.DB
+	cfg       *config.Config
+	prv       *ecdsa.PrivateKey
+	vmHandler *vm.Handler
+}
 
-		privateKey *ecdsa.PrivateKey
-		vmHandler  *vm.Handler
-	}
-)
-
-func NewProver(config *config.Config, privateKey *ecdsa.PrivateKey, db *db.DB) *Prover {
+func NewProver(cfg *config.Config, privateKey *ecdsa.PrivateKey, db *db.DB) *Prover {
 	vmEndpoints := map[uint64]string{}
-	if err := json.Unmarshal([]byte(config.VMEndpoints), &vmEndpoints); err != nil {
+	if err := json.Unmarshal([]byte(cfg.VMEndpoints), &vmEndpoints); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to unmarshal vm endpoints"))
 	}
 	vmHandler, err := vm.NewHandler(vmEndpoints)
@@ -37,10 +34,10 @@ func NewProver(config *config.Config, privateKey *ecdsa.PrivateKey, db *db.DB) *
 		log.Fatal(errors.Wrap(err, "failed to new vm handler"))
 	}
 	return &Prover{
-		config:     config,
-		vmHandler:  vmHandler,
-		privateKey: privateKey,
-		db:         db,
+		cfg:       cfg,
+		vmHandler: vmHandler,
+		prv:       privateKey,
+		db:        db,
 	}
 }
 
@@ -54,28 +51,28 @@ func (p *Prover) Start() error {
 			SettleTask:               p.db.DeleteTask,
 		},
 		&monitor.ContractAddr{
-			Project:     common.HexToAddress(p.config.ProjectContractAddr),
-			TaskManager: common.HexToAddress(p.config.TaskManagerContractAddr),
+			Project:     common.HexToAddress(p.cfg.ProjectContractAddr),
+			TaskManager: common.HexToAddress(p.cfg.TaskManagerContractAddr),
 		},
-		p.config.BeginningBlockNumber,
-		p.config.ChainEndpoint,
+		p.cfg.BeginningBlockNumber,
+		p.cfg.ChainEndpoint,
 	); err != nil {
 		return errors.Wrap(err, "failed to run monitor")
 	}
 
 	projectManager := project.NewManager(p.db.Project, p.db.ProjectFile, p.db.UpsertProjectFile)
 
-	datasource, err := datasource.NewPostgres(p.config.DatasourceDSN)
+	datasource, err := datasource.NewPostgres(p.cfg.DatasourceDSN)
 	if err != nil {
 		return errors.Wrap(err, "failed to new datasource")
 	}
 
-	if err := processor.Run(p.vmHandler.Handle, projectManager.Project, p.db, datasource.Retrieve, p.privateKey, p.config.ChainEndpoint, common.HexToAddress(p.config.RouterContractAddr)); err != nil {
-		return errors.Wrap(err, "failed to run processor")
+	if err := processor.Run(p.vmHandler.Handle, projectManager.Project, p.db, datasource.Retrieve, p.prv, p.cfg.ChainEndpoint, common.HexToAddress(p.cfg.RouterContractAddr)); err != nil {
+		return errors.Wrap(err, "failed to run task processor")
 	}
 
 	go func() {
-		if err := api.Run(p.db, p.config.ServiceEndpoint); err != nil {
+		if err := api.Run(p.db, p.cfg.ServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()

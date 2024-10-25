@@ -17,13 +17,13 @@ func TestConfig_Init(t *testing.T) {
 	t.Run("UseEnvConfig", func(t *testing.T) {
 		os.Clearenv()
 		expected := Config{
-			ServiceEndpoint:      "test",
-			VMEndpoints:          `{"1":"halo2:4001","2":"risc0:4001","3":"zkwasm:4001","4":"wasm:4001"}`,
-			ChainEndpoint:        "http://abc.def.com",
-			DatasourceDSN:        "postgres://root@localhost/abc?ext=666",
-			ProjectContractAddr:  "0x456",
-			ProverOperatorPrvKey: "private key",
-			LocalDBDir:           "./test",
+			ServiceEndpoint:     "test",
+			VMEndpoints:         `{"1":"halo2:4001","2":"risc0:4001","3":"zkwasm:4001","4":"wasm:4001"}`,
+			ChainEndpoint:       "http://abc.def.com",
+			DatasourceDSN:       "postgres://root@localhost/abc?ext=666",
+			ProjectContractAddr: "0x456",
+			ProverPrvKey:        "private key",
+			LocalDBDir:          "./test",
 		}
 
 		_ = os.Setenv("HTTP_SERVICE_ENDPOINT", expected.ServiceEndpoint)
@@ -31,7 +31,7 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("DATASOURCE_DSN", expected.DatasourceDSN)
 		_ = os.Setenv("PROJECT_CONTRACT_ADDRESS", expected.ProjectContractAddr)
-		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverOperatorPrvKey)
+		_ = os.Setenv("PROVER_OPERATOR_PRIVATE_KEY", expected.ProverPrvKey)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
 
 		c := &Config{}

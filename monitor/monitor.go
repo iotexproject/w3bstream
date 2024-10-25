@@ -16,8 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/smartcontracts/go/blockheadervalidator"
-	"github.com/iotexproject/w3bstream/smartcontracts/go/dao"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
@@ -27,8 +25,6 @@ import (
 type (
 	ScannedBlockNumber       func() (uint64, error)
 	UpsertScannedBlockNumber func(uint64) error
-	UpsertNBits              func(uint32) error
-	UpsertBlockHead          func(uint64, common.Hash) error
 	AssignTask               func(uint64, common.Hash, common.Address) error
 	SettleTask               func(uint64, common.Hash, common.Hash) error
 	UpsertProject            func(uint64, string, common.Hash) error
@@ -38,8 +34,6 @@ type (
 type Handler struct {
 	ScannedBlockNumber
 	UpsertScannedBlockNumber
-	UpsertNBits
-	UpsertBlockHead
 	AssignTask
 	SettleTask
 	UpsertProject
@@ -47,32 +41,26 @@ type Handler struct {
 }
 
 type ContractAddr struct {
-	Prover               common.Address
-	Project              common.Address
-	Dao                  common.Address
-	Minter               common.Address
-	TaskManager          common.Address
-	BlockHeaderValidator common.Address
+	Prover      common.Address
+	Project     common.Address
+	Minter      common.Address
+	TaskManager common.Address
 }
 
 type contract struct {
-	h                            *Handler
-	addr                         *ContractAddr
-	beginningBlockNumber         uint64
-	listStepSize                 uint64
-	watchInterval                time.Duration
-	client                       *ethclient.Client
-	daoInstance                  *dao.Dao
-	minterInstance               *minter.Minter
-	taskManagerInstance          *taskmanager.Taskmanager
-	proverInstance               *prover.Prover
-	projectInstance              *project.Project
-	blockHeaderValidatorInstance *blockheadervalidator.Blockheadervalidator
+	h                    *Handler
+	addr                 *ContractAddr
+	beginningBlockNumber uint64
+	listStepSize         uint64
+	watchInterval        time.Duration
+	client               *ethclient.Client
+	minterInstance       *minter.Minter
+	taskManagerInstance  *taskmanager.Taskmanager
+	proverInstance       *prover.Prover
+	projectInstance      *project.Project
 }
 
 var (
-	blockAddedTopic           = crypto.Keccak256Hash([]byte("BlockAdded(uint256,bytes32,uint256)"))
-	nbitsSetTopic             = crypto.Keccak256Hash([]byte("NBitsSet(uint32)"))
 	taskAssignedTopic         = crypto.Keccak256Hash([]byte("TaskAssigned(uint256,bytes32,address,uint256)"))
 	taskSettledTopic          = crypto.Keccak256Hash([]byte("TaskSettled(uint256,bytes32,address)"))
 	projectConfigUpdatedTopic = crypto.Keccak256Hash([]byte("ProjectConfigUpdated(uint256,string,bytes32)"))
@@ -80,8 +68,6 @@ var (
 )
 
 var allTopic = []common.Hash{
-	blockAddedTopic,
-	nbitsSetTopic,
 	taskAssignedTopic,
 	taskSettledTopic,
 	projectConfigUpdatedTopic,
@@ -91,10 +77,7 @@ var allTopic = []common.Hash{
 var emptyAddr = common.Address{}
 
 func (a *ContractAddr) all() []common.Address {
-	all := make([]common.Address, 0, 5)
-	if !bytes.Equal(a.Dao[:], emptyAddr[:]) {
-		all = append(all, a.Dao)
-	}
+	all := make([]common.Address, 0, 4)
 	if !bytes.Equal(a.Minter[:], emptyAddr[:]) {
 		all = append(all, a.Minter)
 	}
@@ -106,9 +89,6 @@ func (a *ContractAddr) all() []common.Address {
 	}
 	if !bytes.Equal(a.TaskManager[:], emptyAddr[:]) {
 		all = append(all, a.TaskManager)
-	}
-	if !bytes.Equal(a.BlockHeaderValidator[:], emptyAddr[:]) {
-		all = append(all, a.BlockHeaderValidator)
 	}
 	return all
 }
@@ -123,28 +103,6 @@ func (c *contract) processLogs(logs []types.Log) error {
 
 	for _, l := range logs {
 		switch l.Topics[0] {
-		case blockAddedTopic:
-			if c.daoInstance == nil || c.h.UpsertBlockHead == nil {
-				continue
-			}
-			e, err := c.daoInstance.ParseBlockAdded(l)
-			if err != nil {
-				return errors.Wrap(err, "failed to parse block added event")
-			}
-			if err := c.h.UpsertBlockHead(e.Num.Uint64(), e.Hash); err != nil {
-				return err
-			}
-		case nbitsSetTopic:
-			if c.blockHeaderValidatorInstance == nil || c.h.UpsertNBits == nil {
-				continue
-			}
-			e, err := c.blockHeaderValidatorInstance.ParseNBitsSet(l)
-			if err != nil {
-				return errors.Wrap(err, "failed to parse nbits set event")
-			}
-			if err := c.h.UpsertNBits(e.Nbits); err != nil {
-				return err
-			}
 		case taskAssignedTopic:
 			if c.taskManagerInstance == nil || c.h.AssignTask == nil {
 				continue
@@ -291,13 +249,6 @@ func Run(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpo
 		client:               client,
 	}
 
-	if !bytes.Equal(addr.Dao[:], emptyAddr[:]) {
-		daoInstance, err := dao.NewDao(addr.Dao, client)
-		if err != nil {
-			return errors.Wrap(err, "failed to new dao contract instance")
-		}
-		c.daoInstance = daoInstance
-	}
 	if !bytes.Equal(addr.Minter[:], emptyAddr[:]) {
 		minterInstance, err := minter.NewMinter(addr.Minter, client)
 		if err != nil {
@@ -325,13 +276,6 @@ func Run(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpo
 			return errors.Wrap(err, "failed to new project contract instance")
 		}
 		c.projectInstance = projectInstance
-	}
-	if !bytes.Equal(addr.BlockHeaderValidator[:], emptyAddr[:]) {
-		blockHeaderValidatorInstance, err := blockheadervalidator.NewBlockheadervalidator(addr.BlockHeaderValidator, client)
-		if err != nil {
-			return errors.Wrap(err, "failed to new block header validator contract instance")
-		}
-		c.blockHeaderValidatorInstance = blockHeaderValidatorInstance
 	}
 
 	listedBlockNumber, err := c.list()

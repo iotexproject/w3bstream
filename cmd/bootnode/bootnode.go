@@ -21,18 +21,18 @@ type (
 		host host.Host
 		dht  *dht.IpfsDHT
 
-		config BootNodeConfig
+		cfg BootNodeConfig
 	}
 
 	BootNodeConfig struct {
-		PrivateKey   crypto.PrivKey
+		PrvKey       crypto.PrivKey
 		Port         int
 		IoTeXChainID int
 	}
 )
 
 func NewBootNode(config BootNodeConfig) *BootNode {
-	h, err := libp2p.New(libp2p.Identity(config.PrivateKey), libp2p.ListenAddrStrings(
+	h, err := libp2p.New(libp2p.Identity(config.PrvKey), libp2p.ListenAddrStrings(
 		fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", config.Port)), libp2p.Muxer("/yamux/2.0.0", yamux.DefaultTransport))
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to create libp2p host"))
@@ -49,9 +49,9 @@ func NewBootNode(config BootNodeConfig) *BootNode {
 	}
 
 	return &BootNode{
-		host:   h,
-		dht:    dht,
-		config: config,
+		host: h,
+		dht:  dht,
+		cfg:  config,
 	}
 }
 

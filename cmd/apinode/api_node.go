@@ -13,26 +13,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-type (
-	APINode struct {
-		config     *config.Config
-		db         *persistence.Persistence
-		privatekey *ecdsa.PrivateKey
-	}
-)
+type APINode struct {
+	cfg *config.Config
+	db  *persistence.Persistence
+	prv *ecdsa.PrivateKey
+}
 
-func NewAPINode(config *config.Config, db *persistence.Persistence, privatekey *ecdsa.PrivateKey) *APINode {
+func NewAPINode(cfg *config.Config, db *persistence.Persistence, prv *ecdsa.PrivateKey) *APINode {
 	return &APINode{
-		config:     config,
-		db:         db,
-		privatekey: privatekey,
+		cfg: cfg,
+		db:  db,
+		prv: prv,
 	}
 }
 
 func (n *APINode) Start() error {
-	pubSub, err := p2p.NewPubSub(n.config.BootNodeMultiAddr, n.config.IoTeXChainID, nil)
+	pubSub, err := p2p.NewPubSub(n.cfg.BootNodeMultiAddr, n.cfg.IoTeXChainID, nil)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new p2p pubsub"))
+		return errors.Wrap(err, "failed to new p2p pubsub")
 	}
 
 	if err := monitor.Run(
@@ -43,16 +41,16 @@ func (n *APINode) Start() error {
 			SettleTask:               n.db.UpsertSettledTask,
 		},
 		&monitor.ContractAddr{
-			TaskManager: common.HexToAddress(n.config.TaskManagerContractAddr),
+			TaskManager: common.HexToAddress(n.cfg.TaskManagerContractAddr),
 		},
-		n.config.BeginningBlockNumber,
-		n.config.ChainEndpoint,
+		n.cfg.BeginningBlockNumber,
+		n.cfg.ChainEndpoint,
 	); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to run contract monitor"))
+		return errors.Wrap(err, "failed to run contract monitor")
 	}
 
 	go func() {
-		if err := api.Run(n.db, n.privatekey, pubSub, n.config.AggregationAmount, n.config.ServiceEndpoint, n.config.ProverServiceEndpoint); err != nil {
+		if err := api.Run(n.db, n.prv, pubSub, n.cfg.AggregationAmount, n.cfg.ServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()

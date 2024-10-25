@@ -14,17 +14,6 @@ type scannedBlockNumber struct {
 	Number uint64 `gorm:"not null"`
 }
 
-type currentNBits struct {
-	gorm.Model
-	NBits uint32 `gorm:"not null"`
-}
-
-type blockHead struct {
-	gorm.Model
-	Hash   common.Hash `gorm:"not null"`
-	Number uint64      `gorm:"not null"`
-}
-
 type prover struct {
 	gorm.Model
 	Prover common.Address `gorm:"uniqueIndex:prover,not null"`
@@ -64,51 +53,6 @@ func (p *DB) UpsertScannedBlockNumber(number uint64) error {
 		DoUpdates: clause.AssignmentColumns([]string{"number"}),
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert scanned block number")
-}
-
-func (p *DB) NBits() (uint32, error) {
-	t := currentNBits{}
-	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
-		return 0, errors.Wrap(err, "failed to query nbits")
-	}
-	return t.NBits, nil
-}
-
-func (p *DB) UpsertNBits(nbits uint32) error {
-	t := currentNBits{
-		Model: gorm.Model{
-			ID: 1,
-		},
-		NBits: nbits,
-	}
-	err := p.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"n_bits"}),
-	}).Create(&t).Error
-	return errors.Wrap(err, "failed to upsert nbits")
-}
-
-func (p *DB) BlockHead() (uint64, common.Hash, error) {
-	t := blockHead{}
-	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
-		return 0, common.Hash{}, errors.Wrap(err, "failed to query block head")
-	}
-	return t.Number, t.Hash, nil
-}
-
-func (p *DB) UpsertBlockHead(number uint64, hash common.Hash) error {
-	t := blockHead{
-		Model: gorm.Model{
-			ID: 1,
-		},
-		Hash:   hash,
-		Number: number,
-	}
-	err := p.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"hash", "number"}),
-	}).Create(&t).Error
-	return errors.Wrap(err, "failed to upsert block head")
 }
 
 func (p *DB) Provers() ([]common.Address, error) {
@@ -175,7 +119,7 @@ func New(localDBDir string) (*DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect sqlite")
 	}
-	if err := db.AutoMigrate(&task{}, &scannedBlockNumber{}, &currentNBits{}, &blockHead{}, &prover{}); err != nil {
+	if err := db.AutoMigrate(&task{}, &scannedBlockNumber{}, &prover{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &DB{db}, nil

@@ -70,10 +70,10 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 			},
 		},
 		new(big.Int).SetUint64(t.ProjectID),
-		new(big.Int).SetUint64(1),
-		t.DeviceID.String(),
+		t.ID,
+		r.account,
+		t.DeviceID,
 		proof,
-		taskID,
 	)
 	if err != nil {
 		jsonErr := &struct {

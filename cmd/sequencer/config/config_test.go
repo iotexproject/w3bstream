@@ -17,14 +17,12 @@ func TestConfig_Init(t *testing.T) {
 	t.Run("UseEnvConfig", func(t *testing.T) {
 		os.Clearenv()
 		expected := Config{
-			ServiceEndpoint:    ":1999",
 			ChainEndpoint:      "http://iotex.chainendpoint.io",
 			BootNodeMultiAddr:  "/dns4/a.b.com/tcp/1000/ipfs/123123123",
 			IoTeXChainID:       100,
 			ProverContractAddr: "0x",
 		}
 
-		_ = os.Setenv("HTTP_SERVICE_ENDPOINT", expected.ServiceEndpoint)
 		_ = os.Setenv("CHAIN_ENDPOINT", expected.ChainEndpoint)
 		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
 		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))

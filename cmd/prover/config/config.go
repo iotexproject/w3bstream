@@ -16,7 +16,7 @@ type Config struct {
 	ProjectContractAddr     string     `env:"PROJECT_CONTRACT_ADDRESS,optional"`
 	RouterContractAddr      string     `env:"ROUTER_CONTRACT_ADDRESS,optional"`
 	TaskManagerContractAddr string     `env:"TASK_MANAGER_CONTRACT_ADDRESS,optional"`
-	ProverOperatorPrvKey    string     `env:"PROVER_OPERATOR_PRIVATE_KEY,optional"`
+	ProverPrvKey            string     `env:"PROVER_OPERATOR_PRIVATE_KEY,optional"`
 	BeginningBlockNumber    uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
 	LocalDBDir              string     `env:"LOCAL_DB_DIRECTORY,optional"`
 	env                     string     `env:"-"`
@@ -32,7 +32,7 @@ var (
 		ProjectContractAddr:     "0x2e45132c8fFeBa7490d57A6118Bd060E55161564",
 		RouterContractAddr:      "0xBAB5D88AbECd06c3969fa3CE2597DDD31d13e3C3",
 		TaskManagerContractAddr: "0x7AEF1Ed51c1EF3f9e118e25De5D65Ff9F7E2fd29",
-		ProverOperatorPrvKey:    "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
+		ProverPrvKey:            "a5f4e99aa80342d5451e8f8fd0dc357ccddb70d3827428fb1fc366f70833497f",
 		BeginningBlockNumber:    28685000,
 		LocalDBDir:              "./local_db",
 		env:                     "TESTNET",

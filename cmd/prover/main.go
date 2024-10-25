@@ -22,7 +22,7 @@ func main() {
 	cfg.Print()
 	slog.Info("prover config loaded")
 
-	prv, err := crypto.HexToECDSA(cfg.ProverOperatorPrvKey)
+	prv, err := crypto.HexToECDSA(cfg.ProverPrvKey)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse prover private key"))
 	}

@@ -35,7 +35,7 @@ func main() {
 	}
 
 	bootnode := NewBootNode(BootNodeConfig{
-		PrivateKey:   priKey,
+		PrvKey:       priKey,
 		Port:         8000,
 		IoTeXChainID: ioTeXChainID,
 	})
