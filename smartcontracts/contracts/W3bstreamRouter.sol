@@ -2,18 +2,23 @@
 pragma solidity ^0.8.19;
 
 import "./interfaces/IRouter.sol";
-import "./interfaces/IFleetManagement.sol";
 import "./interfaces/IDapp.sol";
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {ITaskManager} from "./interfaces/ITaskManager.sol";
 
-interface IProjectCenter {
+interface IProjectStore {
     function isPaused(uint256 _projectId) external view returns (bool);
 }
 
+interface IProverStore {
+    function isPaused(address prover) external view returns (bool);
+}
+
 contract W3bstreamRouter is IRouter, Initializable {
-    address public fleetManagement;
+    ITaskManager public taskManager;
+    IProverStore public proverStore;
     address public projectStore;
 
     mapping(uint256 => address) public override dapp;
@@ -23,32 +28,30 @@ contract W3bstreamRouter is IRouter, Initializable {
         _;
     }
 
-    function initialize(address _fleetManagement, address _projectStore) public initializer {
-        fleetManagement = _fleetManagement;
+    function initialize(
+        ITaskManager _taskManager,
+        IProverStore _proverStore,
+        address _projectStore
+    ) public initializer {
+        taskManager = _taskManager;
         projectStore = _projectStore;
+        proverStore = _proverStore;
     }
 
     function route(
         uint256 _projectId,
-        uint256 _proverId,
-        string memory _clientId,
+        bytes32 _taskId,
+        address _prover,
+        address _deviceId,
         bytes calldata _data
     ) external override {
         address _dapp = dapp[_projectId];
         require(_dapp != address(0), "no dapp");
-        IFleetManagement _fm = IFleetManagement(fleetManagement);
-        require(_fm.isActiveCoordinator(msg.sender, _projectId), "invalid coordinator");
-        // TODO: 1. epoch based
-        // TODO: 2. validate operator (of prover) signature
-        require(_fm.isActiveProver(_proverId), "invalid prover");
-        require(!IProjectCenter(projectStore).isPaused(_projectId), "invalid project");
+        require(!proverStore.isPaused(_prover), "prover paused");
+        require(!IProjectStore(projectStore).isPaused(_projectId), "project paused");
 
-        try IDapp(_dapp).process(_projectId, _proverId, _clientId, _data) {
-            _fm.grant(_proverId, 1);
-            emit DataProcessed(_projectId, _proverId, msg.sender, true, "");
-        } catch (bytes memory err) {
-            emit DataProcessed(_projectId, _proverId, msg.sender, false, err);
-        }
+        IDapp(_dapp).process(_projectId, _taskId, _prover, _deviceId, _data);
+        taskManager.settle(_projectId, _taskId, _prover);
     }
 
     function bindDapp(uint256 _projectId, address _dapp) external override onlyProjectOwner(_projectId) {

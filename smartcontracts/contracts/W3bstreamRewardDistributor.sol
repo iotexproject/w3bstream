@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract W3bstreamBlockRewardDistributor is OwnableUpgradeable {
+contract W3bstreamRewardDistributor is OwnableUpgradeable {
     event Distributed(address indexed recipient, uint256 amount);
     event Withdrawn(uint256 amount);
     event OperatorSet(address indexed operator);

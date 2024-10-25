@@ -3,6 +3,8 @@ pragma solidity ^0.8.19;
 
 interface ITaskManager {
     function assign(TaskAssignment[] calldata assignments, address sequencer, uint256 deadline) external;
+
+    function settle(uint256 projectId, bytes32 taskId, address prover) external;
 }
 
 struct TaskAssignment {

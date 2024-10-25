@@ -53,16 +53,16 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
     event OperatorRemoved(address operator);
     mapping(uint256 => mapping(bytes32 => Record)) public records;
     mapping(address => bool) public operators;
-    address public debits;
-    address public projectReward;
-    address public proverStore;
+    IDebits public debits;
+    IProjectReward public projectReward;
+    IProverStore public proverStore;
 
     modifier onlyOperator() {
         require(operators[msg.sender], "not task manager operator");
         _;
     }
 
-    function initialize(address _debits, address _projectReward, address _proverStore) public initializer {
+    function initialize(IDebits _debits, IProjectReward _projectReward, IProverStore _proverStore) public initializer {
         __Ownable_init();
         debits = _debits;
         projectReward = _projectReward;
@@ -91,15 +91,13 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         uint256 deadline,
         address sequencer
     ) internal {
-        IProverStore ps = IProverStore(proverStore);
-        require(!ps.isPaused(prover), "prover paused");
-        uint16 rebateRatio = ps.rebateRatio(prover);
+        require(!proverStore.isPaused(prover), "prover paused");
+        uint16 rebateRatio = proverStore.rebateRatio(prover);
         require(rebateRatio <= 10000, "invalid rebate ratio");
-        IProjectReward pr = IProjectReward(projectReward);
-        require(!pr.isPaused(projectId), "project paused");
+        require(!projectReward.isPaused(projectId), "project paused");
         address taskOwner = hash.recover(signature);
-        uint256 rewardAmount = pr.rewardAmount(taskOwner, projectId);
-        address rewardToken = pr.rewardToken(projectId);
+        uint256 rewardAmount = projectReward.rewardAmount(taskOwner, projectId);
+        address rewardToken = projectReward.rewardToken(projectId);
         IDebits(debits).withhold(rewardToken, taskOwner, rewardAmount);
         require(prover != address(0), "invalid prover");
         Record storage record = records[projectId][taskId];
