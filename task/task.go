@@ -22,7 +22,7 @@ type Task struct {
 }
 
 func (t *Task) Sign(prv *ecdsa.PrivateKey) ([]byte, error) {
-	h, err := t.hash()
+	h, err := t.Hash()
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (t *Task) Sign(prv *ecdsa.PrivateKey) ([]byte, error) {
 }
 
 func (t *Task) VerifySignature(pubKey []byte) error {
-	h, err := t.hash()
+	h, err := t.Hash()
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (t *Task) VerifySignature(pubKey []byte) error {
 	return nil
 }
 
-func (t *Task) hash() (common.Hash, error) {
+func (t *Task) Hash() (common.Hash, error) {
 	nt := *t
 	nt.Signature = nil
 	j, err := json.Marshal(&nt)

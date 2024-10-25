@@ -91,15 +91,15 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         uint256 deadline,
         address sequencer
     ) internal {
+        require(prover != address(0), "invalid prover");
         require(!proverStore.isPaused(prover), "prover paused");
         uint16 rebateRatio = proverStore.rebateRatio(prover);
         require(rebateRatio <= 10000, "invalid rebate ratio");
         require(!projectReward.isPaused(projectId), "project paused");
         address taskOwner = hash.recover(signature);
         uint256 rewardAmount = projectReward.rewardAmount(taskOwner, projectId);
-        address rewardToken = projectReward.rewardToken(projectId);
-        IDebits(debits).withhold(rewardToken, taskOwner, rewardAmount);
-        require(prover != address(0), "invalid prover");
+        //address rewardToken = projectReward.rewardToken(projectId);
+        //debits.withhold(rewardToken, taskOwner, rewardAmount);
         Record storage record = records[projectId][taskId];
         require(record.settled == false, "task already settled");
         if (record.prover != address(0)) {
@@ -160,7 +160,7 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         recipients[1] = record.sequencer;
         amounts[1] = record.rewardForSequencer;
         address rewardToken = IProjectReward(projectReward).rewardToken(projectId);
-        IDebits(debits).distribute(rewardToken, record.owner, recipients, amounts);
+        debits.distribute(rewardToken, record.owner, recipients, amounts);
     }
 
     function recall(uint256 projectId, bytes32 taskId) public {
@@ -171,6 +171,6 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         record.prover = address(0);
         record.deadline = 0;
         address rewardToken = IProjectReward(projectReward).rewardToken(projectId);
-        IDebits(debits).redeem(rewardToken, record.owner, record.rewardForProver + record.rewardForSequencer);
+        debits.redeem(rewardToken, record.owner, record.rewardForProver + record.rewardForSequencer);
     }
 }

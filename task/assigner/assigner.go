@@ -53,6 +53,11 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 	}
 	prover := provers[rand.Intn(len(provers))]
 
+	th, err := t.Hash()
+	if err != nil {
+		return errors.Wrap(err, "failed to hash task")
+	}
+
 	tx, err := r.minterInstance.Mint(
 		&bind.TransactOpts{
 			From: r.account,
@@ -70,7 +75,7 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 				ProjectId: new(big.Int).SetUint64(projectID),
 				TaskId:    taskID,
 				Prover:    prover,
-				Hash:      common.Hash{},
+				Hash:      th,
 				Signature: t.Signature,
 			},
 		},

@@ -11,7 +11,7 @@ contract W3bstreamRewardDistributor is OwnableUpgradeable {
     address public operator;
 
     modifier onlyOperator() {
-        require(msg.sender == operator, "not block reward distributor operator");
+        require(msg.sender == operator, "not reward distributor operator");
         _;
     }
 
