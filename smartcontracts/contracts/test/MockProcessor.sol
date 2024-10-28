@@ -10,7 +10,13 @@ contract MockProcessor {
         errorType = _errorType;
     }
 
-    function process(uint256, uint256, string memory, bytes memory) external view {
+    function process(
+        uint256 _projectId,
+        bytes32 _taskId,
+        address _prover,
+        address _deviceId,
+        bytes calldata _data
+    ) external view {
         if (errorType == 1) {
             require(false, "Normal Error");
         } else if (errorType == 2) {
