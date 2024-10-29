@@ -98,8 +98,8 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         require(!projectReward.isPaused(projectId), "project paused");
         address taskOwner = hash.recover(signature);
         uint256 rewardAmount = projectReward.rewardAmount(taskOwner, projectId);
-        address rewardToken = projectReward.rewardToken(projectId);
-        debits.withhold(rewardToken, taskOwner, rewardAmount);
+        //address rewardToken = projectReward.rewardToken(projectId);
+        //debits.withhold(rewardToken, taskOwner, rewardAmount);
         Record storage record = records[projectId][taskId];
         require(record.settled == false, "task already settled");
         if (record.prover != address(0)) {
@@ -159,8 +159,8 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         amounts[0] = record.rewardForProver;
         recipients[1] = record.sequencer;
         amounts[1] = record.rewardForSequencer;
-        address rewardToken = IProjectReward(projectReward).rewardToken(projectId);
-        debits.distribute(rewardToken, record.owner, recipients, amounts);
+        //address rewardToken = IProjectReward(projectReward).rewardToken(projectId);
+        //debits.distribute(rewardToken, record.owner, recipients, amounts);
     }
 
     function recall(uint256 projectId, bytes32 taskId) public {

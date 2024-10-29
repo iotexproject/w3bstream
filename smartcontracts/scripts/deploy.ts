@@ -111,9 +111,9 @@ async function main() {
   await tx.wait();
   console.log(`W3bstreamRewardDistributor set operator to ${minter.target}`);
 
-  tx = await debits.setOperator(minter.target);
+  tx = await debits.setOperator(taskManager.target);
   await tx.wait();
-  console.log(`W3bstreamDebits set operator to ${minter.target}`);
+  console.log(`W3bstreamDebits set operator to ${taskManager.target}`);
 
   tx = await minter.setReward(0);
   await tx.wait();

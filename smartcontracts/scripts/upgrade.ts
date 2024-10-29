@@ -29,13 +29,6 @@ async function main() {
     console.log(`Upgrade W3bstreamVMType ${process.env.W3BSTREAM_VMTYPE} successfull!`);
   }
 
-  if (process.env.W3BSTREAM_DEBITS) {
-    const W3bstreamDebits = await ethers.getContractFactory('W3bstreamDebits');
-    await upgrades.forceImport(process.env.W3BSTREAM_DEBITS, W3bstreamDebits);
-    await upgrades.upgradeProxy(process.env.W3BSTREAM_DEBITS, W3bstreamDebits, {});
-    console.log(`Upgrade W3bstreamDebits ${process.env.W3BSTREAM_DEBITS} successfull!`);
-  }
-
   // if (process.env.W3BSTREAM_TASK_MANAGER) {
   //   const W3bstreamTaskManager = await ethers.getContractFactory('W3bstreamTaskManager');
   //   await upgrades.forceImport(process.env.W3BSTREAM_TASK_MANAGER, W3bstreamTaskManager);
