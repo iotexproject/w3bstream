@@ -2,7 +2,7 @@
 
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Contract, BigNumber } from "ethers";
+import { Contract, BigNumber, HDNodeWallet } from "ethers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("W3bstreamTaskManager", function () {
@@ -14,7 +14,6 @@ describe("W3bstreamTaskManager", function () {
     let operator: SignerWithAddress;
     let user1: SignerWithAddress;
     let user2: SignerWithAddress;
-    let recipients: SignerWithAddress[];
     let token: Contract;
     let project: Contract;
     let w3bstreamProject: Contract;
@@ -22,13 +21,19 @@ describe("W3bstreamTaskManager", function () {
     let projectOwner: SignerWithAddress;
     let projectId: number;
     let taskOwner: SignerWithAddress;
+    let taskOwnerWallet: HDNodeWallet
     let sequencer: SignerWithAddress;
     let prover: SignerWithAddress;
 
     beforeEach(async function () {
+        [owner, taskOwner, operator, user1, user2, binder, projectOwner, sequencer, prover] = await ethers.getSigners();
+        const accounts = config.networks.hardhat.accounts;
+        taskOwnerWallet = ethers.HDNodeWallet.fromMnemonic(
+            ethers.Mnemonic.fromPhrase(accounts.mnemonic),
+            "m/44'/60'/0'/0/1",
+        );
+
         // Deploy debits contract
-        [owner, operator, user1, user2, ...recipients] = await ethers.getSigners();
-        [, binder, projectOwner, taskOwner, sequencer, prover] = recipients;
         const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
         token = await ERC20Mock.deploy(
             "Mock Token",
@@ -136,7 +141,7 @@ describe("W3bstreamTaskManager", function () {
                 ["uint256", "bytes32", "address"],
                 [projectId, taskId, taskOwner.address]
             );
-            taskSignature = await taskOwner.signMessage(ethers.getBytes(taskHash));
+            taskSignature = taskOwnerWallet.signingKey.sign(ethers.getBytes(taskHash)).serialized;
 
             // Owner adds operator
             await w3bstreamTaskManager.connect(owner).addOperator(operator.address);
@@ -165,8 +170,7 @@ describe("W3bstreamTaskManager", function () {
             expect(record.prover).to.equal(prover.address);
             expect(record.sequencer).to.equal(sequencer.address);
             expect(record.deadline).to.equal(deadline);
-            // TODO: fix this if ethers can sign message without prefix
-            // expect(record.owner).to.equal(taskOwner.address);
+            expect(record.owner).to.equal(taskOwner.address);
             expect(record.settled).to.be.false;
         });
 
@@ -217,7 +221,7 @@ describe("W3bstreamTaskManager", function () {
                 ["uint256", "bytes32", "address"],
                 [projectId, taskId, taskOwner.address]
             );
-            taskSignature = await taskOwner.signMessage(ethers.getBytes(taskHash));
+            taskSignature = taskOwnerWallet.signingKey.sign(ethers.getBytes(taskHash)).serialized;
 
             // Owner adds operator
             await w3bstreamTaskManager.connect(owner).addOperator(operator.address);
@@ -291,7 +295,7 @@ describe("W3bstreamTaskManager", function () {
                 ["uint256", "bytes32", "address"],
                 [projectId, taskId, taskOwner.address]
             );
-            taskSignature = await taskOwner.signMessage(ethers.getBytes(taskHash));
+            taskSignature = taskOwnerWallet.signingKey.sign(ethers.getBytes(taskHash)).serialized;
 
             // Owner adds operator
             await w3bstreamTaskManager.connect(owner).addOperator(operator.address);
@@ -309,32 +313,32 @@ describe("W3bstreamTaskManager", function () {
             await w3bstreamTaskManager.connect(operator)["assign((uint256,bytes32,bytes32,bytes,address),address,uint256)"](assignment, sequencer.address, deadline);
         });
 
-        // it("should allow task owner to recall task after deadline", async function () {
-        //     // Advance block number beyond deadline
-        //     await ethers.provider.send("hardhat_mine", ["0x65"]); // Mine 101 blocks
+        it("should allow task owner to recall task after deadline", async function () {
+            // Advance block number beyond deadline
+            await ethers.provider.send("hardhat_mine", ["0x65"]); // Mine 101 blocks
 
-        //     await expect(
-        //         w3bstreamTaskManager.connect(taskOwner).recall(projectId, taskId)
-        //     )
-        //         .to.emit(w3bstreamDebits, "Redeemed")
-        //         .withArgs(
-        //             token.target,
-        //             taskOwner.address,
-        //             rewardAmount
-        //         );
+            await expect(
+                w3bstreamTaskManager.connect(taskOwner).recall(projectId, taskId)
+            )
+                .to.emit(w3bstreamDebits, "Redeemed")
+                .withArgs(
+                    token.target,
+                    taskOwner.address,
+                    rewardAmount
+                );
 
-        //     // Verify record is updated
-        //     const record = await w3bstreamTaskManager.records(projectId, taskId);
-        //     expect(record.prover).to.equal(ethers.ZeroAddress);
-        //     expect(record.deadline).to.equal(0);
-        // });
+            // Verify record is updated
+            const record = await w3bstreamTaskManager.records(projectId, taskId);
+            expect(record.prover).to.equal(ethers.ZeroAddress);
+            expect(record.deadline).to.equal(0);
+        });
 
-        // it("should not allow task owner to recall task before deadline", async function () {
-        //     await expect(
-        //         w3bstreamTaskManager.connect(taskOwner).recall(projectId, taskId)
-        //     )
-        //         .to.be.revertedWith("task assignement not expired");
-        // });
+        it("should not allow task owner to recall task before deadline", async function () {
+            await expect(
+                w3bstreamTaskManager.connect(taskOwner).recall(projectId, taskId)
+            )
+                .to.be.revertedWith("task assignement not expired");
+        });
 
         it("should not allow non-owner to recall task", async function () {
             // Advance block number beyond deadline
