@@ -7,7 +7,7 @@ W3bstream is a key Layer-2 solution within the IoTeX ecosystem, designed to supp
 ## Workflow
 
 <p align="center">
-  <img src="./docs/arch_new.png"/>
+  <img src="./docs/arch_new.png" width="75%"/>
 </p>
 
 **Sequencer nodes** assemble received data messages with a “block header” that (among other things) references the previous block of data. Each block of data is mined using a proof-of-work mechanism and is then assigned as a Task to a Prover node that is available for data computation. Sequencer nodes receive rewards in IOTX for the mining activity.
@@ -17,10 +17,6 @@ W3bstream is a key Layer-2 solution within the IoTeX ecosystem, designed to supp
 The chain of tasks and their ZK-proofs are recorded **on the IoTeX blockchain**, making them accessible for dApps. The actual data, uniquely referenced by the on-chain tasks, remains available for full off-chain verification.
 
 This architecture ensures secure, reliable, and scalable data processing, allowing DePIN dApps to act on verified real-world facts to trigger blockchain-based incentives.
-
-## Architecture
-
-[Detailed system architecture description →](./docs/ARCHITECTURE.md)
 
 ## Docker images
 
