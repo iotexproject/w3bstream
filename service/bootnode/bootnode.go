@@ -1,4 +1,4 @@
-package main
+package bootnode
 
 import (
 	"context"
@@ -25,21 +25,17 @@ type (
 	}
 
 	BootNodeConfig struct {
-		PrvKey       crypto.PrivKey
+		PrivateKey   crypto.PrivKey
 		Port         int
 		IoTeXChainID int
 	}
 )
 
 func NewBootNode(config BootNodeConfig) *BootNode {
-	h, err := libp2p.New(libp2p.Identity(config.PrvKey), libp2p.ListenAddrStrings(
+	h, err := libp2p.New(libp2p.Identity(config.PrivateKey), libp2p.ListenAddrStrings(
 		fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", config.Port)), libp2p.Muxer("/yamux/2.0.0", yamux.DefaultTransport))
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to create libp2p host"))
-	}
-
-	for _, a := range h.Addrs() {
-		slog.Info(fmt.Sprintf("listening on %s/p2p/%s", a, h.ID().String()))
 	}
 
 	ctx := context.Background()
@@ -56,6 +52,11 @@ func NewBootNode(config BootNodeConfig) *BootNode {
 }
 
 func (b *BootNode) Start() error {
+	slog.Info("bootnode started")
+
+	for _, addr := range b.Addrs() {
+		slog.Info("listening on", "addr", addr)
+	}
 	return b.dht.Bootstrap(context.Background())
 }
 
@@ -64,4 +65,12 @@ func (b *BootNode) Stop() error {
 		return err
 	}
 	return b.host.Close()
+}
+
+func (b *BootNode) Addrs() []string {
+	var addrs []string
+	for _, addr := range b.host.Addrs() {
+		addrs = append(addrs, fmt.Sprintf("%s/p2p/%s", addr.String(), b.host.ID().String()))
+	}
+	return addrs
 }

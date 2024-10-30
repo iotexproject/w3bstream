@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/cmd/apinode/api"
+	"github.com/iotexproject/w3bstream/service/apinode/api"
 )
 
 func main() {

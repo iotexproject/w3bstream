@@ -1,15 +1,15 @@
-package main
+package apinode
 
 import (
 	"crypto/ecdsa"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/iotexproject/w3bstream/cmd/apinode/api"
-	"github.com/iotexproject/w3bstream/cmd/apinode/config"
-	"github.com/iotexproject/w3bstream/cmd/apinode/persistence"
 	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/service/apinode/api"
+	"github.com/iotexproject/w3bstream/service/apinode/config"
+	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 	"github.com/pkg/errors"
 )
 

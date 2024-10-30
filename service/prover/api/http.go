@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/cmd/prover/db"
+	"github.com/iotexproject/w3bstream/service/prover/db"
 )
 
 type ErrResp struct {

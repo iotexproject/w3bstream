@@ -1,4 +1,4 @@
-package main
+package prover
 
 import (
 	"crypto/ecdsa"
@@ -6,15 +6,16 @@ import (
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/iotexproject/w3bstream/cmd/prover/api"
-	"github.com/iotexproject/w3bstream/cmd/prover/config"
-	"github.com/iotexproject/w3bstream/cmd/prover/db"
+	"github.com/pkg/errors"
+
 	"github.com/iotexproject/w3bstream/datasource"
 	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/service/prover/api"
+	"github.com/iotexproject/w3bstream/service/prover/config"
+	"github.com/iotexproject/w3bstream/service/prover/db"
 	"github.com/iotexproject/w3bstream/task/processor"
 	"github.com/iotexproject/w3bstream/vm"
-	"github.com/pkg/errors"
 )
 
 type Prover struct {
@@ -24,7 +25,7 @@ type Prover struct {
 	vmHandler *vm.Handler
 }
 
-func NewProver(cfg *config.Config, privateKey *ecdsa.PrivateKey, db *db.DB) *Prover {
+func NewProver(cfg *config.Config, db *db.DB, privateKey *ecdsa.PrivateKey) *Prover {
 	vmEndpoints := map[uint64]string{}
 	if err := json.Unmarshal([]byte(cfg.VMEndpoints), &vmEndpoints); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to unmarshal vm endpoints"))

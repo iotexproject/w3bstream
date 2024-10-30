@@ -10,6 +10,8 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/pkg/errors"
+
+	"github.com/iotexproject/w3bstream/service/bootnode"
 )
 
 var (
@@ -34,8 +36,8 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to unmarshal private key"))
 	}
 
-	bootnode := NewBootNode(BootNodeConfig{
-		PrvKey:       priKey,
+	bootnode := bootnode.NewBootNode(bootnode.BootNodeConfig{
+		PrivateKey:   priKey,
 		Port:         8000,
 		IoTeXChainID: ioTeXChainID,
 	})

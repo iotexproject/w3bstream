@@ -46,3 +46,4 @@ clients/contracts/ioid
 node_modules
 
 examples/halo2-circuit/contracts/.*.sol
+build
