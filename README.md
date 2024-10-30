@@ -18,11 +18,14 @@ The chain of tasks and their ZK-proofs are recorded **on the IoTeX blockchain**,
 
 This architecture ensures secure, reliable, and scalable data processing, allowing DePIN dApps to act on verified real-world facts to trigger blockchain-based incentives.
 
-## Get Started
+## Running nodes
+ > ⓘ **Note**: Joining the W3bstream network as a sequencer or prover node is currently unavailable. Stay tuned for updates in future releases. [Follow us on X](https://x.com/iotex_dev).
 
-[Deploy a simple W3bstream prover →](./docs/QUICK_START.md)
+## Get Started for Builders
 
-[Build custom provers →](./docs/DEVELOPER_GUIDE.md)
+[Deploy a simple zk prover to W3bstream →](./docs/QUICK_START.md)
+
+[Build your custom zk prover for W3bstream →](./docs/DEVELOPER_GUIDE.md)
 
 ## Docker images
 
