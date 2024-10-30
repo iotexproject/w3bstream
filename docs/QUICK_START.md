@@ -120,3 +120,36 @@ Example result:
 ```
 
 When the Task ID reaches “settled” status, you can verify the `transaction_hash` on <https://testnet.iotexscan.io> to review the proof written to the DApp contract.
+
+## Additional commands
+
+### Retrieve Project Info
+Use the following command to retrieve information about your project:
+
+```bash
+ioctl ws project query --id "your project id"
+```
+
+### Set the Required number of Provers of the Project
+
+By default, only one prover processes the project’s data. To customize this number, use:
+
+```bash
+ioctl ws project attributes set --id "your project id" --key "RequiredProverAmount" --val "your expected amount"
+```
+
+### Stop the Project
+
+To stop data processing and proof generation for your project, use the command below:
+
+```bash
+ioctl ws project pause --id "your project id"
+```
+
+### Unbind the Project from the DApp
+
+If you want to unbind the project from the DApp:
+
+```sh
+ioctl ws router unbind --project-id "your project id"
+```
