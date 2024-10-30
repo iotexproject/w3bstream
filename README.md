@@ -18,21 +18,24 @@ The chain of tasks and their ZK-proofs are recorded **on the IoTeX blockchain**,
 
 This architecture ensures secure, reliable, and scalable data processing, allowing DePIN dApps to act on verified real-world facts to trigger blockchain-based incentives.
 
+## Get Started
+
+[Deploy a simple W3bstream prover →](./docs/QUICK_START.md)
+
+[Build custom provers →](./docs/DEVELOPER_GUIDE.md)
+
 ## Docker images
 
-* [Sequencer](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-sequencer)
-* [Prover](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-prover)
+[Sequencer Node →](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-sequencer)
 
-## Running
-
-For users who just want to give it a try, please refer to [Quick Start →](./docs/QUICK_START.md), which will guide you through how to interact with existing projects deployed on testnet.
-
-Developers looking to build circuits and deploy W3bstream projects should consult the [DEVELOPER_GUIDE →](./docs/DEVELOPER_GUIDE.md)
+[Prover Node →](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-prover)
 
 ## Contract Deployments
 
-Coming
+ [smartcontracts/README.md](./smartcontracts/README.md#deployment)
 
 ## Contributing
 
-We welcome contributions! Please read our [contributing guidelines](./docs/CONTRIBUTING.md) and submit pull requests to our GitHub repository.
+We welcome contributions!
+
+Please read our [contributing guidelines](./docs/CONTRIBUTING.md) and submit pull requests to our GitHub repository.
