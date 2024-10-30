@@ -121,9 +121,14 @@ Example result:
 
 When the Task ID reaches “settled” status, you can verify the `transaction_hash` on <https://testnet.iotexscan.io> to review the proof written to the DApp contract.
 
+## What's next??
+
+Refer to the [Developer Guide](./DEVELOPER_GUIDE.md) to learn how to customize the prover and the Dapp contract.
+
 ## Additional commands
 
 ### Retrieve Project Info
+
 Use the following command to retrieve information about your project:
 
 ```bash
@@ -153,3 +158,4 @@ If you want to unbind the project from the DApp:
 ```sh
 ioctl ws router unbind --project-id "your project id"
 ```
+
