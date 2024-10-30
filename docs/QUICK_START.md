@@ -8,7 +8,7 @@ Ensure you have the following tools installed:
 - [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html): Required for building the prover code.
 - [curl](https://curl.se/): For sending messages to the API node.
 
-- [qt](https://jqlang.github.io/jq/): To format JSON output.
+- [jq](https://jqlang.github.io/jq/): To format JSON output.
 
 ## Step 1: Create and fund a Developer wallet
 
