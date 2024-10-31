@@ -33,9 +33,9 @@ const (
 )
 
 func TestE2E(t *testing.T) {
-	// if os.Getenv("TEST_E2E") != "true" {
-	// 	t.Skip("Skipping E2E tests.")
-	// }
+	if os.Getenv("TEST_E2E") != "true" {
+		t.Skip("Skipping E2E tests.")
+	}
 	var chainEndpoint string
 	if runtime.GOARCH == "arm64" {
 		chainEndpoint = "http://localhost:8545"
