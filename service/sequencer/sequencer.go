@@ -50,7 +50,7 @@ func (s *Sequencer) Start() error {
 	}
 
 	if _, err := p2p.NewPubSub(s.cfg.BootNodeMultiAddr, s.cfg.IoTeXChainID, s.db.CreateTask); err != nil {
-		log.Fatal(errors.Wrap(err, "failed to new p2p pubsub"))
+		return errors.Wrap(err, "failed to new pubsub")
 	}
 
 	datasource, err := datasource.NewPostgres(s.cfg.DatasourceDSN)

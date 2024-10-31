@@ -96,6 +96,7 @@ contract W3bstreamProject is OwnableUpgradeable {
 
     function updateConfig(uint256 _projectId, string memory _uri, bytes32 _hash) external onlyProjectOwner(_projectId) {
         require(bytes(_uri).length != 0, "empty uri");
+        // TODO: check the existence of the project
         ProjectConfig storage c = projectConfigs[_projectId];
         c.uri = _uri;
         c.hash = _hash;

@@ -61,7 +61,7 @@ func TestE2E(t *testing.T) {
 
 	// Setup postgres
 	dbName := "users"
-	pgContainer, URI, err := utils.SetupPostgres(dbName)
+	pgContainer, PGURI, err := utils.SetupPostgres(dbName)
 	t.Cleanup(func() {
 		if err := pgContainer.Terminate(context.Background()); err != nil {
 			t.Logf("failed to terminate postgres container: %v", err)
@@ -81,13 +81,15 @@ func TestE2E(t *testing.T) {
 	// Bootnode init
 	bootnode, err := bootNodeInit()
 	require.NoError(t, err)
-	bootnode.Start()
+	err = bootnode.Start()
+	require.NoError(t, err)
 	defer bootnode.Stop()
 
 	// APINode init
-	apiNode, apiNodeUrl, err := apiNodeInit(URI, chainEndpoint, bootnode.Addrs()[1], contracts.TaskManager)
+	apiNode, apiNodeUrl, err := apiNodeInit(PGURI, chainEndpoint, bootnode.Addrs()[1], contracts.TaskManager)
 	require.NoError(t, err)
-	apiNode.Start()
+	err = apiNode.Start()
+	require.NoError(t, err)
 	defer apiNode.Stop()
 
 	// Sequencer init
@@ -95,17 +97,23 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempSequencerDB.Name())
 	defer tempSequencerDB.Close()
-	sequencer, err := sequencerInit(tempSequencerDB.Name(), chainEndpoint, bootnode.Addrs()[1],
+	sequencer, err := sequencerInit(PGURI, tempSequencerDB.Name(), chainEndpoint, bootnode.Addrs()[1],
 		contracts)
 	require.NoError(t, err)
 	err = sendETH(t, chainEndpoint, payerHex, sequencer.Address(), 200)
 	require.NoError(t, err)
 
-	sequencer.Start()
+	err = sequencer.Start()
+	require.NoError(t, err)
 	defer sequencer.Stop()
 
 	// Register project
-	projectID, err := registerProject(t, chainEndpoint, ipfsEndpoint, projectFilePath, contracts, payerHex)
+	projectOwnerKey, err := crypto.GenerateKey()
+	require.NoError(t, err)
+	projectOwnerAddr := crypto.PubkeyToAddress(projectOwnerKey.PublicKey)
+	err = sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
+	require.NoError(t, err)
+	projectID, err := registerProject(t, chainEndpoint, ipfsEndpoint, projectFilePath, contracts, projectOwnerKey)
 	require.NoError(t, err)
 
 	// Register prover
@@ -235,7 +243,7 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 		return nil, err
 	}
 
-	fmt.Printf("Signature: %x", sig)
+	fmt.Printf("Signature: %x\n", sig)
 	req.Signature = hexutil.Encode(sig)
 
 	return json.Marshal(req)

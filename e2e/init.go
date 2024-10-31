@@ -29,9 +29,13 @@ import (
 	"github.com/iotexproject/w3bstream/service/sequencer"
 	sequencerconfig "github.com/iotexproject/w3bstream/service/sequencer/config"
 	sequencerdb "github.com/iotexproject/w3bstream/service/sequencer/db"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/debits"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/mockerc20"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/mockproject"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/projectregistrar"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/projectreward"
+	provercontract "github.com/iotexproject/w3bstream/smartcontracts/go/prover"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/router"
 	"github.com/iotexproject/w3bstream/util/ipfs"
 )
@@ -80,7 +84,7 @@ func apiNodeInit(dbURI string, chainEndpoint string, bootnodeAddr string, taskMa
 	return node, fmt.Sprintf("http://localhost%s", cfg.ServiceEndpoint), nil
 }
 
-func sequencerInit(dbFile string, chainEndpoint string, bootnodeAddr string,
+func sequencerInit(dbURI string, dbFile string, chainEndpoint string, bootnodeAddr string,
 	contractDeployments *utils.ContractsDeployments,
 ) (*sequencer.Sequencer, error) {
 	key, err := crypto.GenerateKey()
@@ -97,6 +101,7 @@ func sequencerInit(dbFile string, chainEndpoint string, bootnodeAddr string,
 		LogLevel:                slog.LevelInfo,
 		BootNodeMultiAddr:       bootnodeAddr,
 		IoTeXChainID:            2,
+		DatasourceDSN:           dbURI,
 		ChainEndpoint:           chainEndpoint,
 		ProverContractAddr:      contractDeployments.Prover,
 		MinterContractAddr:      contractDeployments.Minter,
@@ -139,44 +144,35 @@ func proverInit(dbFile string, dbURI string, chainEndpoint string,
 }
 
 func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, projectFile string,
-	contractDeployments *utils.ContractsDeployments, payerHex string) (*big.Int, error) {
+	contractDeployments *utils.ContractsDeployments, projectOwner *ecdsa.PrivateKey) (*big.Int, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)
 	chainID, err := client.ChainID(context.Background())
-	require.NoError(t, err)
-	payer, err := crypto.HexToECDSA(payerHex)
 	require.NoError(t, err)
 
 	// Register project with ioid
 	mockProjectContract, err := mockproject.NewMockProject(
 		common.HexToAddress(contractDeployments.MockProject), client)
 	require.NoError(t, err)
-
-	tOpts, err := bind.NewKeyedTransactorWithChainID(payer, chainID)
+	tOpts, err := bind.NewKeyedTransactorWithChainID(projectOwner, chainID)
 	require.NoError(t, err)
-
 	tx, err := mockProjectContract.Register(tOpts)
 	require.NoError(t, err)
-
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
+	newProjectID := big.NewInt(1)
 
 	// Register project in w3bstream
 	projectRegistrarContract, err := projectregistrar.NewProjectRegistrar(
 		common.HexToAddress(contractDeployments.Registrar), client)
 	require.NoError(t, err)
-	newProjectID := big.NewInt(1)
-
 	registerFee, err := projectRegistrarContract.RegistrationFee(nil)
 	require.NoError(t, err)
-
-	tOpts, err = bind.NewKeyedTransactorWithChainID(payer, chainID)
+	tOpts, err = bind.NewKeyedTransactorWithChainID(projectOwner, chainID)
 	require.NoError(t, err)
 	tOpts.Value = registerFee
-
 	tx, err = projectRegistrarContract.Register(tOpts, newProjectID)
 	require.NoError(t, err)
-
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
 
@@ -190,29 +186,52 @@ func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, project
 	projectFileURL := fmt.Sprintf("ipfs://%s/%s", ipfsURL, cid)
 	wsProject, err := project.NewProject(common.HexToAddress(contractDeployments.WSProject), client)
 	require.NoError(t, err)
-
-	tOpts, err = bind.NewKeyedTransactorWithChainID(payer, chainID)
+	tOpts, err = bind.NewKeyedTransactorWithChainID(projectOwner, chainID)
 	require.NoError(t, err)
-
 	tx, err = wsProject.UpdateConfig(tOpts, newProjectID, projectFileURL, hash256)
 	require.NoError(t, err)
-
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+	tx, err = wsProject.Resume(tOpts, newProjectID)
+	require.NoError(t, err)
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
 
-	tx, err = wsProject.Resume(tOpts, newProjectID)
+	// set reward for project
+	var (
+		rewardAmount = big.NewInt(100)
+	)
+	projectOwnerAddr := crypto.PubkeyToAddress(projectOwner.PublicKey)
+	mockerc20Addr, _, mockerc20, err := mockerc20.DeployMockerc20(tOpts, client, "Mockerc20", "M20", projectOwnerAddr, big.NewInt(1e18))
 	require.NoError(t, err)
-
+	projectRewardContract, err := projectreward.NewProjectReward(
+		common.HexToAddress(contractDeployments.ProjectReward), client)
+	require.NoError(t, err)
+	require.NoError(t, err)
+	tx, err = projectRewardContract.SetReward(tOpts, newProjectID, rewardAmount)
+	require.NoError(t, err)
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+	tx, err = projectRewardContract.SetRewardToken(tOpts, newProjectID, mockerc20Addr)
+	require.NoError(t, err)
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+	tx, err = mockerc20.Approve(tOpts, common.HexToAddress(contractDeployments.Debits), rewardAmount)
+	require.NoError(t, err)
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+	debitsContract, err := debits.NewDebits(common.HexToAddress(contractDeployments.Debits), client)
+	require.NoError(t, err)
+	tx, err = debitsContract.Deposit(tOpts, mockerc20Addr, rewardAmount)
+	require.NoError(t, err)
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
 
 	// Bind dapp to router
 	router, err := router.NewRouter(common.HexToAddress(contractDeployments.Router), client)
 	require.NoError(t, err)
-
 	tx, err = router.BindDapp(tOpts, newProjectID, common.HexToAddress(contractDeployments.MockDapp))
 	require.NoError(t, err)
-
 	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
 
@@ -221,23 +240,24 @@ func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, project
 
 func registerProver(t *testing.T, chainEndpoint string,
 	contractDeployments *utils.ContractsDeployments, prover *ecdsa.PrivateKey) error {
-	// client, err := ethclient.Dial(chainEndpoint)
-	// require.NoError(t, err)
-	// chainID, err := client.ChainID(context.Background())
-	// require.NoError(t, err)
+	client, err := ethclient.Dial(chainEndpoint)
+	require.NoError(t, err)
+	chainID, err := client.ChainID(context.Background())
+	require.NoError(t, err)
 
-	// fleetManagementContract, err := fleetmanagement.NewFleetManagement(
-	// 	common.HexToAddress(contractDeployments.FleetManagement), client)
-	// require.NoError(t, err)
-
-	// tOpts, err := bind.NewKeyedTransactorWithChainID(prover, chainID)
-	// require.NoError(t, err)
-
-	// tx, err := fleetManagementContract.Register(tOpts)
-	// require.NoError(t, err)
-
-	// _, err = utils.WaitForTransactionReceipt(client, tx.Hash())
-	// require.NoError(t, err)
+	proverContract, err := provercontract.NewProver(
+		common.HexToAddress(contractDeployments.Prover), client)
+	require.NoError(t, err)
+	tOpts, err := bind.NewKeyedTransactorWithChainID(prover, chainID)
+	require.NoError(t, err)
+	tx, err := proverContract.Register(tOpts)
+	require.NoError(t, err)
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+	tx, err = proverContract.SetRebateRatio(tOpts, 1000)
+	require.NoError(t, err)
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
 
 	return nil
 }

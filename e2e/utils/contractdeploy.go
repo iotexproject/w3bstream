@@ -16,27 +16,27 @@ const (
 var (
 	taskManagerRe      = regexp.MustCompile(`W3bstreamTaskManager deployed to (\S+)`)
 	proverRe           = regexp.MustCompile(`W3bstreamProver deployed to (\S+)`)
-	daoRe              = regexp.MustCompile(`W3bstreamDAO deployed to (\S+)`)
-	minterRe           = regexp.MustCompile(`W3bstreamBlockMinter deployed to (\S+)`)
+	minterRe           = regexp.MustCompile(`W3bstreamMinter deployed to (\S+)`)
 	projectRegistrarRe = regexp.MustCompile(`ProjectRegistrar deployed to (\S+)`)
 	mockProjectRe      = regexp.MustCompile(`MockProject deployed to (\S+)`)
 	wsProjectRe        = regexp.MustCompile(`W3bstreamProject deployed to (\S+)`)
 	routerRe           = regexp.MustCompile(`W3bstreamRouter deployed to (\S+)`)
 	mockDappRe         = regexp.MustCompile(`MockProcessor deployed to (\S+)`)
-	fleetManagementRe  = regexp.MustCompile(`FleetManagement deployed to (\S+)`)
+	projectRewardRe    = regexp.MustCompile(`W3bstreamProjectReward deployed to (\S+)`)
+	debitsRe           = regexp.MustCompile(`W3bstreamDebits deployed to (\S+)`)
 )
 
 type ContractsDeployments struct {
-	TaskManager     string
-	Prover          string
-	Dao             string
-	Minter          string
-	Registrar       string
-	MockProject     string
-	WSProject       string
-	Router          string
-	MockDapp        string
-	FleetManagement string
+	TaskManager   string
+	Prover        string
+	Minter        string
+	Registrar     string
+	MockProject   string
+	WSProject     string
+	Router        string
+	MockDapp      string
+	ProjectReward string
+	Debits        string
 }
 
 func DeployContract(endpoint string, payerHex string) (*ContractsDeployments, error) {
@@ -86,9 +86,6 @@ func DeployContract(endpoint string, payerHex string) (*ContractsDeployments, er
 	if match := proverRe.FindStringSubmatch(output); len(match) > 1 {
 		deployments.Prover = match[1]
 	}
-	if match := daoRe.FindStringSubmatch(output); len(match) > 1 {
-		deployments.Dao = match[1]
-	}
 	if match := minterRe.FindStringSubmatch(output); len(match) > 1 {
 		deployments.Minter = match[1]
 	}
@@ -107,8 +104,11 @@ func DeployContract(endpoint string, payerHex string) (*ContractsDeployments, er
 	if match := routerRe.FindStringSubmatch(output); len(match) > 1 {
 		deployments.Router = match[1]
 	}
-	if match := fleetManagementRe.FindStringSubmatch(output); len(match) > 1 {
-		deployments.FleetManagement = match[1]
+	if match := projectRewardRe.FindStringSubmatch(output); len(match) > 1 {
+		deployments.ProjectReward = match[1]
+	}
+	if match := debitsRe.FindStringSubmatch(output); len(match) > 1 {
+		deployments.Debits = match[1]
 	}
 
 	return deployments, nil

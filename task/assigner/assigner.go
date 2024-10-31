@@ -64,8 +64,6 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 			Signer: func(a common.Address, t *types.Transaction) (*types.Transaction, error) {
 				return types.SignTx(t, r.signer, r.prv)
 			},
-			// TODO: remove this when err is fixed
-			GasLimit: 100000,
 		},
 		minter.Sequencer{
 			Addr:        r.account,
