@@ -14,13 +14,20 @@ export MIN_STAKE=1.0
 
 #### Testnet
 
-```
-W3bstreamProject deployed to 0x3522bBB40D94D5027aB585e1796a68BE003bF36b
-ProjectRegistrar deployed to 0x6325D51b6F8bC78b00c55e6233e8824231C31DE2
-W3bstreamProver deployed to 0x1BCe261009e73A2300A6144d5900062De7fd8365
-W3bstreamCredit deployed to 0x8CA1EBDF8E6190e0e8015220601b6854Cc439931
-FleetManagement deployed to 0x7f23447c0bC51b0532EB0D2C7f2D123304666524
-W3bstreamRouter deployed to 0x749C1856D7fdF7b4a2BEBDa6c16E335CE6b33bAe
-W3bstreamVMType deployed to 0x3C296D654d33901F8c2D08386Bf438458c89dFaB
-ProjectDevice deployed to 0xEA0B75d277AE1D13BBeAAe4537291319E2d3d1C2
-```
+| Contract                   | Address                                    |
+|-----------------------------|--------------------------------------------|
+| W3bstreamProject            | `0x0abec44FC786e8da12267Db5fdeB4311AD1A0A8A` |
+| ProjectRegistrar            | `0x74309Bc83fF7Ba8aBaB901936927976792a6d9B6` |
+| W3bstreamProver             | `0xab6836908d15E42D30bdEf14cbFA4ad45dCAF3a3` |
+| W3bstreamVMType             | `0x5b27FC853058C1e50C252c017e5859AcF854F3b4` |
+| W3bstreamDebits             | `0x0AD341EfF116eeee2451d105133F7759FE4c2e4f` |
+| W3bstreamProjectReward      | `0xfb3E89d1ED4b43F2D4D76400D95f4C158Fc02aC0` |
+| W3bstreamTaskManager        | `0xF0714400a4C0C72007A9F910C5E3007614958636` |
+| W3bstreamRouter             | `0x28E0A99A76a467E7418019cBBbF79E4599C73B5B` |
+| W3bstreamRewardDistributor  | `0x058f2F501EC0505B9CF8AB361FFFBFd36C83a8aF` |
+| W3bstreamMinter             | `0x49C096AE869A3054Db06ffF221b917b41f94CEf3` |
+
+| Setting                   | Value                                    |
+|-----------------------------|--------------------------------------------|
+| ProjectRegistrar Fee        | `1.0 IOTX`                                      |
+| W3bstreamMinter Reward      | `0 IOTX`                                        |
