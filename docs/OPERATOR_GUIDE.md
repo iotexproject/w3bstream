@@ -1,4 +1,6 @@
-# IoTeX W3bstream Sprout Node Operator Guide
+# IoTeX W3bstream Node Operator Guide
+
+> ⚠️ **Note**:  Please note that this guide is outdated. Currently, running a community node on W3bstream is not supported. Stay tuned for updates.
 
 W3bstream is a permissionless, decentralized protocol within the IoTeX Network, where node operators contribute computing power to support verifiable computations for blockchain applications. These applications rely on insights from real-world data to trigger their token economies. Anyone can become a W3bstream Node Operator in the IoTeX Network, choosing which dApps to support in processing data and generating ZK (Zero Knowledge) Proofs.
 
