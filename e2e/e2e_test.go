@@ -102,10 +102,20 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	err = sendETH(t, chainEndpoint, payerHex, sequencer.Address(), 200)
 	require.NoError(t, err)
-
 	err = sequencer.Start()
 	require.NoError(t, err)
 	defer sequencer.Stop()
+
+	// Prover init
+	tempProverDB, err := os.CreateTemp("", "prover.db")
+	require.NoError(t, err)
+	defer os.Remove(tempProverDB.Name())
+	defer tempProverDB.Close()
+	_, proverKey, err := proverInit(PGURI, tempProverDB.Name(), chainEndpoint, contracts)
+	require.NoError(t, err)
+	// err = prover.Start()
+	// require.NoError(t, err)
+	// defer prover.Stop()
 
 	// Register project
 	projectOwnerKey, err := crypto.GenerateKey()
@@ -117,8 +127,6 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 
 	// Register prover
-	proverKey, err := crypto.GenerateKey()
-	require.NoError(t, err)
 	proverAddr := crypto.PubkeyToAddress(proverKey.PublicKey)
 	err = sendETH(t, chainEndpoint, payerHex, proverAddr, 20)
 	require.NoError(t, err)
@@ -143,7 +151,21 @@ func TestE2E(t *testing.T) {
 	reqBody, err := signMesssage(dataJson, projectID.Uint64(), senderKey)
 	require.NoError(t, err)
 
-	err = sendMessage(reqBody, apiNodeUrl)
+	taskID, err := sendMessage(reqBody, apiNodeUrl)
+	require.NoError(t, err)
+
+	err = waitUntil(func() (bool, error) {
+		states, err := queryTask(projectID.Uint64(), taskID, apiNodeUrl)
+		if err != nil {
+			return false, err
+		}
+		for _, state := range states.States {
+			if state.State == "assigned" {
+				return true, nil
+			}
+		}
+		return false, nil
+	}, 30*time.Second)
 	require.NoError(t, err)
 
 	time.Sleep(20 * time.Second)
@@ -202,29 +224,6 @@ func sendETH(t *testing.T, chainEndpoint string, payerHex string, toAddress comm
 	return nil
 }
 
-func sendMessage(body []byte, apiurl string) error {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/message", apiurl), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.Wrapf(err, "failed to send message, status code: %d", resp.StatusCode)
-	}
-
-	return nil
-}
-
 func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte, error) {
 	req := &api.HandleMessageReq{
 		ProjectID:      projectID,
@@ -247,4 +246,94 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	req.Signature = hexutil.Encode(sig)
 
 	return json.Marshal(req)
+}
+
+func sendMessage(body []byte, apiurl string) (string, error) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/message", apiurl), bytes.NewBuffer(body))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.Wrapf(err, "failed to send message, status code: %d", resp.StatusCode)
+	}
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	var handleMessageResp api.HandleMessageResp
+	if err := json.Unmarshal(buf.Bytes(), &handleMessageResp); err != nil {
+		return "", errors.Wrap(err, "failed to deserialize response body")
+	}
+
+	return handleMessageResp.TaskID, nil
+}
+
+func queryTask(projectID uint64, taskID string, apiurl string) (*api.QueryTaskResp, error) {
+	req := &api.QueryTaskReq{
+		ProjectID: projectID,
+		TaskID:    taskID,
+	}
+
+	reqJson, err := json.Marshal(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal request")
+	}
+
+	httpReq, err := http.NewRequest("GET", fmt.Sprintf("%s/task", apiurl), bytes.NewBuffer(reqJson))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create request")
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to send request")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("failed to query task, status code: %d", resp.StatusCode)
+	}
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	var queryTaskResp api.QueryTaskResp
+	if err := json.Unmarshal(buf.Bytes(), &queryTaskResp); err != nil {
+		return nil, errors.Wrap(err, "failed to deserialize response body")
+	}
+
+	return &queryTaskResp, nil
+}
+
+func waitUntil(f func() (bool, error), timeOut time.Duration) error {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	timeoutCh := time.After(timeOut)
+
+	for {
+		select {
+		case <-timeoutCh:
+			return fmt.Errorf("timeout waiting for condition")
+		case <-ticker.C:
+			ok, err := f()
+			if err != nil {
+				return err
+			}
+			if ok {
+				return nil
+			}
+		}
+	}
 }

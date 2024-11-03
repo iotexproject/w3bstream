@@ -210,6 +210,14 @@ func (c *contract) watch(listedBlockNumber uint64) {
 	go func() {
 		for range ticker.C {
 			target := scannedBlockNumber + 1
+			currheight, err := c.client.BlockNumber(context.Background())
+			if err != nil {
+				slog.Error("failed to get current block number", "error", err)
+				continue
+			}
+			if target > currheight {
+				continue
+			}
 
 			query.FromBlock = new(big.Int).SetUint64(target)
 			query.ToBlock = new(big.Int).SetUint64(target)

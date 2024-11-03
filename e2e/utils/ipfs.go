@@ -42,7 +42,7 @@ func SetupIPFS() (*ipfsContainer, string, error) {
 		return nil, "", err
 	}
 
-	apiURL := fmt.Sprintf("http://%s:%s", ip, mapPort.Port())
+	apiURL := fmt.Sprintf("%s:%s", ip, mapPort.Port())
 
 	return &ipfsContainer{Container: container}, apiURL, nil
 }

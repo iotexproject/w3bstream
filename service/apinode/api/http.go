@@ -128,6 +128,47 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+func (s *httpServer) getProverTaskState(projectID uint64, taskID string) (*StateLog, error) {
+	reqBody, err := json.Marshal(proverapi.QueryTaskReq{
+		ProjectID: projectID,
+		TaskID:    taskID,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal prover request")
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s/task", s.proverAddr), bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build http request")
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	proverResp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to call prover http server")
+	}
+	defer proverResp.Body.Close()
+
+	body, err := io.ReadAll(proverResp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read prover http server response")
+	}
+
+	taskResp := &proverapi.QueryTaskResp{}
+	if err := json.Unmarshal(body, &taskResp); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal prover http server response")
+	}
+
+	if taskResp.Processed && taskResp.Error != "" {
+		return &StateLog{
+			State: "failed",
+			Error: taskResp.Error,
+			Time:  taskResp.Time,
+		}, nil
+	}
+	return nil, nil
+}
+
 func (s *httpServer) queryTask(c *gin.Context) {
 	req := &QueryTaskReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
@@ -143,97 +184,89 @@ func (s *httpServer) queryTask(c *gin.Context) {
 		States:    []*StateLog{},
 	}
 
-	t, err := s.p.FetchTask(req.ProjectID, taskID)
+	// Get packed state
+	task, err := s.p.FetchTask(req.ProjectID, taskID)
 	if err != nil {
 		slog.Error("failed to query task", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to query task")))
+		resp.States = append(resp.States, &StateLog{
+			State: "error",
+			Time:  time.Now(),
+			Error: fmt.Sprintf("failed to query task: %v", err),
+		})
+		c.JSON(http.StatusOK, resp)
 		return
 	}
-	if t == nil {
+	if task == nil {
 		c.JSON(http.StatusOK, resp)
 		return
 	}
 	resp.States = append(resp.States, &StateLog{
 		State: "packed",
-		Time:  t.CreatedAt,
+		Time:  task.CreatedAt,
 	})
 
-	ta, err := s.p.FetchAssignedTask(req.ProjectID, taskID)
+	// Get assigned state
+	assignedTask, err := s.p.FetchAssignedTask(req.ProjectID, taskID)
 	if err != nil {
 		slog.Error("failed to query assigned task", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to query assigned task")))
+		resp.States = append(resp.States, &StateLog{
+			State: "error",
+			Time:  time.Now(),
+			Error: fmt.Sprintf("failed to query assigned task: %v", err),
+		})
+		c.JSON(http.StatusOK, resp)
 		return
 	}
-	if ta == nil {
+	if assignedTask == nil {
 		c.JSON(http.StatusOK, resp)
 		return
 	}
 	resp.States = append(resp.States, &StateLog{
 		State:    "assigned",
-		Time:     ta.CreatedAt,
-		ProverID: "did:io:" + strings.TrimPrefix(ta.Prover.String(), "0x"),
+		Time:     assignedTask.CreatedAt,
+		ProverID: "did:io:" + strings.TrimPrefix(assignedTask.Prover.String(), "0x"),
 	})
 
-	ts, err := s.p.FetchSettledTask(req.ProjectID, taskID)
+	// Get settled state
+	settledTask, err := s.p.FetchSettledTask(req.ProjectID, taskID)
 	if err != nil {
 		slog.Error("failed to query settled task", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to query settled task")))
-		return
-	}
-	if ts == nil {
-		reqJ, err := json.Marshal(proverapi.QueryTaskReq{
-			ProjectID: req.ProjectID,
-			TaskID:    req.TaskID,
+		resp.States = append(resp.States, &StateLog{
+			State: "error",
+			Time:  time.Now(),
+			Error: fmt.Sprintf("failed to query settled task: %v", err),
 		})
-		if err != nil {
-			slog.Error("failed to marshal prover request", "error", err)
-			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to marshal prover request")))
-			return
-		}
-		req, err := http.NewRequest("GET", fmt.Sprintf("http://%s/task", s.proverAddr), bytes.NewBuffer(reqJ))
-		if err != nil {
-			slog.Error("failed to build http request", "error", err)
-			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to build http request")))
-			return
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		proverResp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			slog.Error("failed to call prover http server", "error", err)
-			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to call prover http server")))
-			return
-		}
-		defer proverResp.Body.Close()
-
-		body, err := io.ReadAll(proverResp.Body)
-		if err != nil {
-			slog.Error("failed to read prover http server response", "error", err)
-			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to read prover http server response")))
-			return
-		}
-		taskResp := &proverapi.QueryTaskResp{}
-		if err := json.Unmarshal(body, &taskResp); err != nil {
-			slog.Error("failed to unmarshal prover http server response", "error", err)
-			c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to unmarshal prover http server response")))
-			return
-		}
-		if taskResp.Processed && taskResp.Error != "" {
-			resp.States = append(resp.States, &StateLog{
-				State: "failed",
-				Error: taskResp.Error,
-				Time:  taskResp.Time,
-			})
-		}
 		c.JSON(http.StatusOK, resp)
 		return
 	}
-	resp.States = append(resp.States, &StateLog{
-		State:   "settled",
-		Time:    ts.CreatedAt,
-		Comment: "The task has been completed. Please check the generated proof in the corresponding DApp contract.",
-		Tx:      ts.Tx.String(),
-	})
+
+	if settledTask != nil {
+		resp.States = append(resp.States, &StateLog{
+			State:   "settled",
+			Time:    settledTask.CreatedAt,
+			Comment: "The task has been completed. Please check the generated proof in the corresponding DApp contract.",
+			Tx:      settledTask.Tx.String(),
+		})
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+
+	// If not settled, check prover state
+	proverState, err := s.getProverTaskState(req.ProjectID, req.TaskID)
+	if err != nil {
+		slog.Error("failed to get prover task state", "error", err)
+		resp.States = append(resp.States, &StateLog{
+			State: "error",
+			Time:  time.Now(),
+			Error: fmt.Sprintf("failed to get prover state: %v", err),
+		})
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	if proverState != nil {
+		resp.States = append(resp.States, proverState)
+	}
+
 	c.JSON(http.StatusOK, resp)
 }
 

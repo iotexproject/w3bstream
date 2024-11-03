@@ -96,6 +96,15 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 		return errors.Errorf("failed to send tx, error_code: %v, error_message: %v, error_data: %v", jsonErr.Code, jsonErr.Message, jsonErr.Data)
 	}
 	slog.Info("send tx to minter contract success", "hash", tx.Hash().String())
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	receipt, err := bind.WaitMined(ctx, r.client, tx)
+	if err != nil {
+		return errors.Wrap(err, "failed to wait tx mined")
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return errors.New("tx failed")
+	}
 	if err := r.db.AssignTask(projectID, taskID, prover); err != nil {
 		return err
 	}

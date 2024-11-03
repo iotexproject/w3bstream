@@ -113,34 +113,34 @@ func sequencerInit(dbURI string, dbFile string, chainEndpoint string, bootnodeAd
 	return sq, nil
 }
 
-func proverInit(dbFile string, dbURI string, chainEndpoint string,
+func proverInit(dbURI string, dbFile string, chainEndpoint string,
 	contractDeployments *utils.ContractsDeployments,
-) (*prover.Prover, error) {
+) (*prover.Prover, *ecdsa.PrivateKey, error) {
 	key, err := crypto.GenerateKey()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	db, err := proverdb.New(dbFile, crypto.PubkeyToAddress(key.PublicKey))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	cfg := &proverconfig.Config{
-		LogLevel:        slog.LevelInfo,
-		ServiceEndpoint: ":9002",
-		VMEndpoints:     `{"1":"localhost:4001","2":"localhost:4002","3":"zkwasm:4001","4":"wasm:4001"}`,
-		ChainEndpoint:   chainEndpoint,
-		DatasourceDSN:   dbURI,
-		// ProjectContractAddr:     projectContractAddr,
-		// RouterContractAddr:      routerContractAddr,
-		// TaskManagerContractAddr: taskManagerContractAddr,
-		BeginningBlockNumber: 0,
+		LogLevel:                slog.LevelInfo,
+		ServiceEndpoint:         ":9002",
+		VMEndpoints:             `{"1":"localhost:4001","2":"localhost:4002","3":"zkwasm:4001","4":"wasm:4001"}`,
+		ChainEndpoint:           chainEndpoint,
+		DatasourceDSN:           dbURI,
+		ProjectContractAddr:     contractDeployments.WSProject,
+		RouterContractAddr:      contractDeployments.Router,
+		TaskManagerContractAddr: contractDeployments.TaskManager,
+		BeginningBlockNumber:    0,
 	}
 
 	prover := prover.NewProver(cfg, db, key)
 
-	return prover, nil
+	return prover, key, nil
 }
 
 func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, projectFile string,
