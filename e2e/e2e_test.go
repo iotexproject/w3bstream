@@ -78,6 +78,15 @@ func TestE2E(t *testing.T) {
 		}
 	})
 
+	// Setup VM
+	vmContainer, vmEndpoint, err := utils.SetupRisc0VM()
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		if err := vmContainer.Terminate(context.Background()); err != nil {
+			t.Logf("failed to terminate vm container: %v", err)
+		}
+	})
+
 	// Bootnode init
 	bootnode, err := bootNodeInit()
 	require.NoError(t, err)
@@ -111,11 +120,11 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempProverDB.Name())
 	defer tempProverDB.Close()
-	_, proverKey, err := proverInit(PGURI, tempProverDB.Name(), chainEndpoint, contracts)
+	prover, proverKey, err := proverInit(PGURI, tempProverDB.Name(), chainEndpoint, vmEndpoint, contracts)
 	require.NoError(t, err)
-	// err = prover.Start()
-	// require.NoError(t, err)
-	// defer prover.Stop()
+	err = prover.Start()
+	require.NoError(t, err)
+	defer prover.Stop()
 
 	// Register project
 	projectOwnerKey, err := crypto.GenerateKey()
@@ -141,7 +150,7 @@ func TestE2E(t *testing.T) {
 	}{
 		PrivateInput: "14",
 		PublicInput:  "3,34",
-		ReceiptType:  "Snark",
+		ReceiptType:  "Stark",
 	}
 	dataJson, err := json.Marshal(msgData)
 	require.NoError(t, err)
@@ -168,7 +177,19 @@ func TestE2E(t *testing.T) {
 	}, 30*time.Second)
 	require.NoError(t, err)
 
-	time.Sleep(20 * time.Second)
+	err = waitUntil(func() (bool, error) {
+		states, err := queryTask(projectID.Uint64(), taskID, apiNodeUrl)
+		if err != nil {
+			return false, err
+		}
+		for _, state := range states.States {
+			if state.State == "settled" {
+				return true, nil
+			}
+		}
+		return false, nil
+	}, 120*time.Second)
+	require.NoError(t, err)
 
 }
 
@@ -242,7 +263,6 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 		return nil, err
 	}
 
-	fmt.Printf("Signature: %x\n", sig)
 	req.Signature = hexutil.Encode(sig)
 
 	return json.Marshal(req)

@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	_ "github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
@@ -36,8 +35,6 @@ func SetupPostgres(dbName string) (*pgContainer, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-
-	fmt.Println(connStr)
 
 	// test connection
 	db, err := sql.Open("postgres", connStr)

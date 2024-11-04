@@ -90,6 +90,16 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 		}
 		return errors.Errorf("failed to send tx, error_code: %v, error_message: %v, error_data: %v", jsonErr.Code, jsonErr.Message, jsonErr.Data)
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	receipt, err := bind.WaitMined(ctx, r.client, tx)
+	if err != nil {
+		return errors.Wrap(err, "failed to wait tx mined")
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return errors.New("tx failed")
+	}
 	slog.Info("send tx to router contract success", "hash", tx.Hash().String())
 	return nil
 }

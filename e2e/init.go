@@ -113,7 +113,7 @@ func sequencerInit(dbURI string, dbFile string, chainEndpoint string, bootnodeAd
 	return sq, nil
 }
 
-func proverInit(dbURI string, dbFile string, chainEndpoint string,
+func proverInit(dbURI string, dbFile string, chainEndpoint string, vmEndpoint string,
 	contractDeployments *utils.ContractsDeployments,
 ) (*prover.Prover, *ecdsa.PrivateKey, error) {
 	key, err := crypto.GenerateKey()
@@ -129,7 +129,7 @@ func proverInit(dbURI string, dbFile string, chainEndpoint string,
 	cfg := &proverconfig.Config{
 		LogLevel:                slog.LevelInfo,
 		ServiceEndpoint:         ":9002",
-		VMEndpoints:             `{"1":"localhost:4001","2":"localhost:4002","3":"zkwasm:4001","4":"wasm:4001"}`,
+		VMEndpoints:             fmt.Sprintf("{\"1\":\"%s\"}", vmEndpoint),
 		ChainEndpoint:           chainEndpoint,
 		DatasourceDSN:           dbURI,
 		ProjectContractAddr:     contractDeployments.WSProject,
