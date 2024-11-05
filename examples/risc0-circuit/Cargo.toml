@@ -8,7 +8,12 @@ range-method = { path = "method" }
 risc0-zkvm = { version = "1.0.0" }
 serde = "1.0"
 serde_json = "1.0"
-clap = { version = "4.4.3", features = ["derive", "env", "unicode", "wrap_help"] }
+clap = { version = "4.4.3", features = [
+    "derive",
+    "env",
+    "unicode",
+    "wrap_help",
+] }
 
 
 [features]
