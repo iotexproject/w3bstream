@@ -1,5 +1,5 @@
 # Variables
-BUILD_DIR=build
+BUILD_DIR=bin
 DOCKER_APINODE_TARGET=ghcr.io/iotexproject/w3bstream-apinode:latest
 DOCKER_PROVER_TARGET=ghcr.io/iotexproject/w3bstream-prover:latest
 DOCKER_BOOTNODE_TARGET=ghcr.io/iotexproject/w3bstream-bootnode:latest
