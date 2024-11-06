@@ -28,7 +28,6 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode code")
 	}
-	slog.Debug("new project", "projectID", task.ProjectID, "binary", code)
 	if _, err := cli.NewProject(context.Background(), &proto.NewProjectRequest{
 		ProjectID: task.ProjectID,
 		Binary:    bi,
@@ -37,14 +36,14 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
 
-	slog.Debug("execute task", "projectID", task.ProjectID, "taskID", task.ID, "payloads", task.Payloads)
 	resp, err := cli.ExecuteTask(context.Background(), &proto.ExecuteTaskRequest{
 		ProjectID: task.ProjectID,
 		TaskID:    task.ID[:],
 		Payloads:  task.Payloads,
 	})
 	if err != nil {
-		slog.Error("failed to execute task", "projectID", task.ProjectID, "taskID", task.ID, "err", err)
+		slog.Error("failed to execute task", "projectID", task.ProjectID, "vmTppeID", vmTypeID,
+			"taskID", task.ID, "binary", code, "payloads", task.Payloads, "err", err)
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
 

@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	LogLevel                slog.Level `env:"LOG_LEVEL,optional"`
+	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT"`
 	BootNodeMultiAddr       string     `env:"BOOTNODE_MULTIADDR"`
 	IoTeXChainID            int        `env:"IOTEX_CHAINID"`
 	DatasourceDSN           string     `env:"DATASOURCE_DSN"`
@@ -25,6 +26,7 @@ type Config struct {
 var (
 	defaultTestnetConfig = &Config{
 		LogLevel:                slog.LevelInfo,
+		ServiceEndpoint:         ":9001",
 		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		DatasourceDSN:           "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",
 		IoTeXChainID:            2,

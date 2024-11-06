@@ -11,6 +11,7 @@ import (
 	"github.com/iotexproject/w3bstream/datasource"
 	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/p2p"
+	"github.com/iotexproject/w3bstream/service/sequencer/api"
 	"github.com/iotexproject/w3bstream/service/sequencer/config"
 	"github.com/iotexproject/w3bstream/service/sequencer/db"
 	"github.com/iotexproject/w3bstream/task/assigner"
@@ -59,6 +60,12 @@ func (s *Sequencer) Start() error {
 	}
 
 	err = assigner.Run(s.db, s.privateKey, s.cfg.ChainEndpoint, datasource.Retrieve, common.HexToAddress(s.cfg.MinterContractAddr))
+	go func() {
+		if err := api.Run(s.cfg.ServiceEndpoint); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	return errors.Wrap(err, "failed to run task assigner")
 }
 

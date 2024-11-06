@@ -3,9 +3,9 @@ package processor
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/json"
 	"log/slog"
 	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
+	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/router"
 	"github.com/iotexproject/w3bstream/task"
@@ -55,12 +56,17 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 	if err != nil {
 		return err
 	}
-	slog.Debug("get a new task", "project_id", t.ProjectID, "task_id", t.ID)
-
+	slog.Info("process task", "project_id", t.ProjectID, "task_id", t.ID, "vm_type", c.VMTypeID)
+	startTime := time.Now()
 	proof, err := r.handle(t, c.VMTypeID, c.Code, c.CodeExpParam)
 	if err != nil {
+		metrics.FailedTaskNumMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10)).Inc()
+		slog.Error("failed to handle task", "error", err)
 		return err
 	}
+	processTime := time.Since(startTime)
+	slog.Info("process task success", "project_id", t.ProjectID, "task_id", t.ID, "process_time", processTime)
+	metrics.TaskDurationMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion, t.ID.String()).Set(processTime.Seconds())
 
 	tx, err := r.routerInstance.Route(
 		&bind.TransactOpts{
@@ -76,28 +82,17 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 		proof,
 	)
 	if err != nil {
-		jsonErr := &struct {
-			Code    int         `json:"code"`
-			Message string      `json:"message"`
-			Data    interface{} `json:"data,omitempty"`
-		}{}
-		je, nerr := json.Marshal(err)
-		if nerr != nil {
-			return errors.Wrap(err, "failed to marshal send tx error")
-		}
-		if err := json.Unmarshal(je, jsonErr); err != nil {
-			return errors.Wrap(err, "failed to unmarshal send tx error")
-		}
-		return errors.Errorf("failed to send tx, error_code: %v, error_message: %v, error_data: %v", jsonErr.Code, jsonErr.Message, jsonErr.Data)
+		return errors.Wrap(err, "failed to send tx to router contract")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	receipt, err := bind.WaitMined(ctx, r.client, tx)
 	if err != nil {
 		return errors.Wrap(err, "failed to wait tx mined")
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
+		slog.Error("tx failed", "tx_hash", tx.Hash().String())
 		return errors.New("tx failed")
 	}
 	slog.Info("send tx to router contract success", "hash", tx.Hash().String())

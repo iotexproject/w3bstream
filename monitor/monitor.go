@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
+	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
@@ -114,6 +115,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err := c.h.AssignTask(e.ProjectId.Uint64(), e.TaskId, e.Prover); err != nil {
 				return err
 			}
+			metrics.AssignedTaskMtc.WithLabelValues(e.ProjectId.String()).Inc()
 		case taskSettledTopic:
 			if c.taskManagerInstance == nil || c.h.SettleTask == nil {
 				continue
@@ -125,6 +127,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err := c.h.SettleTask(e.ProjectId.Uint64(), e.TaskId, l.TxHash); err != nil {
 				return err
 			}
+			metrics.SucceedTaskNumMtc.WithLabelValues(e.ProjectId.String()).Inc()
 		case projectConfigUpdatedTopic:
 			if c.projectInstance == nil || c.h.UpsertProject == nil {
 				continue
@@ -193,6 +196,7 @@ func (c *contract) list() (uint64, error) {
 		if err := c.h.UpsertScannedBlockNumber(to); err != nil {
 			return 0, err
 		}
+		metrics.SyncedBlockHeightMtc.Set(float64(to))
 		from = to + 1
 	}
 	slog.Info("contract data synchronization completed", "current_height", to)

@@ -1,89 +1,63 @@
 package metrics
 
 import (
-	"strconv"
-
+	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
-	dispatchedTaskNumMtc = prometheus.NewCounterVec(
+	SyncedBlockHeightMtc = prometheus.NewGauge(prometheus.GaugeOpts{ //
+		Name: "synced_block_height",
+		Help: "Height of the latest synced block.",
+	})
+	ProverMtc = prometheus.NewGauge(prometheus.GaugeOpts{ //
+		Name: "prover_total",
+		Help: "Total number of provers.",
+	})
+	NewTaskMtc = prometheus.NewCounterVec( //
 		prometheus.CounterOpts{
-			Name: "dispatched_task_num_metrics",
-			Help: "dispatched task num metrics.",
-		}, []string{"projectID", "projectVersion"})
-	retryTaskNumMtc = prometheus.NewCounterVec(
+			Name: "new_tasks_total",
+			Help: "Total number of new tasks.",
+		}, []string{"projectID"})
+	AssignedTaskMtc = prometheus.NewCounterVec( //
 		prometheus.CounterOpts{
-			Name: "retry_task_num_metrics",
-			Help: "retry task num metrics.",
-		}, []string{"projectID", "projectVersion"})
-	timeoutTaskNumMtc = prometheus.NewCounterVec(
+			Name: "assigned_tasks_total",
+			Help: "Total number of tasks that have been assigned.",
+		}, []string{"projectID"})
+	FailedAssignedTaskMtc = prometheus.NewCounterVec( //
 		prometheus.CounterOpts{
-			Name: "timeout_task_num_metrics",
-			Help: "timeout task num metrics.",
-		}, []string{"projectID", "projectVersion"})
-	taskDurationMtc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "task_duration_metrics",
-		Help: "task duration metrics.",
-	}, []string{"projectID", "projectVersion"})
-	taskRuntimeMtc = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "task_runtime_metrics",
-		Help:    "task runtime metrics.",
-		Buckets: prometheus.LinearBuckets(0, 60, 10),
-	}, []string{"projectID", "projectVersion"})
-	failedTaskNumMtc = prometheus.NewCounterVec(
+			Name: "failed_assigned_tasks_total",
+			Help: "Total number of tasks that have failed to be assigned.",
+		}, []string{"projectID"})
+	TaskDurationMtc = prometheus.NewGaugeVec(prometheus.GaugeOpts{ //
+		Name: "task_duration_seconds",
+		Help: "Duration of task execution in seconds.",
+	}, []string{"projectID", "projectVersion", "taskID"})
+	FailedTaskNumMtc = prometheus.NewCounterVec( //
 		prometheus.CounterOpts{
-			Name: "failed_task_num_metrics",
-			Help: "failed task num metrics.",
-		}, []string{"projectID", "projectVersion"})
-	succeedTaskNumMtc = prometheus.NewCounterVec(
+			Name: "failed_tasks_total",
+			Help: "Total number of tasks that have failed.",
+		}, []string{"projectID"})
+	SucceedTaskNumMtc = prometheus.NewCounterVec( //
 		prometheus.CounterOpts{
-			Name: "succeed_task_num_metrics",
-			Help: "succeed task num metrics.",
-		}, []string{"projectID", "projectVersion"})
-	taskFinalStateNumMtc = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "task_final_state_num_metrics",
-		Help: "task final state num metrics.",
-	}, []string{"projectID", "projectVersion", "state"})
+			Name: "successful_tasks_total",
+			Help: "Total number of tasks that have completed successfully.",
+		}, []string{"projectID"})
 )
 
-func init() {
-	prometheus.MustRegister(dispatchedTaskNumMtc)
-	prometheus.MustRegister(retryTaskNumMtc)
-	prometheus.MustRegister(timeoutTaskNumMtc)
-	prometheus.MustRegister(taskDurationMtc)
-	prometheus.MustRegister(failedTaskNumMtc)
-	prometheus.MustRegister(succeedTaskNumMtc)
-	prometheus.MustRegister(taskFinalStateNumMtc)
-	prometheus.MustRegister(taskRuntimeMtc)
+func Init() {
+	prometheus.MustRegister(SyncedBlockHeightMtc)
+	prometheus.MustRegister(ProverMtc)
+	prometheus.MustRegister(NewTaskMtc)
+	prometheus.MustRegister(AssignedTaskMtc)
+	prometheus.MustRegister(FailedAssignedTaskMtc)
+	prometheus.MustRegister(TaskDurationMtc)
+	prometheus.MustRegister(FailedTaskNumMtc)
+	prometheus.MustRegister(SucceedTaskNumMtc)
 }
 
-func DispatchedTaskNumMtc(projectID uint64, projectVersion string) {
-	dispatchedTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
-}
-
-func RetryTaskNumMtc(projectID uint64, projectVersion string) {
-	retryTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
-}
-
-func TimeoutTaskNumMtc(projectID uint64, projectVersion string) {
-	timeoutTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
-}
-
-func TaskDurationMtc(projectID uint64, projectVersion string, duration float64) {
-	taskDurationMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Set(duration)
-
-	taskRuntimeMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Observe(duration)
-}
-
-func FailedTaskNumMtc(projectID uint64, projectVersion string) {
-	failedTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
-}
-
-func SucceedTaskNumMtc(projectID uint64, projectVersion string) {
-	succeedTaskNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion).Inc()
-}
-
-func TaskFinalStateNumMtc(projectID uint64, projectVersion, state string) {
-	taskFinalStateNumMtc.WithLabelValues(strconv.FormatUint(projectID, 10), projectVersion, state).Inc()
+// RegisterMetrics adds prometheus metrics endpoint to gin engine
+func RegisterMetrics(r *gin.Engine) {
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 }

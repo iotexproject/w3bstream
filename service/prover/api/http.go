@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
+	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/service/prover/db"
 )
 
@@ -67,6 +68,7 @@ func Run(db *db.DB, address string) error {
 	}
 
 	s.engine.GET("/task", s.queryTask)
+	metrics.RegisterMetrics(s.engine)
 
 	if err := s.engine.Run(address); err != nil {
 		slog.Error("failed to start http server", "address", address, "error", err)

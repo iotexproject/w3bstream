@@ -1,12 +1,16 @@
 package db
 
 import (
+	"strconv"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
+
+	"github.com/iotexproject/w3bstream/metrics"
 )
 
 type scannedBlockNumber struct {
@@ -64,6 +68,7 @@ func (p *DB) Provers() ([]common.Address, error) {
 	for _, t := range ts {
 		res = append(res, t.Prover)
 	}
+	metrics.ProverMtc.Set(float64(len(ts)))
 	return res, nil
 }
 
@@ -84,8 +89,11 @@ func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
 		ProjectID: projectID,
 		Assigned:  false,
 	}
-	err := p.db.Create(t).Error
-	return errors.Wrap(err, "failed to create task")
+	if err := p.db.Create(t).Error; err != nil {
+		return errors.Wrap(err, "failed to create task")
+	}
+	metrics.NewTaskMtc.WithLabelValues(strconv.FormatUint(projectID, 10)).Inc()
+	return nil
 }
 
 func (p *DB) AssignTask(projectID uint64, taskID common.Hash, prover common.Address) error {

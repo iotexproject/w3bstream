@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
+	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
@@ -283,6 +284,7 @@ func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, 
 
 	s.engine.POST("/message", s.handleMessage)
 	s.engine.GET("/task", s.queryTask)
+	metrics.RegisterMetrics(s.engine)
 
 	if err := s.engine.Run(addr); err != nil {
 		slog.Error("failed to start http server", "address", addr, "error", err)
