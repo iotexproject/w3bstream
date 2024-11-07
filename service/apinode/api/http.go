@@ -79,32 +79,16 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 		return
 	}
 
-	sigStr := req.Signature
-	req.Signature = ""
-
-	reqJson, err := json.Marshal(req)
+	pubKey, err := s.recoverSignature(*req)
 	if err != nil {
-		slog.Error("failed to marshal request into json format", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to process request data")))
-		return
-	}
-
-	sig, err := hexutil.Decode(sigStr)
-	if err != nil {
-		slog.Error("failed to decode signature from hex format", "signature", sigStr, "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature format")))
-		return
-	}
-
-	h := crypto.Keccak256Hash(reqJson)
-	sigpk, err := crypto.SigToPub(h.Bytes(), sig)
-	if err != nil {
-		slog.Error("failed to recover public key from signature", "error", err)
+		slog.Error("failed to recover signature", "error", err)
 		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
 		return
 	}
 
-	addr := crypto.PubkeyToAddress(*sigpk)
+	// TODO: Crosscheck pubkey with ioID
+
+	addr := crypto.PubkeyToAddress(*pubKey)
 
 	taskID, err := s.p.Save(s.pubSub,
 		&persistence.Message{
@@ -127,6 +111,27 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	}
 	slog.Info("successfully processed message", "taskID", resp.TaskID)
 	c.JSON(http.StatusOK, resp)
+}
+
+func (s *httpServer) recoverSignature(req HandleMessageReq) (*ecdsa.PublicKey, error) {
+	sigStr := req.Signature
+	req.Signature = ""
+	reqJson, err := json.Marshal(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal request into json format")
+	}
+
+	sig, err := hexutil.Decode(sigStr)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode signature from hex format")
+	}
+
+	h := crypto.Keccak256Hash(reqJson)
+	sigpk, err := crypto.SigToPub(h.Bytes(), sig)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to recover public key from signature")
+	}
+	return sigpk, nil
 }
 
 func (s *httpServer) getProverTaskState(projectID uint64, taskID string) (*StateLog, error) {
