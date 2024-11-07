@@ -32,7 +32,7 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 		ProjectID: task.ProjectID,
 		Binary:    bi,
 	}); err != nil {
-		slog.Error("failed to new project", "projectID", task.ProjectID, "err", err)
+		slog.Error("failed to new project", "project_id", task.ProjectID, "err", err)
 		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
 
@@ -42,8 +42,8 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 		Payloads:  task.Payloads,
 	})
 	if err != nil {
-		slog.Error("failed to execute task", "projectID", task.ProjectID, "vmTppeID", vmTypeID,
-			"taskID", task.ID, "binary", code, "payloads", task.Payloads, "err", err)
+		slog.Error("failed to execute task", "project_id", task.ProjectID, "vm_type", vmTypeID,
+			"task_id", task.ID, "binary", code, "payloads", task.Payloads, "err", err)
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/metrics"
@@ -82,6 +83,12 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 		proof,
 	)
 	if err != nil {
+		if jsonErr, ok := err.(rpc.DataError); ok {
+			errData := jsonErr.ErrorData()
+			errMsg := jsonErr.Error()
+			errCode := err.(rpc.Error).ErrorCode()
+			return errors.Wrapf(err, "failed to send tx to router contract, errData: %v, errMsg: %s, errCode: %d", errData, errMsg, errCode)
+		}
 		return errors.Wrap(err, "failed to send tx to router contract")
 	}
 

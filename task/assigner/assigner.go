@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/rand"
 
@@ -82,6 +83,12 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 		},
 	)
 	if err != nil {
+		if jsonErr, ok := err.(rpc.DataError); ok {
+			errData := jsonErr.ErrorData()
+			errMsg := jsonErr.Error()
+			errCode := err.(rpc.Error).ErrorCode()
+			return errors.Wrapf(err, "failed to send tx to minter contract, errData: %v, errMsg: %s, errCode: %d", errData, errMsg, errCode)
+		}
 		return errors.Wrap(err, "failed to send tx to minter contract")
 	}
 	slog.Info("send tx to minter contract success", "hash", tx.Hash().String())
