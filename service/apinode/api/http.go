@@ -65,12 +65,11 @@ type QueryTaskResp struct {
 }
 
 type httpServer struct {
-	engine            *gin.Engine
-	p                 *persistence.Persistence
-	aggregationAmount int
-	prv               *ecdsa.PrivateKey
-	pubSub            *p2p.PubSub
-	proverAddr        string
+	engine     *gin.Engine
+	p          *persistence.Persistence
+	prv        *ecdsa.PrivateKey
+	pubSub     *p2p.PubSub
+	proverAddr string
 }
 
 func (s *httpServer) createTask(c *gin.Context) {
@@ -307,14 +306,13 @@ func (s *httpServer) queryTask(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, aggregationAmount int, addr, proverAddr string) error {
+func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, addr, proverAddr string) error {
 	s := &httpServer{
-		engine:            gin.Default(),
-		p:                 p,
-		aggregationAmount: aggregationAmount,
-		prv:               prv,
-		pubSub:            pubSub,
-		proverAddr:        proverAddr,
+		engine:     gin.Default(),
+		p:          p,
+		prv:        prv,
+		pubSub:     pubSub,
+		proverAddr: proverAddr,
 	}
 
 	s.engine.POST("/task", s.createTask)

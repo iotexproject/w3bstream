@@ -65,7 +65,6 @@ func apiNodeInit(dbURI string, chainEndpoint string, bootnodeAddr string, taskMa
 		LogLevel:                slog.LevelInfo,
 		ServiceEndpoint:         ":9000",
 		ProverServiceEndpoint:   "localhost:9002",
-		AggregationAmount:       1,
 		DatabaseDSN:             dbURI,
 		PrvKey:                  "",
 		BootNodeMultiAddr:       bootnodeAddr,

@@ -50,7 +50,7 @@ func (n *APINode) Start() error {
 	}
 
 	go func() {
-		if err := api.Run(n.db, n.prv, pubSub, n.cfg.AggregationAmount, n.cfg.ServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {
+		if err := api.Run(n.db, n.prv, pubSub, n.cfg.ServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()

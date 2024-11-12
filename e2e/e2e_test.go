@@ -160,7 +160,7 @@ func TestE2E(t *testing.T) {
 	reqBody, err := signMesssage(dataJson, projectID.Uint64(), senderKey)
 	require.NoError(t, err)
 
-	taskID, err := sendMessage(reqBody, apiNodeUrl)
+	taskID, err := createTask(reqBody, apiNodeUrl)
 	require.NoError(t, err)
 
 	err = waitUntil(func() (bool, error) {
@@ -268,8 +268,8 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	return json.Marshal(req)
 }
 
-func sendMessage(body []byte, apiurl string) (string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/message", apiurl), bytes.NewBuffer(body))
+func createTask(body []byte, apiurl string) (string, error) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/task", apiurl), bytes.NewBuffer(body))
 	if err != nil {
 		return "", err
 	}
@@ -285,7 +285,7 @@ func sendMessage(body []byte, apiurl string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.Wrapf(err, "failed to send message, status code: %d", resp.StatusCode)
+		return "", errors.Wrapf(err, "failed to create task, status code: %d", resp.StatusCode)
 	}
 
 	buf := new(bytes.Buffer)
