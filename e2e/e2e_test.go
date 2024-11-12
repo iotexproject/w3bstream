@@ -246,10 +246,10 @@ func sendETH(t *testing.T, chainEndpoint string, payerHex string, toAddress comm
 }
 
 func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte, error) {
-	req := &api.HandleMessageReq{
+	req := &api.CreateTaskReq{
 		ProjectID:      projectID,
 		ProjectVersion: "v1.0.0",
-		Data:           string(data),
+		Payloads:       []string{string(data)},
 	}
 
 	reqJson, err := json.Marshal(req)
@@ -290,7 +290,7 @@ func sendMessage(body []byte, apiurl string) (string, error) {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
-	var handleMessageResp api.HandleMessageResp
+	var handleMessageResp api.CreateTaskResp
 	if err := json.Unmarshal(buf.Bytes(), &handleMessageResp); err != nil {
 		return "", errors.Wrap(err, "failed to deserialize response body")
 	}

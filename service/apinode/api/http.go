@@ -15,12 +15,14 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
+	"github.com/iotexproject/w3bstream/task"
 )
 
 type ErrResp struct {
@@ -31,14 +33,14 @@ func NewErrResp(err error) *ErrResp {
 	return &ErrResp{Error: err.Error()}
 }
 
-type HandleMessageReq struct {
-	ProjectID      uint64 `json:"projectID"                  binding:"required"`
-	ProjectVersion string `json:"projectVersion"             binding:"required"`
-	Data           string `json:"data"                       binding:"required"`
-	Signature      string `json:"signature,omitempty"        binding:"required"`
+type CreateTaskReq struct {
+	ProjectID      uint64   `json:"projectID"                  binding:"required"`
+	ProjectVersion string   `json:"projectVersion"             binding:"required"`
+	Payloads       []string `json:"payloads"                   binding:"required"`
+	Signature      string   `json:"signature,omitempty"        binding:"required"`
 }
 
-type HandleMessageResp struct {
+type CreateTaskResp struct {
 	TaskID string `json:"taskID"`
 }
 
@@ -71,8 +73,8 @@ type httpServer struct {
 	proverAddr        string
 }
 
-func (s *httpServer) handleMessage(c *gin.Context) {
-	req := &HandleMessageReq{}
+func (s *httpServer) createTask(c *gin.Context) {
+	req := &CreateTaskReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
 		slog.Error("failed to bind request", "error", err)
 		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
@@ -89,31 +91,59 @@ func (s *httpServer) handleMessage(c *gin.Context) {
 	// TODO: Crosscheck pubkey with ioID
 
 	addr := crypto.PubkeyToAddress(*pubKey)
-
-	taskID, err := s.p.Save(s.pubSub,
-		&persistence.Message{
-			DeviceID:       addr,
-			ProjectID:      req.ProjectID,
-			ProjectVersion: req.ProjectVersion,
-			Data:           []byte(req.Data),
-			TaskID:         common.Hash{},
-		}, s.aggregationAmount, s.prv,
-	)
+	payloadsB := make([][]byte, 0, len(req.Payloads))
+	for _, p := range req.Payloads {
+		payloadsB = append(payloadsB, []byte(p))
+	}
+	payloadsJ, err := json.Marshal(payloadsB)
 	if err != nil {
-		slog.Error("failed to save message to persistence layer", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "internal server error; could not save task")))
+		slog.Error("failed to marshal payloads", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to marshal payloads")))
+		return
+	}
+	taskID := crypto.Keccak256Hash([]byte(uuid.NewString()))
+	t := &task.Task{
+		ID:             taskID,
+		ProjectID:      req.ProjectID,
+		ProjectVersion: req.ProjectVersion,
+		DeviceID:       addr,
+		Payloads:       payloadsB,
+	}
+	sig, err := t.Sign(s.prv)
+	if err != nil {
+		slog.Error("failed to sign task", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to sign task")))
 		return
 	}
 
-	resp := &HandleMessageResp{}
-	if !bytes.Equal(taskID[:], common.Hash{}.Bytes()) {
-		resp.TaskID = taskID.String()
+	if err := s.p.CreateTask(
+		&persistence.Task{
+			DeviceID:       addr,
+			TaskID:         taskID,
+			ProjectID:      req.ProjectID,
+			ProjectVersion: req.ProjectVersion,
+			Payloads:       payloadsJ,
+			Signature:      sig,
+		},
+	); err != nil {
+		slog.Error("failed to create task to persistence layer", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "could not save task")))
+		return
 	}
-	slog.Info("successfully processed message", "taskID", resp.TaskID)
-	c.JSON(http.StatusOK, resp)
+
+	if err := s.pubSub.Publish(req.ProjectID, taskID); err != nil {
+		slog.Error("failed to publish message to p2p network", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to publish message to p2p network")))
+		return
+	}
+
+	slog.Info("successfully processed message", "task_id", taskID.String())
+	c.JSON(http.StatusOK, &CreateTaskResp{
+		TaskID: taskID.String(),
+	})
 }
 
-func (s *httpServer) recoverSignature(req HandleMessageReq) (*ecdsa.PublicKey, error) {
+func (s *httpServer) recoverSignature(req CreateTaskReq) (*ecdsa.PublicKey, error) {
 	sigStr := req.Signature
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
@@ -287,7 +317,7 @@ func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, 
 		proverAddr:        proverAddr,
 	}
 
-	s.engine.POST("/message", s.handleMessage)
+	s.engine.POST("/task", s.createTask)
 	s.engine.GET("/task", s.queryTask)
 	metrics.RegisterMetrics(s.engine)
 

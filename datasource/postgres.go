@@ -22,30 +22,17 @@ func (p *Postgres) Retrieve(projectID uint64, taskID common.Hash) (*task.Task, e
 	if err := p.db.Where("task_id = ? AND project_id = ?", taskID, projectID).First(&t).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to query task")
 	}
-	messageIDs := []uint64{}
-	if err := json.Unmarshal(t.MessageIDs, &messageIDs); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal task message ids, task_id %v", t.TaskID)
-	}
-
-	ms := []*persistence.Message{}
-	if err := p.db.Where("id IN ?", messageIDs).Find(&ms).Error; err != nil {
-		return nil, errors.Wrapf(err, "failed to query task messages, task_id %v", t.TaskID)
-	}
-	if len(ms) == 0 {
-		return nil, errors.Errorf("invalid task, task_id %v", t.TaskID)
-	}
-
-	ds := [][]byte{}
-	for _, m := range ms {
-		ds = append(ds, m.Data)
+	ps := [][]byte{}
+	if err := json.Unmarshal(t.Payloads, &ps); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal task payloads, task_id %v", t.TaskID)
 	}
 
 	return &task.Task{
 		ID:             t.TaskID,
-		ProjectID:      ms[0].ProjectID,
-		ProjectVersion: ms[0].ProjectVersion,
-		Payloads:       ds,
-		DeviceID:       ms[0].DeviceID,
+		ProjectID:      t.ProjectID,
+		ProjectVersion: t.ProjectVersion,
+		Payloads:       ps,
+		DeviceID:       t.DeviceID,
 		Signature:      t.Signature,
 	}, nil
 }
