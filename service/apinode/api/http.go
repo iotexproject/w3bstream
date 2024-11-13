@@ -22,7 +22,6 @@ import (
 	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
-	"github.com/iotexproject/w3bstream/task"
 )
 
 type ErrResp struct {
@@ -67,7 +66,6 @@ type QueryTaskResp struct {
 type httpServer struct {
 	engine     *gin.Engine
 	p          *persistence.Persistence
-	prv        *ecdsa.PrivateKey
 	pubSub     *p2p.PubSub
 	proverAddr string
 }
@@ -80,9 +78,15 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	pubKey, err := s.recoverSignature(*req)
+	sig, err := hexutil.Decode(req.Signature)
 	if err != nil {
-		slog.Error("failed to recover signature", "error", err)
+		slog.Error("failed to decode signature from hex format", "error", err)
+		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
+		return
+	}
+	pubKey, err := s.recoverPubkey(*req, sig)
+	if err != nil {
+		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
 		return
 	}
@@ -101,19 +105,6 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 	taskID := crypto.Keccak256Hash([]byte(uuid.NewString()))
-	t := &task.Task{
-		ID:             taskID,
-		ProjectID:      req.ProjectID,
-		ProjectVersion: req.ProjectVersion,
-		DeviceID:       addr,
-		Payloads:       payloadsB,
-	}
-	sig, err := t.Sign(s.prv)
-	if err != nil {
-		slog.Error("failed to sign task", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to sign task")))
-		return
-	}
 
 	if err := s.p.CreateTask(
 		&persistence.Task{
@@ -142,17 +133,11 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func (s *httpServer) recoverSignature(req CreateTaskReq) (*ecdsa.PublicKey, error) {
-	sigStr := req.Signature
+func (s *httpServer) recoverPubkey(req CreateTaskReq, sig []byte) (*ecdsa.PublicKey, error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal request into json format")
-	}
-
-	sig, err := hexutil.Decode(sigStr)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to decode signature from hex format")
 	}
 
 	h := crypto.Keccak256Hash(reqJson)
@@ -306,11 +291,10 @@ func (s *httpServer) queryTask(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(p *persistence.Persistence, prv *ecdsa.PrivateKey, pubSub *p2p.PubSub, addr, proverAddr string) error {
+func Run(p *persistence.Persistence, pubSub *p2p.PubSub, addr, proverAddr string) error {
 	s := &httpServer{
 		engine:     gin.Default(),
 		p:          p,
-		prv:        prv,
 		pubSub:     pubSub,
 		proverAddr: proverAddr,
 	}

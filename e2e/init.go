@@ -56,11 +56,6 @@ func bootNodeInit() (*bootnode.BootNode, error) {
 }
 
 func apiNodeInit(dbURI string, chainEndpoint string, bootnodeAddr string, taskManagerContractAddr string) (*apinode.APINode, string, error) {
-	key, err := crypto.GenerateKey()
-	if err != nil {
-		return nil, "", err
-	}
-
 	cfg := apinodeconfig.Config{
 		LogLevel:                slog.LevelInfo,
 		ServiceEndpoint:         ":9000",
@@ -79,7 +74,7 @@ func apiNodeInit(dbURI string, chainEndpoint string, bootnodeAddr string, taskMa
 		return nil, "", err
 	}
 
-	node := apinode.NewAPINode(&cfg, db, key)
+	node := apinode.NewAPINode(&cfg, db)
 	return node, fmt.Sprintf("http://localhost%s", cfg.ServiceEndpoint), nil
 }
 

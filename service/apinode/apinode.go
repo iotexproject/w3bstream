@@ -1,7 +1,6 @@
 package apinode
 
 import (
-	"crypto/ecdsa"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -16,14 +15,12 @@ import (
 type APINode struct {
 	cfg *config.Config
 	db  *persistence.Persistence
-	prv *ecdsa.PrivateKey
 }
 
-func NewAPINode(cfg *config.Config, db *persistence.Persistence, prv *ecdsa.PrivateKey) *APINode {
+func NewAPINode(cfg *config.Config, db *persistence.Persistence) *APINode {
 	return &APINode{
 		cfg: cfg,
 		db:  db,
-		prv: prv,
 	}
 }
 
@@ -50,7 +47,7 @@ func (n *APINode) Start() error {
 	}
 
 	go func() {
-		if err := api.Run(n.db, n.prv, pubSub, n.cfg.ServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {
+		if err := api.Run(n.db, pubSub, n.cfg.ServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()
