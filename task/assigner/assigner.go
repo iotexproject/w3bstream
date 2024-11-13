@@ -59,6 +59,8 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to hash task")
 	}
+	sig := t.Signature
+	sig[64] += 27
 
 	tx, err := r.minterInstance.Mint(
 		&bind.TransactOpts{
@@ -78,7 +80,7 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 				TaskId:    taskID,
 				Prover:    prover,
 				Hash:      th,
-				Signature: t.Signature,
+				Signature: sig,
 			},
 		},
 	)
