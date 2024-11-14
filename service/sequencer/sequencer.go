@@ -10,7 +10,6 @@ import (
 
 	"github.com/iotexproject/w3bstream/datasource"
 	"github.com/iotexproject/w3bstream/monitor"
-	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/service/sequencer/api"
 	"github.com/iotexproject/w3bstream/service/sequencer/config"
 	"github.com/iotexproject/w3bstream/service/sequencer/db"
@@ -48,10 +47,6 @@ func (s *Sequencer) Start() error {
 		s.cfg.ChainEndpoint,
 	); err != nil {
 		return errors.Wrap(err, "failed to start monitor")
-	}
-
-	if _, err := p2p.NewPubSub(s.cfg.BootNodeMultiAddr, s.cfg.IoTeXChainID, s.db.CreateTask); err != nil {
-		return errors.Wrap(err, "failed to new pubsub")
 	}
 
 	datasource, err := datasource.NewPostgres(s.cfg.DatasourceDSN)

@@ -87,15 +87,8 @@ func TestE2E(t *testing.T) {
 		}
 	})
 
-	// Bootnode init
-	bootnode, err := bootNodeInit()
-	require.NoError(t, err)
-	err = bootnode.Start()
-	require.NoError(t, err)
-	defer bootnode.Stop()
-
 	// APINode init
-	apiNode, apiNodeUrl, err := apiNodeInit(PGURI, chainEndpoint, bootnode.Addrs()[1], contracts.TaskManager)
+	apiNode, apiNodeUrl, err := apiNodeInit(PGURI, chainEndpoint, contracts.TaskManager)
 	require.NoError(t, err)
 	err = apiNode.Start()
 	require.NoError(t, err)
@@ -106,8 +99,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempSequencerDB.Name())
 	defer tempSequencerDB.Close()
-	sequencer, err := sequencerInit(PGURI, tempSequencerDB.Name(), chainEndpoint, bootnode.Addrs()[1],
-		contracts)
+	sequencer, err := sequencerInit(PGURI, tempSequencerDB.Name(), chainEndpoint, contracts)
 	require.NoError(t, err)
 	err = sendETH(t, chainEndpoint, payerHex, sequencer.Address(), 200)
 	require.NoError(t, err)

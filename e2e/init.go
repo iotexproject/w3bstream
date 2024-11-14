@@ -3,7 +3,6 @@ package e2e
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/rand"
 	"crypto/sha256"
 	"fmt"
 	"log/slog"
@@ -15,14 +14,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	libp2pcrypto "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotexproject/w3bstream/e2e/utils"
 	"github.com/iotexproject/w3bstream/service/apinode"
 	apinodeconfig "github.com/iotexproject/w3bstream/service/apinode/config"
 	apinodepersistence "github.com/iotexproject/w3bstream/service/apinode/persistence"
-	"github.com/iotexproject/w3bstream/service/bootnode"
 	"github.com/iotexproject/w3bstream/service/prover"
 	proverconfig "github.com/iotexproject/w3bstream/service/prover/config"
 	proverdb "github.com/iotexproject/w3bstream/service/prover/db"
@@ -40,22 +37,7 @@ import (
 	"github.com/iotexproject/w3bstream/util/ipfs"
 )
 
-func bootNodeInit() (*bootnode.BootNode, error) {
-	key, _, err := libp2pcrypto.GenerateSecp256k1Key(rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	node := bootnode.NewBootNode(bootnode.BootNodeConfig{
-		PrivateKey:   key,
-		Port:         8000,
-		IoTeXChainID: 2,
-	})
-
-	return node, nil
-}
-
-func apiNodeInit(dbURI string, chainEndpoint string, bootnodeAddr string, taskManagerContractAddr string) (*apinode.APINode, string, error) {
+func apiNodeInit(dbURI, chainEndpoint, taskManagerContractAddr string) (*apinode.APINode, string, error) {
 	cfg := apinodeconfig.Config{
 		LogLevel:                 slog.LevelInfo,
 		ServiceEndpoint:          ":9000",
@@ -63,8 +45,6 @@ func apiNodeInit(dbURI string, chainEndpoint string, bootnodeAddr string, taskMa
 		ProverServiceEndpoint:    "localhost:9002",
 		DatabaseDSN:              dbURI,
 		PrvKey:                   "",
-		BootNodeMultiAddr:        bootnodeAddr,
-		IoTeXChainID:             2,
 		ChainEndpoint:            chainEndpoint,
 		BeginningBlockNumber:     0,
 		TaskManagerContractAddr:  taskManagerContractAddr,
@@ -79,8 +59,7 @@ func apiNodeInit(dbURI string, chainEndpoint string, bootnodeAddr string, taskMa
 	return node, fmt.Sprintf("http://localhost%s", cfg.ServiceEndpoint), nil
 }
 
-func sequencerInit(dbURI string, dbFile string, chainEndpoint string, bootnodeAddr string,
-	contractDeployments *utils.ContractsDeployments,
+func sequencerInit(dbURI, dbFile, chainEndpoint string, contractDeployments *utils.ContractsDeployments,
 ) (*sequencer.Sequencer, error) {
 	key, err := crypto.GenerateKey()
 	if err != nil {
@@ -94,9 +73,7 @@ func sequencerInit(dbURI string, dbFile string, chainEndpoint string, bootnodeAd
 
 	cfg := &sequencerconfig.Config{
 		LogLevel:                slog.LevelInfo,
-		BootNodeMultiAddr:       bootnodeAddr,
 		ServiceEndpoint:         ":9001",
-		IoTeXChainID:            2,
 		TaskProcessingBandwidth: 20,
 		DatasourceDSN:           dbURI,
 		ChainEndpoint:           chainEndpoint,
@@ -140,7 +117,7 @@ func proverInit(dbURI string, dbFile string, chainEndpoint string, vmEndpoint st
 	return prover, key, nil
 }
 
-func registerProject(t *testing.T, chainEndpoint string, ipfsURL string, projectFile string,
+func registerProject(t *testing.T, chainEndpoint, ipfsURL, projectFile string,
 	contractDeployments *utils.ContractsDeployments, projectOwner *ecdsa.PrivateKey) (*big.Int, error) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)

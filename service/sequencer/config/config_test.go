@@ -18,8 +18,6 @@ func TestConfig_Init(t *testing.T) {
 		os.Clearenv()
 		expected := Config{
 			ChainEndpoint:           "http://iotex.chainendpoint.io",
-			BootNodeMultiAddr:       "/dns4/a.b.com/tcp/1000/ipfs/123123123",
-			IoTeXChainID:            100,
 			TaskProcessingBandwidth: 20,
 			ProverContractAddr:      "0x",
 			DatasourceDSN:           "111",
@@ -30,8 +28,6 @@ func TestConfig_Init(t *testing.T) {
 		_ = os.Setenv("TASK_PROCESSING_BANDWIDTH", strconv.Itoa(expected.TaskProcessingBandwidth))
 		_ = os.Setenv("DATASOURCE_DSN", expected.DatasourceDSN)
 		_ = os.Setenv("HTTP_SERVICE_ENDPOINT", expected.ServiceEndpoint)
-		_ = os.Setenv("BOOTNODE_MULTIADDR", expected.BootNodeMultiAddr)
-		_ = os.Setenv("IOTEX_CHAINID", strconv.Itoa(expected.IoTeXChainID))
 		_ = os.Setenv("PROVER_CONTRACT_ADDRESS", expected.ProverContractAddr)
 		_ = os.Setenv("LOCAL_DB_DIRECTORY", expected.LocalDBDir)
 

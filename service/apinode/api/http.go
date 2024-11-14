@@ -19,7 +19,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/metrics"
-	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
 	sequencerapi "github.com/iotexproject/w3bstream/service/sequencer/api"
@@ -67,7 +66,6 @@ type QueryTaskResp struct {
 type httpServer struct {
 	engine        *gin.Engine
 	p             *persistence.Persistence
-	pubSub        *p2p.PubSub
 	sequencerAddr string
 	proverAddr    string
 }
@@ -312,11 +310,10 @@ func (s *httpServer) queryTask(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(p *persistence.Persistence, pubSub *p2p.PubSub, addr, sequencerAddr, proverAddr string) error {
+func Run(p *persistence.Persistence, addr, sequencerAddr, proverAddr string) error {
 	s := &httpServer{
 		engine:        gin.Default(),
 		p:             p,
-		pubSub:        pubSub,
 		sequencerAddr: sequencerAddr,
 		proverAddr:    proverAddr,
 	}

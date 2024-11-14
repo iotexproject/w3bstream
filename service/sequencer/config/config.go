@@ -10,9 +10,7 @@ import (
 type Config struct {
 	LogLevel                slog.Level `env:"LOG_LEVEL,optional"`
 	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT"`
-	BootNodeMultiAddr       string     `env:"BOOTNODE_MULTIADDR"`
 	TaskProcessingBandwidth int        `env:"TASK_PROCESSING_BANDWIDTH"`
-	IoTeXChainID            int        `env:"IOTEX_CHAINID"`
 	DatasourceDSN           string     `env:"DATASOURCE_DSN"`
 	ChainEndpoint           string     `env:"CHAIN_ENDPOINT,optional"`
 	OperatorPrvKey          string     `env:"OPERATOR_PRIVATE_KEY,optional"`
@@ -28,10 +26,8 @@ var (
 	defaultTestnetConfig = &Config{
 		LogLevel:                slog.LevelInfo,
 		ServiceEndpoint:         ":9001",
-		BootNodeMultiAddr:       "/dns4/bootnode-0.testnet.iotex.one/tcp/4689/ipfs/12D3KooWFnaTYuLo8Mkbm3wzaWHtUuaxBRe24Uiopu15Wr5EhD3o",
 		DatasourceDSN:           "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",
 		TaskProcessingBandwidth: 20,
-		IoTeXChainID:            2,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
 		OperatorPrvKey:          "33e6ba3e033131026903f34dfa208feb88c284880530cf76280b68d38041c67b",
 		ProverContractAddr:      "0xab6836908d15E42D30bdEf14cbFA4ad45dCAF3a3",
