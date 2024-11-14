@@ -22,6 +22,7 @@ import (
 	"github.com/iotexproject/w3bstream/p2p"
 	"github.com/iotexproject/w3bstream/service/apinode/persistence"
 	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
+	sequencerapi "github.com/iotexproject/w3bstream/service/sequencer/api"
 )
 
 type ErrResp struct {
@@ -64,10 +65,11 @@ type QueryTaskResp struct {
 }
 
 type httpServer struct {
-	engine     *gin.Engine
-	p          *persistence.Persistence
-	pubSub     *p2p.PubSub
-	proverAddr string
+	engine        *gin.Engine
+	p             *persistence.Persistence
+	pubSub        *p2p.PubSub
+	sequencerAddr string
+	proverAddr    string
 }
 
 func (s *httpServer) createTask(c *gin.Context) {
@@ -121,9 +123,28 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	if err := s.pubSub.Publish(req.ProjectID, taskID); err != nil {
-		slog.Error("failed to publish message to p2p network", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to publish message to p2p network")))
+	reqSequencer := &sequencerapi.CreateTaskReq{ProjectID: req.ProjectID, TaskID: taskID}
+	reqSequencerJ, err := json.Marshal(reqSequencer)
+	if err != nil {
+		slog.Error("failed to marshal sequencer request", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to marshal sequencer request")))
+		return
+	}
+	resp, err := http.Post(s.sequencerAddr+"/task", "application/json", bytes.NewBuffer(reqSequencerJ))
+	if err != nil {
+		slog.Error("failed to call sequencer service", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to call sequencer service")))
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
+		if err == nil {
+			err = errors.New(string(body))
+		}
+		slog.Error("failed to call sequencer service", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to call sequencer service")))
 		return
 	}
 
@@ -291,12 +312,13 @@ func (s *httpServer) queryTask(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(p *persistence.Persistence, pubSub *p2p.PubSub, addr, proverAddr string) error {
+func Run(p *persistence.Persistence, pubSub *p2p.PubSub, addr, sequencerAddr, proverAddr string) error {
 	s := &httpServer{
-		engine:     gin.Default(),
-		p:          p,
-		pubSub:     pubSub,
-		proverAddr: proverAddr,
+		engine:        gin.Default(),
+		p:             p,
+		pubSub:        pubSub,
+		sequencerAddr: sequencerAddr,
+		proverAddr:    proverAddr,
 	}
 
 	s.engine.POST("/task", s.createTask)

@@ -57,16 +57,17 @@ func bootNodeInit() (*bootnode.BootNode, error) {
 
 func apiNodeInit(dbURI string, chainEndpoint string, bootnodeAddr string, taskManagerContractAddr string) (*apinode.APINode, string, error) {
 	cfg := apinodeconfig.Config{
-		LogLevel:                slog.LevelInfo,
-		ServiceEndpoint:         ":9000",
-		ProverServiceEndpoint:   "localhost:9002",
-		DatabaseDSN:             dbURI,
-		PrvKey:                  "",
-		BootNodeMultiAddr:       bootnodeAddr,
-		IoTeXChainID:            2,
-		ChainEndpoint:           chainEndpoint,
-		BeginningBlockNumber:    0,
-		TaskManagerContractAddr: taskManagerContractAddr,
+		LogLevel:                 slog.LevelInfo,
+		ServiceEndpoint:          ":9000",
+		SequencerServiceEndpoint: "localhost:9001",
+		ProverServiceEndpoint:    "localhost:9002",
+		DatabaseDSN:              dbURI,
+		PrvKey:                   "",
+		BootNodeMultiAddr:        bootnodeAddr,
+		IoTeXChainID:             2,
+		ChainEndpoint:            chainEndpoint,
+		BeginningBlockNumber:     0,
+		TaskManagerContractAddr:  taskManagerContractAddr,
 	}
 
 	db, err := apinodepersistence.NewPersistence(cfg.DatabaseDSN)
