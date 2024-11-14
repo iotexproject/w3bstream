@@ -14,14 +14,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [apinode, bootnode, prover, sequencer]
+        name: [apinode, prover, sequencer]
         include:
           - name: apinode
             image_name: iotexproject/w3bstream-apinode
             dockerfile: build/apinode.Dockerfile
-          - name: bootnode
-            image_name: iotexproject/w3bstream-bootnode
-            dockerfile: build/bootnode.Dockerfile
           - name: prover
             image_name: iotexproject/w3bstream-prover
             dockerfile: build/prover.Dockerfile
