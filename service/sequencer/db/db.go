@@ -118,7 +118,7 @@ func (p *DB) DeleteTask(projectID uint64, taskID, tx common.Hash) error {
 
 func (p *DB) UnassignedTasks(limit int) ([]*Task, error) {
 	ts := []*Task{}
-	if err := p.db.Order("created_at ASC").Where("assigned = false").Find(ts).Limit(limit).Error; err != nil {
+	if err := p.db.Order("created_at ASC").Where("assigned = false").Find(&ts).Limit(limit).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to query unassigned tasks")
 	}
 	return ts, nil
