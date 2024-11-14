@@ -130,7 +130,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to marshal sequencer request")))
 		return
 	}
-	resp, err := http.Post(s.sequencerAddr+"/task", "application/json", bytes.NewBuffer(reqSequencerJ))
+	resp, err := http.Post(fmt.Sprintf("http://%s/task", s.sequencerAddr), "application/json", bytes.NewBuffer(reqSequencerJ))
 	if err != nil {
 		slog.Error("failed to call sequencer service", "error", err)
 		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to call sequencer service")))
