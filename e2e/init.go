@@ -94,6 +94,7 @@ func sequencerInit(dbURI string, dbFile string, chainEndpoint string, bootnodeAd
 	cfg := &sequencerconfig.Config{
 		LogLevel:                slog.LevelInfo,
 		BootNodeMultiAddr:       bootnodeAddr,
+		ServiceEndpoint:         ":9001",
 		IoTeXChainID:            2,
 		TaskProcessingBandwidth: 20,
 		DatasourceDSN:           dbURI,
