@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	LogLevel                slog.Level `env:"LOG_LEVEL,optional"`
-	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT,optional"`
+	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT"`
 	BootNodeMultiAddr       string     `env:"BOOTNODE_MULTIADDR"`
 	TaskProcessingBandwidth int        `env:"TASK_PROCESSING_BANDWIDTH"`
 	IoTeXChainID            int        `env:"IOTEX_CHAINID"`

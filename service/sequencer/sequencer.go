@@ -60,8 +60,9 @@ func (s *Sequencer) Start() error {
 	}
 
 	err = assigner.Run(s.db, s.privateKey, s.cfg.ChainEndpoint, datasource.Retrieve, common.HexToAddress(s.cfg.MinterContractAddr), s.cfg.TaskProcessingBandwidth)
+
 	go func() {
-		if err := api.Run(s.cfg.ServiceEndpoint); err != nil {
+		if err := api.Run(s.cfg.ServiceEndpoint, s.db); err != nil {
 			log.Fatal(err)
 		}
 	}()
