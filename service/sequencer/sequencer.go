@@ -59,7 +59,7 @@ func (s *Sequencer) Start() error {
 		return errors.Wrap(err, "failed to new datasource")
 	}
 
-	err = assigner.Run(s.db, s.privateKey, s.cfg.ChainEndpoint, datasource.Retrieve, common.HexToAddress(s.cfg.MinterContractAddr))
+	err = assigner.Run(s.db, s.privateKey, s.cfg.ChainEndpoint, datasource.Retrieve, common.HexToAddress(s.cfg.MinterContractAddr), s.cfg.TaskProcessingBandwidth)
 	go func() {
 		if err := api.Run(s.cfg.ServiceEndpoint); err != nil {
 			log.Fatal(err)

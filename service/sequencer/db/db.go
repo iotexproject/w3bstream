@@ -23,7 +23,7 @@ type prover struct {
 	Prover common.Address `gorm:"uniqueIndex:prover,not null"`
 }
 
-type task struct {
+type Task struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
 	ProjectID uint64      `gorm:"uniqueIndex:task_uniq,not null"`
@@ -84,7 +84,7 @@ func (p *DB) UpsertProver(addr common.Address) error {
 }
 
 func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
-	t := &task{
+	t := &Task{
 		TaskID:    taskID,
 		ProjectID: projectID,
 		Assigned:  false,
@@ -96,28 +96,32 @@ func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
 	return nil
 }
 
-func (p *DB) AssignTask(projectID uint64, taskID common.Hash, prover common.Address) error {
-	t := &task{
+func (p *DB) AssignTasks(ts []*Task) error {
+	if len(ts) == 0 {
+		return nil
+	}
+	ids := []uint{}
+	for _, t := range ts {
+		ids = append(ids, t.ID)
+	}
+	t := &Task{
 		Assigned: true,
 	}
-	err := p.db.Model(t).Where("task_id = ?", taskID).Where("project_id = ?", projectID).Updates(t).Error
-	return errors.Wrap(err, "failed to assign task")
+	err := p.db.Model(t).Where("id IN ?", ids).Updates(t).Error
+	return errors.Wrap(err, "failed to assign tasks")
 }
 
 func (p *DB) DeleteTask(projectID uint64, taskID, tx common.Hash) error {
-	err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error
+	err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&Task{}).Error
 	return errors.Wrap(err, "failed to delete task")
 }
 
-func (p *DB) UnassignedTask() (uint64, common.Hash, error) {
-	t := task{}
-	if err := p.db.Order("created_at ASC").Where("assigned = false").First(&t).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return 0, common.Hash{}, nil
-		}
-		return 0, common.Hash{}, errors.Wrap(err, "failed to query unassigned task")
+func (p *DB) UnassignedTasks(limit int) ([]*Task, error) {
+	ts := []*Task{}
+	if err := p.db.Order("created_at ASC").Where("assigned = false").Find(ts).Limit(limit).Error; err != nil {
+		return nil, errors.Wrap(err, "failed to query unassigned tasks")
 	}
-	return t.ProjectID, t.TaskID, nil
+	return ts, nil
 }
 
 func New(localDBDir string) (*DB, error) {
@@ -127,7 +131,7 @@ func New(localDBDir string) (*DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect sqlite")
 	}
-	if err := db.AutoMigrate(&task{}, &scannedBlockNumber{}, &prover{}); err != nil {
+	if err := db.AutoMigrate(&Task{}, &scannedBlockNumber{}, &prover{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &DB{db}, nil

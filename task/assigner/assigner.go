@@ -18,6 +18,7 @@ import (
 	"golang.org/x/exp/rand"
 
 	"github.com/iotexproject/w3bstream/metrics"
+	"github.com/iotexproject/w3bstream/service/sequencer/db"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 	"github.com/iotexproject/w3bstream/task"
 )
@@ -25,8 +26,8 @@ import (
 type RetrieveTask func(projectID uint64, taskID common.Hash) (*task.Task, error)
 
 type DB interface {
-	UnassignedTask() (uint64, common.Hash, error)
-	AssignTask(projectID uint64, taskID common.Hash, prover common.Address) error
+	UnassignedTasks(limit int) ([]*db.Task, error)
+	AssignTasks(ts []*db.Task) error
 	Provers() ([]common.Address, error)
 }
 
@@ -38,14 +39,11 @@ type assigner struct {
 	client         *ethclient.Client
 	db             DB
 	retrieve       RetrieveTask
+	bandwidth      int
 	minterInstance *minter.Minter
 }
 
-func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
-	t, err := r.retrieve(projectID, taskID)
-	if err != nil {
-		return err
-	}
+func (r *assigner) assign(dts []*db.Task) error {
 	provers, err := r.db.Provers()
 	if err != nil {
 		return errors.Wrap(err, "failed to get provers")
@@ -53,14 +51,30 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 	if len(provers) == 0 {
 		return errors.New("no available prover")
 	}
-	prover := provers[rand.Intn(len(provers))]
 
-	th, err := t.Hash()
-	if err != nil {
-		return errors.Wrap(err, "failed to hash task")
+	tas := []minter.TaskAssignment{}
+	for _, dt := range dts {
+		t, err := r.retrieve(dt.ProjectID, dt.TaskID)
+		if err != nil {
+			return err
+		}
+		prover := provers[rand.Intn(len(provers))]
+
+		th, err := t.Hash()
+		if err != nil {
+			return errors.Wrap(err, "failed to hash task")
+		}
+		sig := t.Signature
+		sig[64] += 27
+
+		tas = append(tas, minter.TaskAssignment{
+			ProjectId: new(big.Int).SetUint64(dt.ProjectID),
+			TaskId:    dt.TaskID,
+			Prover:    prover,
+			Hash:      th,
+			Signature: sig,
+		})
 	}
-	sig := t.Signature
-	sig[64] += 27
 
 	tx, err := r.minterInstance.Mint(
 		&bind.TransactOpts{
@@ -74,15 +88,7 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 			Operator:    r.account,
 			Beneficiary: r.account,
 		},
-		[]minter.TaskAssignment{
-			{
-				ProjectId: new(big.Int).SetUint64(projectID),
-				TaskId:    taskID,
-				Prover:    prover,
-				Hash:      th,
-				Signature: sig,
-			},
-		},
+		tas,
 	)
 	if err != nil {
 		if jsonErr, ok := err.(rpc.DataError); ok {
@@ -100,12 +106,14 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to wait tx mined")
 	}
-	if err := r.db.AssignTask(projectID, taskID, prover); err != nil {
+	if err := r.db.AssignTasks(dts); err != nil {
 		return err
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
-		metrics.FailedAssignedTaskMtc.WithLabelValues(strconv.FormatUint(projectID, 10)).Inc()
-		slog.Error("fail to assign task", "tx", tx.Hash().String())
+		for _, t := range dts {
+			metrics.FailedAssignedTaskMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10)).Inc()
+		}
+		slog.Error("failed to assign task", "tx", tx.Hash().String())
 		return errors.New("tx failed")
 	}
 	return nil
@@ -113,18 +121,18 @@ func (r *assigner) assign(projectID uint64, taskID common.Hash) error {
 
 func (r *assigner) run() {
 	for {
-		projectID, taskID, err := r.db.UnassignedTask()
+		ts, err := r.db.UnassignedTasks(r.bandwidth)
 		if err != nil {
-			slog.Error("failed to get unassigned task", "error", err)
+			slog.Error("failed to get unassigned tasks", "error", err)
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		if projectID == 0 {
+		if len(ts) == 0 {
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		if err := r.assign(projectID, taskID); err != nil {
-			slog.Error("failed to assign task", "error", err)
+		if err := r.assign(ts); err != nil {
+			slog.Error("failed to assign tasks", "error", err)
 			time.Sleep(r.waitingTime)
 			continue
 		}
@@ -132,7 +140,7 @@ func (r *assigner) run() {
 	}
 }
 
-func Run(db DB, prv *ecdsa.PrivateKey, chainEndpoint string, retrieve RetrieveTask, minterAddr common.Address) error {
+func Run(db DB, prv *ecdsa.PrivateKey, chainEndpoint string, retrieve RetrieveTask, minterAddr common.Address, bandwidth int) error {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to dial chain endpoint")
@@ -152,6 +160,7 @@ func Run(db DB, prv *ecdsa.PrivateKey, chainEndpoint string, retrieve RetrieveTa
 		signer:         types.NewLondonSigner(chainID),
 		account:        crypto.PubkeyToAddress(prv.PublicKey),
 		client:         client,
+		bandwidth:      bandwidth,
 		retrieve:       retrieve,
 		minterInstance: minterInstance,
 	}
