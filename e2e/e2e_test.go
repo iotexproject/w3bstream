@@ -239,6 +239,7 @@ func sendETH(t *testing.T, chainEndpoint string, payerHex string, toAddress comm
 
 func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte, error) {
 	req := &api.CreateTaskReq{
+		Nonce:          uint64(time.Now().Unix()),
 		ProjectID:      projectID,
 		ProjectVersion: "v1.0.0",
 		Payloads:       []string{string(data)},
