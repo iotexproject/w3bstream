@@ -67,7 +67,7 @@ func (p *Persistence) UpsertAssignedTask(projectID uint64, taskID common.Hash, p
 		Prover:    prover,
 	}
 	err := p.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "task_id"}, {Name: "project_id"}},
+		Columns:   []clause.Column{{Name: "task_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"prover"}),
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert assigned task")
@@ -80,7 +80,7 @@ func (p *Persistence) UpsertSettledTask(projectID uint64, taskID, tx common.Hash
 		Tx:        tx,
 	}
 	err := p.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "task_id"}, {Name: "project_id"}},
+		Columns:   []clause.Column{{Name: "task_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"tx"}),
 	}).Create(&t).Error
 	return errors.Wrap(err, "failed to upsert settled task")

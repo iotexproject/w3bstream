@@ -26,7 +26,7 @@ type prover struct {
 type Task struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
-	ProjectID uint64      `gorm:"uniqueIndex:task_uniq,not null"`
+	ProjectID uint64      `gorm:"not null"`
 	Assigned  bool        `gorm:"index:unassigned_task,not null,default:false"`
 }
 
