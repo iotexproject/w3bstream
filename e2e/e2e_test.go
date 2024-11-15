@@ -242,7 +242,7 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 		Nonce:          uint64(time.Now().Unix()),
 		ProjectID:      projectID,
 		ProjectVersion: "v1.0.0",
-		Payloads:       []string{string(data)},
+		Payloads:       []string{hexutil.Encode(data)},
 	}
 
 	reqJson, err := json.Marshal(req)
