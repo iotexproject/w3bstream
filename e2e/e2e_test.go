@@ -156,7 +156,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 
 	err = waitUntil(func() (bool, error) {
-		states, err := queryTask(projectID.Uint64(), taskID, apiNodeUrl)
+		states, err := queryTask(taskID, apiNodeUrl)
 		if err != nil {
 			return false, err
 		}
@@ -170,7 +170,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 
 	err = waitUntil(func() (bool, error) {
-		states, err := queryTask(projectID.Uint64(), taskID, apiNodeUrl)
+		states, err := queryTask(taskID, apiNodeUrl)
 		if err != nil {
 			return false, err
 		}
@@ -290,10 +290,9 @@ func createTask(body []byte, apiurl string) (string, error) {
 	return handleMessageResp.TaskID, nil
 }
 
-func queryTask(projectID uint64, taskID string, apiurl string) (*api.QueryTaskResp, error) {
+func queryTask(taskID string, apiurl string) (*api.QueryTaskResp, error) {
 	req := &api.QueryTaskReq{
-		ProjectID: projectID,
-		TaskID:    taskID,
+		TaskID: taskID,
 	}
 
 	reqJson, err := json.Marshal(req)

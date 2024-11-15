@@ -34,7 +34,7 @@ type projectFile struct {
 type task struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
-	ProjectID uint64      `gorm:"uniqueIndex:task_uniq,not null"`
+	ProjectID uint64      `gorm:"not null"`
 	Processed bool        `gorm:"index:unprocessed_task,not null,default:false"`
 	Error     string      `gorm:"not null,default:''"`
 }
@@ -146,9 +146,9 @@ func (p *DB) DeleteTask(projectID uint64, taskID, tx common.Hash) error {
 	return errors.Wrap(err, "failed to delete task")
 }
 
-func (p *DB) ProcessedTask(projectID uint64, taskID common.Hash) (bool, string, time.Time, error) {
+func (p *DB) ProcessedTask(taskID common.Hash) (bool, string, time.Time, error) {
 	t := task{}
-	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
+	if err := p.db.Where("task_id = ?", taskID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, "", time.Now(), nil
 		}

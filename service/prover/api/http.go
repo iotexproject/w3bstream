@@ -22,8 +22,7 @@ func NewErrResp(err error) *ErrResp {
 }
 
 type QueryTaskReq struct {
-	ProjectID uint64 `json:"projectID"                  binding:"required"`
-	TaskID    string `json:"taskID"                     binding:"required"`
+	TaskID string `json:"taskID"                     binding:"required"`
 }
 
 type QueryTaskResp struct {
@@ -46,7 +45,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	}
 	taskID := common.HexToHash(req.TaskID)
 
-	processed, errMsg, createdAt, err := s.db.ProcessedTask(req.ProjectID, taskID)
+	processed, errMsg, createdAt, err := s.db.ProcessedTask(taskID)
 	if err != nil {
 		slog.Error("failed to query processed task", "error", err)
 		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to query processed task")))

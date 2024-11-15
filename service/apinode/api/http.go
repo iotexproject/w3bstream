@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/metrics"
@@ -33,6 +32,7 @@ func NewErrResp(err error) *ErrResp {
 }
 
 type CreateTaskReq struct {
+	Nonce          uint64   `json:"nonce"                      binding:"required"`
 	ProjectID      uint64   `json:"projectID"                  binding:"required"`
 	ProjectVersion string   `json:"projectVersion"             binding:"required"`
 	Payloads       []string `json:"payloads"                   binding:"required"`
@@ -44,8 +44,7 @@ type CreateTaskResp struct {
 }
 
 type QueryTaskReq struct {
-	ProjectID uint64 `json:"projectID"                  binding:"required"`
-	TaskID    string `json:"taskID"                     binding:"required"`
+	TaskID string `json:"taskID"                     binding:"required"`
 }
 
 type StateLog struct {
@@ -96,7 +95,13 @@ func (s *httpServer) createTask(c *gin.Context) {
 	addr := crypto.PubkeyToAddress(*pubKey)
 	payloadsB := make([][]byte, 0, len(req.Payloads))
 	for _, p := range req.Payloads {
-		payloadsB = append(payloadsB, []byte(p))
+		d, err := hexutil.Decode(p)
+		if err != nil {
+			slog.Error("failed to decode payload from hex format", "error", err)
+			c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "failed to decode payload from hex format")))
+			return
+		}
+		payloadsB = append(payloadsB, d)
 	}
 	payloadsJ, err := json.Marshal(payloadsB)
 	if err != nil {
@@ -104,12 +109,13 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to marshal payloads")))
 		return
 	}
-	taskID := crypto.Keccak256Hash([]byte(uuid.NewString()))
+	taskID := crypto.Keccak256Hash(sig)
 
 	if err := s.p.CreateTask(
 		&persistence.Task{
 			DeviceID:       addr,
 			TaskID:         taskID,
+			Nonce:          req.Nonce,
 			ProjectID:      req.ProjectID,
 			ProjectVersion: req.ProjectVersion,
 			Payloads:       payloadsJ,
@@ -167,10 +173,9 @@ func (s *httpServer) recoverPubkey(req CreateTaskReq, sig []byte) (*ecdsa.Public
 	return sigpk, nil
 }
 
-func (s *httpServer) getProverTaskState(projectID uint64, taskID string) (*StateLog, error) {
+func (s *httpServer) getProverTaskState(taskID string) (*StateLog, error) {
 	reqBody, err := json.Marshal(proverapi.QueryTaskReq{
-		ProjectID: projectID,
-		TaskID:    taskID,
+		TaskID: taskID,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal prover request")
@@ -218,13 +223,12 @@ func (s *httpServer) queryTask(c *gin.Context) {
 
 	taskID := common.HexToHash(req.TaskID)
 	resp := &QueryTaskResp{
-		ProjectID: req.ProjectID,
-		TaskID:    req.TaskID,
-		States:    []*StateLog{},
+		TaskID: req.TaskID,
+		States: []*StateLog{},
 	}
 
 	// Get packed state
-	task, err := s.p.FetchTask(req.ProjectID, taskID)
+	task, err := s.p.FetchTask(taskID)
 	if err != nil {
 		slog.Error("failed to query task", "error", err)
 		resp.States = append(resp.States, &StateLog{
@@ -239,13 +243,14 @@ func (s *httpServer) queryTask(c *gin.Context) {
 		c.JSON(http.StatusOK, resp)
 		return
 	}
+	resp.ProjectID = task.ProjectID
 	resp.States = append(resp.States, &StateLog{
 		State: "packed",
 		Time:  task.CreatedAt,
 	})
 
 	// Get assigned state
-	assignedTask, err := s.p.FetchAssignedTask(req.ProjectID, taskID)
+	assignedTask, err := s.p.FetchAssignedTask(taskID)
 	if err != nil {
 		slog.Error("failed to query assigned task", "error", err)
 		resp.States = append(resp.States, &StateLog{
@@ -267,7 +272,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	})
 
 	// Get settled state
-	settledTask, err := s.p.FetchSettledTask(req.ProjectID, taskID)
+	settledTask, err := s.p.FetchSettledTask(taskID)
 	if err != nil {
 		slog.Error("failed to query settled task", "error", err)
 		resp.States = append(resp.States, &StateLog{
@@ -291,7 +296,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	}
 
 	// If not settled, check prover state
-	proverState, err := s.getProverTaskState(req.ProjectID, req.TaskID)
+	proverState, err := s.getProverTaskState(req.TaskID)
 	if err != nil {
 		slog.Error("failed to get prover task state", "error", err)
 		resp.States = append(resp.States, &StateLog{

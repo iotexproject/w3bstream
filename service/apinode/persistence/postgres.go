@@ -18,7 +18,8 @@ type scannedBlockNumber struct {
 type Task struct {
 	gorm.Model
 	DeviceID       common.Address `gorm:"not null"`
-	TaskID         common.Hash    `gorm:"uniqueIndex:task_uniq,not null"`
+	TaskID         common.Hash    `gorm:"uniqueIndex:task_id_uniq,not null"`
+	Nonce          uint64         `gorm:"uniqueIndex:task_uniq,not null"`
 	ProjectID      uint64         `gorm:"uniqueIndex:task_uniq,not null"`
 	ProjectVersion string         `gorm:"not null"`
 	Payloads       datatypes.JSON `gorm:"not null"`
@@ -28,14 +29,14 @@ type Task struct {
 type AssignedTask struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:assigned_task_uniq,not null"`
-	ProjectID uint64      `gorm:"uniqueIndex:assigned_task_uniq,not null"`
+	ProjectID uint64      `gorm:"not null"`
 	Prover    common.Address
 }
 
 type SettledTask struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:settled_task_uniq,not null"`
-	ProjectID uint64      `gorm:"uniqueIndex:settled_task_uniq,not null"`
+	ProjectID uint64      `gorm:"not null"`
 	Tx        common.Hash `gorm:"not null"`
 }
 
@@ -48,9 +49,9 @@ func (p *Persistence) CreateTask(m *Task) error {
 	return errors.Wrap(err, "failed to create task")
 }
 
-func (p *Persistence) FetchTask(projectID uint64, taskID common.Hash) (*Task, error) {
+func (p *Persistence) FetchTask(taskID common.Hash) (*Task, error) {
 	t := Task{}
-	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
+	if err := p.db.Where("task_id = ?", taskID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -85,9 +86,9 @@ func (p *Persistence) UpsertSettledTask(projectID uint64, taskID, tx common.Hash
 	return errors.Wrap(err, "failed to upsert settled task")
 }
 
-func (p *Persistence) FetchAssignedTask(projectID uint64, taskID common.Hash) (*AssignedTask, error) {
+func (p *Persistence) FetchAssignedTask(taskID common.Hash) (*AssignedTask, error) {
 	t := AssignedTask{}
-	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
+	if err := p.db.Where("task_id = ?", taskID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -96,9 +97,9 @@ func (p *Persistence) FetchAssignedTask(projectID uint64, taskID common.Hash) (*
 	return &t, nil
 }
 
-func (p *Persistence) FetchSettledTask(projectID uint64, taskID common.Hash) (*SettledTask, error) {
+func (p *Persistence) FetchSettledTask(taskID common.Hash) (*SettledTask, error) {
 	t := SettledTask{}
-	if err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).First(&t).Error; err != nil {
+	if err := p.db.Where("task_id = ?", taskID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
