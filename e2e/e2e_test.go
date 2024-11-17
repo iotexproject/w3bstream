@@ -292,24 +292,7 @@ func createTask(body []byte, apiurl string) (string, error) {
 }
 
 func queryTask(taskID string, apiurl string) (*api.QueryTaskResp, error) {
-	req := &api.QueryTaskReq{
-		TaskID: taskID,
-	}
-
-	reqJson, err := json.Marshal(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal request")
-	}
-
-	httpReq, err := http.NewRequest("GET", fmt.Sprintf("%s/task", apiurl), bytes.NewBuffer(reqJson))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create request")
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
+	resp, err := http.Get(fmt.Sprintf("%s/task/%s", apiurl, taskID))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to send request")
 	}

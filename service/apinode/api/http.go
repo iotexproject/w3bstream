@@ -43,10 +43,6 @@ type CreateTaskResp struct {
 	TaskID string `json:"taskID"`
 }
 
-type QueryTaskReq struct {
-	TaskID string `json:"taskID"                     binding:"required"`
-}
-
 type StateLog struct {
 	State    string    `json:"state"`
 	Time     time.Time `json:"time"`
@@ -174,26 +170,13 @@ func (s *httpServer) recoverPubkey(req CreateTaskReq, sig []byte) (*ecdsa.Public
 }
 
 func (s *httpServer) getProverTaskState(taskID string) (*StateLog, error) {
-	reqBody, err := json.Marshal(proverapi.QueryTaskReq{
-		TaskID: taskID,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal prover request")
-	}
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s/task", s.proverAddr), bytes.NewBuffer(reqBody))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to build http request")
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	proverResp, err := http.DefaultClient.Do(req)
+	resp, err := http.Get(fmt.Sprintf("http://%s/task/%s", s.proverAddr, taskID))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to call prover http server")
 	}
-	defer proverResp.Body.Close()
+	defer resp.Body.Close()
 
-	body, err := io.ReadAll(proverResp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read prover http server response")
 	}
@@ -214,16 +197,11 @@ func (s *httpServer) getProverTaskState(taskID string) (*StateLog, error) {
 }
 
 func (s *httpServer) queryTask(c *gin.Context) {
-	req := &QueryTaskReq{}
-	if err := c.ShouldBindJSON(req); err != nil {
-		slog.Error("failed to bind request", "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
-		return
-	}
+	taskIDStr := c.Param("id")
+	taskID := common.HexToHash(taskIDStr)
 
-	taskID := common.HexToHash(req.TaskID)
 	resp := &QueryTaskResp{
-		TaskID: req.TaskID,
+		TaskID: taskIDStr,
 		States: []*StateLog{},
 	}
 
@@ -296,7 +274,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	}
 
 	// If not settled, check prover state
-	proverState, err := s.getProverTaskState(req.TaskID)
+	proverState, err := s.getProverTaskState(taskIDStr)
 	if err != nil {
 		slog.Error("failed to get prover task state", "error", err)
 		resp.States = append(resp.States, &StateLog{
@@ -324,7 +302,7 @@ func Run(p *persistence.Persistence, addr, sequencerAddr, proverAddr string) err
 	}
 
 	s.engine.POST("/task", s.createTask)
-	s.engine.GET("/task", s.queryTask)
+	s.engine.GET("/task/:id", s.queryTask)
 	metrics.RegisterMetrics(s.engine)
 
 	if err := s.engine.Run(addr); err != nil {

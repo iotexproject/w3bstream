@@ -13,16 +13,12 @@ import (
 	"github.com/iotexproject/w3bstream/service/prover/db"
 )
 
-type ErrResp struct {
+type errResp struct {
 	Error string `json:"error,omitempty"`
 }
 
-func NewErrResp(err error) *ErrResp {
-	return &ErrResp{Error: err.Error()}
-}
-
-type QueryTaskReq struct {
-	TaskID string `json:"taskID"                     binding:"required"`
+func newErrResp(err error) *errResp {
+	return &errResp{Error: err.Error()}
 }
 
 type QueryTaskResp struct {
@@ -37,18 +33,13 @@ type httpServer struct {
 }
 
 func (s *httpServer) queryTask(c *gin.Context) {
-	req := &QueryTaskReq{}
-	if err := c.ShouldBindJSON(req); err != nil {
-		slog.Error("failed to bind request", "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
-		return
-	}
-	taskID := common.HexToHash(req.TaskID)
+	taskIDStr := c.Param("id")
+	taskID := common.HexToHash(taskIDStr)
 
 	processed, errMsg, createdAt, err := s.db.ProcessedTask(taskID)
 	if err != nil {
 		slog.Error("failed to query processed task", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to query processed task")))
+		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to query processed task")))
 		return
 	}
 
@@ -66,7 +57,7 @@ func Run(db *db.DB, address string) error {
 		db:     db,
 	}
 
-	s.engine.GET("/task", s.queryTask)
+	s.engine.GET("/task/:id", s.queryTask)
 	metrics.RegisterMetrics(s.engine)
 
 	if err := s.engine.Run(address); err != nil {
