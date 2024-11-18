@@ -85,10 +85,20 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
 		return
 	}
-
-	// TODO: Crosscheck pubkey with ioID
-
 	addr := crypto.PubkeyToAddress(*pubKey)
+
+	ok, err := s.p.IsDeviceApproved(req.ProjectID, addr)
+	if err != nil {
+		slog.Error("failed to check device permission", "error", err)
+		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to check device permission")))
+		return
+	}
+	if !ok {
+		slog.Error("device does not have permission", "project_id", req.ProjectID, "device_address", addr.String())
+		c.JSON(http.StatusForbidden, NewErrResp(errors.Wrap(err, "device does not have permission")))
+		return
+	}
+
 	payloadsB := make([][]byte, 0, len(req.Payloads))
 	for _, p := range req.Payloads {
 		d, err := hexutil.Decode(p)
