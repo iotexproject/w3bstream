@@ -23,12 +23,12 @@ import (
 	sequencerapi "github.com/iotexproject/w3bstream/service/sequencer/api"
 )
 
-type ErrResp struct {
+type errResp struct {
 	Error string `json:"error,omitempty"`
 }
 
-func NewErrResp(err error) *ErrResp {
-	return &ErrResp{Error: err.Error()}
+func newErrResp(err error) *errResp {
+	return &errResp{Error: err.Error()}
 }
 
 type CreateTaskReq struct {
@@ -69,20 +69,20 @@ func (s *httpServer) createTask(c *gin.Context) {
 	req := &CreateTaskReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
 		slog.Error("failed to bind request", "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid request payload")))
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid request payload")))
 		return
 	}
 
 	sig, err := hexutil.Decode(req.Signature)
 	if err != nil {
 		slog.Error("failed to decode signature from hex format", "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
 		return
 	}
 	pubKey, err := s.recoverPubkey(*req, sig)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
-		c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
 		return
 	}
 	addr := crypto.PubkeyToAddress(*pubKey)
@@ -90,12 +90,12 @@ func (s *httpServer) createTask(c *gin.Context) {
 	ok, err := s.p.IsDeviceApproved(req.ProjectID, addr)
 	if err != nil {
 		slog.Error("failed to check device permission", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to check device permission")))
+		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to check device permission")))
 		return
 	}
 	if !ok {
 		slog.Error("device does not have permission", "project_id", req.ProjectID, "device_address", addr.String())
-		c.JSON(http.StatusForbidden, NewErrResp(errors.Wrap(err, "device does not have permission")))
+		c.JSON(http.StatusForbidden, newErrResp(errors.New("device does not have permission")))
 		return
 	}
 
@@ -104,7 +104,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		d, err := hexutil.Decode(p)
 		if err != nil {
 			slog.Error("failed to decode payload from hex format", "error", err)
-			c.JSON(http.StatusBadRequest, NewErrResp(errors.Wrap(err, "failed to decode payload from hex format")))
+			c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode payload from hex format")))
 			return
 		}
 		payloadsB = append(payloadsB, d)
@@ -112,7 +112,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 	payloadsJ, err := json.Marshal(payloadsB)
 	if err != nil {
 		slog.Error("failed to marshal payloads", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to marshal payloads")))
+		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to marshal payloads")))
 		return
 	}
 	taskID := crypto.Keccak256Hash(sig)
@@ -129,7 +129,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		},
 	); err != nil {
 		slog.Error("failed to create task to persistence layer", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "could not save task")))
+		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "could not save task")))
 		return
 	}
 
@@ -137,13 +137,13 @@ func (s *httpServer) createTask(c *gin.Context) {
 	reqSequencerJ, err := json.Marshal(reqSequencer)
 	if err != nil {
 		slog.Error("failed to marshal sequencer request", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to marshal sequencer request")))
+		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to marshal sequencer request")))
 		return
 	}
 	resp, err := http.Post(fmt.Sprintf("http://%s/task", s.sequencerAddr), "application/json", bytes.NewBuffer(reqSequencerJ))
 	if err != nil {
 		slog.Error("failed to call sequencer service", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to call sequencer service")))
+		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to call sequencer service")))
 		return
 	}
 	defer resp.Body.Close()
@@ -154,7 +154,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			err = errors.New(string(body))
 		}
 		slog.Error("failed to call sequencer service", "error", err)
-		c.JSON(http.StatusInternalServerError, NewErrResp(errors.Wrap(err, "failed to call sequencer service")))
+		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to call sequencer service")))
 		return
 	}
 
