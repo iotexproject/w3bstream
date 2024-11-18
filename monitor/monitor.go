@@ -19,6 +19,7 @@ import (
 	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/projectdevice"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/prover"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/taskmanager"
 )
@@ -30,6 +31,8 @@ type (
 	SettleTask               func(taskID, tx common.Hash) error
 	UpsertProject            func(projectID uint64, uri string, hash common.Hash) error
 	UpsertProver             func(addr common.Address) error
+	UpsertProjectDevice      func(projectID uint64, address common.Address) error
+	DeleteProjectDevice      func(projectID uint64, address common.Address) error
 )
 
 type Handler struct {
@@ -39,26 +42,30 @@ type Handler struct {
 	SettleTask
 	UpsertProject
 	UpsertProver
+	UpsertProjectDevice
+	DeleteProjectDevice
 }
 
 type ContractAddr struct {
-	Prover      common.Address
-	Project     common.Address
-	Minter      common.Address
-	TaskManager common.Address
+	Prover        common.Address
+	Project       common.Address
+	Minter        common.Address
+	TaskManager   common.Address
+	ProjectDevice common.Address
 }
 
 type contract struct {
-	h                    *Handler
-	addr                 *ContractAddr
-	beginningBlockNumber uint64
-	listStepSize         uint64
-	watchInterval        time.Duration
-	client               *ethclient.Client
-	minterInstance       *minter.Minter
-	taskManagerInstance  *taskmanager.Taskmanager
-	proverInstance       *prover.Prover
-	projectInstance      *project.Project
+	h                     *Handler
+	addr                  *ContractAddr
+	beginningBlockNumber  uint64
+	listStepSize          uint64
+	watchInterval         time.Duration
+	client                *ethclient.Client
+	minterInstance        *minter.Minter
+	taskManagerInstance   *taskmanager.Taskmanager
+	proverInstance        *prover.Prover
+	projectInstance       *project.Project
+	projectDeviceInstance *projectdevice.Projectdevice
 }
 
 var (
@@ -66,6 +73,8 @@ var (
 	taskSettledTopic          = crypto.Keccak256Hash([]byte("TaskSettled(uint256,bytes32,address)"))
 	projectConfigUpdatedTopic = crypto.Keccak256Hash([]byte("ProjectConfigUpdated(uint256,string,bytes32)"))
 	proverSetTopic            = crypto.Keccak256Hash([]byte("BeneficiarySet(address,address)"))
+	deviceApproveTopic        = crypto.Keccak256Hash([]byte("Approve(uint256,address)"))
+	deviceUnapproveTopic      = crypto.Keccak256Hash([]byte("Unapprove(uint256,address)"))
 )
 
 var allTopic = []common.Hash{
@@ -73,12 +82,14 @@ var allTopic = []common.Hash{
 	taskSettledTopic,
 	projectConfigUpdatedTopic,
 	proverSetTopic,
+	deviceApproveTopic,
+	deviceUnapproveTopic,
 }
 
 var emptyAddr = common.Address{}
 
 func (a *ContractAddr) all() []common.Address {
-	all := make([]common.Address, 0, 4)
+	all := make([]common.Address, 0, 5)
 	if !bytes.Equal(a.Minter[:], emptyAddr[:]) {
 		all = append(all, a.Minter)
 	}
@@ -90,6 +101,9 @@ func (a *ContractAddr) all() []common.Address {
 	}
 	if !bytes.Equal(a.TaskManager[:], emptyAddr[:]) {
 		all = append(all, a.TaskManager)
+	}
+	if !bytes.Equal(a.ProjectDevice[:], emptyAddr[:]) {
+		all = append(all, a.ProjectDevice)
 	}
 	return all
 }
@@ -148,6 +162,28 @@ func (c *contract) processLogs(logs []types.Log) error {
 				return errors.Wrap(err, "failed to parse prover set event")
 			}
 			if err := c.h.UpsertProver(e.Prover); err != nil {
+				return err
+			}
+		case deviceApproveTopic:
+			if c.projectDeviceInstance == nil || c.h.UpsertProjectDevice == nil {
+				continue
+			}
+			e, err := c.projectDeviceInstance.ParseApprove(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse device approve event")
+			}
+			if err := c.h.UpsertProjectDevice(e.ProjectId.Uint64(), e.Device); err != nil {
+				return err
+			}
+		case deviceUnapproveTopic:
+			if c.projectDeviceInstance == nil || c.h.DeleteProjectDevice == nil {
+				continue
+			}
+			e, err := c.projectDeviceInstance.ParseUnapprove(l)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse device unapprove event")
+			}
+			if err := c.h.DeleteProjectDevice(e.ProjectId.Uint64(), e.Device); err != nil {
 				return err
 			}
 		}
@@ -288,6 +324,13 @@ func Run(h *Handler, addr *ContractAddr, beginningBlockNumber uint64, chainEndpo
 			return errors.Wrap(err, "failed to new project contract instance")
 		}
 		c.projectInstance = projectInstance
+	}
+	if !bytes.Equal(addr.ProjectDevice[:], emptyAddr[:]) {
+		projectDeviceInstance, err := projectdevice.NewProjectdevice(addr.ProjectDevice, client)
+		if err != nil {
+			return errors.Wrap(err, "failed to new project device contract instance")
+		}
+		c.projectDeviceInstance = projectDeviceInstance
 	}
 
 	listedBlockNumber, err := c.list()

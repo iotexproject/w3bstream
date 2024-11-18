@@ -30,6 +30,8 @@ func (n *APINode) Start() error {
 			UpsertScannedBlockNumber: n.db.UpsertScannedBlockNumber,
 			AssignTask:               n.db.UpsertAssignedTask,
 			SettleTask:               n.db.UpsertSettledTask,
+			UpsertProjectDevice:      n.db.UpsertProjectDevice,
+			DeleteProjectDevice:      n.db.DeleteProjectDevice,
 		},
 		&monitor.ContractAddr{
 			TaskManager: common.HexToAddress(n.cfg.TaskManagerContractAddr),

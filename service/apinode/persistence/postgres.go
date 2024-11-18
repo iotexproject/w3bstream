@@ -38,6 +38,12 @@ type SettledTask struct {
 	Tx     common.Hash `gorm:"not null"`
 }
 
+type ProjectDevice struct {
+	gorm.Model
+	ProjectID     uint64         `gorm:"uniqueIndex:project_device_uniq,not null"`
+	DeviceAddress common.Address `gorm:"uniqueIndex:project_device_uniq,not null"`
+}
+
 type Persistence struct {
 	db *gorm.DB
 }
@@ -104,6 +110,34 @@ func (p *Persistence) FetchSettledTask(taskID common.Hash) (*SettledTask, error)
 	return &t, nil
 }
 
+func (p *Persistence) UpsertProjectDevice(projectID uint64, address common.Address) error {
+	t := ProjectDevice{
+		ProjectID:     projectID,
+		DeviceAddress: address,
+	}
+	err := p.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "project_id"}, {Name: "device_address"}},
+		DoNothing: true,
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert project device")
+}
+
+func (p *Persistence) DeleteProjectDevice(projectID uint64, address common.Address) error {
+	err := p.db.Where("project_id = ?", projectID).Where("device_address = ?", address).Delete(&ProjectDevice{}).Error
+	return errors.Wrap(err, "failed to delete project device")
+}
+
+func (p *Persistence) IsDeviceApproved(projectID uint64, address common.Address) (bool, error) {
+	t := ProjectDevice{}
+	if err := p.db.Where("project_id = ?", projectID).Where("device_address = ?", address).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return false, nil
+		}
+		return false, errors.Wrap(err, "failed to query project device")
+	}
+	return true, nil
+}
+
 func (p *Persistence) ScannedBlockNumber() (uint64, error) {
 	t := scannedBlockNumber{}
 	if err := p.db.Where("id = ?", 1).First(&t).Error; err != nil {
@@ -136,7 +170,7 @@ func NewPersistence(pgEndpoint string) (*Persistence, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect postgres")
 	}
-	if err := db.AutoMigrate(&scannedBlockNumber{}, &Task{}, &AssignedTask{}, &SettledTask{}); err != nil {
+	if err := db.AutoMigrate(&scannedBlockNumber{}, &Task{}, &AssignedTask{}, &SettledTask{}, &ProjectDevice{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return &Persistence{db}, nil
