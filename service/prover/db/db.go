@@ -130,14 +130,14 @@ func (p *DB) CreateTask(projectID uint64, taskID common.Hash, prover common.Addr
 	return errors.Wrap(err, "failed to upsert task")
 }
 
-func (p *DB) ProcessTask(projectID uint64, taskID common.Hash, err error) error {
+func (p *DB) ProcessTask(taskID common.Hash, err error) error {
 	t := &task{
 		Processed: true,
 	}
 	if err != nil {
 		t.Error = err.Error()
 	}
-	err = p.db.Model(t).Where("task_id = ?", taskID).Where("project_id = ?", projectID).Updates(t).Error
+	err = p.db.Model(t).Where("task_id = ?", taskID).Updates(t).Error
 	return errors.Wrap(err, "failed to update task")
 }
 
@@ -157,15 +157,15 @@ func (p *DB) ProcessedTask(taskID common.Hash) (bool, string, time.Time, error) 
 	return t.Processed, t.Error, t.CreatedAt, nil
 }
 
-func (p *DB) UnprocessedTask() (uint64, common.Hash, error) {
+func (p *DB) UnprocessedTask() (common.Hash, error) {
 	t := task{}
 	if err := p.db.Order("created_at ASC").Where("processed = false").First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return 0, common.Hash{}, nil
+			return common.Hash{}, nil
 		}
-		return 0, common.Hash{}, errors.Wrap(err, "failed to query unprocessed task")
+		return common.Hash{}, errors.Wrap(err, "failed to query unprocessed task")
 	}
-	return t.ProjectID, t.TaskID, nil
+	return t.TaskID, nil
 }
 
 func New(localDBDir string, prover common.Address) (*DB, error) {

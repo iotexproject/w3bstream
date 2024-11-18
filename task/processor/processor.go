@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"log/slog"
@@ -24,11 +25,11 @@ import (
 
 type HandleTask func(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error)
 type Project func(projectID uint64) (*project.Project, error)
-type RetrieveTask func(projectID uint64, taskID common.Hash) (*task.Task, error)
+type RetrieveTask func(taskIDs []common.Hash) ([]*task.Task, error)
 
 type DB interface {
-	UnprocessedTask() (uint64, common.Hash, error)
-	ProcessTask(uint64, common.Hash, error) error
+	UnprocessedTask() (common.Hash, error)
+	ProcessTask(common.Hash, error) error
 }
 
 type processor struct {
@@ -44,11 +45,12 @@ type processor struct {
 	routerInstance *router.Router
 }
 
-func (r *processor) process(projectID uint64, taskID common.Hash) error {
-	t, err := r.retrieve(projectID, taskID)
+func (r *processor) process(taskID common.Hash) error {
+	ts, err := r.retrieve([]common.Hash{taskID})
 	if err != nil {
 		return err
 	}
+	t := ts[0]
 	p, err := r.project(t.ProjectID)
 	if err != nil {
 		return err
@@ -108,21 +110,21 @@ func (r *processor) process(projectID uint64, taskID common.Hash) error {
 
 func (r *processor) run() {
 	for {
-		projectID, taskID, err := r.db.UnprocessedTask()
+		taskID, err := r.db.UnprocessedTask()
 		if err != nil {
 			slog.Error("failed to get unprocessed task", "error", err)
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		if projectID == 0 {
+		if bytes.Equal(taskID.Bytes(), common.Hash{}.Bytes()) {
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		err = r.process(projectID, taskID)
+		err = r.process(taskID)
 		if err != nil {
 			slog.Error("failed to process task", "error", err)
 		}
-		if err := r.db.ProcessTask(projectID, taskID, err); err != nil {
+		if err := r.db.ProcessTask(taskID, err); err != nil {
 			slog.Error("failed to process db task", "error", err)
 		}
 	}

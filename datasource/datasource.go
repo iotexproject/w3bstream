@@ -6,5 +6,7 @@ import (
 )
 
 type Datasource interface {
-	Retrieve(projectID uint64, taskID common.Hash) (*task.Task, error)
+	// If the provided taskID list is empty, an error will be reported
+	// If the data for any task in the list cannot be retrieved, an error will be reported
+	Retrieve(taskIDs []common.Hash) ([]*task.Task, error)
 }

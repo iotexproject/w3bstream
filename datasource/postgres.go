@@ -17,24 +17,34 @@ type Postgres struct {
 	db *gorm.DB
 }
 
-func (p *Postgres) Retrieve(projectID uint64, taskID common.Hash) (*task.Task, error) {
-	t := persistence.Task{}
-	if err := p.db.Where("task_id = ? AND project_id = ?", taskID, projectID).First(&t).Error; err != nil {
-		return nil, errors.Wrap(err, "failed to query task")
+func (p *Postgres) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
+	if len(taskIDs) == 0 {
+		return nil, errors.New("empty query task ids")
 	}
-	ps := [][]byte{}
-	if err := json.Unmarshal(t.Payloads, &ps); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal task payloads, task_id %v", t.TaskID)
+	ts := []*persistence.Task{}
+	if err := p.db.Where("task_id IN ?", taskIDs).First(&ts).Error; err != nil {
+		return nil, errors.Wrap(err, "failed to query tasks")
 	}
 
-	return &task.Task{
-		ID:             t.TaskID,
-		ProjectID:      t.ProjectID,
-		ProjectVersion: t.ProjectVersion,
-		Payloads:       ps,
-		DeviceID:       t.DeviceID,
-		Signature:      t.Signature,
-	}, nil
+	res := []*task.Task{}
+	for _, t := range ts {
+		ps := [][]byte{}
+		if err := json.Unmarshal(t.Payloads, &ps); err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal task payloads, task_id %v", t.TaskID)
+		}
+		res = append(res, &task.Task{
+			ID:             t.TaskID,
+			ProjectID:      t.ProjectID,
+			ProjectVersion: t.ProjectVersion,
+			Payloads:       ps,
+			DeviceID:       t.DeviceID,
+			Signature:      t.Signature,
+		})
+	}
+	if len(res) != len(taskIDs) {
+		return nil, errors.Errorf("cannot find all tasks, task_ids %v", taskIDs)
+	}
+	return res, nil
 }
 
 func NewPostgres(dsn string) (*Postgres, error) {

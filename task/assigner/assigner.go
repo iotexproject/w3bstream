@@ -18,16 +18,15 @@ import (
 	"golang.org/x/exp/rand"
 
 	"github.com/iotexproject/w3bstream/metrics"
-	"github.com/iotexproject/w3bstream/service/sequencer/db"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/minter"
 	"github.com/iotexproject/w3bstream/task"
 )
 
-type RetrieveTask func(projectID uint64, taskID common.Hash) (*task.Task, error)
+type RetrieveTask func(taskIDs []common.Hash) ([]*task.Task, error)
 
 type DB interface {
-	UnassignedTasks(limit int) ([]*db.Task, error)
-	AssignTasks(ts []*db.Task) error
+	UnassignedTasks(limit int) ([]common.Hash, error)
+	AssignTasks(taskIDs []common.Hash) error
 	Provers() ([]common.Address, error)
 }
 
@@ -43,7 +42,7 @@ type assigner struct {
 	minterInstance *minter.Minter
 }
 
-func (r *assigner) assign(dts []*db.Task) error {
+func (r *assigner) assign(tids []common.Hash) error {
 	provers, err := r.db.Provers()
 	if err != nil {
 		return errors.Wrap(err, "failed to get provers")
@@ -53,11 +52,11 @@ func (r *assigner) assign(dts []*db.Task) error {
 	}
 
 	tas := []minter.TaskAssignment{}
-	for _, dt := range dts {
-		t, err := r.retrieve(dt.ProjectID, dt.TaskID)
-		if err != nil {
-			return err
-		}
+	ts, err := r.retrieve(tids)
+	if err != nil {
+		return err
+	}
+	for _, t := range ts {
 		prover := provers[rand.Intn(len(provers))]
 
 		th, err := t.Hash()
@@ -68,8 +67,8 @@ func (r *assigner) assign(dts []*db.Task) error {
 		sig[64] += 27
 
 		tas = append(tas, minter.TaskAssignment{
-			ProjectId: new(big.Int).SetUint64(dt.ProjectID),
-			TaskId:    dt.TaskID,
+			ProjectId: new(big.Int).SetUint64(t.ProjectID),
+			TaskId:    t.ID,
 			Prover:    prover,
 			Hash:      th,
 			Signature: sig,
@@ -106,11 +105,11 @@ func (r *assigner) assign(dts []*db.Task) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to wait tx mined")
 	}
-	if err := r.db.AssignTasks(dts); err != nil {
+	if err := r.db.AssignTasks(tids); err != nil {
 		return err
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
-		for _, t := range dts {
+		for _, t := range ts {
 			metrics.FailedAssignedTaskMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10)).Inc()
 		}
 		slog.Error("failed to assign task", "tx", tx.Hash().String())
@@ -121,17 +120,17 @@ func (r *assigner) assign(dts []*db.Task) error {
 
 func (r *assigner) run() {
 	for {
-		ts, err := r.db.UnassignedTasks(r.bandwidth)
+		tids, err := r.db.UnassignedTasks(r.bandwidth)
 		if err != nil {
 			slog.Error("failed to get unassigned tasks", "error", err)
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		if len(ts) == 0 {
+		if len(tids) == 0 {
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		if err := r.assign(ts); err != nil {
+		if err := r.assign(tids); err != nil {
 			slog.Error("failed to assign tasks", "error", err)
 			time.Sleep(r.waitingTime)
 			continue
