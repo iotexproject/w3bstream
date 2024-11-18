@@ -34,7 +34,8 @@ func (n *APINode) Start() error {
 			DeleteProjectDevice:      n.db.DeleteProjectDevice,
 		},
 		&monitor.ContractAddr{
-			TaskManager: common.HexToAddress(n.cfg.TaskManagerContractAddr),
+			TaskManager:   common.HexToAddress(n.cfg.TaskManagerContractAddr),
+			ProjectDevice: common.HexToAddress(n.cfg.ProjectDeviceContractAddr),
 		},
 		n.cfg.BeginningBlockNumber,
 		n.cfg.ChainEndpoint,
