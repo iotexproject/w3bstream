@@ -25,11 +25,11 @@ import (
 
 type (
 	ScannedBlockNumber       func() (uint64, error)
-	UpsertScannedBlockNumber func(uint64) error
-	AssignTask               func(uint64, common.Hash, common.Address) error
-	SettleTask               func(uint64, common.Hash, common.Hash) error
-	UpsertProject            func(uint64, string, common.Hash) error
-	UpsertProver             func(common.Address) error
+	UpsertScannedBlockNumber func(number uint64) error
+	AssignTask               func(taskID common.Hash, prover common.Address) error
+	SettleTask               func(taskID, tx common.Hash) error
+	UpsertProject            func(projectID uint64, uri string, hash common.Hash) error
+	UpsertProver             func(addr common.Address) error
 )
 
 type Handler struct {
@@ -112,7 +112,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse task assigned event")
 			}
-			if err := c.h.AssignTask(e.ProjectId.Uint64(), e.TaskId, e.Prover); err != nil {
+			if err := c.h.AssignTask(e.TaskId, e.Prover); err != nil {
 				return err
 			}
 			metrics.AssignedTaskMtc.WithLabelValues(e.ProjectId.String()).Inc()
@@ -124,7 +124,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse task settled event")
 			}
-			if err := c.h.SettleTask(e.ProjectId.Uint64(), e.TaskId, l.TxHash); err != nil {
+			if err := c.h.SettleTask(e.TaskId, l.TxHash); err != nil {
 				return err
 			}
 			metrics.SucceedTaskNumMtc.WithLabelValues(e.ProjectId.String()).Inc()

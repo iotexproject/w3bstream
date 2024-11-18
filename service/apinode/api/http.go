@@ -123,7 +123,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	reqSequencer := &sequencerapi.CreateTaskReq{ProjectID: req.ProjectID, TaskID: taskID}
+	reqSequencer := &sequencerapi.CreateTaskReq{TaskID: taskID}
 	reqSequencerJ, err := json.Marshal(reqSequencer)
 	if err != nil {
 		slog.Error("failed to marshal sequencer request", "error", err)

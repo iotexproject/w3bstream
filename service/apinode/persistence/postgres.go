@@ -28,16 +28,14 @@ type Task struct {
 
 type AssignedTask struct {
 	gorm.Model
-	TaskID    common.Hash `gorm:"uniqueIndex:assigned_task_uniq,not null"`
-	ProjectID uint64      `gorm:"not null"`
-	Prover    common.Address
+	TaskID common.Hash `gorm:"uniqueIndex:assigned_task_uniq,not null"`
+	Prover common.Address
 }
 
 type SettledTask struct {
 	gorm.Model
-	TaskID    common.Hash `gorm:"uniqueIndex:settled_task_uniq,not null"`
-	ProjectID uint64      `gorm:"not null"`
-	Tx        common.Hash `gorm:"not null"`
+	TaskID common.Hash `gorm:"uniqueIndex:settled_task_uniq,not null"`
+	Tx     common.Hash `gorm:"not null"`
 }
 
 type Persistence struct {
@@ -60,11 +58,10 @@ func (p *Persistence) FetchTask(taskID common.Hash) (*Task, error) {
 	return &t, nil
 }
 
-func (p *Persistence) UpsertAssignedTask(projectID uint64, taskID common.Hash, prover common.Address) error {
+func (p *Persistence) UpsertAssignedTask(taskID common.Hash, prover common.Address) error {
 	t := AssignedTask{
-		ProjectID: projectID,
-		TaskID:    taskID,
-		Prover:    prover,
+		TaskID: taskID,
+		Prover: prover,
 	}
 	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}},
@@ -73,11 +70,10 @@ func (p *Persistence) UpsertAssignedTask(projectID uint64, taskID common.Hash, p
 	return errors.Wrap(err, "failed to upsert assigned task")
 }
 
-func (p *Persistence) UpsertSettledTask(projectID uint64, taskID, tx common.Hash) error {
+func (p *Persistence) UpsertSettledTask(taskID, tx common.Hash) error {
 	t := SettledTask{
-		ProjectID: projectID,
-		TaskID:    taskID,
-		Tx:        tx,
+		TaskID: taskID,
+		Tx:     tx,
 	}
 	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}},

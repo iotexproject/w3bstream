@@ -1,8 +1,6 @@
 package db
 
 import (
-	"strconv"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
@@ -25,9 +23,8 @@ type prover struct {
 
 type task struct {
 	gorm.Model
-	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
-	ProjectID uint64      `gorm:"not null"`
-	Assigned  bool        `gorm:"index:unassigned_task,not null,default:false"`
+	TaskID   common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
+	Assigned bool        `gorm:"index:unassigned_task,not null,default:false"`
 }
 
 type DB struct {
@@ -83,16 +80,14 @@ func (p *DB) UpsertProver(addr common.Address) error {
 	return errors.Wrap(err, "failed to upsert prover")
 }
 
-func (p *DB) CreateTask(projectID uint64, taskID common.Hash) error {
+func (p *DB) CreateTask(taskID common.Hash) error {
 	t := &task{
-		TaskID:    taskID,
-		ProjectID: projectID,
-		Assigned:  false,
+		TaskID:   taskID,
+		Assigned: false,
 	}
 	if err := p.db.Create(t).Error; err != nil {
 		return errors.Wrap(err, "failed to create task")
 	}
-	metrics.NewTaskMtc.WithLabelValues(strconv.FormatUint(projectID, 10)).Inc()
 	return nil
 }
 
@@ -107,8 +102,8 @@ func (p *DB) AssignTasks(ids []common.Hash) error {
 	return errors.Wrap(err, "failed to assign tasks")
 }
 
-func (p *DB) DeleteTask(projectID uint64, taskID, tx common.Hash) error {
-	err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error
+func (p *DB) DeleteTask(taskID, tx common.Hash) error {
+	err := p.db.Where("task_id = ?", taskID).Delete(&task{}).Error
 	return errors.Wrap(err, "failed to delete task")
 }
 

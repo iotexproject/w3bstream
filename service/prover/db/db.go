@@ -34,7 +34,6 @@ type projectFile struct {
 type task struct {
 	gorm.Model
 	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
-	ProjectID uint64      `gorm:"not null"`
 	Processed bool        `gorm:"index:unprocessed_task,not null,default:false"`
 	Error     string      `gorm:"not null,default:''"`
 }
@@ -114,13 +113,12 @@ func (p *DB) UpsertProjectFile(projectID uint64, file []byte, hash common.Hash) 
 	return errors.Wrap(err, "failed to upsert project file")
 }
 
-func (p *DB) CreateTask(projectID uint64, taskID common.Hash, prover common.Address) error {
+func (p *DB) CreateTask(taskID common.Hash, prover common.Address) error {
 	if !bytes.Equal(prover[:], p.prover[:]) {
 		return nil
 	}
 	t := &task{
 		TaskID:    taskID,
-		ProjectID: projectID,
 		Processed: false,
 	}
 	err := p.db.Clauses(clause.OnConflict{
@@ -141,8 +139,8 @@ func (p *DB) ProcessTask(taskID common.Hash, err error) error {
 	return errors.Wrap(err, "failed to update task")
 }
 
-func (p *DB) DeleteTask(projectID uint64, taskID, tx common.Hash) error {
-	err := p.db.Where("task_id = ?", taskID).Where("project_id = ?", projectID).Delete(&task{}).Error
+func (p *DB) DeleteTask(taskID, tx common.Hash) error {
+	err := p.db.Where("task_id = ?", taskID).Delete(&task{}).Error
 	return errors.Wrap(err, "failed to delete task")
 }
 

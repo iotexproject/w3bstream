@@ -3,6 +3,7 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
@@ -10,11 +11,13 @@ import (
 
 	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/service/sequencer/db"
+	"github.com/iotexproject/w3bstream/task"
 )
 
+type RetrieveTask func(taskIDs []common.Hash) ([]*task.Task, error)
+
 type CreateTaskReq struct {
-	ProjectID uint64      `json:"projectID"                  binding:"required"`
-	TaskID    common.Hash `json:"taskID"                     binding:"required"`
+	TaskID common.Hash `json:"taskID"                     binding:"required"`
 }
 
 type errResp struct {
@@ -26,8 +29,9 @@ func newErrResp(err error) *errResp {
 }
 
 type httpServer struct {
-	engine *gin.Engine
-	db     *db.DB
+	engine   *gin.Engine
+	db       *db.DB
+	retrieve RetrieveTask
 }
 
 func (s *httpServer) createTask(c *gin.Context) {
@@ -38,21 +42,32 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	if err := s.db.CreateTask(req.ProjectID, req.TaskID); err != nil {
+	ts, err := s.retrieve([]common.Hash{req.TaskID})
+	if err != nil {
+		slog.Error("failed to retrieve task", "error", err)
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to retrieve task")))
+		return
+	}
+
+	t := ts[0]
+	metrics.NewTaskMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10)).Inc()
+
+	if err := s.db.CreateTask(req.TaskID); err != nil {
 		slog.Error("failed to create task", "error", err)
 		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to create task")))
 		return
 	}
 
-	slog.Info("get a new task", "project_id", req.ProjectID, "task_id", req.TaskID.String())
+	slog.Info("get a new task", "project_id", t.ProjectID, "task_id", req.TaskID.String())
 	c.Status(http.StatusOK)
 }
 
 // this func will block caller
-func Run(address string, db *db.DB) error {
+func Run(address string, db *db.DB, retrieve RetrieveTask) error {
 	s := &httpServer{
-		db:     db,
-		engine: gin.Default(),
+		retrieve: retrieve,
+		db:       db,
+		engine:   gin.Default(),
 	}
 
 	s.engine.POST("/task", s.createTask)
