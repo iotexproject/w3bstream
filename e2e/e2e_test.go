@@ -140,7 +140,7 @@ func TestE2E(t *testing.T) {
 	deviceAddr := crypto.PubkeyToAddress(deviceKey.PublicKey)
 	err = sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
 	require.NoError(t, err)
-	registerDevice(t, chainEndpoint, contracts, deviceKey, projectID)
+	registerDevice(t, chainEndpoint, contracts, deviceKey, projectOwnerKey, projectID)
 
 	// Send message
 	msgData := struct {

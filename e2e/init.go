@@ -216,7 +216,7 @@ func registerProject(t *testing.T, chainEndpoint, ipfsURL, projectFile string,
 }
 
 func registerDevice(t *testing.T, chainEndpoint string,
-	contractDeployments *utils.ContractsDeployments, device *ecdsa.PrivateKey, projectID *big.Int) {
+	contractDeployments *utils.ContractsDeployments, device, projectOwnerKey *ecdsa.PrivateKey, projectID *big.Int) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)
 	chainID, err := client.ChainID(context.Background())
@@ -248,6 +248,8 @@ func registerDevice(t *testing.T, chainEndpoint string,
 	// Approve device
 	projectDevice, err := projectdevice.NewProjectdevice(
 		common.HexToAddress(contractDeployments.ProjectDevice), client)
+	require.NoError(t, err)
+	tOpts, err = bind.NewKeyedTransactorWithChainID(projectOwnerKey, chainID)
 	require.NoError(t, err)
 	tx, err = projectDevice.Approve(tOpts, projectID, []common.Address{deviceAddr})
 	require.NoError(t, err)
