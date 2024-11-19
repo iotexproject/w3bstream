@@ -137,7 +137,7 @@ func TestE2E(t *testing.T) {
 	// Approve device
 	deviceKey, err := crypto.GenerateKey()
 	require.NoError(t, err)
-	deviceAddr := crypto.PubkeyToAddress(proverKey.PublicKey)
+	deviceAddr := crypto.PubkeyToAddress(deviceKey.PublicKey)
 	err = sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
 	require.NoError(t, err)
 	registerDevice(t, chainEndpoint, contracts, deviceKey, projectID)
