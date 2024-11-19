@@ -134,6 +134,11 @@ func TestE2E(t *testing.T) {
 	err = registerProver(t, chainEndpoint, contracts, proverKey)
 	require.NoError(t, err)
 
+	// Approve device
+	deviceKey, err := crypto.GenerateKey()
+	require.NoError(t, err)
+	registerDevice(t, chainEndpoint, contracts, deviceKey, projectID)
+
 	// Send message
 	msgData := struct {
 		PrivateInput string `json:"private_input"`
@@ -147,9 +152,7 @@ func TestE2E(t *testing.T) {
 	dataJson, err := json.Marshal(msgData)
 	require.NoError(t, err)
 
-	senderKey, err := crypto.GenerateKey()
-	require.NoError(t, err)
-	reqBody, err := signMesssage(dataJson, projectID.Uint64(), senderKey)
+	reqBody, err := signMesssage(dataJson, projectID.Uint64(), deviceKey)
 	require.NoError(t, err)
 
 	taskID, err := createTask(reqBody, apiNodeUrl)

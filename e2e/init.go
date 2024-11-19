@@ -28,8 +28,11 @@ import (
 	sequencerdb "github.com/iotexproject/w3bstream/service/sequencer/db"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/debits"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/mockerc20"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/mockioid"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/mockioidregistry"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/mockproject"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/projectdevice"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/projectregistrar"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/projectreward"
 	provercontract "github.com/iotexproject/w3bstream/smartcontracts/go/prover"
@@ -210,6 +213,46 @@ func registerProject(t *testing.T, chainEndpoint, ipfsURL, projectFile string,
 	require.NoError(t, err)
 
 	return newProjectID, nil
+}
+
+func registerDevice(t *testing.T, chainEndpoint string,
+	contractDeployments *utils.ContractsDeployments, device *ecdsa.PrivateKey, projectID *big.Int) {
+	client, err := ethclient.Dial(chainEndpoint)
+	require.NoError(t, err)
+	chainID, err := client.ChainID(context.Background())
+	require.NoError(t, err)
+
+	// Register ioid
+	mockIOIDRegistry, err := mockioidregistry.NewMockioidregistry(
+		common.HexToAddress(contractDeployments.IoIDRegistry), client)
+	require.NoError(t, err)
+
+	ioidAddr, err := mockIOIDRegistry.IoID(nil)
+	require.NoError(t, err)
+	mockIOID, err := mockioid.NewMockioid(ioidAddr, client)
+	require.NoError(t, err)
+
+	tOpts, err := bind.NewKeyedTransactorWithChainID(device, chainID)
+	require.NoError(t, err)
+	tx, err := mockIOID.Register(tOpts)
+	require.NoError(t, err)
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+	newDeviceID := big.NewInt(1)
+	deviceAddr := crypto.PubkeyToAddress(device.PublicKey)
+	tx, err = mockIOIDRegistry.Bind(tOpts, newDeviceID, deviceAddr)
+	require.NoError(t, err)
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+
+	// Approve device
+	projectDevice, err := projectdevice.NewProjectdevice(
+		common.HexToAddress(contractDeployments.ProjectDevice), client)
+	require.NoError(t, err)
+	tx, err = projectDevice.Approve(tOpts, projectID, []common.Address{deviceAddr})
+	require.NoError(t, err)
+	_, err = utils.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
 }
 
 func registerProver(t *testing.T, chainEndpoint string,

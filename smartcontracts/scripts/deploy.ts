@@ -2,6 +2,7 @@ import { ethers, upgrades } from 'hardhat';
 
 async function main() {
   let projectAddr: string = ''
+  let ioIDRegistryAddr: string = ''
   let projectRegistrationFee: string = '0.0'
 
   if (process.env.PROJECT_ADDRESS) {
@@ -12,6 +13,23 @@ async function main() {
     console.log(`MockProject deployed to ${MockProject.target}`);
 
     projectAddr = MockProject.target.toString()
+  }
+  if (process.env.IOID_REGISTRY) {
+    ioIDRegistryAddr = process.env.IOID_REGISTRY
+  } else {
+    const MockIoID = await ethers.deployContract('MockIoID', []);
+    await MockIoID.waitForDeployment();
+    console.log(`MockIoID deployed to ${MockIoID.target}`);
+
+    const MockIoIDRegistry = await ethers.getContractFactory('MockIoIDRegistry');
+    const mockIoIDRegistry = await upgrades.deployProxy(MockIoIDRegistry, [MockIoID.target], {
+      initializer: 'initialize',
+    });
+    await mockIoIDRegistry.waitForDeployment();
+    console.log(`MockIoIDRegistry deployed to ${mockIoIDRegistry.target}`);
+
+    ioIDRegistryAddr = mockIoIDRegistry.target.toString()
+    console.log(`IoIDRegistry deployed to ${ioIDRegistryAddr}`);
   }
   if (process.env.DAPP_PROCESSOR) {
   } else {
@@ -100,6 +118,13 @@ async function main() {
   });
   await minter.waitForDeployment();
   console.log(`W3bstreamMinter deployed to ${minter.target}`);
+
+  const ProjectDevice = await ethers.getContractFactory('ProjectDevice');
+  const projectDevice = await upgrades.deployProxy(ProjectDevice, [ioIDRegistryAddr, project.target], {
+    initializer: 'initialize',
+  });
+  await projectDevice.waitForDeployment();
+  console.log(`ProjectDevice deployed to ${projectDevice.target}`);
 
   tx = await distributor.setOperator(minter.target);
   await tx.wait();
