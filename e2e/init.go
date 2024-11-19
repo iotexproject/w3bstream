@@ -40,17 +40,18 @@ import (
 	"github.com/iotexproject/w3bstream/util/ipfs"
 )
 
-func apiNodeInit(dbURI, chainEndpoint, taskManagerContractAddr string) (*apinode.APINode, string, error) {
+func apiNodeInit(dbURI, chainEndpoint, taskManagerContractAddr, projectDeviceContractAddr string) (*apinode.APINode, string, error) {
 	cfg := apinodeconfig.Config{
-		LogLevel:                 slog.LevelInfo,
-		ServiceEndpoint:          ":9000",
-		SequencerServiceEndpoint: "localhost:9001",
-		ProverServiceEndpoint:    "localhost:9002",
-		DatabaseDSN:              dbURI,
-		PrvKey:                   "",
-		ChainEndpoint:            chainEndpoint,
-		BeginningBlockNumber:     0,
-		TaskManagerContractAddr:  taskManagerContractAddr,
+		LogLevel:                  slog.LevelInfo,
+		ServiceEndpoint:           ":9000",
+		SequencerServiceEndpoint:  "localhost:9001",
+		ProverServiceEndpoint:     "localhost:9002",
+		DatabaseDSN:               dbURI,
+		PrvKey:                    "",
+		ChainEndpoint:             chainEndpoint,
+		BeginningBlockNumber:      0,
+		TaskManagerContractAddr:   taskManagerContractAddr,
+		ProjectDeviceContractAddr: projectDeviceContractAddr,
 	}
 
 	db, err := apinodepersistence.NewPersistence(cfg.DatabaseDSN)

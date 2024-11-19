@@ -88,7 +88,7 @@ func TestE2E(t *testing.T) {
 	})
 
 	// APINode init
-	apiNode, apiNodeUrl, err := apiNodeInit(PGURI, chainEndpoint, contracts.TaskManager)
+	apiNode, apiNodeUrl, err := apiNodeInit(PGURI, chainEndpoint, contracts.TaskManager, contracts.ProjectDevice)
 	require.NoError(t, err)
 	err = apiNode.Start()
 	require.NoError(t, err)
