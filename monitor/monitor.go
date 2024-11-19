@@ -165,7 +165,6 @@ func (c *contract) processLogs(logs []types.Log) error {
 				return err
 			}
 		case deviceApproveTopic:
-			slog.Info("------------ device approve")
 			if c.projectDeviceInstance == nil || c.h.UpsertProjectDevice == nil {
 				continue
 			}

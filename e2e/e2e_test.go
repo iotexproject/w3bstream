@@ -127,13 +127,6 @@ func TestE2E(t *testing.T) {
 	projectID, err := registerProject(t, chainEndpoint, ipfsEndpoint, projectFilePath, contracts, projectOwnerKey)
 	require.NoError(t, err)
 
-	// Register prover
-	proverAddr := crypto.PubkeyToAddress(proverKey.PublicKey)
-	err = sendETH(t, chainEndpoint, payerHex, proverAddr, 20)
-	require.NoError(t, err)
-	err = registerProver(t, chainEndpoint, contracts, proverKey)
-	require.NoError(t, err)
-
 	// Approve device
 	deviceKey, err := crypto.GenerateKey()
 	require.NoError(t, err)
@@ -141,6 +134,13 @@ func TestE2E(t *testing.T) {
 	err = sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
 	require.NoError(t, err)
 	registerDevice(t, chainEndpoint, contracts, deviceKey, projectOwnerKey, projectID)
+
+	// Register prover
+	proverAddr := crypto.PubkeyToAddress(proverKey.PublicKey)
+	err = sendETH(t, chainEndpoint, payerHex, proverAddr, 20)
+	require.NoError(t, err)
+	err = registerProver(t, chainEndpoint, contracts, proverKey)
+	require.NoError(t, err)
 
 	// Send message
 	msgData := struct {
