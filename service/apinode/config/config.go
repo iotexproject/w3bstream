@@ -31,7 +31,7 @@ var defaultTestnetConfig = &Config{
 	ChainEndpoint:             "https://babel-api.testnet.iotex.io",
 	BeginningBlockNumber:      28685000,
 	TaskManagerContractAddr:   "0xF0714400a4C0C72007A9F910C5E3007614958636",
-	ProjectDeviceContractAddr: "0xF0714400a4C0C72007A9F910C5E3007614958636", // TODO update the value
+	ProjectDeviceContractAddr: "0x503BE87Bc613076819aDe916Bde0D394e5F8A36e",
 	env:                       "TESTNET",
 }
 
