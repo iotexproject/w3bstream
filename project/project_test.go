@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -116,7 +115,7 @@ func TestProject_GetConfig(t *testing.T) {
 		Version: "0.1",
 	}
 	project := &Project{
-		Versions: []*Config{conf},
+		Configs: []*Config{conf},
 	}
 
 	t.Run("Success", func(t *testing.T) {
@@ -149,27 +148,5 @@ func TestConfig_Validate(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		err := config.validate()
 		r.NoError(err)
-	})
-}
-
-func TestConvertProject(t *testing.T) {
-	r := require.New(t)
-
-	t.Run("FailedToUnmarshal", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p.ApplyFuncReturn(easyjson.Unmarshal, errors.New(t.Name()))
-		_, err := convertProject(nil)
-		r.ErrorContains(err, t.Name())
-	})
-
-	t.Run("EmptyConfig", func(t *testing.T) {
-		p := gomonkey.NewPatches()
-		defer p.Reset()
-
-		p.ApplyFuncReturn(easyjson.Unmarshal, nil)
-		_, err := convertProject(nil)
-		r.ErrorContains(err, errEmptyConfig.Error())
 	})
 }

@@ -13,7 +13,7 @@ import (
 type Task struct {
 	ID             common.Hash    `json:"id"`
 	ProjectID      uint64         `json:"projectID"`
-	ProjectVersion string         `json:"projectVersion"`
+	ProjectVersion string         `json:"projectVersion,omitempty"`
 	DeviceID       common.Address `json:"deviceID"`
 	Payloads       [][]byte       `json:"payloads"`
 	Signature      []byte         `json:"signature,omitempty"`
