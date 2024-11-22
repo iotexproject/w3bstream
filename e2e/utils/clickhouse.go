@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 
-	_ "github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/clickhouse"
 )
