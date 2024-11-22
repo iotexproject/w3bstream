@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS w3bstream_tasks
     signature Array(UInt8) NOT NULL,
 	create_at DateTime NOT NULL
 )
-ENGINE = SharedMergeTree()
+ENGINE = ReplacingMergeTree()
 PRIMARY KEY task_id
 ORDER BY task_id
 `)
