@@ -7,16 +7,16 @@ import (
 	"github.com/iotexproject/w3bstream/monitor"
 	"github.com/iotexproject/w3bstream/service/apinode/api"
 	"github.com/iotexproject/w3bstream/service/apinode/config"
-	"github.com/iotexproject/w3bstream/service/apinode/persistence"
+	"github.com/iotexproject/w3bstream/service/apinode/db"
 	"github.com/pkg/errors"
 )
 
 type APINode struct {
 	cfg *config.Config
-	db  *persistence.Persistence
+	db  *db.DB
 }
 
-func NewAPINode(cfg *config.Config, db *persistence.Persistence) *APINode {
+func NewAPINode(cfg *config.Config, db *db.DB) *APINode {
 	return &APINode{
 		cfg: cfg,
 		db:  db,

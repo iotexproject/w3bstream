@@ -11,7 +11,7 @@ import (
 
 	"github.com/iotexproject/w3bstream/service/apinode"
 	"github.com/iotexproject/w3bstream/service/apinode/config"
-	"github.com/iotexproject/w3bstream/service/apinode/persistence"
+	"github.com/iotexproject/w3bstream/service/apinode/db"
 )
 
 func main() {
@@ -22,12 +22,12 @@ func main() {
 	cfg.Print()
 	slog.Info("apinode config loaded")
 
-	p, err := persistence.NewPersistence(cfg.DatabaseDSN)
+	db, err := db.New(cfg.LocalDBDir, cfg.ClickhouseEndpoint, cfg.ClickhousePasswd)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	apinode := apinode.NewAPINode(cfg, p)
+	apinode := apinode.NewAPINode(cfg, db)
 
 	if err := apinode.Start(); err != nil {
 		log.Fatal(err)

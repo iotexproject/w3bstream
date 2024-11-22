@@ -11,7 +11,8 @@ type Config struct {
 	LogLevel                slog.Level `env:"LOG_LEVEL,optional"`
 	ServiceEndpoint         string     `env:"HTTP_SERVICE_ENDPOINT"`
 	TaskProcessingBandwidth int        `env:"TASK_PROCESSING_BANDWIDTH"`
-	DatasourceDSN           string     `env:"DATASOURCE_DSN"`
+	ClickhouseEndpoint      string     `env:"CLICKHOUSE_ENDPOINT"`
+	ClickhousePasswd        string     `env:"CLICKHOUSE_PASSWORD"`
 	ChainEndpoint           string     `env:"CHAIN_ENDPOINT,optional"`
 	OperatorPrvKey          string     `env:"OPERATOR_PRIVATE_KEY,optional"`
 	LocalDBDir              string     `env:"LOCAL_DB_DIRECTORY,optional"`
@@ -26,7 +27,6 @@ var (
 	defaultTestnetConfig = &Config{
 		LogLevel:                slog.LevelInfo,
 		ServiceEndpoint:         ":9001",
-		DatasourceDSN:           "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",
 		TaskProcessingBandwidth: 20,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
 		OperatorPrvKey:          "33e6ba3e033131026903f34dfa208feb88c284880530cf76280b68d38041c67b",

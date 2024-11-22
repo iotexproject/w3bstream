@@ -63,7 +63,7 @@ func (p *Prover) Start() error {
 
 	projectManager := project.NewManager(p.db.Project, p.db.ProjectFile, p.db.UpsertProjectFile)
 
-	datasource, err := datasource.NewPostgres(p.cfg.DatasourceDSN)
+	datasource, err := datasource.NewClickhouse(p.cfg.ClickhouseEndpoint, p.cfg.ClickhousePasswd)
 	if err != nil {
 		return errors.Wrap(err, "failed to new datasource")
 	}

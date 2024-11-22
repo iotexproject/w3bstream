@@ -1,34 +1,22 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
-
-	"github.com/iotexproject/w3bstream/service/apinode/api"
 )
 
 func main() {
-	prv, err := crypto.HexToECDSA("your private key")
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to parse private key"))
-	}
-	req := &api.CreateTaskReq{
-		ProjectID:      912,
-		ProjectVersion: "v1.0.0",
-		Payloads:       []string{"{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"},
-	}
-	reqJson, _ := json.Marshal(req)
-	fmt.Println(string(reqJson))
-
-	h := crypto.Keccak256Hash(reqJson)
-	sig, err := crypto.Sign(h.Bytes(), prv)
+	b, err := hexutil.Decode("0x" + "048877758949b314f9da52ebcb46c19a085c1ad12a7509228de04b24784e815e8d7b726e2564cb9f03175feb70fca96d2f5f117762304d8621afc424ebcb92f39c")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(hexutil.Encode(sig))
+	pub, err := crypto.UnmarshalPubkey(b)
+	if err != nil {
+		panic(err)
+	}
+	addr := crypto.PubkeyToAddress(*pub)
+
+	fmt.Println(addr.String())
 }

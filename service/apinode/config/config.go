@@ -12,12 +12,14 @@ type Config struct {
 	ServiceEndpoint           string     `env:"HTTP_SERVICE_ENDPOINT"`
 	SequencerServiceEndpoint  string     `env:"SEQUENCER_SERVICE_ENDPOINT"`
 	ProverServiceEndpoint     string     `env:"PROVER_SERVICE_ENDPOINT"`
-	DatabaseDSN               string     `env:"DATABASE_DSN"`
+	ClickhouseEndpoint        string     `env:"CLICKHOUSE_ENDPOINT"`
+	ClickhousePasswd          string     `env:"CLICKHOUSE_PASSWORD"`
 	PrvKey                    string     `env:"PRIVATE_KEY,optional"`
 	ChainEndpoint             string     `env:"CHAIN_ENDPOINT,optional"`
 	BeginningBlockNumber      uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
 	TaskManagerContractAddr   string     `env:"TASK_MANAGER_CONTRACT_ADDRESS,optional"`
 	ProjectDeviceContractAddr string     `env:"PROJECT_DEVICE_CONTRACT_ADDRESS,optional"`
+	LocalDBDir                string     `env:"LOCAL_DB_DIRECTORY,optional"`
 	env                       string     `env:"-"`
 }
 
@@ -26,12 +28,12 @@ var defaultTestnetConfig = &Config{
 	ServiceEndpoint:           ":9000",
 	SequencerServiceEndpoint:  "localhost:9001",
 	ProverServiceEndpoint:     "localhost:9002",
-	DatabaseDSN:               "postgres://postgres:mysecretpassword@postgres:5432/w3bstream?sslmode=disable",
 	PrvKey:                    "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
 	ChainEndpoint:             "https://babel-api.testnet.iotex.io",
 	BeginningBlockNumber:      28685000,
 	TaskManagerContractAddr:   "0xF0714400a4C0C72007A9F910C5E3007614958636",
 	ProjectDeviceContractAddr: "0x503BE87Bc613076819aDe916Bde0D394e5F8A36e",
+	LocalDBDir:                "./local_db",
 	env:                       "TESTNET",
 }
 

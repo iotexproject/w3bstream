@@ -18,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/metrics"
-	"github.com/iotexproject/w3bstream/service/apinode/persistence"
+	"github.com/iotexproject/w3bstream/service/apinode/db"
 	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
 	sequencerapi "github.com/iotexproject/w3bstream/service/sequencer/api"
 )
@@ -60,7 +60,7 @@ type QueryTaskResp struct {
 
 type httpServer struct {
 	engine        *gin.Engine
-	p             *persistence.Persistence
+	db            *db.DB
 	sequencerAddr string
 	proverAddr    string
 }
@@ -87,7 +87,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 	}
 	addr := crypto.PubkeyToAddress(*pubKey)
 
-	ok, err := s.p.IsDeviceApproved(req.ProjectID, addr)
+	ok, err := s.db.IsDeviceApproved(req.ProjectID, addr)
 	if err != nil {
 		slog.Error("failed to check device permission", "error", err)
 		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to check device permission")))
@@ -117,10 +117,10 @@ func (s *httpServer) createTask(c *gin.Context) {
 	}
 	taskID := crypto.Keccak256Hash(sig)
 
-	if err := s.p.CreateTask(
-		&persistence.Task{
-			DeviceID:       addr,
-			TaskID:         taskID,
+	if err := s.db.CreateTask(
+		&db.Task{
+			DeviceID:       addr.Bytes(),
+			TaskID:         taskID.Bytes(),
 			Nonce:          req.Nonce,
 			ProjectID:      req.ProjectID,
 			ProjectVersion: req.ProjectVersion,
@@ -216,7 +216,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	}
 
 	// Get packed state
-	task, err := s.p.FetchTask(taskID)
+	task, err := s.db.FetchTask(taskID)
 	if err != nil {
 		slog.Error("failed to query task", "error", err)
 		resp.States = append(resp.States, &StateLog{
@@ -238,7 +238,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	})
 
 	// Get assigned state
-	assignedTask, err := s.p.FetchAssignedTask(taskID)
+	assignedTask, err := s.db.FetchAssignedTask(taskID)
 	if err != nil {
 		slog.Error("failed to query assigned task", "error", err)
 		resp.States = append(resp.States, &StateLog{
@@ -260,7 +260,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	})
 
 	// Get settled state
-	settledTask, err := s.p.FetchSettledTask(taskID)
+	settledTask, err := s.db.FetchSettledTask(taskID)
 	if err != nil {
 		slog.Error("failed to query settled task", "error", err)
 		resp.States = append(resp.States, &StateLog{
@@ -303,10 +303,10 @@ func (s *httpServer) queryTask(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(p *persistence.Persistence, addr, sequencerAddr, proverAddr string) error {
+func Run(p *db.DB, addr, sequencerAddr, proverAddr string) error {
 	s := &httpServer{
 		engine:        gin.Default(),
-		p:             p,
+		db:            p,
 		sequencerAddr: sequencerAddr,
 		proverAddr:    proverAddr,
 	}

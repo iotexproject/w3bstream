@@ -1,28 +1,33 @@
 package datasource
 
 import (
+	"context"
+	"crypto/tls"
 	"encoding/json"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
 	"github.com/iotexproject/w3bstream/service/apinode/db"
 	"github.com/iotexproject/w3bstream/task"
 )
 
-type Postgres struct {
-	db *gorm.DB
+type Clickhouse struct {
+	db driver.Conn
 }
 
-func (p *Postgres) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
+func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 	if len(taskIDs) == 0 {
 		return nil, errors.New("empty query task ids")
 	}
+	tids := make([][]byte, 0, len(taskIDs))
+	for _, t := range taskIDs {
+		tids = append(tids, t.Bytes())
+	}
 	ts := []*db.Task{}
-	if err := p.db.Where("task_id IN ?", taskIDs).First(&ts).Error; err != nil {
+	if err := p.db.Select(context.Background(), &ts, "SELECT * FROM w3bstream_tasks WHERE task_id IN ?", tids); err != nil {
 		return nil, errors.Wrap(err, "failed to query tasks")
 	}
 
@@ -47,12 +52,18 @@ func (p *Postgres) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 	return res, nil
 }
 
-func NewPostgres(dsn string) (*Postgres, error) {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+func NewClickhouse(endpoint, passwd string) (*Clickhouse, error) {
+	conn, err := clickhouse.Open(&clickhouse.Options{
+		Addr:     []string{endpoint},
+		Protocol: clickhouse.Native,
+		TLS:      &tls.Config{},
+		Auth: clickhouse.Auth{
+			Username: "default",
+			Password: passwd,
+		},
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to connect postgres")
+		return nil, errors.Wrap(err, "failed to connect clickhouse")
 	}
-	return &Postgres{db}, nil
+	return &Clickhouse{db: conn}, nil
 }

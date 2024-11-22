@@ -49,7 +49,7 @@ func (s *Sequencer) Start() error {
 		return errors.Wrap(err, "failed to start monitor")
 	}
 
-	datasource, err := datasource.NewPostgres(s.cfg.DatasourceDSN)
+	datasource, err := datasource.NewClickhouse(s.cfg.ClickhouseEndpoint, s.cfg.ClickhousePasswd)
 	if err != nil {
 		return errors.Wrap(err, "failed to new datasource")
 	}

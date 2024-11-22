@@ -59,12 +59,12 @@ func TestE2E(t *testing.T) {
 	contracts, err := utils.DeployContract(chainEndpoint, payerHex)
 	require.NoError(t, err)
 
-	// Setup postgres
-	dbName := "users"
-	pgContainer, PGURI, err := utils.SetupPostgres(dbName)
+	// Setup clickhouse
+	dbName := "w3bstream"
+	chContainer, chEndpoint, chPasswd, err := utils.SetupClickhouse(dbName)
 	t.Cleanup(func() {
-		if err := pgContainer.Terminate(context.Background()); err != nil {
-			t.Logf("failed to terminate postgres container: %v", err)
+		if err := chContainer.Terminate(context.Background()); err != nil {
+			t.Logf("failed to terminate clickhouse container: %v", err)
 		}
 	})
 	require.NoError(t, err)
@@ -88,7 +88,11 @@ func TestE2E(t *testing.T) {
 	})
 
 	// APINode init
-	apiNode, apiNodeUrl, err := apiNodeInit(PGURI, chainEndpoint, contracts.TaskManager, contracts.ProjectDevice)
+	tempApiNodeDB, err := os.CreateTemp("", "apinode.db")
+	require.NoError(t, err)
+	defer os.Remove(tempApiNodeDB.Name())
+	defer tempApiNodeDB.Close()
+	apiNode, apiNodeUrl, err := apiNodeInit(chEndpoint, chPasswd, tempApiNodeDB.Name(), chainEndpoint, contracts.TaskManager, contracts.ProjectDevice)
 	require.NoError(t, err)
 	err = apiNode.Start()
 	require.NoError(t, err)
@@ -99,7 +103,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempSequencerDB.Name())
 	defer tempSequencerDB.Close()
-	sequencer, err := sequencerInit(PGURI, tempSequencerDB.Name(), chainEndpoint, contracts)
+	sequencer, err := sequencerInit(chEndpoint, chPasswd, tempSequencerDB.Name(), chainEndpoint, contracts)
 	require.NoError(t, err)
 	err = sendETH(t, chainEndpoint, payerHex, sequencer.Address(), 200)
 	require.NoError(t, err)
@@ -112,7 +116,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempProverDB.Name())
 	defer tempProverDB.Close()
-	prover, proverKey, err := proverInit(PGURI, tempProverDB.Name(), chainEndpoint, vmEndpoint, contracts)
+	prover, proverKey, err := proverInit(chEndpoint, chPasswd, tempProverDB.Name(), chainEndpoint, vmEndpoint, contracts)
 	require.NoError(t, err)
 	err = prover.Start()
 	require.NoError(t, err)
