@@ -61,7 +61,7 @@ func (r *processor) process(taskID common.Hash) error {
 	}
 	slog.Info("process task", "project_id", t.ProjectID, "task_id", t.ID, "vm_type", c.VMTypeID)
 	startTime := time.Now()
-	proof, err := r.handle(t, c.VMTypeID, c.Code, c.CodeExpParam)
+	proof, err := r.handle(t, c.VMTypeID, c.Code, c.Metadata)
 	if err != nil {
 		metrics.FailedTaskNumMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10)).Inc()
 		slog.Error("failed to handle task", "error", err)

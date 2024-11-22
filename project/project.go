@@ -3,12 +3,12 @@ package project
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
-	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/util/ipfs"
@@ -19,9 +19,10 @@ var (
 	errEmptyCode   = errors.New("code is empty")
 )
 
+// TODO: prefer protobuf for serialization and deserialization
 type Project struct {
-	DefaultVersion string    `json:"defaultVersion"`
-	Versions       []*Config `json:"versions"`
+	DefaultVersion string    `json:"defaultVersion,omitempty"`
+	Configs        []*Config `json:"config"`
 }
 
 type Meta struct {
@@ -36,14 +37,14 @@ type Attribute struct {
 }
 
 type Config struct {
-	Version      string `json:"version"`
-	VMTypeID     uint64 `json:"vmTypeID"`
-	CodeExpParam string `json:"codeExpParam,omitempty"`
-	Code         string `json:"code"`
+	Version  string `json:"version,omitempty"`
+	VMTypeID uint64 `json:"vmTypeID"`
+	Code     string `json:"code"`
+	Metadata string `json:"metadata,omitempty"`
 }
 
 func (p *Project) Config(version string) (*Config, error) {
-	for _, c := range p.Versions {
+	for _, c := range p.Configs {
 		if c.Version == version {
 			return c, nil
 		}
@@ -52,7 +53,30 @@ func (p *Project) Config(version string) (*Config, error) {
 }
 
 func (p *Project) DefaultConfig() (*Config, error) {
-	return p.Config(p.DefaultVersion)
+	if len(p.DefaultVersion) > 0 {
+		return p.Config(p.DefaultVersion)
+	}
+	return p.Configs[0], nil
+}
+
+func (p *Project) Marshal() ([]byte, error) {
+	return json.Marshal(p)
+}
+
+func (p *Project) Unmarshal(data []byte) error {
+	if err := json.Unmarshal(data, p); err != nil {
+		return errors.Wrap(err, "failed to unmarshal project")
+	}
+
+	if len(p.Configs) == 0 {
+		return errEmptyConfig
+	}
+	for _, c := range p.Configs {
+		if err := c.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Config) validate() error {
@@ -101,21 +125,4 @@ func (m *Meta) FetchProjectFile() ([]byte, error) {
 	}
 
 	return data, nil
-}
-
-func convertProject(projectFile []byte) (*Project, error) {
-	p := &Project{}
-	if err := easyjson.Unmarshal(projectFile, p); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal project")
-	}
-
-	if len(p.Versions) == 0 {
-		return nil, errEmptyConfig
-	}
-	for _, c := range p.Versions {
-		if err := c.validate(); err != nil {
-			return nil, err
-		}
-	}
-	return p, nil
 }

@@ -29,8 +29,9 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 		return nil, errors.Wrap(err, "failed to decode code")
 	}
 	if _, err := cli.NewProject(context.Background(), &proto.NewProjectRequest{
-		ProjectID: task.ProjectID,
-		Binary:    bi,
+		ProjectID:      task.ProjectID,
+		ProjectVersion: task.ProjectVersion,
+		Binary:         bi,
 	}); err != nil {
 		slog.Error("failed to new project", "project_id", task.ProjectID, "err", err)
 		return nil, errors.Wrap(err, "failed to create vm instance")

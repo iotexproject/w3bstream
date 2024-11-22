@@ -27,17 +27,19 @@ func (m *Manager) Project(projectID uint64) (*Project, error) {
 		return nil, errors.Errorf("failed to get project file, project_id %v", projectID)
 	}
 
+	p := &Project{}
 	if bytes.Equal(fileHash[:], hash[:]) {
-		p, err := convertProject(pf)
+		err := p.Unmarshal(pf)
 		return p, errors.Wrapf(err, "failed to unmarshal project file, project_id %v", projectID)
 	}
 
+	// project file hash mismatch, fetch new project file from uri
 	pm := &Meta{ProjectID: projectID, Uri: uri, Hash: hash}
 	data, err := pm.FetchProjectFile()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch project file, project_id %v", projectID)
 	}
-	p, err := convertProject(data)
+	err = p.Unmarshal(data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal project file, project_id %v", projectID)
 	}
