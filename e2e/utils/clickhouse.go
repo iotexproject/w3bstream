@@ -19,7 +19,7 @@ func SetupClickhouse(dbName string) (c *chContainer, endpoint, passwd string, er
 	dbPassword := "password"
 
 	clickhouseContainer, err := clickhouse.Run(ctx,
-		"clickhouse/clickhouse-server:23.3.8.21-alpine",
+		"clickhouse/clickhouse-server:24.8-alpine",
 		clickhouse.WithDatabase(dbName),
 		clickhouse.WithUsername(dbUser),
 		clickhouse.WithPassword(dbPassword),
