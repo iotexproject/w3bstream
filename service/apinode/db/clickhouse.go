@@ -63,11 +63,15 @@ ORDER BY task_id
 	return errors.Wrap(err, "failed to create clickhouse table")
 }
 
-func newCH(endpoint, passwd string) (driver.Conn, error) {
+func newCH(endpoint, passwd string, isTLS bool) (driver.Conn, error) {
+	var tlsCfg *tls.Config
+	if isTLS {
+		tlsCfg = &tls.Config{}
+	}
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr:     []string{endpoint},
 		Protocol: clickhouse.Native,
-		TLS:      &tls.Config{},
+		TLS:      tlsCfg,
 		Auth: clickhouse.Auth{
 			Username: "default",
 			Password: passwd,

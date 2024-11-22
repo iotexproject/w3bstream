@@ -13,6 +13,7 @@ type Config struct {
 	VMEndpoints             string     `env:"VM_ENDPOINTS"`
 	ClickhouseEndpoint      string     `env:"CLICKHOUSE_ENDPOINT"`
 	ClickhousePasswd        string     `env:"CLICKHOUSE_PASSWORD"`
+	ClickhouseTLS           bool       `env:"CLICKHOUSE_TLS"`
 	ChainEndpoint           string     `env:"CHAIN_ENDPOINT,optional"`
 	ProjectContractAddr     string     `env:"PROJECT_CONTRACT_ADDRESS,optional"`
 	RouterContractAddr      string     `env:"ROUTER_CONTRACT_ADDRESS,optional"`
@@ -29,6 +30,7 @@ var (
 		ServiceEndpoint:         ":9002",
 		VMEndpoints:             `{"1":"localhost:4001","2":"localhost:4002","3":"zkwasm:4001","4":"wasm:4001"}`,
 		ChainEndpoint:           "https://babel-api.testnet.iotex.io",
+		ClickhouseTLS:           true,
 		ProjectContractAddr:     "0x0abec44FC786e8da12267Db5fdeB4311AD1A0A8A",
 		RouterContractAddr:      "0x28E0A99A76a467E7418019cBBbF79E4599C73B5B",
 		TaskManagerContractAddr: "0xF0714400a4C0C72007A9F910C5E3007614958636",

@@ -11,12 +11,12 @@ type DB struct {
 	ch     driver.Conn
 }
 
-func New(localDBDir, chEndpoint, chPasswd string) (*DB, error) {
+func New(localDBDir, chEndpoint, chPasswd string, isChTLS bool) (*DB, error) {
 	sqlite, err := newSqlite(localDBDir)
 	if err != nil {
 		return nil, err
 	}
-	ch, err := newCH(chEndpoint, chPasswd)
+	ch, err := newCH(chEndpoint, chPasswd, isChTLS)
 	if err != nil {
 		return nil, err
 	}

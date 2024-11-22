@@ -55,7 +55,7 @@ func apiNodeInit(chEndpoint, chPasswd, dbFile, chainEndpoint, taskManagerContrac
 		ProjectDeviceContractAddr: projectDeviceContractAddr,
 	}
 
-	db, err := apinodedb.New(dbFile, chEndpoint, chPasswd)
+	db, err := apinodedb.New(dbFile, chEndpoint, chPasswd, false)
 	if err != nil {
 		return nil, "", err
 	}

@@ -52,11 +52,15 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 	return res, nil
 }
 
-func NewClickhouse(endpoint, passwd string) (*Clickhouse, error) {
+func NewClickhouse(endpoint, passwd string, isTLS bool) (*Clickhouse, error) {
+	var tlsCfg *tls.Config
+	if isTLS {
+		tlsCfg = &tls.Config{}
+	}
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr:     []string{endpoint},
 		Protocol: clickhouse.Native,
-		TLS:      &tls.Config{},
+		TLS:      tlsCfg,
 		Auth: clickhouse.Auth{
 			Username: "default",
 			Password: passwd,

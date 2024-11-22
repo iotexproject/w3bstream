@@ -14,6 +14,7 @@ type Config struct {
 	ProverServiceEndpoint     string     `env:"PROVER_SERVICE_ENDPOINT"`
 	ClickhouseEndpoint        string     `env:"CLICKHOUSE_ENDPOINT"`
 	ClickhousePasswd          string     `env:"CLICKHOUSE_PASSWORD"`
+	ClickhouseTLS             bool       `env:"CLICKHOUSE_TLS"`
 	PrvKey                    string     `env:"PRIVATE_KEY,optional"`
 	ChainEndpoint             string     `env:"CHAIN_ENDPOINT,optional"`
 	BeginningBlockNumber      uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
@@ -28,6 +29,7 @@ var defaultTestnetConfig = &Config{
 	ServiceEndpoint:           ":9000",
 	SequencerServiceEndpoint:  "localhost:9001",
 	ProverServiceEndpoint:     "localhost:9002",
+	ClickhouseTLS:             true,
 	PrvKey:                    "dbfe03b0406549232b8dccc04be8224fcc0afa300a33d4f335dcfdfead861c85",
 	ChainEndpoint:             "https://babel-api.testnet.iotex.io",
 	BeginningBlockNumber:      28685000,
