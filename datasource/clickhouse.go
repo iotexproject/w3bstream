@@ -26,24 +26,24 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 	for _, t := range taskIDs {
 		tids = append(tids, t.Bytes())
 	}
-	ts := []*db.Task{}
+	var ts []db.Task
 	if err := p.db.Select(context.Background(), &ts, "SELECT * FROM w3bstream_tasks WHERE task_id IN ?", tids); err != nil {
 		return nil, errors.Wrap(err, "failed to query tasks")
 	}
 
 	res := []*task.Task{}
-	for _, t := range ts {
+	for i := range ts {
 		ps := [][]byte{}
-		if err := json.Unmarshal(t.Payloads, &ps); err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal task payloads, task_id %v", t.TaskID)
+		if err := json.Unmarshal(ts[i].Payloads, &ps); err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal task payloads, task_id %v", ts[i].TaskID)
 		}
 		res = append(res, &task.Task{
-			ID:             common.BytesToHash(t.TaskID),
-			ProjectID:      t.ProjectID,
-			ProjectVersion: t.ProjectVersion,
+			ID:             common.BytesToHash(ts[i].TaskID),
+			ProjectID:      ts[i].ProjectID,
+			ProjectVersion: ts[i].ProjectVersion,
 			Payloads:       ps,
-			DeviceID:       common.BytesToAddress(t.DeviceID),
-			Signature:      t.Signature,
+			DeviceID:       common.BytesToAddress(ts[i].DeviceID),
+			Signature:      ts[i].Signature,
 		})
 	}
 	if len(res) != len(taskIDs) {
