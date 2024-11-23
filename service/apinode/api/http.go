@@ -34,7 +34,7 @@ func newErrResp(err error) *errResp {
 type CreateTaskReq struct {
 	Nonce          uint64   `json:"nonce"                      binding:"required"`
 	ProjectID      uint64   `json:"projectID"                  binding:"required"`
-	ProjectVersion string   `json:"projectVersion"             binding:"required"`
+	ProjectVersion string   `json:"projectVersion"`
 	Payloads       []string `json:"payloads"                   binding:"required"`
 	Signature      string   `json:"signature,omitempty"        binding:"required"`
 }
@@ -79,7 +79,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
 		return
 	}
-	pubKey, err := s.recoverPubkey(*req, sig)
+	pubKey, err := recoverPubkey(*req, sig)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
@@ -164,7 +164,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func (s *httpServer) recoverPubkey(req CreateTaskReq, sig []byte) (*ecdsa.PublicKey, error) {
+func recoverPubkey(req CreateTaskReq, sig []byte) (*ecdsa.PublicKey, error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {

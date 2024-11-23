@@ -1,4 +1,4 @@
-package utils
+package services
 
 import (
 	"context"
@@ -29,6 +29,37 @@ func SetupRisc0VM() (*VMContainer, string, error) {
 	}
 
 	mapPort, err := container.MappedPort(ctx, "4001")
+	if err != nil {
+		return nil, "", err
+	}
+
+	ip, err := container.Host(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+
+	endpoint := fmt.Sprintf("%s:%s", ip, mapPort.Port())
+
+	return &VMContainer{Container: container}, endpoint, nil
+}
+
+func SetupGnarkVM() (*VMContainer, string, error) {
+	ctx := context.Background()
+	req := testcontainers.ContainerRequest{
+		Image:        "ghcr.io/iotexproject/gnarkserver:v0.0.17",
+		ExposedPorts: []string{"4005/tcp"},
+		WaitingFor:   wait.ForListeningPort("4005"),
+	}
+	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+		Reuse:            false,
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	mapPort, err := container.MappedPort(ctx, "4005")
 	if err != nil {
 		return nil, "", err
 	}

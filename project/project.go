@@ -44,6 +44,9 @@ type Config struct {
 }
 
 func (p *Project) Config(version string) (*Config, error) {
+	if len(version) == 0 {
+		return p.DefaultConfig()
+	}
 	for _, c := range p.Configs {
 		if c.Version == version {
 			return c, nil
