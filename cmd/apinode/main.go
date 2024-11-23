@@ -22,7 +22,7 @@ func main() {
 	cfg.Print()
 	slog.Info("apinode config loaded")
 
-	db, err := db.New(cfg.LocalDBDir, cfg.ClickhouseEndpoint, cfg.ClickhousePasswd, cfg.ClickhouseTLS)
+	db, err := db.New(cfg.LocalDBDir, cfg.DatabaseDSN)
 	if err != nil {
 		log.Fatal(err)
 	}

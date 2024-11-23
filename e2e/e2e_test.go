@@ -52,7 +52,7 @@ func TestE2E(t *testing.T) {
 
 	// Setup clickhouse
 	dbName := "w3bstream"
-	chContainer, chEndpoint, chPasswd, err := services.SetupClickhouse(dbName)
+	chContainer, chDSN, err := services.SetupClickhouse(dbName)
 	t.Cleanup(func() {
 		if err := chContainer.Terminate(context.Background()); err != nil {
 			t.Logf("failed to terminate clickhouse container: %v", err)
@@ -80,7 +80,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempApiNodeDB.Name())
 	defer tempApiNodeDB.Close()
-	apiNode, apiNodeUrl, err := apiNodeInit(chEndpoint, chPasswd, tempApiNodeDB.Name(), chainEndpoint, contracts.TaskManager, contracts.ProjectDevice)
+	apiNode, apiNodeUrl, err := apiNodeInit(chDSN, tempApiNodeDB.Name(), chainEndpoint, contracts.TaskManager, contracts.ProjectDevice)
 	require.NoError(t, err)
 	err = apiNode.Start()
 	require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempSequencerDB.Name())
 	defer tempSequencerDB.Close()
-	sequencer, err := sequencerInit(chEndpoint, chPasswd, tempSequencerDB.Name(), chainEndpoint, contracts)
+	sequencer, err := sequencerInit(chDSN, tempSequencerDB.Name(), chainEndpoint, contracts)
 	require.NoError(t, err)
 	err = sendETH(t, chainEndpoint, payerHex, sequencer.Address(), 200)
 	require.NoError(t, err)
@@ -104,7 +104,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempProverDB.Name())
 	defer tempProverDB.Close()
-	prover, proverKey, err := proverInit(chEndpoint, chPasswd, tempProverDB.Name(), chainEndpoint,
+	prover, proverKey, err := proverInit(chDSN, tempProverDB.Name(), chainEndpoint,
 		map[int]string{1: risc0VMEndpoint, 5: gnarkVMEndpoint}, contracts)
 	require.NoError(t, err)
 	err = prover.Start()

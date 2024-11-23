@@ -11,9 +11,8 @@ type chContainer struct {
 	testcontainers.Container
 }
 
-func SetupClickhouse(dbName string) (c *chContainer, endpoint, passwd string, err error) {
+func SetupClickhouse(dbName string) (*chContainer, string, error) {
 	ctx := context.Background()
-
 	dbUser := "default"
 	dbPassword := "password"
 
@@ -23,15 +22,14 @@ func SetupClickhouse(dbName string) (c *chContainer, endpoint, passwd string, er
 		clickhouse.WithUsername(dbUser),
 		clickhouse.WithPassword(dbPassword),
 	)
-
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", err
 	}
 
-	endpoint, err = clickhouseContainer.ConnectionHost(ctx)
+	dsn, err := clickhouseContainer.ConnectionString(ctx, "secure=false")
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", err
 	}
 
-	return &chContainer{Container: clickhouseContainer}, endpoint, dbPassword, nil
+	return &chContainer{Container: clickhouseContainer}, dsn, nil
 }

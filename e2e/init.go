@@ -41,14 +41,13 @@ import (
 	"github.com/iotexproject/w3bstream/util/ipfs"
 )
 
-func apiNodeInit(chEndpoint, chPasswd, dbFile, chainEndpoint, taskManagerContractAddr, projectDeviceContractAddr string) (*apinode.APINode, string, error) {
+func apiNodeInit(chDSN, dbFile, chainEndpoint, taskManagerContractAddr, projectDeviceContractAddr string) (*apinode.APINode, string, error) {
 	cfg := apinodeconfig.Config{
 		LogLevel:                  slog.LevelInfo,
 		ServiceEndpoint:           ":9000",
 		SequencerServiceEndpoint:  "localhost:9001",
 		ProverServiceEndpoint:     "localhost:9002",
-		ClickhouseEndpoint:        chEndpoint,
-		ClickhousePasswd:          chPasswd,
+		DatabaseDSN:               chDSN,
 		PrvKey:                    "",
 		ChainEndpoint:             chainEndpoint,
 		BeginningBlockNumber:      0,
@@ -56,7 +55,7 @@ func apiNodeInit(chEndpoint, chPasswd, dbFile, chainEndpoint, taskManagerContrac
 		ProjectDeviceContractAddr: projectDeviceContractAddr,
 	}
 
-	db, err := apinodedb.New(dbFile, chEndpoint, chPasswd, false)
+	db, err := apinodedb.New(dbFile, chDSN)
 	if err != nil {
 		return nil, "", err
 	}
@@ -65,7 +64,7 @@ func apiNodeInit(chEndpoint, chPasswd, dbFile, chainEndpoint, taskManagerContrac
 	return node, fmt.Sprintf("http://localhost%s", cfg.ServiceEndpoint), nil
 }
 
-func sequencerInit(chEndpoint, chPasswd, dbFile, chainEndpoint string, contractDeployments *services.ContractsDeployments,
+func sequencerInit(chDSN, dbFile, chainEndpoint string, contractDeployments *services.ContractsDeployments,
 ) (*sequencer.Sequencer, error) {
 	key, err := crypto.GenerateKey()
 	if err != nil {
@@ -81,8 +80,7 @@ func sequencerInit(chEndpoint, chPasswd, dbFile, chainEndpoint string, contractD
 		LogLevel:                slog.LevelInfo,
 		ServiceEndpoint:         ":9001",
 		TaskProcessingBandwidth: 20,
-		ClickhouseEndpoint:      chEndpoint,
-		ClickhousePasswd:        chPasswd,
+		DatasourceDSN:           chDSN,
 		ChainEndpoint:           chainEndpoint,
 		ProverContractAddr:      contractDeployments.Prover,
 		MinterContractAddr:      contractDeployments.Minter,
@@ -94,7 +92,7 @@ func sequencerInit(chEndpoint, chPasswd, dbFile, chainEndpoint string, contractD
 	return sq, nil
 }
 
-func proverInit(chEndpoint, chPasswd, dbFile, chainEndpoint string, vmEndpoints map[int]string,
+func proverInit(chDSN, dbFile, chainEndpoint string, vmEndpoints map[int]string,
 	contractDeployments *services.ContractsDeployments,
 ) (*prover.Prover, *ecdsa.PrivateKey, error) {
 	key, err := crypto.GenerateKey()
@@ -114,8 +112,7 @@ func proverInit(chEndpoint, chPasswd, dbFile, chainEndpoint string, vmEndpoints 
 		ServiceEndpoint:         ":9002",
 		VMEndpoints:             string(vmEndpointBytes),
 		ChainEndpoint:           chainEndpoint,
-		ClickhouseEndpoint:      chEndpoint,
-		ClickhousePasswd:        chPasswd,
+		DatasourceDSN:           chDSN,
 		ProjectContractAddr:     contractDeployments.WSProject,
 		RouterContractAddr:      contractDeployments.Router,
 		TaskManagerContractAddr: contractDeployments.TaskManager,

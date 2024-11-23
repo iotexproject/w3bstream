@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"crypto/tls"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -63,20 +62,12 @@ ORDER BY task_id
 	return errors.Wrap(err, "failed to create clickhouse table")
 }
 
-func newCH(endpoint, passwd string, isTLS bool) (driver.Conn, error) {
-	var tlsCfg *tls.Config
-	if isTLS {
-		tlsCfg = &tls.Config{}
+func newCH(dsn string) (driver.Conn, error) {
+	op, err := clickhouse.ParseDSN(dsn)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse clickhouse dsn")
 	}
-	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr:     []string{endpoint},
-		Protocol: clickhouse.Native,
-		TLS:      tlsCfg,
-		Auth: clickhouse.Auth{
-			Username: "default",
-			Password: passwd,
-		},
-	})
+	conn, err := clickhouse.Open(op)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect clickhouse")
 	}

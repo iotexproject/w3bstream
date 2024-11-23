@@ -2,7 +2,6 @@ package datasource
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -52,20 +51,12 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 	return res, nil
 }
 
-func NewClickhouse(endpoint, passwd string, isTLS bool) (*Clickhouse, error) {
-	var tlsCfg *tls.Config
-	if isTLS {
-		tlsCfg = &tls.Config{}
+func NewClickhouse(dsn string) (*Clickhouse, error) {
+	op, err := clickhouse.ParseDSN(dsn)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse clickhouse dsn")
 	}
-	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr:     []string{endpoint},
-		Protocol: clickhouse.Native,
-		TLS:      tlsCfg,
-		Auth: clickhouse.Auth{
-			Username: "default",
-			Password: passwd,
-		},
-	})
+	conn, err := clickhouse.Open(op)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect clickhouse")
 	}
