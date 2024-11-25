@@ -19,28 +19,28 @@ This architecture ensures secure, reliable, and scalable data processing, allowi
 
 ## Getting Started
 
-### For Embedded Developer
+### For Embedded Developers
 
 [<u>ioID-SDK</u>](https://github.com/iotexproject/ioID-SDK) repo provides SDK for DePIN hardwares to connect W3bstream and IoTeX ecosystem
 
 
-### For Project Builder 
+### For Project Builders
 
 [<u>Build a custom zk prover for W3bstream</u>](./docs/DEVELOPER_GUIDE.md)
 
 
 [<u>Deploy the zk prover to W3bstream</u>](./docs/QUICK_START.md)
 
-### For Node operator
+### For Node Operators
 
 
 > ⓘ **Note**: Joining the W3bstream network as a sequencer or prover node is currently unavailable. Stay tuned for updates in future releases. [Follow us on X](https://x.com/iotex_dev).
 
-### For Module Integrator
+### For Module Integrators
 
- - Storage: [<u>./datasource</u>](./datasource/) folder contains [<u>documentation</u>](./datasource/README.md)  and existing implementations W3bstream can suppport. 
+ - Storage Modules: The [<u>./datasource</u>](./datasource/) folder contains [<u>documentation</u>](./datasource/README.md)  and existing implementations for data storage that W3bstream can support. 
 
- - ZK Engine: ZK Service needs to support [Protobuf interface](./vm/proto/vm.proto) to communication with ZK Node
+ - ZK Engine Modules: To add a new type of ZK prover, please ensure the service implements the [Protobuf interface](./vm/proto/vm.proto) to enable communication with the W3bstream ZK Node.
 
 
 ## Contributing
