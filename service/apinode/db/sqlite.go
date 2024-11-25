@@ -90,11 +90,6 @@ func (p *DB) UpsertProjectDevice(projectID uint64, address common.Address) error
 	return errors.Wrap(err, "failed to upsert project device")
 }
 
-func (p *DB) DeleteProjectDevice(projectID uint64, address common.Address) error {
-	err := p.sqlite.Where("project_id = ?", projectID).Where("device_address = ?", address).Delete(&ProjectDevice{}).Error
-	return errors.Wrap(err, "failed to delete project device")
-}
-
 func (p *DB) IsDeviceApproved(projectID uint64, address common.Address) (bool, error) {
 	t := ProjectDevice{}
 	if err := p.sqlite.Where("project_id = ?", projectID).Where("device_address = ?", address).First(&t).Error; err != nil {

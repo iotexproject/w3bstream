@@ -80,7 +80,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempApiNodeDB.Name())
 	defer tempApiNodeDB.Close()
-	apiNode, apiNodeUrl, err := apiNodeInit(chDSN, tempApiNodeDB.Name(), chainEndpoint, contracts.TaskManager, contracts.ProjectDevice)
+	apiNode, apiNodeUrl, err := apiNodeInit(chDSN, tempApiNodeDB.Name(), chainEndpoint, contracts.TaskManager, contracts.IoID)
 	require.NoError(t, err)
 	err = apiNode.Start()
 	require.NoError(t, err)
@@ -127,13 +127,13 @@ func TestE2E(t *testing.T) {
 	err = registerProver(t, chainEndpoint, contracts, proverKey)
 	require.NoError(t, err)
 
-	// Approve device
+	// Register device
 	deviceKey, err := crypto.GenerateKey()
 	require.NoError(t, err)
 	deviceAddr := crypto.PubkeyToAddress(deviceKey.PublicKey)
 	err = sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
 	require.NoError(t, err)
-	registerDevice(t, chainEndpoint, contracts, deviceKey, projectOwnerKey, projectID)
+	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
 
 	t.Run("RISC0", func(t *testing.T) {
 		risc0ProjectFilePath := "./testdata/risc0"

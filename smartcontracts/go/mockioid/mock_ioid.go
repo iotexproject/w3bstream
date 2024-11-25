@@ -31,7 +31,7 @@ var (
 
 // MockioidMetaData contains all meta data concerning the Mockioid contract.
 var MockioidMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"approved\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"register\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"tokenURI\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"approved\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"did\",\"type\":\"string\"}],\"name\":\"CreateIoID\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"METHOD\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"deviceProject\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_projectId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_device\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_deviceDID\",\"type\":\"string\"}],\"name\":\"register\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"id_\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"tokenURI\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // MockioidABI is the input ABI used to generate the binding from.
@@ -180,6 +180,37 @@ func (_Mockioid *MockioidTransactorRaw) Transact(opts *bind.TransactOpts, method
 	return _Mockioid.Contract.contract.Transact(opts, method, params...)
 }
 
+// METHOD is a free data retrieval call binding the contract method 0x67efe82e.
+//
+// Solidity: function METHOD() view returns(string)
+func (_Mockioid *MockioidCaller) METHOD(opts *bind.CallOpts) (string, error) {
+	var out []interface{}
+	err := _Mockioid.contract.Call(opts, &out, "METHOD")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
+}
+
+// METHOD is a free data retrieval call binding the contract method 0x67efe82e.
+//
+// Solidity: function METHOD() view returns(string)
+func (_Mockioid *MockioidSession) METHOD() (string, error) {
+	return _Mockioid.Contract.METHOD(&_Mockioid.CallOpts)
+}
+
+// METHOD is a free data retrieval call binding the contract method 0x67efe82e.
+//
+// Solidity: function METHOD() view returns(string)
+func (_Mockioid *MockioidCallerSession) METHOD() (string, error) {
+	return _Mockioid.Contract.METHOD(&_Mockioid.CallOpts)
+}
+
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(address owner) view returns(uint256)
@@ -209,6 +240,37 @@ func (_Mockioid *MockioidSession) BalanceOf(owner common.Address) (*big.Int, err
 // Solidity: function balanceOf(address owner) view returns(uint256)
 func (_Mockioid *MockioidCallerSession) BalanceOf(owner common.Address) (*big.Int, error) {
 	return _Mockioid.Contract.BalanceOf(&_Mockioid.CallOpts, owner)
+}
+
+// DeviceProject is a free data retrieval call binding the contract method 0x7ba0ef27.
+//
+// Solidity: function deviceProject(address ) view returns(uint256)
+func (_Mockioid *MockioidCaller) DeviceProject(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _Mockioid.contract.Call(opts, &out, "deviceProject", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// DeviceProject is a free data retrieval call binding the contract method 0x7ba0ef27.
+//
+// Solidity: function deviceProject(address ) view returns(uint256)
+func (_Mockioid *MockioidSession) DeviceProject(arg0 common.Address) (*big.Int, error) {
+	return _Mockioid.Contract.DeviceProject(&_Mockioid.CallOpts, arg0)
+}
+
+// DeviceProject is a free data retrieval call binding the contract method 0x7ba0ef27.
+//
+// Solidity: function deviceProject(address ) view returns(uint256)
+func (_Mockioid *MockioidCallerSession) DeviceProject(arg0 common.Address) (*big.Int, error) {
+	return _Mockioid.Contract.DeviceProject(&_Mockioid.CallOpts, arg0)
 }
 
 // GetApproved is a free data retrieval call binding the contract method 0x081812fc.
@@ -449,25 +511,25 @@ func (_Mockioid *MockioidTransactorSession) Approve(to common.Address, tokenId *
 	return _Mockioid.Contract.Approve(&_Mockioid.TransactOpts, to, tokenId)
 }
 
-// Register is a paid mutator transaction binding the contract method 0x1aa3a008.
+// Register is a paid mutator transaction binding the contract method 0x23a663e9.
 //
-// Solidity: function register() returns(uint256)
-func (_Mockioid *MockioidTransactor) Register(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Mockioid.contract.Transact(opts, "register")
+// Solidity: function register(uint256 _projectId, address _device, string _deviceDID) returns(uint256 id_)
+func (_Mockioid *MockioidTransactor) Register(opts *bind.TransactOpts, _projectId *big.Int, _device common.Address, _deviceDID string) (*types.Transaction, error) {
+	return _Mockioid.contract.Transact(opts, "register", _projectId, _device, _deviceDID)
 }
 
-// Register is a paid mutator transaction binding the contract method 0x1aa3a008.
+// Register is a paid mutator transaction binding the contract method 0x23a663e9.
 //
-// Solidity: function register() returns(uint256)
-func (_Mockioid *MockioidSession) Register() (*types.Transaction, error) {
-	return _Mockioid.Contract.Register(&_Mockioid.TransactOpts)
+// Solidity: function register(uint256 _projectId, address _device, string _deviceDID) returns(uint256 id_)
+func (_Mockioid *MockioidSession) Register(_projectId *big.Int, _device common.Address, _deviceDID string) (*types.Transaction, error) {
+	return _Mockioid.Contract.Register(&_Mockioid.TransactOpts, _projectId, _device, _deviceDID)
 }
 
-// Register is a paid mutator transaction binding the contract method 0x1aa3a008.
+// Register is a paid mutator transaction binding the contract method 0x23a663e9.
 //
-// Solidity: function register() returns(uint256)
-func (_Mockioid *MockioidTransactorSession) Register() (*types.Transaction, error) {
-	return _Mockioid.Contract.Register(&_Mockioid.TransactOpts)
+// Solidity: function register(uint256 _projectId, address _device, string _deviceDID) returns(uint256 id_)
+func (_Mockioid *MockioidTransactorSession) Register(_projectId *big.Int, _device common.Address, _deviceDID string) (*types.Transaction, error) {
+	return _Mockioid.Contract.Register(&_Mockioid.TransactOpts, _projectId, _device, _deviceDID)
 }
 
 // SafeTransferFrom is a paid mutator transaction binding the contract method 0x42842e0e.
@@ -864,6 +926,153 @@ func (_Mockioid *MockioidFilterer) WatchApprovalForAll(opts *bind.WatchOpts, sin
 func (_Mockioid *MockioidFilterer) ParseApprovalForAll(log types.Log) (*MockioidApprovalForAll, error) {
 	event := new(MockioidApprovalForAll)
 	if err := _Mockioid.contract.UnpackLog(event, "ApprovalForAll", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// MockioidCreateIoIDIterator is returned from FilterCreateIoID and is used to iterate over the raw logs and unpacked data for CreateIoID events raised by the Mockioid contract.
+type MockioidCreateIoIDIterator struct {
+	Event *MockioidCreateIoID // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *MockioidCreateIoIDIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(MockioidCreateIoID)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(MockioidCreateIoID)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *MockioidCreateIoIDIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *MockioidCreateIoIDIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// MockioidCreateIoID represents a CreateIoID event raised by the Mockioid contract.
+type MockioidCreateIoID struct {
+	Owner  common.Address
+	Id     *big.Int
+	Wallet common.Address
+	Did    string
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterCreateIoID is a free log retrieval operation binding the contract event 0x313a15bccdaa3cc35e31f4e2f6a0c398a1c735a9231dd4684399ea0307373062.
+//
+// Solidity: event CreateIoID(address indexed owner, uint256 id, address wallet, string did)
+func (_Mockioid *MockioidFilterer) FilterCreateIoID(opts *bind.FilterOpts, owner []common.Address) (*MockioidCreateIoIDIterator, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+
+	logs, sub, err := _Mockioid.contract.FilterLogs(opts, "CreateIoID", ownerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &MockioidCreateIoIDIterator{contract: _Mockioid.contract, event: "CreateIoID", logs: logs, sub: sub}, nil
+}
+
+// WatchCreateIoID is a free log subscription operation binding the contract event 0x313a15bccdaa3cc35e31f4e2f6a0c398a1c735a9231dd4684399ea0307373062.
+//
+// Solidity: event CreateIoID(address indexed owner, uint256 id, address wallet, string did)
+func (_Mockioid *MockioidFilterer) WatchCreateIoID(opts *bind.WatchOpts, sink chan<- *MockioidCreateIoID, owner []common.Address) (event.Subscription, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+
+	logs, sub, err := _Mockioid.contract.WatchLogs(opts, "CreateIoID", ownerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(MockioidCreateIoID)
+				if err := _Mockioid.contract.UnpackLog(event, "CreateIoID", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseCreateIoID is a log parse operation binding the contract event 0x313a15bccdaa3cc35e31f4e2f6a0c398a1c735a9231dd4684399ea0307373062.
+//
+// Solidity: event CreateIoID(address indexed owner, uint256 id, address wallet, string did)
+func (_Mockioid *MockioidFilterer) ParseCreateIoID(log types.Log) (*MockioidCreateIoID, error) {
+	event := new(MockioidCreateIoID)
+	if err := _Mockioid.contract.UnpackLog(event, "CreateIoID", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

@@ -30,10 +30,8 @@ import (
 	"github.com/iotexproject/w3bstream/smartcontracts/go/debits"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/mockerc20"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/mockioid"
-	"github.com/iotexproject/w3bstream/smartcontracts/go/mockioidregistry"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/mockproject"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/project"
-	"github.com/iotexproject/w3bstream/smartcontracts/go/projectdevice"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/projectregistrar"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/projectreward"
 	provercontract "github.com/iotexproject/w3bstream/smartcontracts/go/prover"
@@ -41,18 +39,18 @@ import (
 	"github.com/iotexproject/w3bstream/util/ipfs"
 )
 
-func apiNodeInit(chDSN, dbFile, chainEndpoint, taskManagerContractAddr, projectDeviceContractAddr string) (*apinode.APINode, string, error) {
+func apiNodeInit(chDSN, dbFile, chainEndpoint, taskManagerContractAddr, ioidContractAddr string) (*apinode.APINode, string, error) {
 	cfg := apinodeconfig.Config{
-		LogLevel:                  slog.LevelInfo,
-		ServiceEndpoint:           ":9000",
-		SequencerServiceEndpoint:  "localhost:9001",
-		ProverServiceEndpoint:     "localhost:9002",
-		DatabaseDSN:               chDSN,
-		PrvKey:                    "",
-		ChainEndpoint:             chainEndpoint,
-		BeginningBlockNumber:      0,
-		TaskManagerContractAddr:   taskManagerContractAddr,
-		ProjectDeviceContractAddr: projectDeviceContractAddr,
+		LogLevel:                 slog.LevelInfo,
+		ServiceEndpoint:          ":9000",
+		SequencerServiceEndpoint: "localhost:9001",
+		ProverServiceEndpoint:    "localhost:9002",
+		DatabaseDSN:              chDSN,
+		PrvKey:                   "",
+		ChainEndpoint:            chainEndpoint,
+		BeginningBlockNumber:     0,
+		TaskManagerContractAddr:  taskManagerContractAddr,
+		IoIDContractAddr:         ioidContractAddr,
 	}
 
 	db, err := apinodedb.New(dbFile, chDSN)
@@ -233,43 +231,20 @@ func uploadProject(t *testing.T, chainEndpoint, ipfsURL, projectFile string,
 	require.NoError(t, err)
 }
 
-func registerDevice(t *testing.T, chainEndpoint string,
-	contractDeployments *services.ContractsDeployments, device, projectOwnerKey *ecdsa.PrivateKey, projectID *big.Int) {
+func registerIoID(t *testing.T, chainEndpoint string,
+	contractDeployments *services.ContractsDeployments, device *ecdsa.PrivateKey, projectID *big.Int) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)
 	chainID, err := client.ChainID(context.Background())
 	require.NoError(t, err)
 
-	// Register ioid
-	mockIOIDRegistry, err := mockioidregistry.NewMockioidregistry(
-		common.HexToAddress(contractDeployments.IoIDRegistry), client)
-	require.NoError(t, err)
-
-	ioidAddr, err := mockIOIDRegistry.IoID(nil)
-	require.NoError(t, err)
-	mockIOID, err := mockioid.NewMockioid(ioidAddr, client)
+	mockIOID, err := mockioid.NewMockioid(common.HexToAddress(contractDeployments.IoID), client)
 	require.NoError(t, err)
 
 	tOpts, err := bind.NewKeyedTransactorWithChainID(device, chainID)
 	require.NoError(t, err)
-	tx, err := mockIOID.Register(tOpts)
-	require.NoError(t, err)
-	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
-	require.NoError(t, err)
-	newDeviceID := big.NewInt(1)
 	deviceAddr := crypto.PubkeyToAddress(device.PublicKey)
-	tx, err = mockIOIDRegistry.Bind(tOpts, newDeviceID, deviceAddr)
-	require.NoError(t, err)
-	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
-	require.NoError(t, err)
-
-	// Approve device
-	projectDevice, err := projectdevice.NewProjectdevice(
-		common.HexToAddress(contractDeployments.ProjectDevice), client)
-	require.NoError(t, err)
-	tOpts, err = bind.NewKeyedTransactorWithChainID(projectOwnerKey, chainID)
-	require.NoError(t, err)
-	tx, err = projectDevice.Approve(tOpts, projectID, []common.Address{deviceAddr})
+	tx, err := mockIOID.Register(tOpts, projectID, deviceAddr, "did:io:"+deviceAddr.String())
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)

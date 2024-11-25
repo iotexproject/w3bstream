@@ -31,11 +31,10 @@ func (n *APINode) Start() error {
 			AssignTask:               n.db.UpsertAssignedTask,
 			SettleTask:               n.db.UpsertSettledTask,
 			UpsertProjectDevice:      n.db.UpsertProjectDevice,
-			DeleteProjectDevice:      n.db.DeleteProjectDevice,
 		},
 		&monitor.ContractAddr{
-			TaskManager:   common.HexToAddress(n.cfg.TaskManagerContractAddr),
-			ProjectDevice: common.HexToAddress(n.cfg.ProjectDeviceContractAddr),
+			TaskManager: common.HexToAddress(n.cfg.TaskManagerContractAddr),
+			IoID:        common.HexToAddress(n.cfg.IoIDContractAddr),
 		},
 		n.cfg.BeginningBlockNumber,
 		n.cfg.ChainEndpoint,

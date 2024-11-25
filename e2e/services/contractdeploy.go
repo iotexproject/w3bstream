@@ -24,8 +24,7 @@ var (
 	mockDappRe         = regexp.MustCompile(`MockProcessor deployed to (\S+)`)
 	projectRewardRe    = regexp.MustCompile(`W3bstreamProjectReward deployed to (\S+)`)
 	debitsRe           = regexp.MustCompile(`W3bstreamDebits deployed to (\S+)`)
-	projectDeviceRe    = regexp.MustCompile(`ProjectDevice deployed to (\S+)`)
-	ioIDRegistryRe     = regexp.MustCompile(`IoIDRegistry deployed to (\S+)`)
+	ioIDRe             = regexp.MustCompile(`MockIoID deployed to (\S+)`)
 )
 
 type ContractsDeployments struct {
@@ -39,8 +38,7 @@ type ContractsDeployments struct {
 	MockDapp      string
 	ProjectReward string
 	Debits        string
-	ProjectDevice string
-	IoIDRegistry  string
+	IoID          string
 }
 
 func DeployContract(endpoint string, payerHex string) (*ContractsDeployments, error) {
@@ -114,11 +112,8 @@ func DeployContract(endpoint string, payerHex string) (*ContractsDeployments, er
 	if match := debitsRe.FindStringSubmatch(output); len(match) > 1 {
 		deployments.Debits = match[1]
 	}
-	if match := projectDeviceRe.FindStringSubmatch(output); len(match) > 1 {
-		deployments.ProjectDevice = match[1]
-	}
-	if match := ioIDRegistryRe.FindStringSubmatch(output); len(match) > 1 {
-		deployments.IoIDRegistry = match[1]
+	if match := ioIDRe.FindStringSubmatch(output); len(match) > 1 {
+		deployments.IoID = match[1]
 	}
 
 	return deployments, nil
