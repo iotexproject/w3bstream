@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,6 +37,7 @@ type CreateTaskReq struct {
 	ProjectID      uint64   `json:"projectID"                  binding:"required"`
 	ProjectVersion string   `json:"projectVersion"`
 	Payloads       []string `json:"payloads"                   binding:"required"`
+	HashAlgorithm  string   `json:"hashAlgorithm"              binding:"required"`
 	Signature      string   `json:"signature,omitempty"        binding:"required"`
 }
 
@@ -79,7 +81,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
 		return
 	}
-	pubKey, err := recoverPubkey(*req, sig)
+	pubKey, err := recoverPubkey(*req, sig, req.HashAlgorithm)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
@@ -164,15 +166,27 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recoverPubkey(req CreateTaskReq, sig []byte) (*ecdsa.PublicKey, error) {
+func recoverPubkey(req CreateTaskReq, sig []byte, hashAlg string) (*ecdsa.PublicKey, error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal request into json format")
 	}
 
-	h := crypto.Keccak256Hash(reqJson)
-	sigpk, err := crypto.SigToPub(h.Bytes(), sig)
+	var h []byte
+
+	switch hashAlg {
+	case "sha256":
+		hash := sha256.New()
+		hash.Write(reqJson)
+		h = hash.Sum(nil)
+	case "keccak256":
+		h = crypto.Keccak256Hash(reqJson).Bytes()
+	default:
+		return nil, errors.New("invalid hash algorithm")
+	}
+
+	sigpk, err := crypto.SigToPub(h, sig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to recover public key from signature")
 	}
