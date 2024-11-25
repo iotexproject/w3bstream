@@ -19,6 +19,7 @@ type Task struct {
 	ProjectVersion string    `ch:"project_version"`
 	Payloads       []byte    `ch:"payloads"`
 	Signature      []byte    `ch:"signature"`
+	HashAlgorithm  string    `ch:"hash_algorithm"`
 	CreatedAt      time.Time `ch:"create_at"`
 }
 
@@ -44,21 +45,22 @@ func (p *DB) FetchTask(taskID common.Hash) (*Task, error) {
 
 func migrateCH(conn driver.Conn) error {
 	err := conn.Exec(context.Background(), `
-CREATE TABLE IF NOT EXISTS w3bstream_tasks
-(
-    task_id Array(UInt8) NOT NULL,
-    device_id Array(UInt8) NOT NULL,
-    nonce UInt64 NOT NULL,
-    project_id UInt64 NOT NULL,
-    project_version String NOT NULL,
-    payloads Array(UInt8) NOT NULL,
-    signature Array(UInt8) NOT NULL,
-	create_at DateTime NOT NULL
-)
-ENGINE = ReplacingMergeTree()
-PRIMARY KEY task_id
-ORDER BY task_id
-`)
+        CREATE TABLE IF NOT EXISTS w3bstream_tasks
+        (
+            task_id Array(UInt8) NOT NULL,
+            device_id Array(UInt8) NOT NULL,
+            nonce UInt64 NOT NULL,
+            project_id UInt64 NOT NULL,
+            project_version String NOT NULL,
+            payloads Array(UInt8) NOT NULL,
+            signature Array(UInt8) NOT NULL,
+        	hash_algorithm String NOT NULL,
+        	create_at DateTime NOT NULL
+        )
+        ENGINE = ReplacingMergeTree()
+        PRIMARY KEY task_id
+        ORDER BY task_id`,
+	)
 	return errors.Wrap(err, "failed to create clickhouse table")
 }
 

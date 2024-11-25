@@ -33,12 +33,12 @@ func newErrResp(err error) *errResp {
 }
 
 type CreateTaskReq struct {
-	Nonce          uint64   `json:"nonce"                      binding:"required"`
-	ProjectID      uint64   `json:"projectID"                  binding:"required"`
-	ProjectVersion string   `json:"projectVersion"`
-	Payloads       []string `json:"payloads"                   binding:"required"`
-	HashAlgorithm  string   `json:"hashAlgorithm"              binding:"required"`
-	Signature      string   `json:"signature,omitempty"        binding:"required"`
+	Nonce          uint64   `json:"nonce"                        binding:"required"`
+	ProjectID      uint64   `json:"projectID"                    binding:"required"`
+	ProjectVersion string   `json:"projectVersion,omitempty"`
+	Payloads       []string `json:"payloads"                     binding:"required"`
+	HashAlgorithm  string   `json:"hashAlgorithm,omitempty"`
+	Signature      string   `json:"signature,omitempty"          binding:"required"`
 }
 
 type CreateTaskResp struct {
@@ -81,7 +81,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
 		return
 	}
-	pubKey, err := recoverPubkey(*req, sig, req.HashAlgorithm)
+	pubKey, hashAlg, err := recoverPubkey(*req, sig)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
@@ -128,6 +128,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			ProjectVersion: req.ProjectVersion,
 			Payloads:       payloadsJ,
 			Signature:      sig,
+			HashAlgorithm:  hashAlg,
 		},
 	); err != nil {
 		slog.Error("failed to create task to persistence layer", "error", err)
@@ -166,31 +167,32 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recoverPubkey(req CreateTaskReq, sig []byte, hashAlg string) (*ecdsa.PublicKey, error) {
+func recoverPubkey(req CreateTaskReq, sig []byte) (*ecdsa.PublicKey, string, error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal request into json format")
+		return nil, "", errors.Wrap(err, "failed to marshal request into json format")
 	}
 
+	var alg string
 	var h []byte
 
-	switch hashAlg {
+	switch req.HashAlgorithm {
 	case "sha256":
 		hash := sha256.New()
 		hash.Write(reqJson)
 		h = hash.Sum(nil)
-	case "keccak256":
-		h = crypto.Keccak256Hash(reqJson).Bytes()
+		alg = "sha256"
 	default:
-		return nil, errors.New("invalid hash algorithm")
+		h = crypto.Keccak256Hash(reqJson).Bytes()
+		alg = "keccak256"
 	}
 
 	sigpk, err := crypto.SigToPub(h, sig)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to recover public key from signature")
+		return nil, "", errors.Wrap(err, "failed to recover public key from signature")
 	}
-	return sigpk, nil
+	return sigpk, alg, nil
 }
 
 func (s *httpServer) getProverTaskState(taskID string) (*StateLog, error) {
