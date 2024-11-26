@@ -4,8 +4,6 @@
 
 W3bstream is a key Layer-2 solution within the IoTeX ecosystem, designed to support verifiable data processing for Decentralized Physical Infrastructure Networks (*DePINs*). It operates through a network of *Sequencer nodes* and *Prover nodes*.
 
-## Workflow
-
 <p align="center">
   <img src="./docs/arch_new.png" width="75%"/>
 </p>
@@ -17,25 +15,33 @@ W3bstream is a key Layer-2 solution within the IoTeX ecosystem, designed to supp
 The chain of tasks and their ZK-proofs are recorded **on the IoTeX blockchain**, making them accessible for dApps. The actual data, uniquely referenced by the on-chain tasks, remains available for full off-chain verification.
 
 This architecture ensures secure, reliable, and scalable data processing, allowing DePIN dApps to act on verified real-world facts to trigger blockchain-based incentives.
+ 
 
-## Running nodes
- > ⓘ **Note**: Joining the W3bstream network as a sequencer or prover node is currently unavailable. Stay tuned for updates in future releases. [Follow us on X](https://x.com/iotex_dev).
+## Getting Started
 
-## Get Started for Builders
+### For Embedded Developers
 
-[Deploy a simple zk prover to W3bstream →](./docs/QUICK_START.md)
+[<u>ioID-SDK</u>](https://github.com/iotexproject/ioID-SDK) repo provides SDK for DePIN hardwares to connect W3bstream and IoTeX ecosystem
 
-[Build your custom zk prover for W3bstream →](./docs/DEVELOPER_GUIDE.md)
 
-## Docker images
+### For Project Builders
 
-[Sequencer Node →](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-sequencer)
+[<u>Build a custom zk prover for W3bstream</u>](./docs/DEVELOPER_GUIDE.md)
 
-[Prover Node →](https://github.com/iotexproject/w3bstream/pkgs/container/w3bstream-prover)
 
-## Contract Deployments
+[<u>Deploy the zk prover to W3bstream</u>](./docs/QUICK_START.md)
 
- [smartcontracts/README.md](./smartcontracts/README.md#deployment)
+### For Node Operators
+
+
+> ⓘ **Note**: Joining the W3bstream network as a sequencer or prover node is currently unavailable. Stay tuned for updates in future releases. [Follow us on X](https://x.com/iotex_dev).
+
+### For Module Integrators
+
+ - Storage Modules: The [<u>./datasource</u>](./datasource/) folder contains [<u>documentation</u>](./datasource/README.md)  and existing implementations for data storage that W3bstream can support. 
+
+ - ZK Engine Modules: To add a new type of ZK prover, please ensure the service implements the [Protobuf interface](./vm/proto/vm.proto) to enable communication with the W3bstream ZK Node.
+
 
 ## Contributing
 
