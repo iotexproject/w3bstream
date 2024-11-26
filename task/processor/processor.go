@@ -6,7 +6,6 @@ import (
 	"crypto/ecdsa"
 	"log/slog"
 	"math/big"
-	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -24,7 +23,7 @@ import (
 )
 
 type HandleTask func(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error)
-type Project func(projectID uint64) (*project.Project, error)
+type Project func(projectID *big.Int) (*project.Project, error)
 type RetrieveTask func(taskIDs []common.Hash) ([]*task.Task, error)
 
 type DB interface {
@@ -59,17 +58,17 @@ func (r *processor) process(taskID common.Hash) error {
 	if err != nil {
 		return err
 	}
-	slog.Info("process task", "project_id", t.ProjectID, "task_id", t.ID, "vm_type", c.VMTypeID)
+	slog.Info("process task", "project_id", t.ProjectID.String(), "task_id", t.ID, "vm_type", c.VMTypeID)
 	startTime := time.Now()
 	proof, err := r.handle(t, c.VMTypeID, c.Code, c.Metadata)
 	if err != nil {
-		metrics.FailedTaskNumMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10)).Inc()
+		metrics.FailedTaskNumMtc.WithLabelValues(t.ProjectID.String()).Inc()
 		slog.Error("failed to handle task", "error", err)
 		return err
 	}
 	processTime := time.Since(startTime)
-	slog.Info("process task success", "project_id", t.ProjectID, "task_id", t.ID, "process_time", processTime)
-	metrics.TaskDurationMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10), t.ProjectVersion, t.ID.String()).Set(processTime.Seconds())
+	slog.Info("process task success", "project_id", t.ProjectID.String(), "task_id", t.ID, "process_time", processTime)
+	metrics.TaskDurationMtc.WithLabelValues(t.ProjectID.String(), t.ProjectVersion, t.ID.String()).Set(processTime.Seconds())
 
 	tx, err := r.routerInstance.Route(
 		&bind.TransactOpts{
@@ -78,7 +77,7 @@ func (r *processor) process(taskID common.Hash) error {
 				return types.SignTx(t, r.signer, r.prv)
 			},
 		},
-		new(big.Int).SetUint64(t.ProjectID),
+		t.ProjectID,
 		t.ID,
 		r.account,
 		t.DeviceID,

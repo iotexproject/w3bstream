@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -34,7 +35,7 @@ func newErrResp(err error) *errResp {
 
 type CreateTaskReq struct {
 	Nonce          uint64   `json:"nonce"                        binding:"required"`
-	ProjectID      uint64   `json:"projectID"                    binding:"required"`
+	ProjectID      string   `json:"projectID"                    binding:"required"`
 	ProjectVersion string   `json:"projectVersion,omitempty"`
 	Payloads       []string `json:"payloads"                     binding:"required"`
 	Algorithm      string   `json:"algorithm,omitempty"` // Refer to the constants defined in JWT (JSON Web Token) https://jwt.io/
@@ -55,7 +56,7 @@ type StateLog struct {
 }
 
 type QueryTaskResp struct {
-	ProjectID uint64      `json:"projectID"`
+	ProjectID string      `json:"projectID"`
 	TaskID    string      `json:"taskID"`
 	States    []*StateLog `json:"states"`
 }
@@ -75,6 +76,12 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
+	pid := new(big.Int)
+	if _, ok := pid.SetString(req.ProjectID, 10); !ok {
+		slog.Error("failed to decode project id string", "project_id", req.ProjectID)
+		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to decode project id string")))
+		return
+	}
 	sig, err := hexutil.Decode(req.Signature)
 	if err != nil {
 		slog.Error("failed to decode signature from hex format", "error", err)
@@ -89,14 +96,14 @@ func (s *httpServer) createTask(c *gin.Context) {
 	}
 	addr := crypto.PubkeyToAddress(*pubkey)
 
-	ok, err := s.db.IsDeviceApproved(req.ProjectID, addr)
+	ok, err := s.db.IsDeviceApproved(pid, addr)
 	if err != nil {
 		slog.Error("failed to check device permission", "error", err)
 		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to check device permission")))
 		return
 	}
 	if !ok {
-		slog.Error("device does not have permission", "project_id", req.ProjectID, "device_address", addr.String())
+		slog.Error("device does not have permission", "project_id", pid.String(), "device_address", addr.String())
 		c.JSON(http.StatusForbidden, newErrResp(errors.New("device does not have permission")))
 		return
 	}
@@ -124,7 +131,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			DeviceID:       addr.Bytes(),
 			TaskID:         taskID.Bytes(),
 			Nonce:          req.Nonce,
-			ProjectID:      req.ProjectID,
+			ProjectID:      pid.String(),
 			ProjectVersion: req.ProjectVersion,
 			Payloads:       payloadsJ,
 			Signature:      sig,

@@ -18,7 +18,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to parse private key"))
 	}
 	req := &api.CreateTaskReq{
-		ProjectID:      912,
+		ProjectID:      "912",
 		ProjectVersion: "v1.0.0",
 		Payloads:       []string{"{\"private_input\":\"14\", \"public_input\":\"3,34\", \"receipt_type\":\"Snark\"}"},
 	}

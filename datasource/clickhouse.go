@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"math/big"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -36,9 +37,13 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 		if err := json.Unmarshal(ts[i].Payloads, &ps); err != nil {
 			return nil, errors.Wrapf(err, "failed to unmarshal task payloads, task_id %v", ts[i].TaskID)
 		}
+		pid := new(big.Int)
+		if _, ok := pid.SetString(ts[i].ProjectID, 10); !ok {
+			return nil, errors.New("failed to decode project id string")
+		}
 		res = append(res, &task.Task{
 			ID:             common.BytesToHash(ts[i].TaskID),
-			ProjectID:      ts[i].ProjectID,
+			ProjectID:      pid,
 			ProjectVersion: ts[i].ProjectVersion,
 			Payloads:       ps,
 			DeviceID:       common.BytesToAddress(ts[i].DeviceID),

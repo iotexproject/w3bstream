@@ -2,14 +2,15 @@ package project
 
 import (
 	"bytes"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
-type ContractProject func(projectID uint64) (string, common.Hash, error)
-type ProjectFile func(projectID uint64) ([]byte, common.Hash, error)
-type UpsertProjectFile func(projectID uint64, file []byte, hash common.Hash) error
+type ContractProject func(projectID *big.Int) (string, common.Hash, error)
+type ProjectFile func(projectID *big.Int) ([]byte, common.Hash, error)
+type UpsertProjectFile func(projectID *big.Int, file []byte, hash common.Hash) error
 
 type Manager struct {
 	contractProject   ContractProject
@@ -17,7 +18,7 @@ type Manager struct {
 	upsertProjectFile UpsertProjectFile
 }
 
-func (m *Manager) Project(projectID uint64) (*Project, error) {
+func (m *Manager) Project(projectID *big.Int) (*Project, error) {
 	uri, hash, err := m.contractProject(projectID)
 	if err != nil {
 		return nil, errors.Errorf("failed to get project metadata, project_id %v", projectID)

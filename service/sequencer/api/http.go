@@ -3,7 +3,6 @@ package api
 import (
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
@@ -50,7 +49,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 	}
 
 	t := ts[0]
-	metrics.NewTaskMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10)).Inc()
+	metrics.NewTaskMtc.WithLabelValues(t.ProjectID.String()).Inc()
 
 	if err := s.db.CreateTask(req.TaskID); err != nil {
 		slog.Error("failed to create task", "error", err)

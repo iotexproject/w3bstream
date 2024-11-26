@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"log/slog"
-	"math/big"
-	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -67,7 +65,7 @@ func (r *assigner) assign(tids []common.Hash) error {
 		sig[64] += 27
 
 		tas = append(tas, minter.TaskAssignment{
-			ProjectId: new(big.Int).SetUint64(t.ProjectID),
+			ProjectId: t.ProjectID,
 			TaskId:    t.ID,
 			Prover:    prover,
 			Hash:      th,
@@ -110,7 +108,7 @@ func (r *assigner) assign(tids []common.Hash) error {
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		for _, t := range ts {
-			metrics.FailedAssignedTaskMtc.WithLabelValues(strconv.FormatUint(t.ProjectID, 10)).Inc()
+			metrics.FailedAssignedTaskMtc.WithLabelValues(t.ProjectID.String()).Inc()
 		}
 		slog.Error("failed to assign task", "tx", tx.Hash().String())
 		return errors.New("tx failed")

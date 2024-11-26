@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -19,14 +20,14 @@ type scannedBlockNumber struct {
 
 type project struct {
 	gorm.Model
-	ProjectID uint64      `gorm:"uniqueIndex:project_id_project,not null"`
+	ProjectID string      `gorm:"uniqueIndex:project_id_project,not null"`
 	URI       string      `gorm:"not null"`
 	Hash      common.Hash `gorm:"not null"`
 }
 
 type projectFile struct {
 	gorm.Model
-	ProjectID uint64      `gorm:"uniqueIndex:project_id_project_file,not null"`
+	ProjectID string      `gorm:"uniqueIndex:project_id_project_file,not null"`
 	File      []byte      `gorm:"not null"`
 	Hash      common.Hash `gorm:"not null"`
 }
@@ -68,17 +69,17 @@ func (p *DB) UpsertScannedBlockNumber(number uint64) error {
 	return errors.Wrap(err, "failed to upsert scanned block number")
 }
 
-func (p *DB) Project(projectID uint64) (string, common.Hash, error) {
+func (p *DB) Project(projectID *big.Int) (string, common.Hash, error) {
 	t := project{}
-	if err := p.db.Where("project_id = ?", projectID).First(&t).Error; err != nil {
+	if err := p.db.Where("project_id = ?", projectID.String()).First(&t).Error; err != nil {
 		return "", common.Hash{}, errors.Wrap(err, "failed to query project")
 	}
 	return t.URI, t.Hash, nil
 }
 
-func (p *DB) UpsertProject(projectID uint64, uri string, hash common.Hash) error {
+func (p *DB) UpsertProject(projectID *big.Int, uri string, hash common.Hash) error {
 	t := project{
-		ProjectID: projectID,
+		ProjectID: projectID.String(),
 		URI:       uri,
 		Hash:      hash,
 	}
@@ -89,9 +90,9 @@ func (p *DB) UpsertProject(projectID uint64, uri string, hash common.Hash) error
 	return errors.Wrap(err, "failed to upsert project")
 }
 
-func (p *DB) ProjectFile(projectID uint64) ([]byte, common.Hash, error) {
+func (p *DB) ProjectFile(projectID *big.Int) ([]byte, common.Hash, error) {
 	t := projectFile{}
-	if err := p.db.Where("project_id = ?", projectID).First(&t).Error; err != nil {
+	if err := p.db.Where("project_id = ?", projectID.String()).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, common.Hash{}, nil
 		}
@@ -100,9 +101,9 @@ func (p *DB) ProjectFile(projectID uint64) ([]byte, common.Hash, error) {
 	return t.File, t.Hash, nil
 }
 
-func (p *DB) UpsertProjectFile(projectID uint64, file []byte, hash common.Hash) error {
+func (p *DB) UpsertProjectFile(projectID *big.Int, file []byte, hash common.Hash) error {
 	t := projectFile{
-		ProjectID: projectID,
+		ProjectID: projectID.String(),
 		File:      file,
 		Hash:      hash,
 	}

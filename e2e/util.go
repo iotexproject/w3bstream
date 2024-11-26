@@ -10,6 +10,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -27,7 +28,7 @@ import (
 func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte, error) {
 	req := &api.CreateTaskReq{
 		Nonce:     uint64(time.Now().Unix()),
-		ProjectID: projectID,
+		ProjectID: strconv.Itoa(int(projectID)),
 		Payloads:  []string{hexutil.Encode(data)},
 	}
 

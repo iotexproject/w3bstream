@@ -1,6 +1,8 @@
 package db
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
@@ -28,7 +30,7 @@ type SettledTask struct {
 
 type ProjectDevice struct {
 	gorm.Model
-	ProjectID     uint64         `gorm:"uniqueIndex:project_device_uniq,not null"`
+	ProjectID     string         `gorm:"uniqueIndex:project_device_uniq,not null"`
 	DeviceAddress common.Address `gorm:"uniqueIndex:project_device_uniq,not null"`
 }
 
@@ -78,9 +80,9 @@ func (p *DB) FetchSettledTask(taskID common.Hash) (*SettledTask, error) {
 	return &t, nil
 }
 
-func (p *DB) UpsertProjectDevice(projectID uint64, address common.Address) error {
+func (p *DB) UpsertProjectDevice(projectID *big.Int, address common.Address) error {
 	t := ProjectDevice{
-		ProjectID:     projectID,
+		ProjectID:     projectID.String(),
 		DeviceAddress: address,
 	}
 	err := p.sqlite.Clauses(clause.OnConflict{
@@ -90,9 +92,9 @@ func (p *DB) UpsertProjectDevice(projectID uint64, address common.Address) error
 	return errors.Wrap(err, "failed to upsert project device")
 }
 
-func (p *DB) IsDeviceApproved(projectID uint64, address common.Address) (bool, error) {
+func (p *DB) IsDeviceApproved(projectID *big.Int, address common.Address) (bool, error) {
 	t := ProjectDevice{}
-	if err := p.sqlite.Where("project_id = ?", projectID).Where("device_address = ?", address).First(&t).Error; err != nil {
+	if err := p.sqlite.Where("project_id = ?", projectID.String()).Where("device_address = ?", address).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
 		}

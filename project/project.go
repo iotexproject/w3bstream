@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"io"
+	"math/big"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,7 +27,7 @@ type Project struct {
 }
 
 type Meta struct {
-	ProjectID uint64
+	ProjectID *big.Int
 	Uri       string
 	Hash      [32]byte
 }

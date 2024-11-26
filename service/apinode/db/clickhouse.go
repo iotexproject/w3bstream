@@ -15,7 +15,7 @@ type Task struct {
 	TaskID         []byte    `ch:"task_id"`
 	DeviceID       []byte    `ch:"device_id"`
 	Nonce          uint64    `ch:"nonce"`
-	ProjectID      uint64    `ch:"project_id"`
+	ProjectID      string    `ch:"project_id"`
 	ProjectVersion string    `ch:"project_version"`
 	Payloads       []byte    `ch:"payloads"`
 	Signature      []byte    `ch:"signature"`
@@ -50,7 +50,7 @@ func migrateCH(conn driver.Conn) error {
             task_id Array(UInt8) NOT NULL,
             device_id Array(UInt8) NOT NULL,
             nonce UInt64 NOT NULL,
-            project_id UInt64 NOT NULL,
+            project_id String NOT NULL,
             project_version String NOT NULL,
             payloads Array(UInt8) NOT NULL,
             signature Array(UInt8) NOT NULL,

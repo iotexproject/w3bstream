@@ -33,7 +33,7 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 		return nil, errors.Wrap(err, "failed to decode metadata")
 	}
 	if _, err := cli.NewProject(context.Background(), &proto.NewProjectRequest{
-		ProjectID:      task.ProjectID,
+		ProjectID:      task.ProjectID.Uint64(),
 		ProjectVersion: task.ProjectVersion,
 		Binary:         bi,
 		Metadata:       metadata,
@@ -43,7 +43,7 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 	}
 
 	resp, err := cli.ExecuteTask(context.Background(), &proto.ExecuteTaskRequest{
-		ProjectID: task.ProjectID,
+		ProjectID: task.ProjectID.Uint64(),
 		TaskID:    task.ID[:],
 		Payloads:  task.Payloads,
 	})

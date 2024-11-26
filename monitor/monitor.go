@@ -29,9 +29,9 @@ type (
 	UpsertScannedBlockNumber func(number uint64) error
 	AssignTask               func(taskID common.Hash, prover common.Address) error
 	SettleTask               func(taskID, tx common.Hash) error
-	UpsertProject            func(projectID uint64, uri string, hash common.Hash) error
+	UpsertProject            func(projectID *big.Int, uri string, hash common.Hash) error
 	UpsertProver             func(addr common.Address) error
-	UpsertProjectDevice      func(projectID uint64, address common.Address) error
+	UpsertProjectDevice      func(projectID *big.Int, address common.Address) error
 )
 
 type Handler struct {
@@ -146,7 +146,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse project config updated event")
 			}
-			if err := c.h.UpsertProject(e.ProjectId.Uint64(), e.Uri, e.Hash); err != nil {
+			if err := c.h.UpsertProject(e.ProjectId, e.Uri, e.Hash); err != nil {
 				return err
 			}
 		case proverSetTopic:
@@ -173,7 +173,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrapf(err, "failed to query device project, device_id %s", e.Did)
 			}
-			if err := c.h.UpsertProjectDevice(pid.Uint64(), address); err != nil {
+			if err := c.h.UpsertProjectDevice(pid, address); err != nil {
 				return err
 			}
 		}

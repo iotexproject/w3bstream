@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/json"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -12,7 +13,7 @@ import (
 
 type Task struct {
 	ID             common.Hash    `json:"id"`
-	ProjectID      uint64         `json:"projectID"`
+	ProjectID      *big.Int       `json:"projectID"`
 	ProjectVersion string         `json:"projectVersion,omitempty"`
 	DeviceID       common.Address `json:"deviceID"`
 	Payloads       [][]byte       `json:"payloads"`
