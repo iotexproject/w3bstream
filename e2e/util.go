@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -35,8 +36,8 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 		return nil, err
 	}
 
-	h := crypto.Keccak256Hash(reqJson)
-	sig, err := crypto.Sign(h.Bytes(), key)
+	h := sha256.Sum256(reqJson)
+	sig, err := crypto.Sign(h[:], key)
 	if err != nil {
 		return nil, err
 	}

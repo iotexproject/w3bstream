@@ -19,7 +19,7 @@ type Task struct {
 	ProjectVersion string    `ch:"project_version"`
 	Payloads       []byte    `ch:"payloads"`
 	Signature      []byte    `ch:"signature"`
-	HashAlgorithm  string    `ch:"hash_algorithm"`
+	Algorithm      string    `ch:"algorithm"`
 	CreatedAt      time.Time `ch:"create_at"`
 }
 
