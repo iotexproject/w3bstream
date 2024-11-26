@@ -1,9 +1,12 @@
 FROM golang:1.22-alpine AS builder
 
 ENV GO111MODULE=on
+ENV CGO_ENABLED=1
 
 WORKDIR /go/src
 COPY ./ ./
+
+RUN apk add --no-cache gcc musl-dev
 
 RUN cd ./cmd/apinode && go build -o apinode
 
