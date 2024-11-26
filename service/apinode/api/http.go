@@ -37,7 +37,7 @@ type CreateTaskReq struct {
 	ProjectID      uint64   `json:"projectID"                    binding:"required"`
 	ProjectVersion string   `json:"projectVersion,omitempty"`
 	Payloads       []string `json:"payloads"                     binding:"required"`
-	Algorithm      string   `json:"alg,omitempty"` // Refer to the constants defined in JWT (JSON Web Token) https://jwt.io/
+	Algorithm      string   `json:"algorithm,omitempty"` // Refer to the constants defined in JWT (JSON Web Token) https://jwt.io/
 	Signature      string   `json:"signature,omitempty"          binding:"required"`
 }
 
