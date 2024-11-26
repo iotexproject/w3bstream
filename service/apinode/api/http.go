@@ -90,7 +90,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 	deviceAddr := common.HexToAddress(strings.TrimPrefix(req.DeviceID, "did:io:"))
-	addr, alg, err := recoverAddr(*req, sig, deviceAddr)
+	addr, sig, alg, err := recoverAddr(*req, sig, deviceAddr)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
@@ -175,34 +175,40 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recoverAddr(req CreateTaskReq, sig []byte, deviceAddr common.Address) (common.Address, string, error) {
+func recoverAddr(req CreateTaskReq, sig []byte, deviceAddr common.Address) (common.Address, []byte, string, error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
-		return common.Address{}, "", errors.Wrap(err, "failed to marshal request into json format")
+		return common.Address{}, nil, "", errors.Wrap(err, "failed to marshal request into json format")
 	}
 
 	switch req.Algorithm {
 	default:
 		h := sha256.Sum256(reqJson)
-		res := []*ecdsa.PublicKey{}
+		res := []struct {
+			pk  *ecdsa.PublicKey
+			sig []byte
+		}{}
 		rID := []uint8{0, 1}
 		for _, id := range rID {
 			ns := append(sig, byte(id))
 			if pk, err := crypto.SigToPub(h[:], ns); err != nil {
 				slog.Debug("failed to recover public key from signature", "error", err, "recover_id", id, "signature", hexutil.Encode(sig))
 			} else {
-				res = append(res, pk)
+				res = append(res, struct {
+					pk  *ecdsa.PublicKey
+					sig []byte
+				}{pk: pk, sig: ns})
 			}
 		}
 
 		for _, r := range res {
-			addr := crypto.PubkeyToAddress(*r)
+			addr := crypto.PubkeyToAddress(*r.pk)
 			if bytes.Equal(addr.Bytes(), deviceAddr.Bytes()) {
-				return addr, "ES256", nil
+				return addr, r.sig, "ES256", nil
 			}
 		}
-		return common.Address{}, "", errors.New("failed to recover public key from signature")
+		return common.Address{}, nil, "", errors.New("failed to recover public key from signature")
 	}
 }
 
