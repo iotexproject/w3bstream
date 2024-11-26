@@ -35,6 +35,7 @@ func newErrResp(err error) *errResp {
 
 type CreateTaskReq struct {
 	Nonce          uint64   `json:"nonce"                        binding:"required"`
+	DeviceID       string   `json:"deviceID"                     binding:"required"`
 	ProjectID      string   `json:"projectID"                    binding:"required"`
 	ProjectVersion string   `json:"projectVersion,omitempty"`
 	Payloads       []string `json:"payloads"                     binding:"required"`
@@ -88,13 +89,13 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
 		return
 	}
-	pubkey, alg, err := recoverPubkey(*req, sig)
+	deviceAddr := common.HexToAddress(strings.TrimPrefix(req.DeviceID, "did:io:"))
+	addr, alg, err := recoverAddr(*req, sig, deviceAddr)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
 		return
 	}
-	addr := crypto.PubkeyToAddress(*pubkey)
 
 	ok, err := s.db.IsDeviceApproved(pid, addr)
 	if err != nil {
@@ -174,24 +175,34 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recoverPubkey(req CreateTaskReq, sig []byte) (*ecdsa.PublicKey, string, error) {
+func recoverAddr(req CreateTaskReq, sig []byte, deviceAddr common.Address) (common.Address, string, error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
-		return nil, "", errors.Wrap(err, "failed to marshal request into json format")
+		return common.Address{}, "", errors.Wrap(err, "failed to marshal request into json format")
 	}
 
 	switch req.Algorithm {
 	default:
-		hash := sha256.New()
-		hash.Write(reqJson)
-		h := hash.Sum(nil)
-
-		pk, err := crypto.SigToPub(h, sig)
-		if err != nil {
-			return nil, "", errors.Wrap(err, "failed to recover public key from signature")
+		h := sha256.Sum256(reqJson)
+		res := []*ecdsa.PublicKey{}
+		rID := []uint8{0, 1}
+		for _, id := range rID {
+			ns := append(sig, byte(id))
+			if pk, err := crypto.SigToPub(h[:], ns); err != nil {
+				slog.Debug("failed to recover public key from signature", "error", err, "recover_id", id, "signature", hexutil.Encode(sig))
+			} else {
+				res = append(res, pk)
+			}
 		}
-		return pk, "ES256", nil
+
+		for _, r := range res {
+			addr := crypto.PubkeyToAddress(*r)
+			if bytes.Equal(addr.Bytes(), deviceAddr.Bytes()) {
+				return addr, "ES256", nil
+			}
+		}
+		return common.Address{}, "", errors.New("failed to recover public key from signature")
 	}
 }
 
