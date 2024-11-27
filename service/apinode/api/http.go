@@ -67,11 +67,6 @@ type httpServer struct {
 	proverAddr    string
 }
 
-type recoverRes struct {
-	addr common.Address
-	sig  []byte
-}
-
 func (s *httpServer) createTask(c *gin.Context) {
 	req := &CreateTaskReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
@@ -178,7 +173,10 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recover(req CreateTaskReq, sig []byte) ([]*recoverRes, string, error) {
+func recover(req CreateTaskReq, sig []byte) (res []*struct {
+	addr common.Address
+	sig  []byte
+}, alg string, err error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
@@ -188,15 +186,17 @@ func recover(req CreateTaskReq, sig []byte) ([]*recoverRes, string, error) {
 	switch req.Algorithm {
 	default:
 		h := sha256.Sum256(reqJson)
-		res := []*recoverRes{}
 		rID := []uint8{0, 1}
 		for _, id := range rID {
 			ns := append(sig, byte(id))
-			if pk, err := crypto.SigToPub(h[:], ns); err != nil {
+			pk, err := crypto.SigToPub(h[:], ns)
+			if err != nil {
 				return nil, "", errors.Wrapf(err, "failed to recover public key from signature, recover_id %d", id)
-			} else {
-				res = append(res, &recoverRes{addr: crypto.PubkeyToAddress(*pk), sig: ns})
 			}
+			res = append(res, &struct {
+				addr common.Address
+				sig  []byte
+			}{addr: crypto.PubkeyToAddress(*pk), sig: ns})
 		}
 		return res, "ES256", nil
 	}
