@@ -27,10 +27,9 @@ import (
 
 func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte, error) {
 	req := &api.CreateTaskReq{
-		DeviceID:  "did:io:" + crypto.PubkeyToAddress(key.PublicKey).String(),
 		Nonce:     uint64(time.Now().Unix()),
 		ProjectID: strconv.Itoa(int(projectID)),
-		Payloads:  []string{hexutil.Encode(data)},
+		Payload:   hexutil.Encode(data),
 	}
 
 	reqJson, err := json.Marshal(req)

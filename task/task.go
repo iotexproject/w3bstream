@@ -16,7 +16,7 @@ type Task struct {
 	ProjectID      *big.Int       `json:"projectID"`
 	ProjectVersion string         `json:"projectVersion,omitempty"`
 	DeviceID       common.Address `json:"deviceID"`
-	Payloads       [][]byte       `json:"payloads"`
+	Payload        []byte         `json:"payload"`
 	Signature      []byte         `json:"signature,omitempty"`
 }
 

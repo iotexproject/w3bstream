@@ -45,11 +45,11 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 	resp, err := cli.ExecuteTask(context.Background(), &proto.ExecuteTaskRequest{
 		ProjectID: task.ProjectID.Uint64(),
 		TaskID:    task.ID[:],
-		Payloads:  task.Payloads,
+		Payloads:  [][]byte{task.Payload},
 	})
 	if err != nil {
 		slog.Error("failed to execute task", "project_id", task.ProjectID, "vm_type", vmTypeID,
-			"task_id", task.ID, "binary", code, "payloads", task.Payloads, "err", err)
+			"task_id", task.ID, "binary", code, "payloads", task.Payload, "err", err)
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
 

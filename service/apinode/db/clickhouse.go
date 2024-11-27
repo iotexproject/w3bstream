@@ -17,7 +17,7 @@ type Task struct {
 	Nonce          uint64    `ch:"nonce"`
 	ProjectID      string    `ch:"project_id"`
 	ProjectVersion string    `ch:"project_version"`
-	Payloads       []byte    `ch:"payloads"`
+	Payload        []byte    `ch:"payload"`
 	Signature      []byte    `ch:"signature"`
 	Algorithm      string    `ch:"algorithm"`
 	CreatedAt      time.Time `ch:"create_at"`
@@ -52,7 +52,7 @@ func migrateCH(conn driver.Conn) error {
             nonce UInt64 NOT NULL,
             project_id String NOT NULL,
             project_version String NOT NULL,
-            payloads Array(UInt8) NOT NULL,
+            payload Array(UInt8) NOT NULL,
             signature Array(UInt8) NOT NULL,
             algorithm String NOT NULL,
             create_at DateTime NOT NULL

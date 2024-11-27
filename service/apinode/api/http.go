@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -34,13 +33,12 @@ func newErrResp(err error) *errResp {
 }
 
 type CreateTaskReq struct {
-	Nonce          uint64   `json:"nonce"                        binding:"required"`
-	DeviceID       string   `json:"deviceID"                     binding:"required"`
-	ProjectID      string   `json:"projectID"                    binding:"required"`
-	ProjectVersion string   `json:"projectVersion,omitempty"`
-	Payloads       []string `json:"payloads"                     binding:"required"`
-	Algorithm      string   `json:"algorithm,omitempty"` // Refer to the constants defined in JWT (JSON Web Token) https://jwt.io/
-	Signature      string   `json:"signature,omitempty"          binding:"required"`
+	Nonce          uint64 `json:"nonce"                        binding:"required"`
+	ProjectID      string `json:"projectID"                    binding:"required"`
+	ProjectVersion string `json:"projectVersion,omitempty"`
+	Payload        string `json:"payload"                     binding:"required"`
+	Algorithm      string `json:"algorithm,omitempty"` // Refer to the constants defined in JWT (JSON Web Token) https://jwt.io/
+	Signature      string `json:"signature,omitempty"          binding:"required"`
 }
 
 type CreateTaskResp struct {
@@ -69,6 +67,11 @@ type httpServer struct {
 	proverAddr    string
 }
 
+type recoverRes struct {
+	addr common.Address
+	sig  []byte
+}
+
 func (s *httpServer) createTask(c *gin.Context) {
 	req := &CreateTaskReq{}
 	if err := c.ShouldBindJSON(req); err != nil {
@@ -77,8 +80,8 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	pid := new(big.Int)
-	if _, ok := pid.SetString(req.ProjectID, 10); !ok {
+	pid, ok := new(big.Int).SetString(req.ProjectID, 10)
+	if !ok {
 		slog.Error("failed to decode project id string", "project_id", req.ProjectID)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to decode project id string")))
 		return
@@ -89,42 +92,42 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
 		return
 	}
-	deviceAddr := common.HexToAddress(strings.TrimPrefix(req.DeviceID, "did:io:"))
-	addr, sig, alg, err := recoverAddr(*req, sig, deviceAddr)
+
+	recovered, alg, err := recover(*req, sig)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
 		return
 	}
-
-	ok, err := s.db.IsDeviceApproved(pid, addr)
-	if err != nil {
-		slog.Error("failed to check device permission", "error", err)
-		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to check device permission")))
-		return
+	var addr common.Address
+	var approved bool
+	for _, r := range recovered {
+		ok, err := s.db.IsDeviceApproved(pid, r.addr)
+		if err != nil {
+			slog.Error("failed to check device permission", "error", err)
+			c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to check device permission")))
+			return
+		}
+		if ok {
+			approved = true
+			addr = r.addr
+			sig = r.sig
+			break
+		}
 	}
-	if !ok {
-		slog.Error("device does not have permission", "project_id", pid.String(), "device_address", addr.String())
+	if !approved {
+		slog.Error("device does not have permission", "project_id", pid.String())
 		c.JSON(http.StatusForbidden, newErrResp(errors.New("device does not have permission")))
 		return
 	}
 
-	payloadsB := make([][]byte, 0, len(req.Payloads))
-	for _, p := range req.Payloads {
-		d, err := hexutil.Decode(p)
-		if err != nil {
-			slog.Error("failed to decode payload from hex format", "error", err)
-			c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode payload from hex format")))
-			return
-		}
-		payloadsB = append(payloadsB, d)
-	}
-	payloadsJ, err := json.Marshal(payloadsB)
+	payload, err := hexutil.Decode(req.Payload)
 	if err != nil {
-		slog.Error("failed to marshal payloads", "error", err)
-		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to marshal payloads")))
+		slog.Error("failed to decode payload from hex format", "error", err)
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode payload from hex format")))
 		return
 	}
+
 	taskID := crypto.Keccak256Hash(sig)
 
 	if err := s.db.CreateTask(
@@ -134,7 +137,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			Nonce:          req.Nonce,
 			ProjectID:      pid.String(),
 			ProjectVersion: req.ProjectVersion,
-			Payloads:       payloadsJ,
+			Payload:        payload,
 			Signature:      sig,
 			Algorithm:      alg,
 		},
@@ -175,40 +178,27 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recoverAddr(req CreateTaskReq, sig []byte, deviceAddr common.Address) (common.Address, []byte, string, error) {
+func recover(req CreateTaskReq, sig []byte) ([]*recoverRes, string, error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
-		return common.Address{}, nil, "", errors.Wrap(err, "failed to marshal request into json format")
+		return nil, "", errors.Wrap(err, "failed to marshal request into json format")
 	}
 
 	switch req.Algorithm {
 	default:
 		h := sha256.Sum256(reqJson)
-		res := []struct {
-			pk  *ecdsa.PublicKey
-			sig []byte
-		}{}
+		res := []*recoverRes{}
 		rID := []uint8{0, 1}
 		for _, id := range rID {
 			ns := append(sig, byte(id))
 			if pk, err := crypto.SigToPub(h[:], ns); err != nil {
-				slog.Debug("failed to recover public key from signature", "error", err, "recover_id", id, "signature", hexutil.Encode(sig))
+				return nil, "", errors.Wrapf(err, "failed to recover public key from signature, recover_id %d", id)
 			} else {
-				res = append(res, struct {
-					pk  *ecdsa.PublicKey
-					sig []byte
-				}{pk: pk, sig: ns})
+				res = append(res, &recoverRes{addr: crypto.PubkeyToAddress(*pk), sig: ns})
 			}
 		}
-
-		for _, r := range res {
-			addr := crypto.PubkeyToAddress(*r.pk)
-			if bytes.Equal(addr.Bytes(), deviceAddr.Bytes()) {
-				return addr, r.sig, "ES256", nil
-			}
-		}
-		return common.Address{}, nil, "", errors.New("failed to recover public key from signature")
+		return res, "ES256", nil
 	}
 }
 
