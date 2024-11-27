@@ -135,6 +135,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			Payload:        payload,
 			Signature:      sig,
 			Algorithm:      alg,
+			CreatedAt:      time.Now(),
 		},
 	); err != nil {
 		slog.Error("failed to create task to persistence layer", "error", err)
