@@ -116,8 +116,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	payload, err := hexutil.Decode(req.Payload)
-	if err != nil {
+	if _, err := hexutil.Decode(req.Payload); err != nil {
 		slog.Error("failed to decode payload from hex format", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode payload from hex format")))
 		return
@@ -127,13 +126,13 @@ func (s *httpServer) createTask(c *gin.Context) {
 
 	if err := s.db.CreateTask(
 		&db.Task{
-			DeviceID:       addr.Bytes(),
-			TaskID:         taskID.Bytes(),
+			DeviceID:       addr.Hex(),
+			TaskID:         taskID.Hex(),
 			Nonce:          req.Nonce,
 			ProjectID:      pid.String(),
 			ProjectVersion: req.ProjectVersion,
-			Payload:        payload,
-			Signature:      sig,
+			Payload:        req.Payload,
+			Signature:      hexutil.Encode(sig),
 			Algorithm:      alg,
 			CreatedAt:      time.Now(),
 		},
