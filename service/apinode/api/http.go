@@ -279,7 +279,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 	resp.States = append(resp.States, &StateLog{
 		State:    "assigned",
 		Time:     assignedTask.CreatedAt,
-		ProverID: "did:io:" + strings.TrimPrefix(assignedTask.Prover.String(), "0x"),
+		ProverID: "did:io:" + strings.TrimPrefix(assignedTask.Prover, "0x"),
 	})
 
 	// Get settled state
@@ -300,7 +300,7 @@ func (s *httpServer) queryTask(c *gin.Context) {
 			State:   "settled",
 			Time:    settledTask.CreatedAt,
 			Comment: "The task has been completed. Please check the generated proof in the corresponding DApp contract.",
-			Tx:      settledTask.Tx.String(),
+			Tx:      settledTask.Tx,
 		})
 		c.JSON(http.StatusOK, resp)
 		return

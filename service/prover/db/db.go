@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -20,23 +21,23 @@ type scannedBlockNumber struct {
 
 type project struct {
 	gorm.Model
-	ProjectID string      `gorm:"uniqueIndex:project_id_project,not null"`
-	URI       string      `gorm:"not null"`
-	Hash      common.Hash `gorm:"not null"`
+	ProjectID string `gorm:"uniqueIndex:project_id_project,not null"`
+	URI       string `gorm:"not null"`
+	Hash      string `gorm:"not null"`
 }
 
 type projectFile struct {
 	gorm.Model
-	ProjectID string      `gorm:"uniqueIndex:project_id_project_file,not null"`
-	File      []byte      `gorm:"not null"`
-	Hash      common.Hash `gorm:"not null"`
+	ProjectID string `gorm:"uniqueIndex:project_id_project_file,not null"`
+	File      string `gorm:"not null"`
+	Hash      string `gorm:"not null"`
 }
 
 type task struct {
 	gorm.Model
-	TaskID    common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
-	Processed bool        `gorm:"index:unprocessed_task,not null,default:false"`
-	Error     string      `gorm:"not null,default:''"`
+	TaskID    string `gorm:"uniqueIndex:task_uniq,not null"`
+	Processed bool   `gorm:"index:unprocessed_task,not null,default:false"`
+	Error     string `gorm:"not null,default:''"`
 }
 
 type DB struct {
@@ -74,14 +75,14 @@ func (p *DB) Project(projectID *big.Int) (string, common.Hash, error) {
 	if err := p.db.Where("project_id = ?", projectID.String()).First(&t).Error; err != nil {
 		return "", common.Hash{}, errors.Wrap(err, "failed to query project")
 	}
-	return t.URI, t.Hash, nil
+	return t.URI, common.HexToHash(t.Hash), nil
 }
 
 func (p *DB) UpsertProject(projectID *big.Int, uri string, hash common.Hash) error {
 	t := project{
 		ProjectID: projectID.String(),
 		URI:       uri,
-		Hash:      hash,
+		Hash:      hash.Hex(),
 	}
 	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "project_id"}},
@@ -98,14 +99,18 @@ func (p *DB) ProjectFile(projectID *big.Int) ([]byte, common.Hash, error) {
 		}
 		return nil, common.Hash{}, errors.Wrap(err, "failed to query project file")
 	}
-	return t.File, t.Hash, nil
+	f, err := hexutil.Decode(t.File)
+	if err != nil {
+		return nil, common.Hash{}, errors.Wrap(err, "failed to decode file from hex format")
+	}
+	return f, common.HexToHash(t.Hash), nil
 }
 
 func (p *DB) UpsertProjectFile(projectID *big.Int, file []byte, hash common.Hash) error {
 	t := projectFile{
 		ProjectID: projectID.String(),
-		File:      file,
-		Hash:      hash,
+		File:      hexutil.Encode(file),
+		Hash:      hash.Hex(),
 	}
 	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "project_id"}},
@@ -119,7 +124,7 @@ func (p *DB) CreateTask(taskID common.Hash, prover common.Address) error {
 		return nil
 	}
 	t := &task{
-		TaskID:    taskID,
+		TaskID:    taskID.Hex(),
 		Processed: false,
 	}
 	err := p.db.Clauses(clause.OnConflict{
@@ -136,18 +141,18 @@ func (p *DB) ProcessTask(taskID common.Hash, err error) error {
 	if err != nil {
 		t.Error = err.Error()
 	}
-	err = p.db.Model(t).Where("task_id = ?", taskID).Updates(t).Error
+	err = p.db.Model(t).Where("task_id = ?", taskID.Hex()).Updates(t).Error
 	return errors.Wrap(err, "failed to update task")
 }
 
 func (p *DB) DeleteTask(taskID, tx common.Hash) error {
-	err := p.db.Where("task_id = ?", taskID).Delete(&task{}).Error
+	err := p.db.Where("task_id = ?", taskID.Hex()).Delete(&task{}).Error
 	return errors.Wrap(err, "failed to delete task")
 }
 
 func (p *DB) ProcessedTask(taskID common.Hash) (bool, string, time.Time, error) {
 	t := task{}
-	if err := p.db.Where("task_id = ?", taskID).First(&t).Error; err != nil {
+	if err := p.db.Where("task_id = ?", taskID.Hex()).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, "", time.Now(), nil
 		}
@@ -164,7 +169,7 @@ func (p *DB) UnprocessedTask() (common.Hash, error) {
 		}
 		return common.Hash{}, errors.Wrap(err, "failed to query unprocessed task")
 	}
-	return t.TaskID, nil
+	return common.HexToHash(t.TaskID), nil
 }
 
 func New(localDBDir string, prover common.Address) (*DB, error) {

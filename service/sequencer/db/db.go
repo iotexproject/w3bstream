@@ -18,13 +18,13 @@ type scannedBlockNumber struct {
 
 type prover struct {
 	gorm.Model
-	Prover common.Address `gorm:"uniqueIndex:prover,not null"`
+	Prover string `gorm:"uniqueIndex:prover,not null"`
 }
 
 type task struct {
 	gorm.Model
-	TaskID   common.Hash `gorm:"uniqueIndex:task_uniq,not null"`
-	Assigned bool        `gorm:"index:unassigned_task,not null,default:false"`
+	TaskID   string `gorm:"uniqueIndex:task_uniq,not null"`
+	Assigned bool   `gorm:"index:unassigned_task,not null,default:false"`
 }
 
 type DB struct {
@@ -63,7 +63,7 @@ func (p *DB) Provers() ([]common.Address, error) {
 	}
 	res := make([]common.Address, 0, len(ts))
 	for _, t := range ts {
-		res = append(res, t.Prover)
+		res = append(res, common.HexToAddress(t.Prover))
 	}
 	metrics.ProverMtc.Set(float64(len(ts)))
 	return res, nil
@@ -71,7 +71,7 @@ func (p *DB) Provers() ([]common.Address, error) {
 
 func (p *DB) UpsertProver(addr common.Address) error {
 	t := prover{
-		Prover: addr,
+		Prover: addr.Hex(),
 	}
 	err := p.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "prover"}},
@@ -82,7 +82,7 @@ func (p *DB) UpsertProver(addr common.Address) error {
 
 func (p *DB) CreateTask(taskID common.Hash) error {
 	t := &task{
-		TaskID:   taskID,
+		TaskID:   taskID.Hex(),
 		Assigned: false,
 	}
 	if err := p.db.Create(t).Error; err != nil {
@@ -95,15 +95,19 @@ func (p *DB) AssignTasks(ids []common.Hash) error {
 	if len(ids) == 0 {
 		return nil
 	}
+	sids := make([]string, 0, len(ids))
+	for _, id := range ids {
+		sids = append(sids, id.Hex())
+	}
 	t := &task{
 		Assigned: true,
 	}
-	err := p.db.Model(t).Where("task_id IN ?", ids).Updates(t).Error
+	err := p.db.Model(t).Where("task_id IN ?", sids).Updates(t).Error
 	return errors.Wrap(err, "failed to assign tasks")
 }
 
 func (p *DB) DeleteTask(taskID, tx common.Hash) error {
-	err := p.db.Where("task_id = ?", taskID).Delete(&task{}).Error
+	err := p.db.Where("task_id = ?", taskID.Hex()).Delete(&task{}).Error
 	return errors.Wrap(err, "failed to delete task")
 }
 
@@ -114,7 +118,7 @@ func (p *DB) UnassignedTasks(limit int) ([]common.Hash, error) {
 	}
 	ids := []common.Hash{}
 	for _, t := range ts {
-		ids = append(ids, t.TaskID)
+		ids = append(ids, common.HexToHash(t.TaskID))
 	}
 	return ids, nil
 }

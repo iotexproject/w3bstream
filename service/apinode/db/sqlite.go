@@ -18,26 +18,26 @@ type scannedBlockNumber struct {
 
 type AssignedTask struct {
 	gorm.Model
-	TaskID common.Hash `gorm:"uniqueIndex:assigned_task_uniq,not null"`
-	Prover common.Address
+	TaskID string `gorm:"uniqueIndex:assigned_task_uniq,not null"`
+	Prover string
 }
 
 type SettledTask struct {
 	gorm.Model
-	TaskID common.Hash `gorm:"uniqueIndex:settled_task_uniq,not null"`
-	Tx     common.Hash `gorm:"not null"`
+	TaskID string `gorm:"uniqueIndex:settled_task_uniq,not null"`
+	Tx     string `gorm:"not null"`
 }
 
 type ProjectDevice struct {
 	gorm.Model
-	ProjectID     string         `gorm:"uniqueIndex:project_device_uniq,not null"`
-	DeviceAddress common.Address `gorm:"uniqueIndex:project_device_uniq,not null"`
+	ProjectID     string `gorm:"uniqueIndex:project_device_uniq,not null"`
+	DeviceAddress string `gorm:"uniqueIndex:project_device_uniq,not null"`
 }
 
 func (p *DB) UpsertAssignedTask(taskID common.Hash, prover common.Address) error {
 	t := AssignedTask{
-		TaskID: taskID,
-		Prover: prover,
+		TaskID: taskID.Hex(),
+		Prover: prover.Hex(),
 	}
 	err := p.sqlite.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}},
@@ -48,8 +48,8 @@ func (p *DB) UpsertAssignedTask(taskID common.Hash, prover common.Address) error
 
 func (p *DB) UpsertSettledTask(taskID, tx common.Hash) error {
 	t := SettledTask{
-		TaskID: taskID,
-		Tx:     tx,
+		TaskID: taskID.Hex(),
+		Tx:     tx.Hex(),
 	}
 	err := p.sqlite.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}},
@@ -60,7 +60,7 @@ func (p *DB) UpsertSettledTask(taskID, tx common.Hash) error {
 
 func (p *DB) FetchAssignedTask(taskID common.Hash) (*AssignedTask, error) {
 	t := AssignedTask{}
-	if err := p.sqlite.Where("task_id = ?", taskID).First(&t).Error; err != nil {
+	if err := p.sqlite.Where("task_id = ?", taskID.Hex()).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -71,7 +71,7 @@ func (p *DB) FetchAssignedTask(taskID common.Hash) (*AssignedTask, error) {
 
 func (p *DB) FetchSettledTask(taskID common.Hash) (*SettledTask, error) {
 	t := SettledTask{}
-	if err := p.sqlite.Where("task_id = ?", taskID).First(&t).Error; err != nil {
+	if err := p.sqlite.Where("task_id = ?", taskID.Hex()).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -83,7 +83,7 @@ func (p *DB) FetchSettledTask(taskID common.Hash) (*SettledTask, error) {
 func (p *DB) UpsertProjectDevice(projectID *big.Int, address common.Address) error {
 	t := ProjectDevice{
 		ProjectID:     projectID.String(),
-		DeviceAddress: address,
+		DeviceAddress: address.Hex(),
 	}
 	err := p.sqlite.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "project_id"}, {Name: "device_address"}},
@@ -94,7 +94,7 @@ func (p *DB) UpsertProjectDevice(projectID *big.Int, address common.Address) err
 
 func (p *DB) IsDeviceApproved(projectID *big.Int, address common.Address) (bool, error) {
 	t := ProjectDevice{}
-	if err := p.sqlite.Where("project_id = ?", projectID.String()).Where("device_address = ?", address).First(&t).Error; err != nil {
+	if err := p.sqlite.Where("project_id = ?", projectID.String()).Where("device_address = ?", address.Hex()).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
 		}
