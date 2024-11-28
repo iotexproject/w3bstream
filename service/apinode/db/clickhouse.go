@@ -37,7 +37,7 @@ func (p *DB) CreateTask(m *Task) error {
 
 func (p *DB) FetchTask(taskID common.Hash) (*Task, error) {
 	t := Task{}
-	if err := p.ch.QueryRow(context.Background(), "SELECT * FROM w3bstream_tasks WHERE task_id = ?", taskID.Bytes()).ScanStruct(&t); err != nil {
+	if err := p.ch.QueryRow(context.Background(), "SELECT * FROM w3bstream_tasks WHERE task_id = ?", taskID.Hex()).ScanStruct(&t); err != nil {
 		return nil, errors.Wrap(err, "failed to query task")
 	}
 	return &t, nil

@@ -22,9 +22,9 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 	if len(taskIDs) == 0 {
 		return nil, errors.New("empty query task ids")
 	}
-	tids := make([][]byte, 0, len(taskIDs))
+	tids := make([]string, 0, len(taskIDs))
 	for _, t := range taskIDs {
-		tids = append(tids, t.Bytes())
+		tids = append(tids, t.Hex())
 	}
 	var ts []db.Task
 	if err := p.db.Select(context.Background(), &ts, "SELECT * FROM w3bstream_tasks WHERE task_id IN ?", tids); err != nil {
