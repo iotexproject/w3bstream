@@ -15,7 +15,7 @@ type VMContainer struct {
 func SetupRisc0VM() (*VMContainer, string, error) {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
-		Image:        "ghcr.io/iotexproject/risc0server:v0.0.13",
+		Image:        "ghcr.io/iotexproject/risc0server:v0.0.18",
 		ExposedPorts: []string{"4001/tcp"},
 		WaitingFor:   wait.ForListeningPort("4001"),
 	}

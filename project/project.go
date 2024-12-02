@@ -38,7 +38,7 @@ type Attribute struct {
 }
 
 type Config struct {
-	Version  string `json:"version,omitempty"`
+	Version  string `json:"version"`
 	VMTypeID uint64 `json:"vmTypeID"`
 	Code     string `json:"code"`
 	Metadata string `json:"metadata,omitempty"`
