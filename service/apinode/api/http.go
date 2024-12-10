@@ -97,6 +97,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 	var addr common.Address
 	var approved bool
 	for _, r := range recovered {
+		slog.Info("recovered address", "project_id", pid.String(), "address", r.addr.String())
 		ok, err := s.db.IsDeviceApproved(pid, r.addr)
 		if err != nil {
 			slog.Error("failed to check device permission", "error", err)
