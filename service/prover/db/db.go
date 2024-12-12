@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -29,7 +28,7 @@ type project struct {
 type projectFile struct {
 	gorm.Model
 	ProjectID string `gorm:"uniqueIndex:project_id_project_file,not null"`
-	File      string `gorm:"not null"`
+	File      []byte `gorm:"not null"`
 	Hash      string `gorm:"not null"`
 }
 
@@ -99,17 +98,13 @@ func (p *DB) ProjectFile(projectID *big.Int) ([]byte, common.Hash, error) {
 		}
 		return nil, common.Hash{}, errors.Wrap(err, "failed to query project file")
 	}
-	f, err := hexutil.Decode(t.File)
-	if err != nil {
-		return nil, common.Hash{}, errors.Wrap(err, "failed to decode file from hex format")
-	}
-	return f, common.HexToHash(t.Hash), nil
+	return t.File, common.HexToHash(t.Hash), nil
 }
 
 func (p *DB) UpsertProjectFile(projectID *big.Int, file []byte, hash common.Hash) error {
 	t := projectFile{
 		ProjectID: projectID.String(),
-		File:      hexutil.Encode(file),
+		File:      file,
 		Hash:      hash.Hex(),
 	}
 	err := p.db.Clauses(clause.OnConflict{
