@@ -107,7 +107,7 @@ func (p *DB) AssignTasks(ids []common.Hash) error {
 }
 
 func (p *DB) DeleteTask(taskID, tx common.Hash) error {
-	err := p.db.Where("task_id = ?", taskID.Hex()).Delete(&task{}).Error
+	err := p.db.Unscoped().Where("task_id = ?", taskID.Hex()).Delete(&task{}).Error
 	return errors.Wrap(err, "failed to delete task")
 }
 
