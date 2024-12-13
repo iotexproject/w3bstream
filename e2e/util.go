@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -23,13 +23,14 @@ import (
 	"github.com/iotexproject/w3bstream/service/apinode/api"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 )
 
 func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte, error) {
 	req := &api.CreateTaskReq{
 		Nonce:     uint64(time.Now().Unix()),
 		ProjectID: strconv.Itoa(int(projectID)),
-		Payload:   hexutil.Encode(data),
+		Payload:   data,
 	}
 
 	reqJson, err := json.Marshal(req)
@@ -38,13 +39,21 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	}
 
 	h := sha256.Sum256(reqJson)
-	sig, err := crypto.Sign(h[:], key)
+	value := gjson.GetBytes(req.Payload, "timestamp")
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
+		return nil, errors.New("failed to convert uint64 to bytes array")
+	}
+	d := []byte{}
+	d = append(d, h[:]...)
+	d = append(d, buf.Bytes()...)
+	sig, err := crypto.Sign(d, key)
 	if err != nil {
 		return nil, err
 	}
 	sig = sig[:len(sig)-1]
 
-	req.Signature = hexutil.Encode(sig)
+	req.Signature = sig
 
 	return json.Marshal(req)
 }

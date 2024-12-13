@@ -12,15 +12,16 @@ import (
 )
 
 type Task struct {
-	TaskID         string    `ch:"task_id"`
-	DeviceID       string    `ch:"device_id"`
-	Nonce          uint64    `ch:"nonce"`
-	ProjectID      string    `ch:"project_id"`
-	ProjectVersion string    `ch:"project_version"`
-	Payload        string    `ch:"payload"`
-	Signature      string    `ch:"signature"`
-	Algorithm      string    `ch:"algorithm"`
-	CreatedAt      time.Time `ch:"create_at"`
+	TaskID             string    `ch:"task_id"`
+	DeviceID           string    `ch:"device_id"`
+	Nonce              uint64    `ch:"nonce"`
+	ProjectID          string    `ch:"project_id"`
+	ProjectVersion     string    `ch:"project_version"`
+	Payload            string    `ch:"payload"`
+	Signature          string    `ch:"signature"`
+	SignatureAlgorithm string    `ch:"signature_algorithm"`
+	HashAlgorithm      string    `ch:"hash_algorithm"`
+	CreatedAt          time.Time `ch:"create_at"`
 }
 
 func (p *DB) CreateTask(m *Task) error {
@@ -54,7 +55,8 @@ func migrateCH(conn driver.Conn) error {
             project_version String NOT NULL,
             payload String NOT NULL,
             signature String NOT NULL,
-            algorithm String NOT NULL,
+            signature_algorithm String NOT NULL,
+			hash_algorithm String NOT NULL,
             create_at DateTime NOT NULL
         )
         ENGINE = ReplacingMergeTree()

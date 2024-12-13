@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,8 +18,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
 
 	"github.com/iotexproject/w3bstream/metrics"
+	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/service/apinode/db"
 	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
 	sequencerapi "github.com/iotexproject/w3bstream/service/sequencer/api"
@@ -32,13 +35,24 @@ func newErrResp(err error) *errResp {
 	return &errResp{Error: err.Error()}
 }
 
+// TODO move to project file
+var pebbleProject = project.Config{
+	SignedKeys:         []project.SignedKey{{Name: "timestamp", Type: "uint64"}},
+	SignatureAlgorithm: "ecdsa",
+	HashAlgorithm:      "sha256",
+}
+var geoProject = project.Config{
+	SignedKeys:         []project.SignedKey{{Name: "previous_timestamp", Type: "uint64"}, {Name: "current_timestamp", Type: "uint64"}},
+	SignatureAlgorithm: "ecdsa",
+	HashAlgorithm:      "sha256",
+}
+
 type CreateTaskReq struct {
 	Nonce          uint64 `json:"nonce"                        binding:"required"`
 	ProjectID      string `json:"projectID"                    binding:"required"`
 	ProjectVersion string `json:"projectVersion,omitempty"`
-	Payload        string `json:"payload"                     binding:"required"`
-	Algorithm      string `json:"algorithm,omitempty"` // Refer to the constants defined in JWT (JSON Web Token) https://jwt.io/
-	Signature      string `json:"signature,omitempty"          binding:"required"`
+	Payload        []byte `json:"payload"                     binding:"required"`
+	Signature      []byte `json:"signature,omitempty"          binding:"required"`
 }
 
 type CreateTaskResp struct {
@@ -74,21 +88,19 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid request payload")))
 		return
 	}
-
 	pid, ok := new(big.Int).SetString(req.ProjectID, 10)
 	if !ok {
 		slog.Error("failed to decode project id string", "project_id", req.ProjectID)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to decode project id string")))
 		return
 	}
-	sig, err := hexutil.Decode(req.Signature)
-	if err != nil {
-		slog.Error("failed to decode signature from hex format", "error", err)
-		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature from hex format")))
+	if ok := gjson.ValidBytes(req.Payload); !ok {
+		slog.Error("failed to validate payload in json format")
+		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to validate payload in json format")))
 		return
 	}
 
-	recovered, alg, err := recover(*req, sig)
+	recovered, sigAlg, hashAlg, err := recover(*req, &pebbleProject)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
@@ -96,6 +108,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 	}
 	var addr common.Address
 	var approved bool
+	var sig []byte
 	for _, r := range recovered {
 		slog.Info("recovered address", "project_id", pid.String(), "address", r.addr.String())
 		ok, err := s.db.IsDeviceApproved(pid, r.addr)
@@ -117,25 +130,20 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	if _, err := hexutil.Decode(req.Payload); err != nil {
-		slog.Error("failed to decode payload from hex format", "error", err)
-		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode payload from hex format")))
-		return
-	}
-
 	taskID := crypto.Keccak256Hash(sig)
 
 	if err := s.db.CreateTask(
 		&db.Task{
-			DeviceID:       addr.Hex(),
-			TaskID:         taskID.Hex(),
-			Nonce:          req.Nonce,
-			ProjectID:      pid.String(),
-			ProjectVersion: req.ProjectVersion,
-			Payload:        req.Payload,
-			Signature:      hexutil.Encode(sig),
-			Algorithm:      alg,
-			CreatedAt:      time.Now(),
+			DeviceID:           addr.Hex(),
+			TaskID:             taskID.Hex(),
+			Nonce:              req.Nonce,
+			ProjectID:          pid.String(),
+			ProjectVersion:     req.ProjectVersion,
+			Payload:            string(req.Payload),
+			Signature:          hexutil.Encode(sig),
+			SignatureAlgorithm: sigAlg,
+			HashAlgorithm:      hashAlg,
+			CreatedAt:          time.Now(),
 		},
 	); err != nil {
 		slog.Error("failed to create task to persistence layer", "error", err)
@@ -174,32 +182,55 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recover(req CreateTaskReq, sig []byte) (res []*struct {
+func recover(req CreateTaskReq, cfg *project.Config) (res []*struct {
 	addr common.Address
 	sig  []byte
-}, alg string, err error) {
-	req.Signature = ""
+}, sigAlg, hashAlg string, err error) {
+	sig := req.Signature
+	req.Signature = nil
 	reqJson, err := json.Marshal(req)
 	if err != nil {
-		return nil, "", errors.Wrap(err, "failed to marshal request into json format")
+		return nil, "", "", errors.Wrap(err, "failed to marshal request into json format")
 	}
 
-	switch req.Algorithm {
+	var hash [32]byte
+	switch cfg.HashAlgorithm {
 	default:
-		h := sha256.Sum256(reqJson)
+		hashAlg = "sha256"
+		h1 := sha256.Sum256(reqJson)
+		d := make([]byte, 0, len(h1))
+		d = append(d, h1[:]...)
+
+		for _, k := range cfg.SignedKeys {
+			value := gjson.GetBytes(req.Payload, k.Name)
+			switch k.Type {
+			case "uint64":
+				buf := new(bytes.Buffer)
+				if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
+					return nil, "", "", errors.New("failed to convert uint64 to bytes array")
+				}
+				d = append(d, buf.Bytes()...)
+			}
+		}
+		hash = sha256.Sum256(d)
+	}
+
+	switch cfg.SignatureAlgorithm {
+	default:
+		sigAlg = "ecdsa"
 		rID := []uint8{0, 1}
 		for _, id := range rID {
 			ns := append(sig, byte(id))
-			pk, err := crypto.SigToPub(h[:], ns)
+			pk, err := crypto.SigToPub(hash[:], ns)
 			if err != nil {
-				return nil, "", errors.Wrapf(err, "failed to recover public key from signature, recover_id %d", id)
+				return nil, "", "", errors.Wrapf(err, "failed to recover public key from signature, recover_id %d", id)
 			}
 			res = append(res, &struct {
 				addr common.Address
 				sig  []byte
 			}{addr: crypto.PubkeyToAddress(*pk), sig: ns})
 		}
-		return res, "ES256", nil
+		return res, sigAlg, hashAlg, nil
 	}
 }
 

@@ -37,10 +37,6 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 		if !ok {
 			return nil, errors.New("failed to decode project id string")
 		}
-		payload, err := hexutil.Decode(ts[i].Payload)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to decode payload from hex format")
-		}
 		sig, err := hexutil.Decode(ts[i].Signature)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to decode signature from hex format")
@@ -49,7 +45,7 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 			ID:             common.HexToHash(ts[i].TaskID),
 			ProjectID:      pid,
 			ProjectVersion: ts[i].ProjectVersion,
-			Payload:        payload,
+			Payload:        []byte(ts[i].Payload),
 			DeviceID:       common.HexToAddress(ts[i].DeviceID),
 			Signature:      sig,
 		})

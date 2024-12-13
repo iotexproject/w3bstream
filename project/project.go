@@ -37,11 +37,19 @@ type Attribute struct {
 	RequestedProverAmount uint64
 }
 
+type SignedKey struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
 type Config struct {
-	Version  string `json:"version"`
-	VMTypeID uint64 `json:"vmTypeID"`
-	Code     string `json:"code"`
-	Metadata string `json:"metadata,omitempty"`
+	Version            string      `json:"version"`
+	VMTypeID           uint64      `json:"vmTypeID"`
+	SignedKeys         []SignedKey `json:"signedKeys"`
+	SignatureAlgorithm string      `json:"signatureAlgorithm"`
+	HashAlgorithm      string      `json:"hashAlgorithm"`
+	Metadata           string      `json:"metadata,omitempty"`
+	Code               string      `json:"code"`
 }
 
 func (p *Project) Config(version string) (*Config, error) {
