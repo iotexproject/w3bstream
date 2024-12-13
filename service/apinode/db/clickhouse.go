@@ -56,7 +56,7 @@ func migrateCH(conn driver.Conn) error {
             payload String NOT NULL,
             signature String NOT NULL,
             signature_algorithm String NOT NULL,
-			hash_algorithm String NOT NULL,
+            hash_algorithm String NOT NULL,
             create_at DateTime NOT NULL
         )
         ENGINE = ReplacingMergeTree()
