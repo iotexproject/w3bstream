@@ -47,7 +47,8 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	d := []byte{}
 	d = append(d, h[:]...)
 	d = append(d, buf.Bytes()...)
-	sig, err := crypto.Sign(d, key)
+	nh := sha256.Sum256(d)
+	sig, err := crypto.Sign(nh[:], key)
 	if err != nil {
 		return nil, err
 	}
