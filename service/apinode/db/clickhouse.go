@@ -12,28 +12,30 @@ import (
 )
 
 type Task struct {
-	TaskID             string    `ch:"task_id"`
-	DeviceID           string    `ch:"device_id"`
-	Nonce              uint64    `ch:"nonce"`
-	ProjectID          string    `ch:"project_id"`
-	ProjectVersion     string    `ch:"project_version"`
-	Payload            string    `ch:"payload"`
-	Signature          string    `ch:"signature"`
-	SignatureAlgorithm string    `ch:"signature_algorithm"`
-	HashAlgorithm      string    `ch:"hash_algorithm"`
-	CreatedAt          time.Time `ch:"create_at"`
+	TaskID             string    `ch:"task_id"             gorm:"primarykey"`
+	DeviceID           string    `ch:"device_id"           gorm:"not null"`
+	Nonce              uint64    `ch:"nonce"               gorm:"not null"`
+	ProjectID          string    `ch:"project_id"          gorm:"not null"`
+	ProjectVersion     string    `ch:"project_version"     gorm:"not null"`
+	Payload            string    `ch:"payload"             gorm:"not null"`
+	Signature          string    `ch:"signature"           gorm:"not null"`
+	SignatureAlgorithm string    `ch:"signature_algorithm" gorm:"not null"`
+	HashAlgorithm      string    `ch:"hash_algorithm"      gorm:"not null"`
+	CreatedAt          time.Time `ch:"created_at"           gorm:"not null"`
 }
 
-func (p *DB) CreateTask(m *Task) error {
+func (p *DB) CreateTasks(ts []*Task) error {
 	batch, err := p.ch.PrepareBatch(context.Background(), "INSERT INTO w3bstream_tasks")
 	if err != nil {
 		return errors.Wrap(err, "failed to prepare batch")
 	}
-	if err := batch.AppendStruct(m); err != nil {
-		return errors.Wrap(err, "failed to append struct")
+	for _, t := range ts {
+		if err := batch.AppendStruct(t); err != nil {
+			return errors.Wrap(err, "failed to append struct")
+		}
 	}
 	err = batch.Send()
-	return errors.Wrap(err, "failed to create task")
+	return errors.Wrap(err, "failed to create tasks")
 }
 
 func (p *DB) FetchTask(taskID common.Hash) (*Task, error) {
@@ -57,7 +59,7 @@ func migrateCH(conn driver.Conn) error {
             signature String NOT NULL,
             signature_algorithm String NOT NULL,
             hash_algorithm String NOT NULL,
-            create_at DateTime NOT NULL
+            created_at DateTime NOT NULL
         )
         ENGINE = ReplacingMergeTree()
         PRIMARY KEY task_id

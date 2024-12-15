@@ -24,7 +24,6 @@ import (
 	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/service/apinode/db"
 	proverapi "github.com/iotexproject/w3bstream/service/prover/api"
-	sequencerapi "github.com/iotexproject/w3bstream/service/sequencer/api"
 )
 
 type errResp struct {
@@ -148,31 +147,6 @@ func (s *httpServer) createTask(c *gin.Context) {
 	); err != nil {
 		slog.Error("failed to create task to persistence layer", "error", err)
 		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "could not save task")))
-		return
-	}
-
-	reqSequencer := &sequencerapi.CreateTaskReq{TaskID: taskID}
-	reqSequencerJ, err := json.Marshal(reqSequencer)
-	if err != nil {
-		slog.Error("failed to marshal sequencer request", "error", err)
-		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to marshal sequencer request")))
-		return
-	}
-	resp, err := http.Post(fmt.Sprintf("http://%s/task", s.sequencerAddr), "application/json", bytes.NewBuffer(reqSequencerJ))
-	if err != nil {
-		slog.Error("failed to call sequencer service", "error", err)
-		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to call sequencer service")))
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err == nil {
-			err = errors.New(string(body))
-		}
-		slog.Error("failed to call sequencer service", "error", err)
-		c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to call sequencer service")))
 		return
 	}
 

@@ -34,6 +34,30 @@ type ProjectDevice struct {
 	DeviceAddress string `gorm:"uniqueIndex:project_device_uniq,not null"`
 }
 
+func (p *DB) CreateTask(t *Task) error {
+	err := p.sqlite.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "task_id"}},
+		DoNothing: true,
+	}).Create(t).Error
+	return errors.Wrap(err, "failed to create task")
+}
+
+func (p *DB) FetchAllTask() ([]*Task, error) {
+	ts := []*Task{}
+	if err := p.sqlite.Order("created_at ASC").Find(&ts).Error; err != nil {
+		return nil, errors.Wrap(err, "failed to query all tasks")
+	}
+	return ts, nil
+}
+
+func (p *DB) DeleteTasks(taskIDs []string) error {
+	if len(taskIDs) == 0 {
+		return nil
+	}
+	err := p.sqlite.Unscoped().Where("task_id IN ?", taskIDs).Delete(&Task{}).Error
+	return errors.Wrap(err, "failed to delete tasks")
+}
+
 func (p *DB) UpsertAssignedTask(taskID common.Hash, prover common.Address) error {
 	t := AssignedTask{
 		TaskID: taskID.Hex(),
@@ -135,7 +159,7 @@ func newSqlite(localDBDir string) (*gorm.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect sqlite")
 	}
-	if err := db.AutoMigrate(&scannedBlockNumber{}, &AssignedTask{}, &SettledTask{}, &ProjectDevice{}); err != nil {
+	if err := db.AutoMigrate(&scannedBlockNumber{}, &Task{}, &AssignedTask{}, &SettledTask{}, &ProjectDevice{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return db, nil

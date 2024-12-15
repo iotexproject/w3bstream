@@ -2,9 +2,11 @@ package apinode
 
 import (
 	"log"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/iotexproject/w3bstream/monitor"
+	"github.com/iotexproject/w3bstream/service/apinode/aggregator"
 	"github.com/iotexproject/w3bstream/service/apinode/api"
 	"github.com/iotexproject/w3bstream/service/apinode/config"
 	"github.com/iotexproject/w3bstream/service/apinode/db"
@@ -41,6 +43,8 @@ func (n *APINode) Start() error {
 	); err != nil {
 		return errors.Wrap(err, "failed to run contract monitor")
 	}
+
+	go aggregator.Run(n.db, n.cfg.SequencerServiceEndpoint, time.Duration(n.cfg.TaskAggregatorIntervalSecond)*time.Second)
 
 	go func() {
 		if err := api.Run(n.db, n.cfg.ServiceEndpoint, n.cfg.SequencerServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {
