@@ -41,16 +41,17 @@ import (
 
 func apiNodeInit(chDSN, dbFile, chainEndpoint, taskManagerContractAddr, ioidContractAddr string) (*apinode.APINode, string, error) {
 	cfg := apinodeconfig.Config{
-		LogLevel:                 slog.LevelInfo,
-		ServiceEndpoint:          ":9000",
-		SequencerServiceEndpoint: "localhost:9001",
-		ProverServiceEndpoint:    "localhost:9002",
-		DatabaseDSN:              chDSN,
-		PrvKey:                   "",
-		ChainEndpoint:            chainEndpoint,
-		BeginningBlockNumber:     0,
-		TaskManagerContractAddr:  taskManagerContractAddr,
-		IoIDContractAddr:         ioidContractAddr,
+		LogLevel:                     slog.LevelInfo,
+		ServiceEndpoint:              ":9000",
+		SequencerServiceEndpoint:     "localhost:9001",
+		TaskAggregatorIntervalSecond: 1,
+		ProverServiceEndpoint:        "localhost:9002",
+		DatabaseDSN:                  chDSN,
+		PrvKey:                       "",
+		ChainEndpoint:                chainEndpoint,
+		BeginningBlockNumber:         0,
+		TaskManagerContractAddr:      taskManagerContractAddr,
+		IoIDContractAddr:             ioidContractAddr,
 	}
 
 	db, err := apinodedb.New(dbFile, chDSN)
