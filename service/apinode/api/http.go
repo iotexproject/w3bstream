@@ -167,6 +167,8 @@ func recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct 
 	addr common.Address
 	sig  []byte
 }, sigAlg, hashAlg string, err error) {
+	slog.Info("request json info", "signature", req.Signature)
+
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
@@ -178,8 +180,10 @@ func recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct 
 	default:
 		hashAlg = "sha256"
 		h1 := sha256.Sum256(reqJson)
+		slog.Info("request json info", "data", string(reqJson), "hash", hexutil.Encode(h1[:]))
 		d := make([]byte, 0, len(h1))
 		d = append(d, h1[:]...)
+		slog.Info("request json info", "hash_d", hexutil.Encode(d))
 
 		for _, k := range cfg.SignedKeys {
 			value := gjson.GetBytes(req.Payload, k.Name)
@@ -193,6 +197,7 @@ func recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct 
 			}
 		}
 		hash = sha256.Sum256(d)
+		slog.Info("request json info", "hash_final", hexutil.Encode(hash[:]))
 	}
 
 	switch cfg.SignatureAlgorithm {
