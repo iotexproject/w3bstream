@@ -35,6 +35,8 @@ func newErrResp(err error) *errResp {
 }
 
 // TODO move to project file
+// mainnet 6
+// testnet 923
 var pebbleProject = project.Config{
 	SignedKeys:         []project.SignedKey{{Name: "timestamp", Type: "uint64"}},
 	SignatureAlgorithm: "ecdsa",
@@ -50,8 +52,8 @@ type CreateTaskReq struct {
 	Nonce          uint64 `json:"nonce"                        binding:"required"`
 	ProjectID      string `json:"projectID"                    binding:"required"`
 	ProjectVersion string `json:"projectVersion,omitempty"`
-	Payload        []byte `json:"payload"                     binding:"required"`
-	Signature      []byte `json:"signature,omitempty"          binding:"required"`
+	Payload        string `json:"payload"                     binding:"required"`
+	Signature      string `json:"signature,omitempty"          binding:"required"`
 }
 
 type CreateTaskResp struct {
@@ -93,13 +95,25 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to decode project id string")))
 		return
 	}
-	if ok := gjson.ValidBytes(req.Payload); !ok {
+	payload, err := hexutil.Decode(req.Payload)
+	if err != nil {
+		slog.Error("failed to decode payload", "error", err)
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode payload")))
+		return
+	}
+	sig, err := hexutil.Decode(req.Signature)
+	if err != nil {
+		slog.Error("failed to decode signature", "error", err)
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature")))
+		return
+	}
+	if ok := gjson.ValidBytes(payload); !ok {
 		slog.Error("failed to validate payload in json format")
 		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to validate payload in json format")))
 		return
 	}
 
-	recovered, sigAlg, hashAlg, err := recover(*req, &pebbleProject)
+	recovered, sigAlg, hashAlg, err := recover(*req, &pebbleProject, sig, payload)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
@@ -107,7 +121,6 @@ func (s *httpServer) createTask(c *gin.Context) {
 	}
 	var addr common.Address
 	var approved bool
-	var sig []byte
 	for _, r := range recovered {
 		slog.Info("recovered address", "project_id", pid.String(), "address", r.addr.String())
 		ok, err := s.db.IsDeviceApproved(pid, r.addr)
@@ -156,12 +169,11 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recover(req CreateTaskReq, cfg *project.Config) (res []*struct {
+func recover(req CreateTaskReq, cfg *project.Config, sig, payload []byte) (res []*struct {
 	addr common.Address
 	sig  []byte
 }, sigAlg, hashAlg string, err error) {
-	sig := req.Signature
-	req.Signature = nil
+	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
 		return nil, "", "", errors.Wrap(err, "failed to marshal request into json format")
@@ -176,7 +188,7 @@ func recover(req CreateTaskReq, cfg *project.Config) (res []*struct {
 		d = append(d, h1[:]...)
 
 		for _, k := range cfg.SignedKeys {
-			value := gjson.GetBytes(req.Payload, k.Name)
+			value := gjson.GetBytes(payload, k.Name)
 			switch k.Type {
 			case "uint64":
 				buf := new(bytes.Buffer)

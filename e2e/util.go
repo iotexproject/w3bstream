@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -30,7 +31,7 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	req := &api.CreateTaskReq{
 		Nonce:     uint64(time.Now().Unix()),
 		ProjectID: strconv.Itoa(int(projectID)),
-		Payload:   data,
+		Payload:   hexutil.Encode(data),
 	}
 
 	reqJson, err := json.Marshal(req)
@@ -39,7 +40,7 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	}
 
 	h := sha256.Sum256(reqJson)
-	value := gjson.GetBytes(req.Payload, "timestamp")
+	value := gjson.GetBytes(data, "timestamp")
 	buf := new(bytes.Buffer)
 	if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
 		return nil, errors.New("failed to convert uint64 to bytes array")
@@ -54,7 +55,7 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	}
 	sig = sig[:len(sig)-1]
 
-	req.Signature = sig
+	req.Signature = hexutil.Encode(sig)
 
 	return json.Marshal(req)
 }
