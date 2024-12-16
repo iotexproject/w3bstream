@@ -151,7 +151,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			Nonce:              req.Nonce,
 			ProjectID:          pid.String(),
 			ProjectVersion:     req.ProjectVersion,
-			Payload:            string(req.Payload),
+			Payload:            string(payload),
 			Signature:          hexutil.Encode(sig),
 			SignatureAlgorithm: sigAlg,
 			HashAlgorithm:      hashAlg,
