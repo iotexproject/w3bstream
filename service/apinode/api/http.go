@@ -49,11 +49,11 @@ var geoProject = project.Config{
 }
 
 type CreateTaskReq struct {
-	Nonce          uint64 `json:"nonce"                        binding:"required"`
-	ProjectID      string `json:"projectID"                    binding:"required"`
-	ProjectVersion string `json:"projectVersion,omitempty"`
-	Payload        string `json:"payload"                     binding:"required"`
-	Signature      string `json:"signature,omitempty"          binding:"required"`
+	Nonce          uint64          `json:"nonce"                        binding:"required"`
+	ProjectID      string          `json:"projectID"                    binding:"required"`
+	ProjectVersion string          `json:"projectVersion,omitempty"`
+	Payload        json.RawMessage `json:"payload"                     binding:"required"`
+	Signature      string          `json:"signature,omitempty"          binding:"required"`
 }
 
 type CreateTaskResp struct {
@@ -101,7 +101,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature")))
 		return
 	}
-	if ok := gjson.Valid(req.Payload); !ok {
+	if ok := gjson.ValidBytes(req.Payload); !ok {
 		slog.Error("failed to validate payload in json format")
 		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to validate payload in json format")))
 		return
@@ -145,7 +145,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			Nonce:              req.Nonce,
 			ProjectID:          pid.String(),
 			ProjectVersion:     req.ProjectVersion,
-			Payload:            req.Payload,
+			Payload:            string(req.Payload),
 			Signature:          hexutil.Encode(sig),
 			SignatureAlgorithm: sigAlg,
 			HashAlgorithm:      hashAlg,
@@ -182,7 +182,7 @@ func recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct 
 		d = append(d, h1[:]...)
 
 		for _, k := range cfg.SignedKeys {
-			value := gjson.Get(req.Payload, k.Name)
+			value := gjson.GetBytes(req.Payload, k.Name)
 			switch k.Type {
 			case "uint64":
 				buf := new(bytes.Buffer)
