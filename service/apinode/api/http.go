@@ -95,25 +95,19 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to decode project id string")))
 		return
 	}
-	payload, err := hexutil.Decode(req.Payload)
-	if err != nil {
-		slog.Error("failed to decode payload", "error", err)
-		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode payload")))
-		return
-	}
 	sig, err := hexutil.Decode(req.Signature)
 	if err != nil {
 		slog.Error("failed to decode signature", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to decode signature")))
 		return
 	}
-	if ok := gjson.ValidBytes(payload); !ok {
+	if ok := gjson.Valid(req.Payload); !ok {
 		slog.Error("failed to validate payload in json format")
 		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to validate payload in json format")))
 		return
 	}
 
-	recovered, sigAlg, hashAlg, err := recover(*req, &pebbleProject, sig, payload)
+	recovered, sigAlg, hashAlg, err := recover(*req, &pebbleProject, sig)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
@@ -151,7 +145,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			Nonce:              req.Nonce,
 			ProjectID:          pid.String(),
 			ProjectVersion:     req.ProjectVersion,
-			Payload:            string(payload),
+			Payload:            req.Payload,
 			Signature:          hexutil.Encode(sig),
 			SignatureAlgorithm: sigAlg,
 			HashAlgorithm:      hashAlg,
@@ -169,7 +163,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func recover(req CreateTaskReq, cfg *project.Config, sig, payload []byte) (res []*struct {
+func recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct {
 	addr common.Address
 	sig  []byte
 }, sigAlg, hashAlg string, err error) {
@@ -188,7 +182,7 @@ func recover(req CreateTaskReq, cfg *project.Config, sig, payload []byte) (res [
 		d = append(d, h1[:]...)
 
 		for _, k := range cfg.SignedKeys {
-			value := gjson.GetBytes(payload, k.Name)
+			value := gjson.Get(req.Payload, k.Name)
 			switch k.Type {
 			case "uint64":
 				buf := new(bytes.Buffer)
