@@ -189,6 +189,7 @@ func recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct 
 			value := gjson.GetBytes(req.Payload, k.Name)
 			switch k.Type {
 			case "uint64":
+				slog.Info("request json info", "json value uint64", value.Uint())
 				buf := new(bytes.Buffer)
 				if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
 					return nil, "", "", errors.New("failed to convert uint64 to bytes array")
@@ -196,6 +197,7 @@ func recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct 
 				d = append(d, buf.Bytes()...)
 			}
 		}
+		slog.Info("request json info", "hash_d_final", hexutil.Encode(d))
 		hash = sha256.Sum256(d)
 		slog.Info("request json info", "hash_final", hexutil.Encode(hash[:]))
 	}
