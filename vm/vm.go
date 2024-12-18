@@ -62,7 +62,8 @@ func decodeBinary(b string) ([]byte, error) {
 	if strings.Contains(b, "http") ||
 		strings.Contains(b, "ipfs") {
 		fd := filefetcher.Filedescriptor{Uri: b}
-		return fd.FetchFile()
+		skipHash := true
+		return fd.FetchFile(skipHash)
 	}
 	return hex.DecodeString(b)
 }

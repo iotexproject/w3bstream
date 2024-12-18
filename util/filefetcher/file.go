@@ -17,7 +17,7 @@ type Filedescriptor struct {
 	Hash [32]byte
 }
 
-func (fd *Filedescriptor) FetchFile() ([]byte, error) {
+func (fd *Filedescriptor) FetchFile(skipHash ...bool) ([]byte, error) {
 	u, err := url.Parse(fd.Uri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse project file uri %s", fd.Uri)
@@ -44,7 +44,7 @@ func (fd *Filedescriptor) FetchFile() ([]byte, error) {
 		return nil, errors.Wrapf(err, "failed to read project file, uri %s", fd.Uri)
 	}
 
-	if !bytes.Equal(fd.Hash[:], make([]byte, 32)) {
+	if skipHash[0] {
 		h := sha256.New()
 		if _, err := h.Write(data); err != nil {
 			return nil, errors.Wrap(err, "failed to generate project file hash")

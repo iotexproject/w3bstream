@@ -68,7 +68,7 @@ func TestProjectMeta_FetchProjectFile_http(t *testing.T) {
 		p = p.ApplyFuncReturn(io.ReadAll, jc, nil)
 
 		nfd := *fd
-		nfd.Hash = [32]byte{1}
+		nfd.Hash = [32]byte{}
 		_, err := nfd.FetchFile()
 		r.ErrorContains(err, "failed to validate project file hash")
 	})
