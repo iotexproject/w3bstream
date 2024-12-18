@@ -43,7 +43,11 @@ var pebbleProject = project.Config{
 	HashAlgorithm:      "sha256",
 }
 var geoProject = project.Config{
-	SignedKeys:         []project.SignedKey{{Name: "previous_timestamp", Type: "uint64"}, {Name: "current_timestamp", Type: "uint64"}},
+	SignedKeys: []project.SignedKey{
+		{Name: "timestamp", Type: "uint64"},
+		{Name: "latitude", Type: "uint64"},
+		{Name: "longitude", Type: "uint64"},
+	},
 	SignatureAlgorithm: "ecdsa",
 	HashAlgorithm:      "sha256",
 }
@@ -107,7 +111,12 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	recovered, sigAlg, hashAlg, err := recover(*req, &pebbleProject, sig)
+	cfg := &pebbleProject
+	if req.ProjectID == "942" {
+		cfg = &geoProject
+	}
+
+	recovered, sigAlg, hashAlg, err := recover(*req, cfg, sig)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
