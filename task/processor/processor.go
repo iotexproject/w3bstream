@@ -22,7 +22,7 @@ import (
 	"github.com/iotexproject/w3bstream/task"
 )
 
-type HandleTask func(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error)
+type HandleTask func(task *task.Task, projectConfig *project.Config) ([]byte, error)
 type Project func(projectID *big.Int) (*project.Project, error)
 type RetrieveTask func(taskIDs []common.Hash) ([]*task.Task, error)
 
@@ -60,7 +60,7 @@ func (r *processor) process(taskID common.Hash) error {
 	}
 	slog.Info("process task", "project_id", t.ProjectID.String(), "task_id", t.ID, "vm_type", c.VMTypeID)
 	startTime := time.Now()
-	proof, err := r.handle(t, c.VMTypeID, c.Code, c.Metadata)
+	proof, err := r.handle(t, c)
 	if err != nil {
 		metrics.FailedTaskNumMtc.WithLabelValues(t.ProjectID.String()).Inc()
 		slog.Error("failed to handle task", "error", err)

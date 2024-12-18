@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/iotexproject/w3bstream/util/filefetcher"
 	"github.com/pkg/errors"
 )
 
@@ -35,8 +36,8 @@ func (m *Manager) Project(projectID *big.Int) (*Project, error) {
 	}
 
 	// project file hash mismatch, fetch new project file from uri
-	pm := &Meta{ProjectID: projectID, Uri: uri, Hash: hash}
-	data, err := pm.FetchProjectFile()
+	fetcher := &filefetcher.Filedescriptor{Uri: uri, Hash: hash}
+	data, err := fetcher.FetchFile()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch project file, project_id %v", projectID)
 	}

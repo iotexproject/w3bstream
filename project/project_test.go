@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotexproject/w3bstream/util/filefetcher"
 	"github.com/iotexproject/w3bstream/util/ipfs"
 )
 
@@ -24,7 +25,7 @@ func TestProjectMeta_FetchProjectRawData_init(t *testing.T) {
 	t.Run("InvalidUri", func(t *testing.T) {
 		p = p.ApplyFuncReturn(url.Parse, nil, errors.New(t.Name()))
 
-		_, err := (&Meta{}).FetchProjectFile()
+		_, err := (&filefetcher.Filedescriptor{}).FetchFile()
 		r.ErrorContains(err, t.Name())
 	})
 }
@@ -43,7 +44,7 @@ func TestProjectMeta_FetchProjectFile_http(t *testing.T) {
 	r.NoError(err)
 	hash := h.Sum(nil)
 
-	pm := &Meta{
+	pm := &filefetcher.Filedescriptor{
 		Uri:  "https://test.com/project_config",
 		Hash: [32]byte(hash),
 	}
@@ -51,7 +52,7 @@ func TestProjectMeta_FetchProjectFile_http(t *testing.T) {
 	t.Run("FailedToGetHTTP", func(t *testing.T) {
 		p = p.ApplyFuncReturn(http.Get, nil, errors.New(t.Name()))
 
-		_, err := pm.FetchProjectFile()
+		_, err := pm.FetchFile()
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("FailedToIOReadAll", func(t *testing.T) {
@@ -60,7 +61,7 @@ func TestProjectMeta_FetchProjectFile_http(t *testing.T) {
 		}, nil)
 		p = p.ApplyFuncReturn(io.ReadAll, nil, errors.New(t.Name()))
 
-		_, err := pm.FetchProjectFile()
+		_, err := pm.FetchFile()
 		r.ErrorContains(err, t.Name())
 	})
 	t.Run("HashMismatch", func(t *testing.T) {
@@ -68,11 +69,11 @@ func TestProjectMeta_FetchProjectFile_http(t *testing.T) {
 
 		npm := *pm
 		npm.Hash = [32]byte{}
-		_, err := npm.FetchProjectFile()
+		_, err := npm.FetchFile()
 		r.ErrorContains(err, "failed to validate project file hash")
 	})
 	t.Run("Success", func(t *testing.T) {
-		_, err := pm.FetchProjectFile()
+		_, err := pm.FetchFile()
 		r.NoError(err)
 	})
 }
@@ -82,13 +83,13 @@ func TestProjectMeta_FetchProjectFile_ipfs(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	pm := &Meta{
+	pm := &filefetcher.Filedescriptor{
 		Uri: "ipfs://test.com/123",
 	}
 	t.Run("FailedToGetIPFS", func(t *testing.T) {
 		p = p.ApplyMethodReturn(&ipfs.IPFS{}, "Cat", nil, errors.New(t.Name()))
 
-		_, err := pm.FetchProjectFile()
+		_, err := pm.FetchFile()
 		r.ErrorContains(err, t.Name())
 	})
 }
@@ -98,12 +99,12 @@ func TestProjectMeta_FetchProjectFile_default(t *testing.T) {
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
-	pm := &Meta{
+	pm := &filefetcher.Filedescriptor{
 		Uri: "test.com/123",
 	}
 
 	t.Run("FailedToGetIPFS", func(t *testing.T) {
-		_, err := pm.FetchProjectFile()
+		_, err := pm.FetchFile()
 		r.ErrorContains(err, "invalid project file uri")
 	})
 }

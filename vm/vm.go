@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/hex"
 	"log/slog"
+	"strings"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/task"
+	"github.com/iotexproject/w3bstream/util/filefetcher"
 	"github.com/iotexproject/w3bstream/vm/proto"
 )
 
@@ -17,21 +20,20 @@ type Handler struct {
 	vmClients map[uint64]*grpc.ClientConn
 }
 
-func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam string) ([]byte, error) {
-	conn, ok := r.vmClients[vmTypeID]
-	if !ok {
-		return nil, errors.Errorf("unsupported vm type id %d", vmTypeID)
-	}
-	cli := proto.NewVMClient(conn)
-
-	bi, err := hex.DecodeString(code)
+func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+	bi, err := decodeBinary(projectConfig.Code)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode code")
 	}
-	metadata, err := hex.DecodeString(expParam)
+	metadata, err := decodeBinary(projectConfig.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode metadata")
 	}
+	conn, ok := r.vmClients[projectConfig.VMTypeID]
+	if !ok {
+		return nil, errors.Errorf("unsupported vm type id %d", projectConfig.VMTypeID)
+	}
+	cli := proto.NewVMClient(conn)
 	if _, err := cli.NewProject(context.Background(), &proto.NewProjectRequest{
 		ProjectID:      task.ProjectID.String(),
 		ProjectVersion: task.ProjectVersion,
@@ -48,12 +50,21 @@ func (r *Handler) Handle(task *task.Task, vmTypeID uint64, code string, expParam
 		Payloads:  [][]byte{task.Payload},
 	})
 	if err != nil {
-		slog.Error("failed to execute task", "project_id", task.ProjectID, "vm_type", vmTypeID,
-			"task_id", task.ID, "binary", code, "payloads", task.Payload, "err", err)
+		slog.Error("failed to execute task", "project_id", task.ProjectID, "vm_type", projectConfig.VMTypeID,
+			"task_id", task.ID, "binary", projectConfig.Code, "payloads", task.Payload, "err", err)
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
 
 	return resp.Result, nil
+}
+
+func decodeBinary(b string) ([]byte, error) {
+	if strings.Contains(b, "http") ||
+		strings.Contains(b, "ipfs") {
+		fd := filefetcher.Filedescriptor{Uri: b}
+		return fd.FetchFile()
+	}
+	return hex.DecodeString(b)
 }
 
 func NewHandler(vmEndpoints map[uint64]string) (*Handler, error) {
