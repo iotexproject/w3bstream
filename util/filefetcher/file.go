@@ -44,7 +44,7 @@ func (fd *Filedescriptor) FetchFile(skipHash ...bool) ([]byte, error) {
 		return nil, errors.Wrapf(err, "failed to read project file, uri %s", fd.Uri)
 	}
 
-	if skipHash[0] {
+	if len(skipHash) == 0 || !skipHash[0] {
 		h := sha256.New()
 		if _, err := h.Write(data); err != nil {
 			return nil, errors.Wrap(err, "failed to generate project file hash")
