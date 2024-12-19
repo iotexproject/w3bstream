@@ -21,6 +21,7 @@ type Handler struct {
 }
 
 func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+	// TODO: load binary before being stored in db
 	bi, err := decodeBinary(projectConfig.Code)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode code")
@@ -28,6 +29,10 @@ func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte
 	metadata, err := decodeBinary(projectConfig.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode metadata")
+	}
+	taskPayload, err := LoadPayload(task, projectConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load payload")
 	}
 	conn, ok := r.vmClients[projectConfig.VMTypeID]
 	if !ok {
@@ -47,7 +52,7 @@ func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte
 	resp, err := cli.ExecuteTask(context.Background(), &proto.ExecuteTaskRequest{
 		ProjectID: task.ProjectID.String(),
 		TaskID:    task.ID[:],
-		Payloads:  [][]byte{task.Payload},
+		Payloads:  [][]byte{taskPayload},
 	})
 	if err != nil {
 		slog.Error("failed to execute task", "project_id", task.ProjectID, "vm_type", projectConfig.VMTypeID,
@@ -58,6 +63,7 @@ func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte
 	return resp.Result, nil
 }
 
+// TODO: validate fetched file with hash
 func decodeBinary(b string) ([]byte, error) {
 	if strings.Contains(b, "http") ||
 		strings.Contains(b, "ipfs") {

@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -24,7 +23,6 @@ import (
 	"github.com/iotexproject/w3bstream/service/apinode/api"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-	"github.com/tidwall/gjson"
 )
 
 func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte, error) {
@@ -40,20 +38,23 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	}
 
 	h := sha256.Sum256(reqJson)
-	value := gjson.GetBytes(data, "timestamp")
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
-		return nil, errors.New("failed to convert uint64 to bytes array")
-	}
-	d := []byte{}
-	d = append(d, h[:]...)
-	d = append(d, buf.Bytes()...)
-	nh := sha256.Sum256(d)
-	sig, err := crypto.Sign(nh[:], key)
+	// TODO: uncomment once project config can be loaded
+	// value := gjson.GetBytes(data, "timestamp")
+	// buf := new(bytes.Buffer)
+	// if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
+	// 	return nil, errors.New("failed to convert uint64 to bytes array")
+	// }
+	// d := []byte{}
+	// d = append(d, h[:]...)
+	// d = append(d, buf.Bytes()...)
+	// nh := sha256.Sum256(d)
+	sig, err := crypto.Sign(h[:], key)
 	if err != nil {
 		return nil, err
 	}
 	sig = sig[:len(sig)-1]
+
+	fmt.Printf("signature: %s, hash: %s\n", hexutil.Encode(sig), hexutil.Encode(h[:]))
 
 	req.Signature = hexutil.Encode(sig)
 

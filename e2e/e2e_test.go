@@ -169,7 +169,6 @@ func TestE2E(t *testing.T) {
 	})
 
 	t.Run("GNARK", func(t *testing.T) {
-		t.Skip() // TODO recover gnark test
 		gnarkProjectFilePath := "./testdata/gnark"
 		t.Cleanup(func() {
 			if err := gnarkVMContainer.Terminate(context.Background()); err != nil {
