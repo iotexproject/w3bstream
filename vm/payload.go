@@ -88,6 +88,7 @@ type ProofofMovenessCircuit struct {
 func (circuit *ProofofMovenessCircuit) Define(api frontend.API) error { return nil }
 
 func encodeGeodnetPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+	// TODO: loaded from task
 	lastPayloadHash := []byte{}
 	lastTimestamp := 0
 	lastLatitude := uint64(3)
