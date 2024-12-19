@@ -13,7 +13,7 @@ import (
 
 type Task struct {
 	TaskID             string    `ch:"task_id"             gorm:"primarykey"`
-	DeviceID           string    `ch:"device_id"           gorm:"not null"`
+	DevicePubKey       string    `ch:"device_public_key"   gorm:"not null"`
 	Nonce              uint64    `ch:"nonce"               gorm:"not null"`
 	ProjectID          string    `ch:"project_id"          gorm:"not null"`
 	ProjectVersion     string    `ch:"project_version"     gorm:"not null"`
@@ -51,7 +51,7 @@ func migrateCH(conn driver.Conn) error {
         CREATE TABLE IF NOT EXISTS w3bstream_tasks
         (
             task_id String NOT NULL,
-            device_id String NOT NULL,
+            device_public_key String NOT NULL,
             nonce UInt64 NOT NULL,
             project_id String NOT NULL,
             project_version String NOT NULL,

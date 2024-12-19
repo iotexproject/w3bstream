@@ -12,12 +12,13 @@ import (
 )
 
 type Task struct {
-	ID             common.Hash    `json:"id"`
-	ProjectID      *big.Int       `json:"projectID"`
-	ProjectVersion string         `json:"projectVersion,omitempty"`
-	DeviceID       common.Address `json:"deviceID"`
-	Payload        []byte         `json:"payload"`
-	Signature      []byte         `json:"signature,omitempty"`
+	ID             common.Hash `json:"id"`
+	Nonce          uint64      `json:"nonce"`
+	ProjectID      *big.Int    `json:"projectID"`
+	ProjectVersion string      `json:"projectVersion,omitempty"`
+	DevicePubKey   []byte      `json:"devicePublicKey"`
+	Payload        []byte      `json:"payload"`
+	Signature      []byte      `json:"signature,omitempty"`
 }
 
 func (t *Task) Sign(prv *ecdsa.PrivateKey) ([]byte, error) {

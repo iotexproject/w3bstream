@@ -41,12 +41,17 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to decode signature from hex format")
 		}
+		pubkey, err := hexutil.Decode(ts[i].DevicePubKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to decode device public key from hex format")
+		}
+
 		res = append(res, &task.Task{
 			ID:             common.HexToHash(ts[i].TaskID),
 			ProjectID:      pid,
 			ProjectVersion: ts[i].ProjectVersion,
 			Payload:        []byte(ts[i].Payload),
-			DeviceID:       common.HexToAddress(ts[i].DeviceID),
+			DevicePubKey:   pubkey,
 			Signature:      sig,
 		})
 	}

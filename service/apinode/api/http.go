@@ -61,11 +61,11 @@ var (
 )
 
 type CreateTaskReq struct {
-	Nonce          uint64 `binding:"required"`
-	ProjectID      string `binding:"required"`
-	ProjectVersion string
-	Payload        []byte `binding:"required"`
-	Signature      string `binding:"required"`
+	Nonce          uint64 `json:"nonce"                       binding:"required"`
+	ProjectID      string `json:"projectID"                   binding:"required"`
+	ProjectVersion string `json:"projectVersion,omitempty"`
+	Payload        []byte `json:"payload"                     binding:"required"`
+	Signature      string `json:"signature,omitempty"         binding:"required"`
 }
 
 func (ct CreateTaskReq) MarshalJSON() ([]byte, error) {
@@ -211,13 +211,12 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	ioid := crypto.PubkeyToAddress(*matchedPubkey)
+	//ioid := crypto.PubkeyToAddress(*matchedPubkey)
 	taskID := crypto.Keccak256Hash(sig)
 
 	if err := s.db.CreateTask(
 		&db.Task{
-			DeviceID: ioid.Hex(),
-			// TODO: add a public key field to the task
+			DevicePubKey:       hexutil.Encode(crypto.FromECDSAPub(matchedPubkey)),
 			TaskID:             taskID.Hex(),
 			Nonce:              req.Nonce,
 			ProjectID:          pid.String(),

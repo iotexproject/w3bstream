@@ -70,6 +70,10 @@ func (r *processor) process(taskID common.Hash) error {
 	slog.Info("process task success", "project_id", t.ProjectID.String(), "task_id", t.ID, "process_time", processTime)
 	metrics.TaskDurationMtc.WithLabelValues(t.ProjectID.String(), t.ProjectVersion, t.ID.String()).Set(processTime.Seconds())
 
+	pubkey, err := crypto.UnmarshalPubkey(t.DevicePubKey)
+	if err != nil {
+		return errors.Wrap(err, "failed to unmarshal public key")
+	}
 	tx, err := r.routerInstance.Route(
 		&bind.TransactOpts{
 			From: r.account,
@@ -80,7 +84,7 @@ func (r *processor) process(taskID common.Hash) error {
 		t.ProjectID,
 		t.ID,
 		r.account,
-		t.DeviceID,
+		crypto.PubkeyToAddress(*pubkey),
 		proof,
 	)
 	if err != nil {
