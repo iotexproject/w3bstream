@@ -34,6 +34,20 @@ type ProjectDevice struct {
 	DeviceAddress string `gorm:"uniqueIndex:project_device_uniq,not null"`
 }
 
+type project struct {
+	gorm.Model
+	ProjectID string `gorm:"uniqueIndex:project_id_project,not null"`
+	URI       string `gorm:"not null"`
+	Hash      string `gorm:"not null"`
+}
+
+type projectFile struct {
+	gorm.Model
+	ProjectID string `gorm:"uniqueIndex:project_id_project_file,not null"`
+	File      []byte `gorm:"not null"`
+	Hash      string `gorm:"not null"`
+}
+
 func (p *DB) CreateTask(t *Task) error {
 	err := p.sqlite.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}},
@@ -152,6 +166,51 @@ func (p *DB) UpsertScannedBlockNumber(number uint64) error {
 	return errors.Wrap(err, "failed to upsert scanned block number")
 }
 
+func (p *DB) Project(projectID *big.Int) (string, common.Hash, error) {
+	t := project{}
+	if err := p.sqlite.Where("project_id = ?", projectID.String()).First(&t).Error; err != nil {
+		return "", common.Hash{}, errors.Wrap(err, "failed to query project")
+	}
+	return t.URI, common.HexToHash(t.Hash), nil
+}
+
+func (p *DB) UpsertProject(projectID *big.Int, uri string, hash common.Hash) error {
+	t := project{
+		ProjectID: projectID.String(),
+		URI:       uri,
+		Hash:      hash.Hex(),
+	}
+	err := p.sqlite.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "project_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"uri", "hash"}),
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert project")
+}
+
+func (p *DB) ProjectFile(projectID *big.Int) ([]byte, common.Hash, error) {
+	t := projectFile{}
+	if err := p.sqlite.Where("project_id = ?", projectID.String()).First(&t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, common.Hash{}, nil
+		}
+		return nil, common.Hash{}, errors.Wrap(err, "failed to query project file")
+	}
+	return t.File, common.HexToHash(t.Hash), nil
+}
+
+func (p *DB) UpsertProjectFile(projectID *big.Int, file []byte, hash common.Hash) error {
+	t := projectFile{
+		ProjectID: projectID.String(),
+		File:      file,
+		Hash:      hash.Hex(),
+	}
+	err := p.sqlite.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "project_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"file", "hash"}),
+	}).Create(&t).Error
+	return errors.Wrap(err, "failed to upsert project file")
+}
+
 func newSqlite(localDBDir string) (*gorm.DB, error) {
 	db, err := gorm.Open(sqlite.Open(localDBDir), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -159,7 +218,7 @@ func newSqlite(localDBDir string) (*gorm.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect sqlite")
 	}
-	if err := db.AutoMigrate(&scannedBlockNumber{}, &Task{}, &AssignedTask{}, &SettledTask{}, &ProjectDevice{}); err != nil {
+	if err := db.AutoMigrate(&scannedBlockNumber{}, &Task{}, &AssignedTask{}, &SettledTask{}, &ProjectDevice{}, &project{}, &projectFile{}); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate model")
 	}
 	return db, nil

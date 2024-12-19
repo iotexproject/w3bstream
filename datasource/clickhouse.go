@@ -48,10 +48,11 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 
 		res = append(res, &task.Task{
 			ID:             common.HexToHash(ts[i].TaskID),
+			Nonce:          ts[i].Nonce,
 			ProjectID:      pid,
 			ProjectVersion: ts[i].ProjectVersion,
-			Payload:        []byte(ts[i].Payload),
 			DevicePubKey:   pubkey,
+			Payload:        []byte(ts[i].Payload),
 			Signature:      sig,
 		})
 	}

@@ -1,19 +1,12 @@
 package vm
 
 import (
-	"bytes"
-	"crypto/sha256"
 	_ "embed"
-	"encoding/binary"
-	"encoding/json"
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
-	"github.com/tidwall/gjson"
 
 	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/service/apinode/api"
@@ -47,14 +40,19 @@ type ProofofLivenessCircuit struct {
 func (circuit *ProofofLivenessCircuit) Define(api frontend.API) error { return nil }
 
 func encodePebblePayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
-	sig := task.Signature
+	sig := task.Signature[:64]
 	pubbytes := task.DevicePubKey
-	h1, _, data, err := recover(task, projectConfig)
+	payloadHash, _, _, data, err := api.HashTask(
+		&api.CreateTaskReq{
+			Nonce:          task.Nonce,
+			ProjectID:      task.ProjectID.String(),
+			ProjectVersion: task.ProjectVersion,
+			Payload:        task.Payload,
+		}, projectConfig)
 	if err != nil {
 		return nil, err
 	}
 	timestamp := data[0].(uint64)
-	payloadHash := h1
 
 	assignment := ProofofLivenessCircuit{
 		PayloadHash: uints.NewU8Array(payloadHash[:]),
@@ -67,45 +65,4 @@ func encodePebblePayload(task *task.Task, projectConfig *project.Config) ([]byte
 		return nil, err
 	}
 	return witness.MarshalBinary()
-}
-
-// TODO duplicate logic
-func recover(t *task.Task, cfg *project.Config) (h1, h2 common.Hash, data []any, err error) {
-	req := api.CreateTaskReq{
-		Nonce:          t.Nonce,
-		ProjectID:      t.ProjectID.String(),
-		ProjectVersion: t.ProjectVersion,
-		Payload:        t.Payload,
-	}
-	reqJson, err := json.Marshal(req)
-	if err != nil {
-		return common.Hash{}, common.Hash{}, nil, errors.Wrap(err, "failed to marshal request into json format")
-	}
-
-	switch cfg.HashAlgorithm {
-	default:
-		h1 = sha256.Sum256(reqJson)
-		if len(cfg.SignedKeys) == 0 {
-			h2 = h1
-		} else {
-			// concatenate payload hash with signed keys from payload json
-			if ok := gjson.ValidBytes(req.Payload); !ok {
-				return common.Hash{}, common.Hash{}, nil, errors.Wrap(err, "failed to validate payload in json format")
-			}
-			buf := new(bytes.Buffer)
-			buf.Write(h1[:])
-			for _, k := range cfg.SignedKeys {
-				value := gjson.GetBytes(req.Payload, k.Name)
-				switch k.Type {
-				case "uint64":
-					data = append(data, value.Uint())
-					if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
-						return common.Hash{}, common.Hash{}, nil, errors.New("failed to convert uint64 to bytes array")
-					}
-				}
-			}
-			h2 = sha256.Sum256(buf.Bytes())
-		}
-	}
-	return
 }

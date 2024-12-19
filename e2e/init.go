@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
-	"os"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -18,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotexproject/w3bstream/e2e/services"
+	wsproject "github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/service/apinode"
 	apinodeconfig "github.com/iotexproject/w3bstream/service/apinode/config"
 	apinodedb "github.com/iotexproject/w3bstream/service/apinode/db"
@@ -39,7 +39,7 @@ import (
 	"github.com/iotexproject/w3bstream/util/ipfs"
 )
 
-func apiNodeInit(chDSN, dbFile, chainEndpoint, taskManagerContractAddr, ioidContractAddr string) (*apinode.APINode, string, error) {
+func apiNodeInit(chDSN, dbFile, chainEndpoint string, contractDeployments *services.ContractsDeployments) (*apinode.APINode, string, error) {
 	cfg := apinodeconfig.Config{
 		LogLevel:                     slog.LevelInfo,
 		ServiceEndpoint:              ":9000",
@@ -50,8 +50,9 @@ func apiNodeInit(chDSN, dbFile, chainEndpoint, taskManagerContractAddr, ioidCont
 		PrvKey:                       "",
 		ChainEndpoint:                chainEndpoint,
 		BeginningBlockNumber:         0,
-		TaskManagerContractAddr:      taskManagerContractAddr,
-		IoIDContractAddr:             ioidContractAddr,
+		ProjectContractAddr:          contractDeployments.WSProject,
+		TaskManagerContractAddr:      contractDeployments.TaskManager,
+		IoIDContractAddr:             contractDeployments.IoID,
 	}
 
 	db, err := apinodedb.New(dbFile, chDSN)
@@ -197,7 +198,8 @@ func registerProject(t *testing.T, chainEndpoint string,
 	return newProjectID, nil
 }
 
-func uploadProject(t *testing.T, chainEndpoint, ipfsURL, projectFile string,
+func uploadProject(t *testing.T, chainEndpoint, ipfsURL string,
+	proj *wsproject.Project, projCodePath *string, projMetadataPath *string,
 	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey, newProjectID *big.Int, pauseProject bool) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)
@@ -206,12 +208,26 @@ func uploadProject(t *testing.T, chainEndpoint, ipfsURL, projectFile string,
 
 	// Upload project file to IPFS and update project config
 	ipfs := ipfs.NewIPFS(ipfsURL)
-	content, err := os.ReadFile(projectFile)
+	if projCodePath != nil {
+		codeCID, err := ipfs.AddFile(*projCodePath)
+		require.NoError(t, err)
+		cgf, err := proj.DefaultConfig()
+		require.NoError(t, err)
+		cgf.Code = fileURL(ipfsURL, codeCID)
+	}
+	if projMetadataPath != nil {
+		metadataCID, err := ipfs.AddFile(*projMetadataPath)
+		require.NoError(t, err)
+		cgf, err := proj.DefaultConfig()
+		require.NoError(t, err)
+		cgf.Metadata = fileURL(ipfsURL, metadataCID)
+	}
+	projBytes, err := proj.Marshal()
+	projHash := sha256.Sum256(projBytes)
 	require.NoError(t, err)
-	hash256 := sha256.Sum256(content)
-	cid, err := ipfs.AddContent(content)
+	cid, err := ipfs.AddContent(projBytes)
 	require.NoError(t, err)
-	projectFileURL := fmt.Sprintf("ipfs://%s/%s", ipfsURL, cid)
+	projectFileURL := fileURL(ipfsURL, cid)
 	wsProject, err := project.NewProject(common.HexToAddress(contractDeployments.WSProject), client)
 	require.NoError(t, err)
 	tOpts, err := bind.NewKeyedTransactorWithChainID(projectOwner, chainID)
@@ -222,7 +238,7 @@ func uploadProject(t *testing.T, chainEndpoint, ipfsURL, projectFile string,
 		_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 		require.NoError(t, err)
 	}
-	tx, err := wsProject.UpdateConfig(tOpts, newProjectID, projectFileURL, hash256)
+	tx, err := wsProject.UpdateConfig(tOpts, newProjectID, projectFileURL, projHash)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
@@ -230,6 +246,10 @@ func uploadProject(t *testing.T, chainEndpoint, ipfsURL, projectFile string,
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
+}
+
+func fileURL(ipfsURL, cid string) string {
+	return fmt.Sprintf("ipfs://%s/%s", ipfsURL, cid)
 }
 
 func registerIoID(t *testing.T, chainEndpoint string,

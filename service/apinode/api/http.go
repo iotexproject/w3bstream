@@ -40,10 +40,6 @@ func newErrResp(err error) *errResp {
 // mainnet 6
 // testnet 923
 var (
-	defaultProject = project.Config{
-		SignatureAlgorithm: "ecdsa",
-		HashAlgorithm:      "sha256",
-	}
 	pebbleProject = project.Config{
 		SignedKeys:         []project.SignedKey{{Name: "timestamp", Type: "uint64"}},
 		SignatureAlgorithm: "ecdsa",
@@ -146,10 +142,11 @@ type QueryTaskResp struct {
 }
 
 type httpServer struct {
-	engine        *gin.Engine
-	db            *db.DB
-	sequencerAddr string
-	proverAddr    string
+	engine         *gin.Engine
+	db             *db.DB
+	projectManager *project.Manager
+	sequencerAddr  string
+	proverAddr     string
 }
 
 func (s *httpServer) createTask(c *gin.Context) {
@@ -172,16 +169,26 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	// TODO move to project file
-	cfg := &defaultProject
-	if req.ProjectID == "923" {
-		cfg = &pebbleProject
+	proj, err := s.projectManager.Project(pid)
+	if err != nil {
+		slog.Error("failed to get project", "error", err)
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to get project")))
+		return
 	}
-	if req.ProjectID == "942" {
-		cfg = &geoProject
+	cfg, err := proj.Config(req.ProjectVersion)
+	if err != nil {
+		slog.Error("failed to get project config", "error", err)
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to get project config")))
+		return
 	}
 
-	recovered, sigAlg, hashAlg, err := Recover(*req, cfg, sig)
+	_, hash, hashAlg, _, err := HashTask(req, cfg)
+	if err != nil {
+		slog.Error("failed to hash request", "error", err)
+		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to hash request")))
+		return
+	}
+	recovered, sigAlg, err := recover(hash, sig, cfg)
 	if err != nil {
 		slog.Error("failed to recover public key", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid signature; could not recover public key")))
@@ -191,7 +198,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 	var approved bool
 	for _, r := range recovered {
 		addr := crypto.PubkeyToAddress(*r.pubkey)
-		slog.Info("recovered address", "project_id", pid.String(), "address", addr.String())
+		slog.Debug("recovered address", "project_id", pid.String(), "address", addr.String())
 		ok, err := s.db.IsDeviceApproved(pid, addr)
 		if err != nil {
 			slog.Error("failed to check device permission", "error", err)
@@ -239,50 +246,58 @@ func (s *httpServer) createTask(c *gin.Context) {
 	})
 }
 
-func Recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct {
-	pubkey *ecdsa.PublicKey
-	sig    []byte
-}, sigAlg, hashAlg string, err error) {
-	slog.Debug("request json info", "signature", req.Signature)
+func HashTask(req *CreateTaskReq, cfg *project.Config) ([32]byte, [32]byte, string, []any, error) {
 	req.Signature = ""
 	reqJson, err := json.Marshal(req)
 	if err != nil {
-		return nil, "", "", errors.Wrap(err, "failed to marshal request into json format")
+		return [32]byte{}, [32]byte{}, "", nil, errors.Wrap(err, "failed to marshal request into json format")
 	}
 
-	var hash [32]byte
+	var (
+		payloadHash [32]byte
+		finalHash   [32]byte
+		hashAlg     string
+		data        []any
+	)
 	switch cfg.HashAlgorithm {
 	default:
 		hashAlg = "sha256"
-		h1 := sha256.Sum256(reqJson)
-		slog.Debug("request json info", "data", string(reqJson), "hash", hexutil.Encode(h1[:]))
+		payloadHash = sha256.Sum256(reqJson)
+		slog.Debug("request json info", "data", string(reqJson), "hash", hexutil.Encode(payloadHash[:]))
 		if len(cfg.SignedKeys) == 0 {
-			hash = h1
+			finalHash = payloadHash
 			break
 		} else {
 			// concatenate payload hash with signed keys from payload json
 			if ok := gjson.ValidBytes(req.Payload); !ok {
 				slog.Error("failed to validate payload in json format")
-				return nil, "", "", errors.Wrap(err, "failed to validate payload in json format")
+				return [32]byte{}, [32]byte{}, "", nil, errors.Wrap(err, "failed to validate payload in json format")
 			}
 			buf := new(bytes.Buffer)
-			buf.Write(h1[:])
+			buf.Write(payloadHash[:])
 			for _, k := range cfg.SignedKeys {
 				value := gjson.GetBytes(req.Payload, k.Name)
 				switch k.Type {
 				case "uint64":
 					slog.Debug("request json info", "json value uint64", value.Uint())
+					data = append(data, value.Uint())
 					if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
-						return nil, "", "", errors.New("failed to convert uint64 to bytes array")
+						return [32]byte{}, [32]byte{}, "", nil, errors.New("failed to convert uint64 to bytes array")
 					}
 				}
 			}
 			slog.Debug("request json info", "hash_d_final", hexutil.Encode(buf.Bytes()))
-			hash = sha256.Sum256(buf.Bytes())
-			slog.Debug("request json info", "hash_final", hexutil.Encode(hash[:]))
+			finalHash = sha256.Sum256(buf.Bytes())
+			slog.Debug("request json info", "hash_final", hexutil.Encode(finalHash[:]))
 		}
 	}
+	return payloadHash, finalHash, hashAlg, data, nil
+}
 
+func recover(hash [32]byte, sig []byte, cfg *project.Config) (res []*struct {
+	pubkey *ecdsa.PublicKey
+	sig    []byte
+}, sigAlg string, err error) {
 	switch cfg.SignatureAlgorithm {
 	default:
 		sigAlg = "ecdsa"
@@ -291,14 +306,14 @@ func Recover(req CreateTaskReq, cfg *project.Config, sig []byte) (res []*struct 
 			ns := append(sig, byte(id))
 			pk, err := crypto.SigToPub(hash[:], ns)
 			if err != nil {
-				return nil, "", "", errors.Wrapf(err, "failed to recover public key from signature, recover_id %d", id)
+				return nil, "", errors.Wrapf(err, "failed to recover public key from signature, recover_id %d", id)
 			}
 			res = append(res, &struct {
 				pubkey *ecdsa.PublicKey
 				sig    []byte
 			}{pubkey: pk, sig: ns})
 		}
-		return res, sigAlg, hashAlg, nil
+		return res, sigAlg, nil
 	}
 }
 
@@ -426,12 +441,14 @@ func (s *httpServer) queryTask(c *gin.Context) {
 }
 
 // this func will block caller
-func Run(p *db.DB, addr, sequencerAddr, proverAddr string) error {
+func Run(p *db.DB, projectManager *project.Manager,
+	addr, sequencerAddr, proverAddr string) error {
 	s := &httpServer{
-		engine:        gin.Default(),
-		db:            p,
-		sequencerAddr: sequencerAddr,
-		proverAddr:    proverAddr,
+		engine:         gin.Default(),
+		db:             p,
+		projectManager: projectManager,
+		sequencerAddr:  sequencerAddr,
+		proverAddr:     proverAddr,
 	}
 
 	s.engine.POST("/task", s.createTask)

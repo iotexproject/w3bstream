@@ -17,6 +17,7 @@ type Config struct {
 	PrvKey                       string     `env:"PRIVATE_KEY,optional"`
 	ChainEndpoint                string     `env:"CHAIN_ENDPOINT,optional"`
 	BeginningBlockNumber         uint64     `env:"BEGINNING_BLOCK_NUMBER,optional"`
+	ProjectContractAddr          string     `env:"PROJECT_CONTRACT_ADDRESS,optional"`
 	TaskManagerContractAddr      string     `env:"TASK_MANAGER_CONTRACT_ADDRESS,optional"`
 	IoIDContractAddr             string     `env:"IOID_CONTRACT_ADDRESS,optional"`
 	LocalDBDir                   string     `env:"LOCAL_DB_DIRECTORY,optional"`

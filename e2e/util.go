@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -19,13 +20,16 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/iotexproject/w3bstream/e2e/services"
-	"github.com/iotexproject/w3bstream/service/apinode/api"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
+
+	"github.com/iotexproject/w3bstream/e2e/services"
+	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/service/apinode/api"
 )
 
-func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte, error) {
+func signMesssage(data []byte, projectID uint64, cfg *project.Config, key *ecdsa.PrivateKey) ([]byte, error) {
 	req := &api.CreateTaskReq{
 		Nonce:     uint64(time.Now().Unix()),
 		ProjectID: strconv.Itoa(int(projectID)),
@@ -38,23 +42,27 @@ func signMesssage(data []byte, projectID uint64, key *ecdsa.PrivateKey) ([]byte,
 	}
 
 	h := sha256.Sum256(reqJson)
-	// TODO: uncomment once project config can be loaded
-	// value := gjson.GetBytes(data, "timestamp")
-	// buf := new(bytes.Buffer)
-	// if err := binary.Write(buf, binary.LittleEndian, value.Uint()); err != nil {
-	// 	return nil, errors.New("failed to convert uint64 to bytes array")
-	// }
-	// d := []byte{}
-	// d = append(d, h[:]...)
-	// d = append(d, buf.Bytes()...)
-	// nh := sha256.Sum256(d)
+
+	if cfg != nil && len(cfg.SignedKeys) > 0 && gjson.ValidBytes(data) {
+		buf := new(bytes.Buffer)
+		buf.Write(h[:])
+		for _, key := range cfg.SignedKeys {
+			switch key.Type {
+			case "uint64":
+				value := gjson.GetBytes(data, key.Name)
+				if err := binary.Write(buf, binary.LittleEndian, uint64(value.Uint())); err != nil {
+					return nil, errors.New("failed to convert uint64 to bytes array")
+				}
+			}
+		}
+		h = sha256.Sum256(buf.Bytes())
+	}
+
 	sig, err := crypto.Sign(h[:], key)
 	if err != nil {
 		return nil, err
 	}
 	sig = sig[:len(sig)-1]
-
-	fmt.Printf("signature: %s, hash: %s\n", hexutil.Encode(sig), hexutil.Encode(h[:]))
 
 	req.Signature = hexutil.Encode(sig)
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/iotexproject/w3bstream/monitor"
+	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/service/apinode/aggregator"
 	"github.com/iotexproject/w3bstream/service/apinode/api"
 	"github.com/iotexproject/w3bstream/service/apinode/config"
@@ -33,8 +34,10 @@ func (n *APINode) Start() error {
 			AssignTask:               n.db.UpsertAssignedTask,
 			SettleTask:               n.db.UpsertSettledTask,
 			UpsertProjectDevice:      n.db.UpsertProjectDevice,
+			UpsertProject:            n.db.UpsertProject,
 		},
 		&monitor.ContractAddr{
+			Project:     common.HexToAddress(n.cfg.ProjectContractAddr),
 			TaskManager: common.HexToAddress(n.cfg.TaskManagerContractAddr),
 			IoID:        common.HexToAddress(n.cfg.IoIDContractAddr),
 		},
@@ -44,10 +47,12 @@ func (n *APINode) Start() error {
 		return errors.Wrap(err, "failed to run contract monitor")
 	}
 
+	projectManager := project.NewManager(n.db.Project, n.db.ProjectFile, n.db.UpsertProjectFile)
+
 	go aggregator.Run(n.db, n.cfg.SequencerServiceEndpoint, time.Duration(n.cfg.TaskAggregatorIntervalSecond)*time.Second)
 
 	go func() {
-		if err := api.Run(n.db, n.cfg.ServiceEndpoint, n.cfg.SequencerServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {
+		if err := api.Run(n.db, projectManager, n.cfg.ServiceEndpoint, n.cfg.SequencerServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {
 			log.Fatal(err)
 		}
 	}()

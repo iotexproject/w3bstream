@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotexproject/w3bstream/e2e/services"
+	"github.com/iotexproject/w3bstream/project"
 )
 
 const (
@@ -80,7 +81,7 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tempApiNodeDB.Name())
 	defer tempApiNodeDB.Close()
-	apiNode, apiNodeUrl, err := apiNodeInit(chDSN, tempApiNodeDB.Name(), chainEndpoint, contracts.TaskManager, contracts.IoID)
+	apiNode, apiNodeUrl, err := apiNodeInit(chDSN, tempApiNodeDB.Name(), chainEndpoint, contracts)
 	require.NoError(t, err)
 	err = apiNode.Start()
 	require.NoError(t, err)
@@ -136,15 +137,16 @@ func TestE2E(t *testing.T) {
 	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
 
 	t.Run("RISC0", func(t *testing.T) {
-		risc0ProjectFilePath := "./testdata/risc0"
 		t.Cleanup(func() {
 			if err := risc0VMContainer.Terminate(context.Background()); err != nil {
 				t.Logf("failed to terminate vm container: %v", err)
 			}
 		})
+		risc0CodePath := "./testdata/risc0.code"
+		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 1}}}
 
 		// Upload project
-		uploadProject(t, chainEndpoint, ipfsEndpoint, risc0ProjectFilePath, contracts, projectOwnerKey, projectID, false)
+		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &risc0CodePath, nil, contracts, projectOwnerKey, projectID, false)
 		require.NoError(t, err)
 
 		// Wait a few seconds for the device info synced on api node
@@ -165,19 +167,21 @@ func TestE2E(t *testing.T) {
 		dataJson, err := json.Marshal(msgData)
 		require.NoError(t, err)
 
-		sendMessage(t, dataJson, projectID, deviceKey, apiNodeUrl)
+		sendMessage(t, dataJson, projectID, nil, deviceKey, apiNodeUrl)
 	})
 
 	t.Run("GNARK", func(t *testing.T) {
-		gnarkProjectFilePath := "./testdata/gnark"
 		t.Cleanup(func() {
 			if err := gnarkVMContainer.Terminate(context.Background()); err != nil {
 				t.Logf("failed to terminate vm container: %v", err)
 			}
 		})
+		gnarkCodePath := "./testdata/gnark.code"
+		gnarkMetadataPath := "./testdata/gnark.metadata"
+		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 5}}}
 
 		// Upload project
-		uploadProject(t, chainEndpoint, ipfsEndpoint, gnarkProjectFilePath, contracts, projectOwnerKey, projectID, true)
+		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID, true)
 		require.NoError(t, err)
 
 		// Wait a few seconds for the device info synced on api node
@@ -187,7 +191,7 @@ func TestE2E(t *testing.T) {
 		data, err := hex.DecodeString("00000001000000010000000200000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001")
 		require.NoError(t, err)
 
-		sendMessage(t, data, projectID, deviceKey, apiNodeUrl)
+		sendMessage(t, data, projectID, nil, deviceKey, apiNodeUrl)
 	})
 }
 

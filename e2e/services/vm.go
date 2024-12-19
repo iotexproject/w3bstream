@@ -46,7 +46,7 @@ func SetupRisc0VM() (*VMContainer, string, error) {
 func SetupGnarkVM() (*VMContainer, string, error) {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
-		Image:        "ghcr.io/iotexproject/gnarkserver:v0.0.17",
+		Image:        "ghcr.io/iotexproject/gnarkserver:v0.0.20",
 		ExposedPorts: []string{"4005/tcp"},
 		WaitingFor:   wait.ForListeningPort("4005"),
 	}
