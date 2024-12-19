@@ -195,8 +195,9 @@ func TestE2E(t *testing.T) {
 	})
 }
 
-func sendMessage(t *testing.T, dataJson []byte, projectID *big.Int, deviceKey *ecdsa.PrivateKey, apiNodeUrl string) {
-	reqBody, err := signMesssage(dataJson, projectID.Uint64(), deviceKey)
+func sendMessage(t *testing.T, dataJson []byte, projectID *big.Int,
+	projectConfig *project.Config, deviceKey *ecdsa.PrivateKey, apiNodeUrl string) {
+	reqBody, err := signMesssage(dataJson, projectID.Uint64(), projectConfig, deviceKey)
 	require.NoError(t, err)
 
 	taskID, err := createTask(reqBody, apiNodeUrl)
