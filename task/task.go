@@ -19,6 +19,7 @@ type Task struct {
 	DevicePubKey   []byte      `json:"devicePublicKey"`
 	Payload        []byte      `json:"payload"`
 	Signature      []byte      `json:"signature,omitempty"`
+	PrevTask       *Task       `json:"previous_task,omitempty"`
 }
 
 func (t *Task) Sign(prv *ecdsa.PrivateKey) ([]byte, error) {

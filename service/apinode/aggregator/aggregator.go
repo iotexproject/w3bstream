@@ -26,6 +26,15 @@ func Run(db *db.DB, sequencerAddr string, interval time.Duration) {
 		if len(ts) == 0 {
 			continue
 		}
+		var prevTaskID string
+		for i := range ts {
+			if ts[i].ProjectID == "942" {
+				if prevTaskID == "" {
+					prevTaskID = ts[i].TaskID
+				}
+				ts[i].PrevTaskID = prevTaskID
+			}
+		}
 		if err := db.CreateTasks(ts); err != nil {
 			slog.Error("failed to create tasks", "error", err)
 			continue

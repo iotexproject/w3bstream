@@ -7,6 +7,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
+	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/service/apinode/api"
@@ -14,7 +15,6 @@ import (
 )
 
 var (
-	// TODO: use real project IDs
 	_pebbleProjectID = big.NewInt(923)
 	_geoProjectID    = big.NewInt(942)
 )
@@ -88,17 +88,37 @@ type ProofofMovenessCircuit struct {
 func (circuit *ProofofMovenessCircuit) Define(api frontend.API) error { return nil }
 
 func encodeGeodnetPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
-	// TODO: loaded from task
-	lastPayloadHash := []byte{}
-	lastTimestamp := 0
-	lastLatitude := uint64(3)
-	lastLongitude := uint64(51)
-	lastSig := []byte{}
-	curPayloadHash := []byte{}
-	curTimestamp := 0
-	curLatitude := uint64(12523)
-	curLongitude := uint64(10)
-	curSig := []byte{}
+	if task.PrevTask == nil {
+		return nil, errors.New("geodnet project miss previous task")
+	}
+	lastPayloadHash, _, _, lastData, err := api.HashTask(
+		&api.CreateTaskReq{
+			Nonce:          task.PrevTask.Nonce,
+			ProjectID:      task.PrevTask.ProjectID.String(),
+			ProjectVersion: task.PrevTask.ProjectVersion,
+			Payload:        task.PrevTask.Payload,
+		}, projectConfig)
+	if err != nil {
+		return nil, err
+	}
+	curPayloadHash, _, _, curData, err := api.HashTask(
+		&api.CreateTaskReq{
+			Nonce:          task.Nonce,
+			ProjectID:      task.ProjectID.String(),
+			ProjectVersion: task.ProjectVersion,
+			Payload:        task.Payload,
+		}, projectConfig)
+	if err != nil {
+		return nil, err
+	}
+	lastTimestamp := lastData[0].(uint64)
+	lastLatitude := lastData[1].(uint64)
+	lastLongitude := lastData[2].(uint64)
+	lastSig := task.PrevTask.Signature[:64]
+	curTimestamp := curData[0].(uint64)
+	curLatitude := curData[1].(uint64)
+	curLongitude := curData[2].(uint64)
+	curSig := task.Signature[:64]
 	isMove := (abs(lastLatitude, curLatitude) > 10^3) || (abs(lastLongitude, curLongitude) > 10^3)
 
 	assignment := ProofofMovenessCircuit{

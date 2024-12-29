@@ -31,35 +31,75 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 		return nil, errors.Wrap(err, "failed to query tasks")
 	}
 
+	prevTaskIDs := map[string]bool{}
+	for i := range ts {
+		if ts[i].PrevTaskID != "" {
+			prevTaskIDs[ts[i].PrevTaskID] = true
+		}
+	}
+	ptids := make([]string, 0, len(prevTaskIDs))
+	for t := range prevTaskIDs {
+		ptids = append(ptids, t)
+	}
+	pts := make(map[string]*db.Task, len(prevTaskIDs))
+	if len(ptids) != 0 {
+		var pdts []db.Task
+		if err := p.db.Select(context.Background(), &pdts, "SELECT * FROM w3bstream_tasks WHERE task_id IN ?", tids); err != nil {
+			return nil, errors.Wrap(err, "failed to query previous tasks")
+		}
+		for i := range pdts {
+			pts[pdts[i].TaskID] = &pdts[i]
+		}
+	}
+
 	res := []*task.Task{}
 	for i := range ts {
-		pid, ok := new(big.Int).SetString(ts[i].ProjectID, 10)
-		if !ok {
-			return nil, errors.New("failed to decode project id string")
-		}
-		sig, err := hexutil.Decode(ts[i].Signature)
+		t, err := p.conv(&ts[i])
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to decode signature from hex format")
+			return nil, err
 		}
-		pubkey, err := hexutil.Decode(ts[i].DevicePubKey)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to decode device public key from hex format")
+		if ts[i].PrevTaskID != "" {
+			pdt, ok := pts[ts[i].PrevTaskID]
+			if !ok {
+				return nil, errors.New("failed to get previous task")
+			}
+			pt, err := p.conv(pdt)
+			if err != nil {
+				return nil, err
+			}
+			t.PrevTask = pt
 		}
-
-		res = append(res, &task.Task{
-			ID:             common.HexToHash(ts[i].TaskID),
-			Nonce:          ts[i].Nonce,
-			ProjectID:      pid,
-			ProjectVersion: ts[i].ProjectVersion,
-			DevicePubKey:   pubkey,
-			Payload:        []byte(ts[i].Payload),
-			Signature:      sig,
-		})
+		res = append(res, t)
 	}
 	if len(res) != len(taskIDs) {
 		return nil, errors.Errorf("cannot find all tasks, task_ids %v", taskIDs)
 	}
+
 	return res, nil
+}
+
+func (p *Clickhouse) conv(dt *db.Task) (*task.Task, error) {
+	pid, ok := new(big.Int).SetString(dt.ProjectID, 10)
+	if !ok {
+		return nil, errors.New("failed to decode project id string")
+	}
+	sig, err := hexutil.Decode(dt.Signature)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode signature from hex format")
+	}
+	pubkey, err := hexutil.Decode(dt.DevicePubKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode device public key from hex format")
+	}
+	return &task.Task{
+		ID:             common.HexToHash(dt.TaskID),
+		Nonce:          dt.Nonce,
+		ProjectID:      pid,
+		ProjectVersion: dt.ProjectVersion,
+		DevicePubKey:   pubkey,
+		Payload:        []byte(dt.Payload),
+		Signature:      sig,
+	}, nil
 }
 
 func NewClickhouse(dsn string) (*Clickhouse, error) {
