@@ -47,7 +47,7 @@ contract-test:
 	@cd smartcontracts && npm install --save-dev hardhat
 	@cd smartcontracts && npx hardhat test
 
-.PHONY: e2e-test
-e2e-test:
+.PHONY: e2e_test
+e2e_test:
 	@cd smartcontracts && yarn install
 	@TEST_E2E=true go test ./e2e -v
