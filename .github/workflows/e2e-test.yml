@@ -29,4 +29,4 @@ jobs:
           node-version: '21.x'
 
       - name: Run e2e tests
-        run: make e2e-test
+        run: make e2e_test
