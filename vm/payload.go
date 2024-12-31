@@ -119,7 +119,10 @@ func encodeGeodnetPayload(task *task.Task, projectConfig *project.Config) ([]byt
 	curLatitude := curData[1].(uint64)
 	curLongitude := curData[2].(uint64)
 	curSig := task.Signature[:64]
-	isMove := (abs(lastLatitude, curLatitude) > 10^3) || (abs(lastLongitude, curLongitude) > 10^3)
+	isMove := uint64(0)
+	if (abs(lastLatitude, curLatitude) > 10^3) || (abs(lastLongitude, curLongitude) > 10^3) {
+		isMove = 1
+	}
 
 	assignment := ProofofMovenessCircuit{
 		LastPayloadHash: uints.NewU8Array(lastPayloadHash[:]),
