@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO: remove this combinator
 type DB struct {
 	sqlite *gorm.DB
 	ch     driver.Conn

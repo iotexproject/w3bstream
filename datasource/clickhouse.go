@@ -22,33 +22,36 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 	if len(taskIDs) == 0 {
 		return nil, errors.New("empty query task ids")
 	}
-	tids := make([]string, 0, len(taskIDs))
+	taskIDsHex := make([]string, 0, len(taskIDs))
 	for _, t := range taskIDs {
-		tids = append(tids, t.Hex())
+		taskIDsHex = append(taskIDsHex, t.Hex())
 	}
 	var ts []db.Task
-	if err := p.db.Select(context.Background(), &ts, "SELECT * FROM w3bstream_tasks WHERE task_id IN ?", tids); err != nil {
+	if err := p.db.Select(context.Background(), &ts, "SELECT * FROM w3bstream_tasks WHERE task_id IN ?", taskIDsHex); err != nil {
 		return nil, errors.Wrap(err, "failed to query tasks")
 	}
 
-	prevTaskIDs := map[string]bool{}
+	// filter out prev task that has been fetched
+	prevTasksPool := map[string]db.Task{}
+	for i := range ts {
+		prevTasksPool[ts[i].TaskID] = ts[i]
+	}
+	fetchPrevTaskIDs := make([]string, 0)
 	for i := range ts {
 		if ts[i].PrevTaskID != "" {
-			prevTaskIDs[ts[i].PrevTaskID] = true
+			if _, exist := prevTasksPool[ts[i].PrevTaskID]; !exist {
+				fetchPrevTaskIDs = append(fetchPrevTaskIDs, ts[i].PrevTaskID)
+			}
 		}
 	}
-	ptids := make([]string, 0, len(prevTaskIDs))
-	for t := range prevTaskIDs {
-		ptids = append(ptids, t)
-	}
-	pts := make(map[string]*db.Task, len(prevTaskIDs))
-	if len(ptids) != 0 {
+
+	if len(fetchPrevTaskIDs) != 0 {
 		var pdts []db.Task
-		if err := p.db.Select(context.Background(), &pdts, "SELECT * FROM w3bstream_tasks WHERE task_id IN ?", tids); err != nil {
+		if err := p.db.Select(context.Background(), &pdts, "SELECT * FROM w3bstream_tasks WHERE task_id IN ?", fetchPrevTaskIDs); err != nil {
 			return nil, errors.Wrap(err, "failed to query previous tasks")
 		}
 		for i := range pdts {
-			pts[pdts[i].TaskID] = &pdts[i]
+			prevTasksPool[pdts[i].TaskID] = pdts[i]
 		}
 	}
 
@@ -59,11 +62,11 @@ func (p *Clickhouse) Retrieve(taskIDs []common.Hash) ([]*task.Task, error) {
 			return nil, err
 		}
 		if ts[i].PrevTaskID != "" {
-			pdt, ok := pts[ts[i].PrevTaskID]
+			pdt, ok := prevTasksPool[ts[i].PrevTaskID]
 			if !ok {
 				return nil, errors.New("failed to get previous task")
 			}
-			pt, err := p.conv(pdt)
+			pt, err := p.conv(&pdt)
 			if err != nil {
 				return nil, err
 			}

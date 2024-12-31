@@ -35,8 +35,11 @@ func (p *DB) CreateTasks(ts []*Task) error {
 			return errors.Wrap(err, "failed to append struct")
 		}
 	}
-	err = batch.Send()
-	return errors.Wrap(err, "failed to create tasks")
+	if err := batch.Send(); err != nil {
+		return errors.Wrap(err, "failed to create tasks")
+	}
+	time.Sleep(1 * time.Second) // after writing to clickhouse, reading immediately will not return the value.
+	return nil
 }
 
 func (p *DB) FetchTask(taskID common.Hash) (*Task, error) {

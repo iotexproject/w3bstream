@@ -167,7 +167,8 @@ func TestE2E(t *testing.T) {
 		dataJson, err := json.Marshal(msgData)
 		require.NoError(t, err)
 
-		sendMessage(t, dataJson, projectID, nil, deviceKey, apiNodeUrl)
+		taskid := sendMessage(t, dataJson, projectID, nil, deviceKey, apiNodeUrl)
+		waitSettled(t, taskid, apiNodeUrl)
 	})
 
 	t.Run("GNARK", func(t *testing.T) {
@@ -191,19 +192,24 @@ func TestE2E(t *testing.T) {
 		data, err := hex.DecodeString("00000001000000010000000200000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001")
 		require.NoError(t, err)
 
-		sendMessage(t, data, projectID, nil, deviceKey, apiNodeUrl)
+		taskid := sendMessage(t, data, projectID, nil, deviceKey, apiNodeUrl)
+		waitSettled(t, taskid, apiNodeUrl)
 	})
 }
 
 func sendMessage(t *testing.T, dataJson []byte, projectID *big.Int,
-	projectConfig *project.Config, deviceKey *ecdsa.PrivateKey, apiNodeUrl string) {
+	projectConfig *project.Config, deviceKey *ecdsa.PrivateKey, apiNodeUrl string) string {
 	reqBody, err := signMesssage(dataJson, projectID.Uint64(), projectConfig, deviceKey)
 	require.NoError(t, err)
 
 	taskID, err := createTask(reqBody, apiNodeUrl)
 	require.NoError(t, err)
 
-	err = waitUntil(func() (bool, error) {
+	return taskID
+}
+
+func waitSettled(t *testing.T, taskID string, apiNodeUrl string) {
+	err := waitUntil(func() (bool, error) {
 		states, err := queryTask(taskID, apiNodeUrl)
 		if err != nil {
 			return false, err

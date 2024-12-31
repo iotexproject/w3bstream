@@ -64,7 +64,11 @@ func (p *DB) FetchAllTask() ([]*Task, error) {
 	return ts, nil
 }
 
-func (p *DB) DeleteTasks(taskIDs []string) error {
+func (p *DB) DeleteTasks(ts []*Task) error {
+	taskIDs := make([]string, len(ts))
+	for i, t := range ts {
+		taskIDs[i] = t.TaskID
+	}
 	if len(taskIDs) == 0 {
 		return nil
 	}

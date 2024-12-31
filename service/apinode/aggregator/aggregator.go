@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/iotexproject/w3bstream/service/apinode/db"
+	apidb "github.com/iotexproject/w3bstream/service/apinode/db"
 	"github.com/iotexproject/w3bstream/service/sequencer/api"
 	"github.com/pkg/errors"
 )
 
-func Run(db *db.DB, sequencerAddr string, interval time.Duration) {
+func Run(db *apidb.DB, sequencerAddr string, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for range ticker.C {
 		ts, err := db.FetchAllTask()
@@ -26,37 +26,47 @@ func Run(db *db.DB, sequencerAddr string, interval time.Duration) {
 		if len(ts) == 0 {
 			continue
 		}
-		var prevTaskID string
+
+		tasksbyProject := make(map[string][]*apidb.Task)
 		for i := range ts {
-			if ts[i].ProjectID == "942" {
-				if prevTaskID == "" {
-					prevTaskID = ts[i].TaskID
-				}
-				ts[i].PrevTaskID = prevTaskID
-			}
+			tasksbyProject[ts[i].ProjectID] = append(tasksbyProject[ts[i].ProjectID], ts[i])
 		}
-		if err := db.CreateTasks(ts); err != nil {
-			slog.Error("failed to create tasks", "error", err)
+
+		if tasks, ok := tasksbyProject["942"]; ok && len(tasks) > 0 {
+			prevTaskID := tasks[0].TaskID
+			tasks[len(tasks)-1].PrevTaskID = prevTaskID
+		}
+
+		if err := dumpTasks(db, ts); err != nil {
+			slog.Error("failed to dump tasks", "error", err)
 			continue
 		}
-		time.Sleep(1 * time.Second) // after writing to clickhouse, reading immediately will not return the value.
 
-		tids := make([]string, 0, len(ts))
-		pt := map[string]string{}
-		for _, t := range ts {
-			tids = append(tids, t.TaskID)
-			pt[t.ProjectID] = t.TaskID
-		}
-		for _, t := range pt {
-			if err := notify(sequencerAddr, common.HexToHash(t)); err != nil {
+		for _, tasks := range tasksbyProject {
+			if len(tasks) == 0 {
+				continue
+			}
+			lastTask := tasks[len(tasks)-1]
+			if err := notify(sequencerAddr, common.HexToHash(lastTask.TaskID)); err != nil {
 				slog.Error("failed to notify sequencer", "error", err)
 				continue
 			}
 		}
-		if err := db.DeleteTasks(tids); err != nil {
-			slog.Error("failed to delete tasks at local", "error", err)
-		}
 	}
+}
+
+func dumpTasks(db *apidb.DB, ts []*apidb.Task) error {
+	// add tasks to remote
+	if err := db.CreateTasks(ts); err != nil {
+		slog.Error("failed to create tasks", "error", err)
+		return err
+	}
+	// remove tasks from local
+	if err := db.DeleteTasks(ts); err != nil {
+		slog.Error("failed to delete tasks at local", "error", err)
+		return err
+	}
+	return nil
 }
 
 func notify(sequencerAddr string, taskID common.Hash) error {
