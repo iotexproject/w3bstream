@@ -451,8 +451,8 @@ func Run(p *db.DB, projectManager *project.Manager,
 		proverAddr:     proverAddr,
 	}
 
-	s.engine.POST("/task", s.createTask)
-	s.engine.GET("/task/:id", s.queryTask)
+	s.engine.POST("/v1/task", s.createTask)
+	s.engine.GET("/v1/task/:id", s.queryTask)
 	metrics.RegisterMetrics(s.engine)
 
 	if err := s.engine.Run(addr); err != nil {

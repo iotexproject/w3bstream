@@ -70,7 +70,7 @@ func signMesssage(data []byte, projectID uint64, cfg *project.Config, key *ecdsa
 }
 
 func createTask(body []byte, apiurl string) (string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/task", apiurl), bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/v1/task", apiurl), bytes.NewBuffer(body))
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +100,7 @@ func createTask(body []byte, apiurl string) (string, error) {
 }
 
 func queryTask(taskID string, apiurl string) (*api.QueryTaskResp, error) {
-	resp, err := http.Get(fmt.Sprintf("%s/task/%s", apiurl, taskID))
+	resp, err := http.Get(fmt.Sprintf("%s/v1/task/%s", apiurl, taskID))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to send request")
 	}
