@@ -36,26 +36,6 @@ func newErrResp(err error) *errResp {
 	return &errResp{Error: err.Error()}
 }
 
-// TODO move to project file
-// mainnet 6
-// testnet 923
-var (
-	pebbleProject = project.Config{
-		SignedKeys:         []project.SignedKey{{Name: "timestamp", Type: "uint64"}},
-		SignatureAlgorithm: "ecdsa",
-		HashAlgorithm:      "sha256",
-	}
-	geoProject = project.Config{
-		SignedKeys: []project.SignedKey{
-			{Name: "timestamp", Type: "uint64"},
-			{Name: "latitude", Type: "uint64"},
-			{Name: "longitude", Type: "uint64"},
-		},
-		SignatureAlgorithm: "ecdsa",
-		HashAlgorithm:      "sha256",
-	}
-)
-
 type CreateTaskReq struct {
 	Nonce          uint64 `json:"nonce"                       binding:"required"`
 	ProjectID      string `json:"projectID"                   binding:"required"`
