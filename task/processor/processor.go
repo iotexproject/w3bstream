@@ -89,6 +89,11 @@ func (r *processor) process(taskID common.Hash) error {
 		proof,
 	)
 	slog.Error("router call data", "projectID", t.ProjectID.String(), "taskID", t.ID.String(), "prover", r.account.String(), "deviceId", crypto.PubkeyToAddress(*pubkey).String(), "data", hexutil.Encode(proof))
+	slog.Error("proof valuses", "param1", hexutil.Encode(proof[0:32*8]),
+		"param2", hexutil.Encode(proof[32*8:32*10]),
+		"param3", hexutil.Encode(proof[32*10:32*12]),
+		"param4", hexutil.Encode(proof[32*12:32*78]),
+	)
 	if err != nil {
 		if jsonErr, ok := err.(rpc.DataError); ok {
 			errData := jsonErr.ErrorData()
