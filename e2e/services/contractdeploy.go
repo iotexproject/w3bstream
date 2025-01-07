@@ -22,23 +22,25 @@ var (
 	wsProjectRe        = regexp.MustCompile(`W3bstreamProject deployed to (\S+)`)
 	routerRe           = regexp.MustCompile(`W3bstreamRouter deployed to (\S+)`)
 	mockDappRe         = regexp.MustCompile(`MockDapp deployed to (\S+)`)
+	mockDappLivenessRe = regexp.MustCompile(`MockDappLiveness deployed to (\S+)`)
 	projectRewardRe    = regexp.MustCompile(`W3bstreamProjectReward deployed to (\S+)`)
 	debitsRe           = regexp.MustCompile(`W3bstreamDebits deployed to (\S+)`)
 	ioIDRe             = regexp.MustCompile(`MockIoID deployed to (\S+)`)
 )
 
 type ContractsDeployments struct {
-	TaskManager   string
-	Prover        string
-	Minter        string
-	Registrar     string
-	MockProject   string
-	WSProject     string
-	Router        string
-	MockDapp      string
-	ProjectReward string
-	Debits        string
-	IoID          string
+	TaskManager      string
+	Prover           string
+	Minter           string
+	Registrar        string
+	MockProject      string
+	WSProject        string
+	Router           string
+	MockDapp         string
+	MockDappLiveness string
+	ProjectReward    string
+	Debits           string
+	IoID             string
 }
 
 func DeployContract(endpoint string, payerHex string) (*ContractsDeployments, error) {
@@ -102,6 +104,9 @@ func DeployContract(endpoint string, payerHex string) (*ContractsDeployments, er
 	}
 	if match := mockDappRe.FindStringSubmatch(output); len(match) > 1 {
 		deployments.MockDapp = match[1]
+	}
+	if match := mockDappLivenessRe.FindStringSubmatch(output); len(match) > 1 {
+		deployments.MockDappLiveness = match[1]
 	}
 	if match := routerRe.FindStringSubmatch(output); len(match) > 1 {
 		deployments.Router = match[1]

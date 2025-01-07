@@ -125,7 +125,7 @@ func proverInit(chDSN, dbFile, chainEndpoint string, vmEndpoints map[int]string,
 }
 
 func registerProject(t *testing.T, chainEndpoint string,
-	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey) (*big.Int, error) {
+	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey, projectID *big.Int, dpp common.Address) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)
 	chainID, err := client.ChainID(context.Background())
@@ -141,7 +141,6 @@ func registerProject(t *testing.T, chainEndpoint string,
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
-	newProjectID := big.NewInt(1)
 
 	// Register project in w3bstream
 	projectRegistrarContract, err := projectregistrar.NewProjectRegistrar(
@@ -152,7 +151,7 @@ func registerProject(t *testing.T, chainEndpoint string,
 	tOpts, err = bind.NewKeyedTransactorWithChainID(projectOwner, chainID)
 	require.NoError(t, err)
 	tOpts.Value = registerFee
-	tx, err = projectRegistrarContract.Register(tOpts, newProjectID)
+	tx, err = projectRegistrarContract.Register(tOpts, projectID)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
@@ -168,11 +167,11 @@ func registerProject(t *testing.T, chainEndpoint string,
 		common.HexToAddress(contractDeployments.ProjectReward), client)
 	require.NoError(t, err)
 	require.NoError(t, err)
-	tx, err = projectRewardContract.SetReward(tOpts, newProjectID, rewardAmount)
+	tx, err = projectRewardContract.SetReward(tOpts, projectID, rewardAmount)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
-	tx, err = projectRewardContract.SetRewardToken(tOpts, newProjectID, mockerc20Addr)
+	tx, err = projectRewardContract.SetRewardToken(tOpts, projectID, mockerc20Addr)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
@@ -190,12 +189,10 @@ func registerProject(t *testing.T, chainEndpoint string,
 	// Bind dapp to router
 	router, err := router.NewRouter(common.HexToAddress(contractDeployments.Router), client)
 	require.NoError(t, err)
-	tx, err = router.BindDapp(tOpts, newProjectID, common.HexToAddress(contractDeployments.MockDapp))
+	tx, err = router.BindDapp(tOpts, projectID, dpp)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
-
-	return newProjectID, nil
 }
 
 func uploadProject(t *testing.T, chainEndpoint, ipfsURL string,

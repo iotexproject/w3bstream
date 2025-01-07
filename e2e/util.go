@@ -141,18 +141,14 @@ func waitUntil(f func() (bool, error), timeOut time.Duration) error {
 	}
 }
 
-func sendETH(t *testing.T, chainEndpoint string, payerHex string, toAddress common.Address, amount uint64) error {
+func sendETH(t *testing.T, chainEndpoint string, payerHex string, toAddress common.Address, amount uint64) {
 	client, err := ethclient.Dial(chainEndpoint)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 	defer client.Close()
 
 	// 2. Load the sender's private key
 	privateKey, err := crypto.HexToECDSA(payerHex) // Replace with actual private key
-	if err != nil {
-		log.Fatalf("Failed to load private key: %v", err)
-	}
+	require.NoError(t, err)
 
 	// 3. Get the sender's address from the private key
 	publicKey := privateKey.Public()
@@ -170,9 +166,7 @@ func sendETH(t *testing.T, chainEndpoint string, payerHex string, toAddress comm
 	value := big.NewInt(0).Mul(big.NewInt(int64(amount)), big.NewInt(1e18)) // Amount in Wei (1 ETH = 10^18 Wei)
 	gasLimit := uint64(21000)                                               // Gas limit for simple ETH transfer
 	gasPrice, err := client.SuggestGasPrice(context.Background())
-	if err != nil {
-		log.Fatalf("Failed to get suggested gas price: %v", err)
-	}
+	require.NoError(t, err)
 
 	// 6. Create the transaction
 	tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, nil)
@@ -189,6 +183,4 @@ func sendETH(t *testing.T, chainEndpoint string, payerHex string, toAddress comm
 
 	_, err = services.WaitForTransactionReceipt(client, signedTx.Hash())
 	require.NoError(t, err)
-
-	return nil
 }

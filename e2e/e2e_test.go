@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"log"
 	"math/big"
@@ -11,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
@@ -72,6 +74,11 @@ func TestE2E(t *testing.T) {
 	// Setup VM
 	gnarkVMContainer, gnarkVMEndpoint, err := services.SetupGnarkVM()
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		if err := gnarkVMContainer.Terminate(context.Background()); err != nil {
+			t.Logf("failed to terminate vm container: %v", err)
+		}
+	})
 
 	// APINode init
 	tempApiNodeDB, err := os.CreateTemp("", "apinode.db")
@@ -91,8 +98,7 @@ func TestE2E(t *testing.T) {
 	defer tempSequencerDB.Close()
 	sequencer, err := sequencerInit(chDSN, tempSequencerDB.Name(), chainEndpoint, contracts)
 	require.NoError(t, err)
-	err = sendETH(t, chainEndpoint, payerHex, sequencer.Address(), 200)
-	require.NoError(t, err)
+	sendETH(t, chainEndpoint, payerHex, sequencer.Address(), 200)
 	err = sequencer.Start()
 	require.NoError(t, err)
 	defer sequencer.Stop()
@@ -109,19 +115,9 @@ func TestE2E(t *testing.T) {
 	require.NoError(t, err)
 	defer prover.Stop()
 
-	// Register project
-	projectOwnerKey, err := crypto.GenerateKey()
-	require.NoError(t, err)
-	projectOwnerAddr := crypto.PubkeyToAddress(projectOwnerKey.PublicKey)
-	err = sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
-	require.NoError(t, err)
-	projectID, err := registerProject(t, chainEndpoint, contracts, projectOwnerKey)
-	require.NoError(t, err)
-
 	// Register prover
 	proverAddr := crypto.PubkeyToAddress(proverKey.PublicKey)
-	err = sendETH(t, chainEndpoint, payerHex, proverAddr, 20)
-	require.NoError(t, err)
+	sendETH(t, chainEndpoint, payerHex, proverAddr, 20)
 	err = registerProver(t, chainEndpoint, contracts, proverKey)
 	require.NoError(t, err)
 
@@ -129,16 +125,43 @@ func TestE2E(t *testing.T) {
 	deviceKey, err := crypto.GenerateKey()
 	require.NoError(t, err)
 	deviceAddr := crypto.PubkeyToAddress(deviceKey.PublicKey)
-	err = sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
-	require.NoError(t, err)
-	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
+	sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
+	//registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
 
+	t.Run("GNARK", func(t *testing.T) {
+		// Register project
+		projectOwnerKey, err := crypto.GenerateKey()
+		require.NoError(t, err)
+		projectOwnerAddr := crypto.PubkeyToAddress(projectOwnerKey.PublicKey)
+		sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
+		projectID := big.NewInt(1)
+		registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
+		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDapp))
+
+		gnarkCodePath := "./testdata/gnark.code"
+		gnarkMetadataPath := "./testdata/gnark.metadata"
+		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 1}}}
+		// Upload project
+		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
+		require.NoError(t, err)
+		// Wait a few seconds for the device info synced on api node
+		time.Sleep(2 * time.Second)
+		// Send message: prove 1+1=2
+		data, err := hex.DecodeString("00000001000000010000000200000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001")
+		require.NoError(t, err)
+		taskid := sendMessage(t, data, projectID, nil, deviceKey, apiNodeUrl)
+		waitSettled(t, taskid, apiNodeUrl)
+	})
 	t.Run("GNARK-liveness", func(t *testing.T) {
-		t.Cleanup(func() {
-			if err := gnarkVMContainer.Terminate(context.Background()); err != nil {
-				t.Logf("failed to terminate vm container: %v", err)
-			}
-		})
+		// Register project
+		projectOwnerKey, err := crypto.GenerateKey()
+		require.NoError(t, err)
+		projectOwnerAddr := crypto.PubkeyToAddress(projectOwnerKey.PublicKey)
+		sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
+		projectID := big.NewInt(2)
+		registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
+		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappLiveness))
+
 		gnarkCodePath := "./testdata/pebble.circuit"
 		gnarkMetadataPath := "./testdata/pebble.pk"
 		project := &project.Project{Configs: []*project.Config{{
