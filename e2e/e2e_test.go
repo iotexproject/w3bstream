@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
-	"encoding/json"
 	"log"
 	"math/big"
 	"os"
@@ -71,8 +70,6 @@ func TestE2E(t *testing.T) {
 	})
 
 	// Setup VM
-	risc0VMContainer, risc0VMEndpoint, err := services.SetupRisc0VM()
-	require.NoError(t, err)
 	gnarkVMContainer, gnarkVMEndpoint, err := services.SetupGnarkVM()
 	require.NoError(t, err)
 
@@ -106,7 +103,7 @@ func TestE2E(t *testing.T) {
 	defer os.Remove(tempProverDB.Name())
 	defer tempProverDB.Close()
 	prover, proverKey, err := proverInit(chDSN, tempProverDB.Name(), chainEndpoint,
-		map[int]string{1: risc0VMEndpoint, 5: gnarkVMEndpoint}, contracts)
+		map[int]string{1: gnarkVMEndpoint}, contracts)
 	require.NoError(t, err)
 	err = prover.Start()
 	require.NoError(t, err)
@@ -135,41 +132,6 @@ func TestE2E(t *testing.T) {
 	err = sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
 	require.NoError(t, err)
 	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
-
-	t.Run("RISC0", func(t *testing.T) {
-		t.Cleanup(func() {
-			if err := risc0VMContainer.Terminate(context.Background()); err != nil {
-				t.Logf("failed to terminate vm container: %v", err)
-			}
-		})
-		risc0CodePath := "./testdata/risc0.code"
-		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 1}}}
-
-		// Upload project
-		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &risc0CodePath, nil, contracts, projectOwnerKey, projectID, false)
-		require.NoError(t, err)
-
-		// Wait a few seconds for the device info synced on api node
-		time.Sleep(2 * time.Second)
-
-		// Send message
-		msgData := struct {
-			PrivateInput string `json:"private_input"`
-			PublicInput  string `json:"public_input"`
-			ReceiptType  string `json:"receipt_type"`
-			Timestamp    uint64 `json:"timestamp"`
-		}{
-			PrivateInput: "14",
-			PublicInput:  "3,34",
-			ReceiptType:  "Stark",
-			Timestamp:    uint64(time.Now().Unix()),
-		}
-		dataJson, err := json.Marshal(msgData)
-		require.NoError(t, err)
-
-		taskid := sendMessage(t, dataJson, projectID, nil, deviceKey, apiNodeUrl)
-		waitSettled(t, taskid, apiNodeUrl)
-	})
 
 	t.Run("GNARK", func(t *testing.T) {
 		t.Cleanup(func() {
