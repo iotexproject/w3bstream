@@ -141,7 +141,7 @@ func TestE2E(t *testing.T) {
 		})
 		gnarkCodePath := "./testdata/gnark.code"
 		gnarkMetadataPath := "./testdata/gnark.metadata"
-		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 5}}}
+		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 1}}}
 
 		// Upload project
 		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
