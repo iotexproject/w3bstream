@@ -30,7 +30,7 @@ func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode metadata")
 	}
-	taskPayload, err := LoadPayload(task, projectConfig)
+	taskPayload, err := loadPayload(task, projectConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load payload")
 	}

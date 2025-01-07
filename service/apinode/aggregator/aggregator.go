@@ -6,16 +6,18 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/iotexproject/w3bstream/project"
 	apidb "github.com/iotexproject/w3bstream/service/apinode/db"
 	"github.com/iotexproject/w3bstream/service/sequencer/api"
 	"github.com/pkg/errors"
 )
 
-func Run(db *apidb.DB, sequencerAddr string, interval time.Duration) {
+func Run(projectManager *project.Manager, db *apidb.DB, sequencerAddr string, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for range ticker.C {
 		ts, err := db.FetchAllTask()
@@ -27,14 +29,32 @@ func Run(db *apidb.DB, sequencerAddr string, interval time.Duration) {
 			continue
 		}
 
-		tasksbyProject := make(map[string][]*apidb.Task)
+		tasksByProject := make(map[string][]*apidb.Task)
 		for i := range ts {
-			tasksbyProject[ts[i].ProjectID] = append(tasksbyProject[ts[i].ProjectID], ts[i])
+			tasksByProject[ts[i].ProjectID] = append(tasksByProject[ts[i].ProjectID], ts[i])
 		}
 
-		if tasks, ok := tasksbyProject["3"]; ok && len(tasks) > 0 {
-			prevTaskID := tasks[0].TaskID
-			tasks[len(tasks)-1].PrevTaskID = prevTaskID
+		for pidStr, tasks := range tasksByProject {
+			pid, ok := new(big.Int).SetString(pidStr, 10)
+			if !ok {
+				slog.Error("failed to decode project id string", "project_string", pidStr)
+				continue
+			}
+			p, err := projectManager.Project(pid)
+			if err != nil {
+				slog.Error("failed to get project", "error", err, "project_id", pidStr)
+				continue
+			}
+			// TODO support project config
+			cfg, err := p.DefaultConfig()
+			if err != nil {
+				slog.Error("failed to get project config", "error", err, "project_id", pidStr)
+				continue
+			}
+			if cfg.ProofType == "movement" && len(tasks) > 0 {
+				prevTaskID := tasks[0].TaskID
+				tasks[len(tasks)-1].PrevTaskID = prevTaskID
+			}
 		}
 
 		if err := dumpTasks(db, ts); err != nil {
@@ -42,7 +62,7 @@ func Run(db *apidb.DB, sequencerAddr string, interval time.Duration) {
 			continue
 		}
 
-		for _, tasks := range tasksbyProject {
+		for _, tasks := range tasksByProject {
 			if len(tasks) == 0 {
 				continue
 			}

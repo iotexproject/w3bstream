@@ -30,6 +30,7 @@ type SignedKey struct {
 type Config struct {
 	Version            string      `json:"version"`
 	VMTypeID           uint64      `json:"vmTypeID"`
+	ProofType          string      `json:"proofType"` // liveness, movement
 	SignedKeys         []SignedKey `json:"signedKeys"`
 	SignatureAlgorithm string      `json:"signatureAlgorithm"`
 	HashAlgorithm      string      `json:"hashAlgorithm"`

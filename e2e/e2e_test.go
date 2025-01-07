@@ -167,6 +167,7 @@ func TestE2E(t *testing.T) {
 		project := &project.Project{Configs: []*project.Config{{
 			Version:    "v1",
 			VMTypeID:   1,
+			ProofType:  "liveness",
 			SignedKeys: []project.SignedKey{{Name: "timestamp", Type: "uint64"}},
 		}}}
 
@@ -199,8 +200,9 @@ func TestE2E(t *testing.T) {
 		gnarkCodePath := "./testdata/geodnet.circuit"
 		gnarkMetadataPath := "./testdata/geodnet.pk"
 		project := &project.Project{Configs: []*project.Config{{
-			Version:  "v1",
-			VMTypeID: 1,
+			Version:   "v1",
+			VMTypeID:  1,
+			ProofType: "movement",
 			SignedKeys: []project.SignedKey{
 				{Name: "timestamp", Type: "uint64"},
 				{Name: "latitude", Type: "uint64"},

@@ -49,7 +49,7 @@ func (n *APINode) Start() error {
 
 	projectManager := project.NewManager(n.db.Project, n.db.ProjectFile, n.db.UpsertProjectFile)
 
-	go aggregator.Run(n.db, n.cfg.SequencerServiceEndpoint, time.Duration(n.cfg.TaskAggregatorIntervalSecond)*time.Second)
+	go aggregator.Run(projectManager, n.db, n.cfg.SequencerServiceEndpoint, time.Duration(n.cfg.TaskAggregatorIntervalSecond)*time.Second)
 
 	go func() {
 		if err := api.Run(n.db, projectManager, n.cfg.ServiceEndpoint, n.cfg.SequencerServiceEndpoint, n.cfg.ProverServiceEndpoint); err != nil {

@@ -2,7 +2,6 @@ package vm
 
 import (
 	_ "embed"
-	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
@@ -14,18 +13,15 @@ import (
 	"github.com/iotexproject/w3bstream/task"
 )
 
-var (
-	_pebbleProjectID = big.NewInt(923)
-	_geoProjectID    = big.NewInt(942)
-)
-
-func LoadPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
-	if l := len(projectConfig.SignedKeys); l == 1 {
-		return encodePebblePayload(task, projectConfig)
-	} else if l > 1 {
-		return encodeGeodnetPayload(task, projectConfig)
+func loadPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+	switch projectConfig.ProofType {
+	case "liveness":
+		return encodeLivenessPayload(task, projectConfig)
+	case "movement":
+		return encodeMovementPayload(task, projectConfig)
+	default:
+		return task.Payload, nil
 	}
-	return task.Payload, nil
 }
 
 type ProofofLivenessCircuit struct {
@@ -37,7 +33,7 @@ type ProofofLivenessCircuit struct {
 
 func (circuit *ProofofLivenessCircuit) Define(api frontend.API) error { return nil }
 
-func encodePebblePayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+func encodeLivenessPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
 	sig := task.Signature[:64]
 	pubbytes := task.DevicePubKey
 	payloadHash, _, _, data, err := api.HashTask(
@@ -65,7 +61,7 @@ func encodePebblePayload(task *task.Task, projectConfig *project.Config) ([]byte
 	return witness.MarshalBinary()
 }
 
-type ProofofMovenessCircuit struct {
+type ProofofMovementCircuit struct {
 	LastPayloadHash []uints.U8
 	LastTimestamp   frontend.Variable
 	LastLatitude    frontend.Variable
@@ -83,11 +79,11 @@ type ProofofMovenessCircuit struct {
 	PubBytes []uints.U8 `gnark:",public"`
 }
 
-func (circuit *ProofofMovenessCircuit) Define(api frontend.API) error { return nil }
+func (circuit *ProofofMovementCircuit) Define(api frontend.API) error { return nil }
 
-func encodeGeodnetPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+func encodeMovementPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
 	if task.PrevTask == nil {
-		return nil, errors.New("geodnet project miss previous task")
+		return nil, errors.New("movement project miss previous task")
 	}
 	lastPayloadHash, _, _, lastData, err := api.HashTask(
 		&api.CreateTaskReq{
@@ -122,7 +118,7 @@ func encodeGeodnetPayload(task *task.Task, projectConfig *project.Config) ([]byt
 		isMove = 1
 	}
 
-	assignment := ProofofMovenessCircuit{
+	assignment := ProofofMovementCircuit{
 		LastPayloadHash: uints.NewU8Array(lastPayloadHash[:]),
 		LastTimestamp:   lastTimestamp,
 		LastLatitude:    lastLatitude,
