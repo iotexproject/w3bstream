@@ -20,10 +20,12 @@ var (
 )
 
 func LoadPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
-	return encodePebblePayload(task, projectConfig)
+	if projectConfig.VMTypeID != 5 {
+		return task.Payload, nil
+	}
 	// switch task.ProjectID.String() {
 	// case _pebbleProjectID.String():
-	// 	return encodePebblePayload(task, projectConfig)
+	return encodePebblePayload(task, projectConfig)
 	// case _geoProjectID.String():
 	// 	return encodeGeodnetPayload(task, projectConfig)
 	// default:
