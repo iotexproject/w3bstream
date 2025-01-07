@@ -32,7 +32,7 @@ func Run(db *apidb.DB, sequencerAddr string, interval time.Duration) {
 			tasksbyProject[ts[i].ProjectID] = append(tasksbyProject[ts[i].ProjectID], ts[i])
 		}
 
-		if tasks, ok := tasksbyProject["942"]; ok && len(tasks) > 0 {
+		if tasks, ok := tasksbyProject["3"]; ok && len(tasks) > 0 {
 			prevTaskID := tasks[0].TaskID
 			tasks[len(tasks)-1].PrevTaskID = prevTaskID
 		}

@@ -128,7 +128,7 @@ func TestE2E(t *testing.T) {
 	sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
 	//registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
 
-	t.Run("GNARK", func(t *testing.T) {
+	t.Run("gnark", func(t *testing.T) {
 		// Register project
 		projectOwnerKey, err := crypto.GenerateKey()
 		require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestE2E(t *testing.T) {
 		taskid := sendMessage(t, data, projectID, nil, deviceKey, apiNodeUrl)
 		waitSettled(t, taskid, apiNodeUrl)
 	})
-	t.Run("GNARK-liveness", func(t *testing.T) {
+	t.Run("gnark-liveness", func(t *testing.T) {
 		// Register project
 		projectOwnerKey, err := crypto.GenerateKey()
 		require.NoError(t, err)
@@ -185,6 +185,63 @@ func TestE2E(t *testing.T) {
 		require.NoError(t, err)
 		taskid := sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 		waitSettled(t, taskid, apiNodeUrl)
+	})
+	t.Run("gnark-movement", func(t *testing.T) {
+		// Register project
+		projectOwnerKey, err := crypto.GenerateKey()
+		require.NoError(t, err)
+		projectOwnerAddr := crypto.PubkeyToAddress(projectOwnerKey.PublicKey)
+		sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
+		projectID := big.NewInt(3)
+		registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
+		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappLiveness))
+
+		gnarkCodePath := "./testdata/geodnet.circuit"
+		gnarkMetadataPath := "./testdata/geodnet.pk"
+		project := &project.Project{Configs: []*project.Config{{
+			Version:  "v1",
+			VMTypeID: 1,
+			SignedKeys: []project.SignedKey{
+				{Name: "timestamp", Type: "uint64"},
+				{Name: "latitude", Type: "uint64"},
+				{Name: "longitude", Type: "uint64"}},
+		}}}
+
+		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
+
+		// Wait a few seconds for the device info synced on api node
+		time.Sleep(2 * time.Second)
+
+		timestamp := uint64(time.Now().Unix())
+		lastTimestamp := timestamp - 60
+		latitude := uint64(1200)
+		longitude := uint64(200)
+		lastLatitude := latitude - 1100
+		lastLongitude := longitude - 1
+
+		data, err := json.Marshal(struct {
+			Timestamp uint64 `json:"timestamp"`
+			Latitude  uint64 `json:"latitude"`
+			Longitude uint64 `json:"longitude"`
+		}{
+			Timestamp: timestamp,
+			Latitude:  latitude,
+			Longitude: longitude,
+		})
+		require.NoError(t, err)
+		lastData, err := json.Marshal(struct {
+			Timestamp uint64 `json:"timestamp"`
+			Latitude  uint64 `json:"latitude"`
+			Longitude uint64 `json:"longitude"`
+		}{
+			Timestamp: lastTimestamp,
+			Latitude:  lastLatitude,
+			Longitude: lastLongitude,
+		})
+		require.NoError(t, err)
+		_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
+		taskID := sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
+		waitSettled(t, taskID, apiNodeUrl)
 	})
 }
 
