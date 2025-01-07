@@ -200,7 +200,7 @@ func registerProject(t *testing.T, chainEndpoint string,
 
 func uploadProject(t *testing.T, chainEndpoint, ipfsURL string,
 	proj *wsproject.Project, projCodePath *string, projMetadataPath *string,
-	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey, newProjectID *big.Int, pauseProject bool) {
+	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey, newProjectID *big.Int) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)
 	chainID, err := client.ChainID(context.Background())
@@ -232,12 +232,6 @@ func uploadProject(t *testing.T, chainEndpoint, ipfsURL string,
 	require.NoError(t, err)
 	tOpts, err := bind.NewKeyedTransactorWithChainID(projectOwner, chainID)
 	require.NoError(t, err)
-	if pauseProject {
-		tx, err := wsProject.Pause(tOpts, newProjectID)
-		require.NoError(t, err)
-		_, err = services.WaitForTransactionReceipt(client, tx.Hash())
-		require.NoError(t, err)
-	}
 	tx, err := wsProject.UpdateConfig(tOpts, newProjectID, projectFileURL, projHash)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())

@@ -144,7 +144,7 @@ func TestE2E(t *testing.T) {
 		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 5}}}
 
 		// Upload project
-		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID, true)
+		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
 		require.NoError(t, err)
 
 		// Wait a few seconds for the device info synced on api node
