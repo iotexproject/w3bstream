@@ -13,17 +13,26 @@ async function main() {
 
     projectAddr = MockProject.target.toString()
   }
+
+  const LivenessVerifier = await ethers.deployContract('LivenessVerifier', []);
+  await LivenessVerifier.waitForDeployment();
+
+  const MovementVerifier = await ethers.deployContract('MovementVerifier', []);
+  await MovementVerifier.waitForDeployment();
+
   if (process.env.DAPP_PROCESSOR) {
   } else {
-    const gnarkVerifier = await ethers.deployContract('Verifier', []);
-    await gnarkVerifier.waitForDeployment();
-    const MockDappLiveness = await ethers.deployContract('MockDappLiveness', [gnarkVerifier.target]);
-    await MockDappLiveness.waitForDeployment();
-    console.log(`MockDappLiveness deployed to ${MockDappLiveness.target}`);
-
     const MockDapp = await ethers.deployContract('MockDapp', []);
     await MockDapp.waitForDeployment();
     console.log(`MockDapp deployed to ${MockDapp.target}`);
+
+    const MockDappLiveness = await ethers.deployContract('MockDappLiveness', [LivenessVerifier.target]);
+    await MockDappLiveness.waitForDeployment();
+    console.log(`MockDappLiveness deployed to ${MockDappLiveness.target}`);
+
+    const MockDappMovement = await ethers.deployContract('MockDappMovement', [MovementVerifier.target]);
+    await MockDappMovement.waitForDeployment();
+    console.log(`MockDappMovement deployed to ${MockDappMovement.target}`);
   }
   if (process.env.PROJECT_REGISTRATION_FEE) {
     projectRegistrationFee = process.env.PROJECT_REGISTRATION_FEE

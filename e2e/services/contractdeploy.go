@@ -23,6 +23,7 @@ var (
 	routerRe           = regexp.MustCompile(`W3bstreamRouter deployed to (\S+)`)
 	mockDappRe         = regexp.MustCompile(`MockDapp deployed to (\S+)`)
 	mockDappLivenessRe = regexp.MustCompile(`MockDappLiveness deployed to (\S+)`)
+	mockDappMovementRe = regexp.MustCompile(`MockDappMovement deployed to (\S+)`)
 	projectRewardRe    = regexp.MustCompile(`W3bstreamProjectReward deployed to (\S+)`)
 	debitsRe           = regexp.MustCompile(`W3bstreamDebits deployed to (\S+)`)
 	ioIDRe             = regexp.MustCompile(`MockIoID deployed to (\S+)`)
@@ -38,6 +39,7 @@ type ContractsDeployments struct {
 	Router           string
 	MockDapp         string
 	MockDappLiveness string
+	MockDappMovement string
 	ProjectReward    string
 	Debits           string
 	IoID             string
@@ -107,6 +109,9 @@ func DeployContract(endpoint string, payerHex string) (*ContractsDeployments, er
 	}
 	if match := mockDappLivenessRe.FindStringSubmatch(output); len(match) > 1 {
 		deployments.MockDappLiveness = match[1]
+	}
+	if match := mockDappMovementRe.FindStringSubmatch(output); len(match) > 1 {
+		deployments.MockDappMovement = match[1]
 	}
 	if match := routerRe.FindStringSubmatch(output); len(match) > 1 {
 		deployments.Router = match[1]
