@@ -194,7 +194,7 @@ func TestE2E(t *testing.T) {
 		sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
 		projectID := big.NewInt(3)
 		registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
-		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappLiveness))
+		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDapp))
 
 		gnarkCodePath := "./testdata/geodnet.circuit"
 		gnarkMetadataPath := "./testdata/geodnet.pk"
