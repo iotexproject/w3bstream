@@ -21,7 +21,7 @@ var (
 	mockProjectRe      = regexp.MustCompile(`MockProject deployed to (\S+)`)
 	wsProjectRe        = regexp.MustCompile(`W3bstreamProject deployed to (\S+)`)
 	routerRe           = regexp.MustCompile(`W3bstreamRouter deployed to (\S+)`)
-	mockDappRe         = regexp.MustCompile(`MockProcessor deployed to (\S+)`)
+	mockDappRe         = regexp.MustCompile(`MockDapp deployed to (\S+)`)
 	projectRewardRe    = regexp.MustCompile(`W3bstreamProjectReward deployed to (\S+)`)
 	debitsRe           = regexp.MustCompile(`W3bstreamDebits deployed to (\S+)`)
 	ioIDRe             = regexp.MustCompile(`MockIoID deployed to (\S+)`)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
+	"encoding/json"
 	"log"
 	"math/big"
 	"os"
@@ -155,6 +156,37 @@ func TestE2E(t *testing.T) {
 		require.NoError(t, err)
 
 		taskid := sendMessage(t, data, projectID, nil, deviceKey, apiNodeUrl)
+		waitSettled(t, taskid, apiNodeUrl)
+	})
+	t.Run("GNARK-liveness", func(t *testing.T) {
+		t.Skip()
+		t.Cleanup(func() {
+			if err := gnarkVMContainer.Terminate(context.Background()); err != nil {
+				t.Logf("failed to terminate vm container: %v", err)
+			}
+		})
+		gnarkCodePath := "./testdata/pebble.circuit"
+		gnarkMetadataPath := "./testdata/pebble.pk"
+		project := &project.Project{Configs: []*project.Config{{
+			Version:    "v1",
+			VMTypeID:   5,
+			SignedKeys: []project.SignedKey{{Name: "timestamp", Type: "uint64"}},
+		}}}
+
+		// Upload project
+		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
+		require.NoError(t, err)
+
+		// Wait a few seconds for the device info synced on api node
+		time.Sleep(2 * time.Second)
+
+		data, err := json.Marshal(struct {
+			Timestamp uint64 `json:"timestamp"`
+		}{
+			Timestamp: uint64(time.Now().Unix()),
+		})
+		require.NoError(t, err)
+		taskid := sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 		waitSettled(t, taskid, apiNodeUrl)
 	})
 }
