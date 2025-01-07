@@ -10,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -87,6 +88,7 @@ func (r *processor) process(taskID common.Hash) error {
 		crypto.PubkeyToAddress(*pubkey),
 		proof,
 	)
+	slog.Error("router call data", "projectID", t.ProjectID.String(), "taskID", t.ID.String(), "prover", r.account.String(), "deviceId", crypto.PubkeyToAddress(*pubkey).String(), "data", hexutil.Encode(proof))
 	if err != nil {
 		if jsonErr, ok := err.(rpc.DataError); ok {
 			errData := jsonErr.ErrorData()
