@@ -42,10 +42,10 @@ import (
 func apiNodeInit(chDSN, dbFile, chainEndpoint string, contractDeployments *services.ContractsDeployments) (*apinode.APINode, string, error) {
 	cfg := apinodeconfig.Config{
 		LogLevel:                     slog.LevelInfo,
-		ServiceEndpoint:              ":9000",
-		SequencerServiceEndpoint:     "localhost:9001",
+		ServiceEndpoint:              ":19000",
+		SequencerServiceEndpoint:     "localhost:19001",
 		TaskAggregatorIntervalSecond: 1,
-		ProverServiceEndpoint:        "localhost:9002",
+		ProverServiceEndpoint:        "localhost:19002",
 		DatabaseDSN:                  chDSN,
 		PrvKey:                       "",
 		ChainEndpoint:                chainEndpoint,
@@ -78,7 +78,7 @@ func sequencerInit(chDSN, dbFile, chainEndpoint string, contractDeployments *ser
 
 	cfg := &sequencerconfig.Config{
 		LogLevel:                slog.LevelInfo,
-		ServiceEndpoint:         ":9001",
+		ServiceEndpoint:         ":19001",
 		TaskProcessingBandwidth: 20,
 		DatasourceDSN:           chDSN,
 		ChainEndpoint:           chainEndpoint,
@@ -109,7 +109,7 @@ func proverInit(chDSN, dbFile, chainEndpoint string, vmEndpoints map[int]string,
 
 	cfg := &proverconfig.Config{
 		LogLevel:                slog.LevelInfo,
-		ServiceEndpoint:         ":9002",
+		ServiceEndpoint:         ":19002",
 		VMEndpoints:             string(vmEndpointBytes),
 		ChainEndpoint:           chainEndpoint,
 		DatasourceDSN:           chDSN,
