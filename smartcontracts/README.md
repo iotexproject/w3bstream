@@ -26,6 +26,9 @@ export MIN_STAKE=1.0
 | W3bstreamRouter             | `0x28E0A99A76a467E7418019cBBbF79E4599C73B5B` |
 | W3bstreamRewardDistributor  | `0x058f2F501EC0505B9CF8AB361FFFBFd36C83a8aF` |
 | W3bstreamMinter             | `0x49C096AE869A3054Db06ffF221b917b41f94CEf3` |
+| LivenessVerifier            | `0x29bBA1515fB2Ae6480bA7086bCb9473044d40b18` |
+| MovementVerifier            | `0xe1FC0a1A75c9243C5Fe0d5ADC32A273C7a26E234` |
+| GeodnetDapp                 | `0xB2Dda5D9E65E44749409E209d8b7b15fb4e82147` |
 
 | Setting                   | Value                                    |
 |-----------------------------|--------------------------------------------|
