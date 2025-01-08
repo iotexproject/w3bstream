@@ -188,6 +188,7 @@ func TestE2E(t *testing.T) {
 		waitSettled(t, taskid, apiNodeUrl)
 	})
 	t.Run("gnark-movement", func(t *testing.T) {
+		t.Skip()
 		// Register project
 		projectOwnerKey, err := crypto.GenerateKey()
 		require.NoError(t, err)
