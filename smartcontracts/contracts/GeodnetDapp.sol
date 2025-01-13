@@ -31,6 +31,13 @@ contract GeodnetDapp {
         (bool success, ) = verifier.staticcall(abi.encodePacked(selector, _data));
         require(success, "Verifier call failed");
 
-        IMarshalDAOTicker(ticker).tick(_deviceId);
+        uint256 isMoved = 0;
+        for (uint256 i = 0; i < 32; i++) {
+            isMoved = isMoved << 8;
+            isMoved |= uint8(_data[13 * 32 + i]);
+        }
+        if (isMoved > 0) {
+            IMarshalDAOTicker(ticker).tick(_deviceId);
+        }
     }
 }
