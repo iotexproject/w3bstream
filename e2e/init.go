@@ -47,7 +47,6 @@ func apiNodeInit(chDSN, dbFile, chainEndpoint string, contractDeployments *servi
 		TaskAggregatorIntervalSecond: 1,
 		ProverServiceEndpoint:        "localhost:9002",
 		DatabaseDSN:                  chDSN,
-		PrvKey:                       "",
 		ChainEndpoint:                chainEndpoint,
 		BeginningBlockNumber:         0,
 		ProjectContractAddr:          contractDeployments.WSProject,

@@ -36,6 +36,19 @@ var (
 		BeginningBlockNumber:    28685000,
 		env:                     "TESTNET",
 	}
+	defaultMainnetConfig = &Config{
+		LogLevel:                slog.LevelInfo,
+		ServiceEndpoint:         ":9001",
+		TaskProcessingBandwidth: 20,
+		ChainEndpoint:           "https://babel-api.mainnet.iotex.io",
+		OperatorPrvKey:          "33e6ba3e033131026903f34dfa208feb88c284880530cf76280b68d38041c67b",
+		ProverContractAddr:      "0x73aE62021517685c4b8Db4422968BCEc80F84063",
+		MinterContractAddr:      "0x270bF4c2d0269f8Bf1c2187c20177DCc2f15C3C9",
+		TaskManagerContractAddr: "0x0A422759A8c6b22Ae8B9C4364763b614d5c0CD29",
+		LocalDBDir:              "./local_db",
+		BeginningBlockNumber:    31780000,
+		env:                     "MAINNET",
+	}
 )
 
 func (c *Config) init() error {
@@ -53,6 +66,8 @@ func Get() (*Config, error) {
 	switch env {
 	case "TESTNET":
 		conf = defaultTestnetConfig
+	case "MAINNET":
+		conf = defaultMainnetConfig
 	default:
 		env = "TESTNET"
 		conf = defaultTestnetConfig
