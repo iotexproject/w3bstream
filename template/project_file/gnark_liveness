@@ -1,0 +1,20 @@
+{
+    "defaultVersion": "v1",
+    "config": [
+        {
+            "version": "v1",
+            "vmTypeID": 1,
+            "proofType": "liveness",
+            "signedKeys": [
+                {
+                    "name": "timestamp",
+                    "type": "uint64"
+                }
+            ],
+            "signatureAlgorithm": "ecdsa",
+            "hashAlgorithm": "sha256",
+            "metadata": "ipfs://ipfs.mainnet.iotex.io/QmVzFDBXsixjSEdqziCDJe3UnGqUGqmCXXb3FZrySjr8Gh",
+            "code": "ipfs://ipfs.mainnet.iotex.io/QmfY8NooLr89X8HYnVC8ueZAVjMiBwWi4WmxvBivV1drRo"
+        }
+    ]
+}
