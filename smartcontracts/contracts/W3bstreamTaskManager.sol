@@ -96,24 +96,24 @@ contract W3bstreamTaskManager is OwnableUpgradeable, ITaskManager {
         uint16 rebateRatio = proverStore.rebateRatio(prover);
         require(rebateRatio <= 10000, "invalid rebate ratio");
         require(!projectReward.isPaused(projectId), "project paused");
-        // address taskOwner = hash.recover(signature);
-        // uint256 rewardAmount = projectReward.rewardAmount(taskOwner, projectId);
-        // address rewardToken = projectReward.rewardToken(projectId);
-        // if (rewardToken != address(0) && rewardAmount > 0) {
-        //     debits.withhold(rewardToken, taskOwner, rewardAmount);
-        // }
+        //address taskOwner = hash.recover(signature);
+        //uint256 rewardAmount = projectReward.rewardAmount(taskOwner, projectId);
+        //address rewardToken = projectReward.rewardToken(projectId);
+        //if (rewardToken != address(0) && rewardAmount > 0) {
+        //    debits.withhold(rewardToken, taskOwner, rewardAmount);
+        //}
         Record storage record = records[projectId][taskId];
         require(record.settled == false, "task already settled");
         if (record.prover != address(0)) {
             require(record.deadline < block.timestamp, "task already assigned");
         }
         record.hash = hash;
-        // record.owner = taskOwner;
+        //record.owner = taskOwner;
         record.prover = prover;
         record.deadline = deadline;
         record.sequencer = sequencer;
-        // record.rewardForSequencer = (rewardAmount * rebateRatio) / 10000;
-        //  record.rewardForProver = rewardAmount - record.rewardForSequencer;
+        //record.rewardForSequencer = (rewardAmount * rebateRatio) / 10000;
+        //record.rewardForProver = rewardAmount - record.rewardForSequencer;
         emit TaskAssigned(projectId, taskId, prover, deadline);
     }
 
