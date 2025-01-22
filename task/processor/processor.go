@@ -66,6 +66,9 @@ func (r *processor) process(taskID common.Hash) error {
 		slog.Error("failed to handle task", "error", err)
 		return err
 	}
+	if len(proof) == 0 {
+		return nil
+	}
 	processTime := time.Since(startTime)
 	slog.Info("process task success", "project_id", t.ProjectID.String(), "task_id", t.ID, "process_time", processTime)
 	metrics.TaskDurationMtc.WithLabelValues(t.ProjectID.String(), t.ProjectVersion, t.ID.String()).Set(processTime.Seconds())

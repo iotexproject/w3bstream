@@ -34,6 +34,9 @@ func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load payload")
 	}
+	if len(taskPayload) == 0 {
+		return nil, nil
+	}
 	conn, ok := r.vmClients[projectConfig.VMTypeID]
 	if !ok {
 		return nil, errors.Errorf("unsupported vm type id %d", projectConfig.VMTypeID)
