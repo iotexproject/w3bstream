@@ -132,6 +132,10 @@ func encodeMovementPayload(task *task.Task, projectConfig *project.Config) ([]by
 	slog.Info("------", "lastPayload", string(task.PrevTask.Payload))
 	slog.Info("------", "curPayload", string(task.Payload))
 
+	if isMove == 0 {
+		return nil, nil
+	}
+
 	assignment := ProofofMovementCircuit{
 		LastPayloadHash: uints.NewU8Array(lastPayloadHash[:]),
 		LastTimestamp:   lastTimestamp,
