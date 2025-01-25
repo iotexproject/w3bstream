@@ -2,6 +2,7 @@ package db
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -24,8 +25,10 @@ type AssignedTask struct {
 
 type SettledTask struct {
 	gorm.Model
-	TaskID string `gorm:"uniqueIndex:settled_task_uniq,not null"`
-	Tx     string `gorm:"not null"`
+	TaskID       string `gorm:"uniqueIndex:settled_task_uniq,not null"`
+	ProjectID    string `gorm:"index:settled_task_query,not null"`
+	DevicePubKey string `gorm:"index:settled_task_query,not null"`
+	Tx           string `gorm:"not null"`
 }
 
 type ProjectDevice struct {
@@ -89,11 +92,17 @@ func (p *DB) UpsertAssignedTask(taskID common.Hash, prover common.Address) error
 }
 
 func (p *DB) UpsertSettledTask(taskID, tx common.Hash) error {
-	t := SettledTask{
-		TaskID: taskID.Hex(),
-		Tx:     tx.Hex(),
+	chTask, err := p.FetchTask(taskID)
+	if err != nil {
+		return err
 	}
-	err := p.sqlite.Clauses(clause.OnConflict{
+	t := SettledTask{
+		TaskID:       taskID.Hex(),
+		ProjectID:    chTask.ProjectID,
+		DevicePubKey: chTask.DevicePubKey,
+		Tx:           tx.Hex(),
+	}
+	err = p.sqlite.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "task_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"tx"}),
 	}).Create(&t).Error
@@ -120,6 +129,18 @@ func (p *DB) FetchSettledTask(taskID common.Hash) (*SettledTask, error) {
 		return nil, errors.Wrap(err, "failed to query settled task")
 	}
 	return &t, nil
+}
+
+func (p *DB) CountSettledTask(projectID, devicePubKey string, begin, end time.Time) (int64, error) {
+	var c int64
+	if err := p.sqlite.Where("project_id = ?", projectID).
+		Where("device_pub_key = ?", devicePubKey).
+		Where("created_at > ?", begin).
+		Where("created_at <= ?", end).
+		Model(&SettledTask{}).Count(&c).Error; err != nil {
+		return 0, errors.Wrap(err, "failed to count settled task")
+	}
+	return c, nil
 }
 
 func (p *DB) UpsertProjectDevice(projectID *big.Int, address common.Address) error {
