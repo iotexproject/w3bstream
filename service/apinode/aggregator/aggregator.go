@@ -35,7 +35,7 @@ func Run(projectManager *project.Manager, db *apidb.DB, sequencerAddr string, in
 			taskMap[k] = append(taskMap[k], ts[i])
 		}
 
-		for _, tasks := range taskMap {
+		for taskMapKey, tasks := range taskMap {
 			pid, ok := new(big.Int).SetString(tasks[0].ProjectID, 10)
 			if !ok {
 				slog.Error("failed to decode project id string", "project_string", tasks[0].ProjectID)
@@ -53,8 +53,19 @@ func Run(projectManager *project.Manager, db *apidb.DB, sequencerAddr string, in
 				continue
 			}
 			if cfg.ProofType == "movement" {
-				prevTaskID := tasks[0].TaskID
-				tasks[len(tasks)-1].PrevTaskID = prevTaskID
+				now := time.Now()
+				hoursAgo24 := now.Add(-24 * time.Hour) // TODO move to project config
+				count, err := db.CountSettledTask(tasks[0].ProjectID, tasks[0].DevicePubKey, hoursAgo24, now)
+				if err != nil {
+					slog.Error("failed to count settled task", "error", err, "project_id", pid.String())
+					continue
+				}
+				if count >= 5 { // TODO move to project config
+					delete(taskMap, taskMapKey)
+				} else {
+					prevTaskID := tasks[0].TaskID
+					tasks[len(tasks)-1].PrevTaskID = prevTaskID
+				}
 			}
 		}
 
