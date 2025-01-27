@@ -153,7 +153,6 @@ func TestE2E(t *testing.T) {
 		waitSettled(t, taskid, apiNodeUrl)
 	})
 	t.Run("gnark-liveness", func(t *testing.T) {
-		t.Skip()
 		// Register project
 		projectOwnerKey, err := crypto.GenerateKey()
 		require.NoError(t, err)
@@ -163,8 +162,8 @@ func TestE2E(t *testing.T) {
 		registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
 		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappLiveness))
 
-		gnarkCodePath := "./testdata/pebble.circuit"
-		gnarkMetadataPath := "./testdata/pebble.pk"
+		gnarkCodePath := "./testdata/liveness.circuit"
+		gnarkMetadataPath := "./testdata/liveness.pk"
 		project := &project.Project{Configs: []*project.Config{{
 			Version:    "v1",
 			VMTypeID:   1,
