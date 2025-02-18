@@ -28,14 +28,17 @@ type SignedKey struct {
 }
 
 type Config struct {
-	Version            string      `json:"version"`
-	VMTypeID           uint64      `json:"vmTypeID"`
-	ProofType          string      `json:"proofType"` // liveness, movement
-	SignedKeys         []SignedKey `json:"signedKeys"`
-	SignatureAlgorithm string      `json:"signatureAlgorithm"`
-	HashAlgorithm      string      `json:"hashAlgorithm"`
-	Metadata           string      `json:"metadata,omitempty"`
-	Code               string      `json:"code"`
+	Version             string      `json:"version"`
+	VMTypeID            uint64      `json:"vmTypeID"`
+	ProofType           string      `json:"proofType"` // liveness, movement
+	SignedKeys          []SignedKey `json:"signedKeys"`
+	SignatureAlgorithm  string      `json:"signatureAlgorithm"`
+	HashAlgorithm       string      `json:"hashAlgorithm"`
+	TaskProcessingBatch uint64      `json:"taskProcessingBatch"`
+	Metadata            string      `json:"metadata,omitempty"`
+	MetadataHash        string      `json:"metadataHash,omitempty"`
+	Code                string      `json:"code"`
+	CodeHash            string      `json:"codeHash,omitempty"`
 }
 
 func (p *Project) Config(version string) (*Config, error) {
