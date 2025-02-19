@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -136,12 +135,6 @@ func (s *httpServer) createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "invalid request payload")))
 		return
 	}
-	pid, ok := new(big.Int).SetString(req.ProjectID, 10)
-	if !ok {
-		slog.Error("failed to decode project id string", "project_id", req.ProjectID)
-		c.JSON(http.StatusBadRequest, newErrResp(errors.New("failed to decode project id string")))
-		return
-	}
 	sig, err := hexutil.Decode(req.Signature)
 	if err != nil {
 		slog.Error("failed to decode signature", "error", err)
@@ -149,7 +142,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	proj, err := s.projectManager.Project(pid)
+	proj, err := s.projectManager.Project(req.ProjectID)
 	if err != nil {
 		slog.Error("failed to get project", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to get project")))
@@ -178,8 +171,8 @@ func (s *httpServer) createTask(c *gin.Context) {
 	var approved bool
 	for _, r := range recovered {
 		addr := crypto.PubkeyToAddress(*r.pubkey)
-		slog.Debug("recovered address", "project_id", pid.String(), "address", addr.String())
-		ok, err := s.db.IsDeviceApproved(pid, addr)
+		slog.Debug("recovered address", "project_id", req.ProjectID, "address", addr.String())
+		ok, err := s.db.IsDeviceApproved(req.ProjectID, addr)
 		if err != nil {
 			slog.Error("failed to check device permission", "error", err)
 			c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to check device permission")))
@@ -193,7 +186,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		}
 	}
 	if !approved {
-		slog.Error("device does not have permission", "project_id", pid.String())
+		slog.Error("device does not have permission", "project_id", req.ProjectID)
 		c.JSON(http.StatusForbidden, newErrResp(errors.New("device does not have permission")))
 		return
 	}
@@ -206,7 +199,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			DevicePubKey:       hexutil.Encode(crypto.FromECDSAPub(matchedPubkey)),
 			TaskID:             taskID.Hex(),
 			Nonce:              req.Nonce,
-			ProjectID:          pid.String(),
+			ProjectID:          req.ProjectID,
 			ProjectVersion:     req.ProjectVersion,
 			Payload:            string(req.Payload),
 			Signature:          hexutil.Encode(sig),

@@ -11,11 +11,5 @@ interface IRouter {
 
     function unbindDapp(uint256 _projectId) external;
 
-    function route(
-        uint256 _projectId,
-        bytes32 _taskId,
-        address _prover,
-        address _deviceId,
-        bytes calldata _data
-    ) external;
+    function route(address _prover, uint256 _projectId, bytes32[] calldata _taskIds, bytes calldata _data) external;
 }

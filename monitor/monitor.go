@@ -27,11 +27,11 @@ import (
 type (
 	ScannedBlockNumber       func() (uint64, error)
 	UpsertScannedBlockNumber func(number uint64) error
-	AssignTask               func(taskID common.Hash, prover common.Address) error
+	AssignTask               func(taskID common.Hash, prover common.Address, projectID string) error
 	SettleTask               func(taskID, tx common.Hash) error
-	UpsertProject            func(projectID *big.Int, uri string, hash common.Hash) error
+	UpsertProject            func(projectID string, uri string, hash common.Hash) error
 	UpsertProver             func(addr common.Address) error
-	UpsertProjectDevice      func(projectID *big.Int, address common.Address) error
+	UpsertProjectDevice      func(projectID string, address common.Address) error
 )
 
 type Handler struct {
@@ -122,7 +122,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse task assigned event")
 			}
-			if err := c.h.AssignTask(e.TaskId, e.Prover); err != nil {
+			if err := c.h.AssignTask(e.TaskId, e.Prover, e.ProjectId.String()); err != nil {
 				return err
 			}
 			metrics.AssignedTaskMtc.WithLabelValues(e.ProjectId.String()).Inc()
@@ -146,7 +146,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to parse project config updated event")
 			}
-			if err := c.h.UpsertProject(e.ProjectId, e.Uri, e.Hash); err != nil {
+			if err := c.h.UpsertProject(e.ProjectId.String(), e.Uri, e.Hash); err != nil {
 				return err
 			}
 		case proverSetTopic:
@@ -173,7 +173,7 @@ func (c *contract) processLogs(logs []types.Log) error {
 			if err != nil {
 				return errors.Wrapf(err, "failed to query device project, device_id %s", e.Did)
 			}
-			if err := c.h.UpsertProjectDevice(pid, address); err != nil {
+			if err := c.h.UpsertProjectDevice(pid.String(), address); err != nil {
 				return err
 			}
 		}

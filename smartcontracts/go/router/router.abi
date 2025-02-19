@@ -145,24 +145,19 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "_projectId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "_taskId",
-          "type": "bytes32"
-        },
-        {
           "internalType": "address",
           "name": "_prover",
           "type": "address"
         },
         {
-          "internalType": "address",
-          "name": "_deviceId",
-          "type": "address"
+          "internalType": "uint256",
+          "name": "_projectId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32[]",
+          "name": "_taskIds",
+          "type": "bytes32[]"
         },
         {
           "internalType": "bytes",

@@ -20,7 +20,8 @@ type Handler struct {
 	vmClients map[uint64]*grpc.ClientConn
 }
 
-func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+func (r *Handler) Handle(tasks []*task.Task, projectConfig *project.Config) ([]byte, error) {
+	task := tasks[0]
 	// TODO: load binary before being stored in db
 	bi, err := decodeBinary(projectConfig.Code)
 	if err != nil {
@@ -30,12 +31,9 @@ func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode metadata")
 	}
-	taskPayload, err := loadPayload(task, projectConfig)
+	taskPayload, err := loadPayload(tasks, projectConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load payload")
-	}
-	if len(taskPayload) == 0 {
-		return nil, nil
 	}
 	conn, ok := r.vmClients[projectConfig.VMTypeID]
 	if !ok {
@@ -48,7 +46,7 @@ func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte
 		Binary:         bi,
 		Metadata:       metadata,
 	}); err != nil {
-		slog.Error("failed to new project", "project_id", task.ProjectID, "err", err)
+		slog.Error("failed to new project", "project_id", tasks[0].ProjectID, "err", err)
 		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
 

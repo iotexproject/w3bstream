@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"math/big"
 	"net/http"
 	"time"
 
@@ -36,20 +35,16 @@ func Run(projectManager *project.Manager, db *apidb.DB, sequencerAddr string, in
 		}
 
 		for _, tasks := range taskMap {
-			pid, ok := new(big.Int).SetString(tasks[0].ProjectID, 10)
-			if !ok {
-				slog.Error("failed to decode project id string", "project_string", tasks[0].ProjectID)
-				continue
-			}
+			pid := tasks[0].ProjectID
 			p, err := projectManager.Project(pid)
 			if err != nil {
-				slog.Error("failed to get project", "error", err, "project_id", pid.String())
+				slog.Error("failed to get project", "error", err, "project_id", pid)
 				continue
 			}
 			// TODO support project config
 			cfg, err := p.DefaultConfig()
 			if err != nil {
-				slog.Error("failed to get project config", "error", err, "project_id", pid.String())
+				slog.Error("failed to get project config", "error", err, "project_id", pid)
 				continue
 			}
 			if cfg.ProofType == "movement" {

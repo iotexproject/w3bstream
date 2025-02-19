@@ -2,12 +2,11 @@ package vm
 
 import (
 	_ "embed"
-	"log/slog"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
 	"github.com/iotexproject/w3bstream/project"
@@ -15,14 +14,14 @@ import (
 	"github.com/iotexproject/w3bstream/task"
 )
 
-func loadPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+func loadPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte, error) {
 	switch projectConfig.ProofType {
 	case "liveness":
-		return encodeLivenessPayload(task, projectConfig)
+		return encodeLivenessPayload(tasks[0], projectConfig)
 	case "movement":
-		return encodeMovementPayload(task, projectConfig)
+		return encodeMovementPayload(tasks, projectConfig)
 	default:
-		return task.Payload, nil
+		return tasks[0].Payload, nil
 	}
 }
 
@@ -63,95 +62,99 @@ func encodeLivenessPayload(task *task.Task, projectConfig *project.Config) ([]by
 	return witness.MarshalBinary()
 }
 
-type ProofofMovementCircuit struct {
-	LastPayloadHash []uints.U8
-	LastTimestamp   frontend.Variable
-	LastLatitude    frontend.Variable
-	LastLongitude   frontend.Variable
-	LastSigBytes    []uints.U8
+type ProofOfMovementBatchCircuit struct {
+	LastPayloadHash [20][32]uints.U8
+	LastTimestamp   [20]frontend.Variable
+	LastLatitude    [20]frontend.Variable
+	LastLongitude   [20]frontend.Variable
+	LastSigBytes    [20][64]uints.U8
 
-	CurPayloadHash []uints.U8
-	CurTimestamp   frontend.Variable `gnark:",public"`
-	CurLatitude    frontend.Variable
-	CurLongitude   frontend.Variable
-	CurSigBytes    []uints.U8
+	CurPayloadHash [20][32]uints.U8
+	CurTimestamp   [20]frontend.Variable
+	CurLatitude    [20]frontend.Variable
+	CurLongitude   [20]frontend.Variable
+	CurSigBytes    [20][64]uints.U8
 
-	IsMoved frontend.Variable `gnark:",public"`
+	PubBytes [20][65]uints.U8
 
-	PubBytes []uints.U8 `gnark:",public"`
+	EthAddress [20]frontend.Variable `gnark:",public"`
+	IsMoved    frontend.Variable     `gnark:",public"`
 }
 
-func (circuit *ProofofMovementCircuit) Define(api frontend.API) error { return nil }
+func (circuit *ProofOfMovementBatchCircuit) Define(api frontend.API) error { return nil }
 
-func encodeMovementPayload(task *task.Task, projectConfig *project.Config) ([]byte, error) {
-	if task.PrevTask == nil {
-		return nil, errors.New("movement project miss previous task")
+func encodeMovementPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte, error) {
+	if len(tasks) != 20 {
+		return nil, errors.New("invalid tasks len")
 	}
-	lastPayloadHash, _, _, lastData, err := api.HashTask(
-		&api.CreateTaskReq{
-			Nonce:          task.PrevTask.Nonce,
-			ProjectID:      task.PrevTask.ProjectID.String(),
-			ProjectVersion: task.PrevTask.ProjectVersion,
-			Payload:        task.PrevTask.Payload,
-		}, projectConfig)
-	if err != nil {
-		return nil, err
-	}
-	curPayloadHash, _, _, curData, err := api.HashTask(
-		&api.CreateTaskReq{
-			Nonce:          task.Nonce,
-			ProjectID:      task.ProjectID.String(),
-			ProjectVersion: task.ProjectVersion,
-			Payload:        task.Payload,
-		}, projectConfig)
-	if err != nil {
-		return nil, err
-	}
-	lastTimestamp := lastData[0].(uint64)
-	lastLatitude := lastData[1].(uint64)
-	lastLongitude := lastData[2].(uint64)
-	lastSig := task.PrevTask.Signature[:64]
-	curTimestamp := curData[0].(uint64)
-	curLatitude := curData[1].(uint64)
-	curLongitude := curData[2].(uint64)
-	curSig := task.Signature[:64]
-	isMove := uint64(0)
-	if (abs(lastLatitude, curLatitude) > 1_000) || (abs(lastLongitude, curLongitude) > 1_000) {
-		isMove = 1
+	assignment := ProofOfMovementBatchCircuit{}
+	movedFlags := []bool{}
+	for i := range tasks {
+		task := tasks[i]
+		if task.PrevTask == nil {
+			return nil, errors.New("movement project miss previous task")
+		}
+		lastPayloadHash, _, _, lastData, err := api.HashTask(
+			&api.CreateTaskReq{
+				Nonce:          task.PrevTask.Nonce,
+				ProjectID:      task.PrevTask.ProjectID.String(),
+				ProjectVersion: task.PrevTask.ProjectVersion,
+				Payload:        task.PrevTask.Payload,
+			}, projectConfig)
+		if err != nil {
+			return nil, err
+		}
+		curPayloadHash, _, _, curData, err := api.HashTask(
+			&api.CreateTaskReq{
+				Nonce:          task.Nonce,
+				ProjectID:      task.ProjectID.String(),
+				ProjectVersion: task.ProjectVersion,
+				Payload:        task.Payload,
+			}, projectConfig)
+		if err != nil {
+			return nil, err
+		}
+		lastTimestamp := lastData[0].(uint64)
+		lastLatitude := lastData[1].(uint64)
+		lastLongitude := lastData[2].(uint64)
+		lastSig := task.PrevTask.Signature[:64]
+		curTimestamp := curData[0].(uint64)
+		curLatitude := curData[1].(uint64)
+		curLongitude := curData[2].(uint64)
+		curSig := task.Signature[:64]
+		isMove := uint64(0)
+		if (abs(lastLatitude, curLatitude) > 1_000) || (abs(lastLongitude, curLongitude) > 1_000) {
+			isMove = 1
+		}
+		movedFlags = append(movedFlags, isMove > 0)
+
+		assignment.LastPayloadHash[i] = [32]uints.U8(uints.NewU8Array(lastPayloadHash[:]))
+		assignment.LastTimestamp[i] = lastTimestamp
+		assignment.LastLatitude[i] = lastLatitude
+		assignment.LastLongitude[i] = lastLongitude
+		assignment.LastSigBytes[i] = [64]uints.U8(uints.NewU8Array(lastSig[:]))
+		assignment.CurPayloadHash[i] = [32]uints.U8(uints.NewU8Array(curPayloadHash[:]))
+		assignment.CurTimestamp[i] = curTimestamp
+		assignment.CurLatitude[i] = curLatitude
+		assignment.CurLongitude[i] = curLongitude
+		assignment.CurSigBytes[i] = [64]uints.U8(uints.NewU8Array(curSig[:]))
+		assignment.PubBytes[i] = [65]uints.U8(uints.NewU8Array(task.DevicePubKey))
+
+		pubkey, err := crypto.UnmarshalPubkey(task.DevicePubKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal pubkey")
+		}
+		assignment.EthAddress[i] = crypto.PubkeyToAddress(*pubkey).Big()
 	}
 
-	slog.Info("------", "lastTimestamp", lastTimestamp)
-	slog.Info("------", "lastLatitude", lastLatitude)
-	slog.Info("------", "lastLongitude", lastLongitude)
-	slog.Info("------", "lastSig", hexutil.Encode(lastSig))
-	slog.Info("------", "curTimestamp", curTimestamp)
-	slog.Info("------", "curLatitude", curLatitude)
-	slog.Info("------", "curLongitude", curLongitude)
-	slog.Info("------", "curSig", hexutil.Encode(curSig))
-	slog.Info("------", "isMove", isMove)
-	slog.Info("------", "lastPayload", string(task.PrevTask.Payload))
-	slog.Info("------", "curPayload", string(task.Payload))
-
-	if isMove == 0 {
-		return nil, nil
+	var isMovedValue uint64 = 0
+	for i := 0; i < 20; i++ {
+		if movedFlags[i] {
+			isMovedValue |= (1 << i)
+		}
 	}
+	assignment.IsMoved = isMovedValue
 
-	assignment := ProofofMovementCircuit{
-		LastPayloadHash: uints.NewU8Array(lastPayloadHash[:]),
-		LastTimestamp:   lastTimestamp,
-		LastLatitude:    lastLatitude,
-		LastLongitude:   lastLongitude,
-		LastSigBytes:    uints.NewU8Array(lastSig[:]),
-
-		CurPayloadHash: uints.NewU8Array(curPayloadHash[:]),
-		CurTimestamp:   curTimestamp,
-		CurLatitude:    curLatitude,
-		CurLongitude:   curLongitude,
-		CurSigBytes:    uints.NewU8Array(curSig[:]),
-
-		IsMoved:  isMove,
-		PubBytes: uints.NewU8Array(task.DevicePubKey),
-	}
 	witness, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
 	if err != nil {
 		return nil, err

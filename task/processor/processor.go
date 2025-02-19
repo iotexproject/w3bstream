@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"log/slog"
@@ -22,19 +21,20 @@ import (
 	"github.com/iotexproject/w3bstream/task"
 )
 
-type HandleTask func(task *task.Task, projectConfig *project.Config) ([]byte, error)
-type Project func(projectID *big.Int) (*project.Project, error)
+type HandleTasks func(tasks []*task.Task, projectConfig *project.Config) ([]byte, error)
+type Project func(projectID string) (*project.Project, error)
 type RetrieveTask func(taskIDs []common.Hash) ([]*task.Task, error)
 
 type DB interface {
-	UnprocessedTask() (common.Hash, error)
-	ProcessTask(common.Hash, error) error
+	UnprocessedTasks(projectID string, limit uint64) ([]common.Hash, error)
+	UnprocessedProjects() (map[string]uint64, error)
+	ProcessTasks(taskIDs []common.Hash, err error) error
 }
 
 type processor struct {
 	db             DB
 	retrieve       RetrieveTask
-	handle         HandleTask
+	handle         HandleTasks
 	project        Project
 	prv            *ecdsa.PrivateKey
 	waitingTime    time.Duration
@@ -44,38 +44,31 @@ type processor struct {
 	routerInstance *router.Router
 }
 
-func (r *processor) process(taskID common.Hash) error {
-	ts, err := r.retrieve([]common.Hash{taskID})
+func (r *processor) process(taskIDs []common.Hash, c *project.Config, pid string) error {
+	ts, err := r.retrieve(taskIDs)
 	if err != nil {
 		return err
 	}
-	t := ts[0]
-	p, err := r.project(t.ProjectID)
-	if err != nil {
-		return err
-	}
-	c, err := p.Config(t.ProjectVersion)
-	if err != nil {
-		return err
-	}
-	slog.Info("process task", "project_id", t.ProjectID.String(), "task_id", t.ID, "vm_type", c.VMTypeID)
+
+	slog.Info("process tasks", "project_id", pid, "vm_type", c.VMTypeID)
 	startTime := time.Now()
-	proof, err := r.handle(t, c)
+	proof, err := r.handle(ts, c)
 	if err != nil {
-		metrics.FailedTaskNumMtc.WithLabelValues(t.ProjectID.String()).Inc()
+		metrics.FailedTaskNumMtc.WithLabelValues(pid).Inc()
 		slog.Error("failed to handle task", "error", err)
 		return err
 	}
-	if len(proof) == 0 {
-		return nil
-	}
 	processTime := time.Since(startTime)
-	slog.Info("process task success", "project_id", t.ProjectID.String(), "task_id", t.ID, "process_time", processTime)
-	metrics.TaskDurationMtc.WithLabelValues(t.ProjectID.String(), t.ProjectVersion, t.ID.String()).Set(processTime.Seconds())
+	slog.Info("process task success", "project_id", pid, "process_time", processTime)
+	//metrics.TaskDurationMtc.WithLabelValues(pid, t.ProjectVersion, t.ID.String()).Set(processTime.Seconds())
 
-	pubkey, err := crypto.UnmarshalPubkey(t.DevicePubKey)
-	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal public key")
+	tids := [][32]byte{}
+	for _, t := range ts {
+		tids = append(tids, t.ID)
+	}
+	pidInt, ok := new(big.Int).SetString(pid, 10)
+	if !ok {
+		return errors.New("failed to decode project id string")
 	}
 	tx, err := r.routerInstance.Route(
 		&bind.TransactOpts{
@@ -84,10 +77,9 @@ func (r *processor) process(taskID common.Hash) error {
 				return types.SignTx(t, r.signer, r.prv)
 			},
 		},
-		t.ProjectID,
-		t.ID,
 		r.account,
-		crypto.PubkeyToAddress(*pubkey),
+		pidInt,
+		tids,
 		proof,
 	)
 	if err != nil {
@@ -116,27 +108,53 @@ func (r *processor) process(taskID common.Hash) error {
 
 func (r *processor) run() {
 	for {
-		taskID, err := r.db.UnprocessedTask()
+		ps, err := r.db.UnprocessedProjects()
 		if err != nil {
-			slog.Error("failed to get unprocessed task", "error", err)
+			slog.Error("failed to get unprocessed projects", "error", err)
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		if bytes.Equal(taskID.Bytes(), common.Hash{}.Bytes()) {
+		if len(ps) == 0 {
 			time.Sleep(r.waitingTime)
 			continue
 		}
-		err = r.process(taskID)
-		if err != nil {
-			slog.Error("failed to process task", "error", err)
-		}
-		if err := r.db.ProcessTask(taskID, err); err != nil {
-			slog.Error("failed to process db task", "error", err)
+		for pid, n := range ps {
+			p, err := r.project(pid)
+			if err != nil {
+				slog.Error("failed to get project file", "project_id", pid, "error", err)
+				continue
+			}
+			c, err := p.DefaultConfig()
+			if err != nil {
+				slog.Error("failed to get project config", "project_id", pid, "error", err)
+				continue
+			}
+			batch := uint64(1)
+			if c.TaskProcessingBatch > 0 {
+				batch = c.TaskProcessingBatch
+			}
+			if n < batch {
+				slog.Info("the project currently doesn't have enough tasks", "project_id", pid, "task_processing_batch", batch, "current_number", n)
+				time.Sleep(r.waitingTime)
+				continue
+			}
+			taskIDs, err := r.db.UnprocessedTasks(pid, batch)
+			if err != nil {
+				slog.Error("failed to get tasks", "project_id", pid, "error", err)
+				continue
+			}
+			err = r.process(taskIDs, c, pid)
+			if err != nil {
+				slog.Error("failed to process task", "error", err)
+			}
+			if err := r.db.ProcessTasks(taskIDs, err); err != nil {
+				slog.Error("failed to process db tasks", "error", err)
+			}
 		}
 	}
 }
 
-func Run(handle HandleTask, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey, chainEndpoint string, routerAddr common.Address) error {
+func Run(handle HandleTasks, project Project, db DB, retrieve RetrieveTask, prv *ecdsa.PrivateKey, chainEndpoint string, routerAddr common.Address) error {
 	client, err := ethclient.Dial(chainEndpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to dial chain endpoint")

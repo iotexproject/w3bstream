@@ -41,10 +41,9 @@ contract W3bstreamRouter is IRouter, Initializable {
     }
 
     function route(
-        uint256 _projectId,
-        bytes32 _taskId,
         address _prover,
-        address _deviceId,
+        uint256 _projectId,
+        bytes32[] calldata _taskIds,
         bytes calldata _data
     ) external override {
         address _dapp = dapp[_projectId];
@@ -52,8 +51,10 @@ contract W3bstreamRouter is IRouter, Initializable {
         require(!proverStore.isPaused(_prover), "prover paused");
         require(!IProjectStore(projectStore).isPaused(_projectId), "project paused");
 
-        IDapp(_dapp).process(_projectId, _taskId, _prover, _deviceId, _data);
-        taskManager.settle(_projectId, _taskId, _prover);
+        IDapp(_dapp).process(_prover, _projectId, _taskIds, _data);
+        for (uint256 i = 0; i < _taskIds.length; i++) {
+            taskManager.settle(_projectId, _taskIds[i], _prover);
+        }
     }
 
     function bindDapp(uint256 _projectId, address _dapp) external override onlyProjectOwner(_projectId) {
