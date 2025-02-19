@@ -185,11 +185,12 @@ func (s *httpServer) createTask(c *gin.Context) {
 			break
 		}
 	}
-	if !approved {
-		slog.Error("device does not have permission", "project_id", req.ProjectID)
-		c.JSON(http.StatusForbidden, newErrResp(errors.New("device does not have permission")))
-		return
-	}
+	_ = approved
+	// if !approved {
+	// 	slog.Error("device does not have permission", "project_id", req.ProjectID)
+	// 	c.JSON(http.StatusForbidden, newErrResp(errors.New("device does not have permission")))
+	// 	return
+	// }
 
 	//ioid := crypto.PubkeyToAddress(*matchedPubkey)
 	taskID := crypto.Keccak256Hash(sig)
