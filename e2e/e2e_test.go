@@ -183,13 +183,14 @@ func TestE2E(t *testing.T) {
 	t.Run("gnark-movement", func(t *testing.T) {
 		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappMovement))
 		project := &project.Project{Configs: []*project.Config{{
-			Version:      "v1",
-			VMTypeID:     1,
-			ProofType:    "movement",
-			Code:         "ipfs://ipfs.mainnet.iotex.io/QmUWpgnVYE2H2m9QCM5aprhR86xXfC6iRAzUMq7M646WRV",
-			CodeHash:     "0x50b05c4558731f16c517ca265f5a076f4574659cf14715f2c21e5a97edbaf0a2",
-			Metadata:     "ipfs://ipfs.mainnet.iotex.io/QmRAAEx3JoPbnbzzNkR4UfQ6hyaQRfSNd3V6Lz8gzC4QFP",
-			MetadataHash: "0xeb764cd388a7bcef888aecd6639b919499c8d9b98d9c46439637443b2d3b54ee",
+			Version:             "v1",
+			VMTypeID:            1,
+			ProofType:           "movement",
+			Code:                "ipfs://ipfs.mainnet.iotex.io/QmUWpgnVYE2H2m9QCM5aprhR86xXfC6iRAzUMq7M646WRV",
+			CodeHash:            "0x50b05c4558731f16c517ca265f5a076f4574659cf14715f2c21e5a97edbaf0a2",
+			Metadata:            "ipfs://ipfs.mainnet.iotex.io/QmRAAEx3JoPbnbzzNkR4UfQ6hyaQRfSNd3V6Lz8gzC4QFP",
+			MetadataHash:        "0xeb764cd388a7bcef888aecd6639b919499c8d9b98d9c46439637443b2d3b54ee",
+			TaskProcessingBatch: 20,
 			SignedKeys: []project.SignedKey{
 				{Name: "timestamp", Type: "uint64"},
 				{Name: "latitude", Type: "uint64"},
