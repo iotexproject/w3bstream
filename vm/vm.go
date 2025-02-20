@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -23,14 +24,18 @@ type Handler struct {
 func (r *Handler) Handle(tasks []*task.Task, projectConfig *project.Config) ([]byte, error) {
 	task := tasks[0]
 	// TODO: load binary before being stored in db
+	now := time.Now()
 	bi, err := decodeBinary(projectConfig.Code)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode code")
 	}
+	slog.Info("fetch circuit code success", "time duration", time.Since(now).String())
+	now = time.Now()
 	metadata, err := decodeBinary(projectConfig.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode metadata")
 	}
+	slog.Info("fetch circuit metadata success", "time duration", time.Since(now).String())
 	taskPayload, err := loadPayload(tasks, projectConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load payload")

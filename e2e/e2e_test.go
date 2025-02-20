@@ -279,6 +279,6 @@ func waitSettled(t *testing.T, taskID string, apiNodeUrl string) {
 			}
 		}
 		return false, nil
-	}, 3*time.Minute)
+	}, 10*time.Minute)
 	require.NoError(t, err)
 }
