@@ -242,26 +242,26 @@ func TestE2E(t *testing.T) {
 		})
 		require.NoError(t, err)
 		taskID := ""
-		for i := 0; i < 7; i++ {
+		for i := 0; i < 4; i++ {
 			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 			time.Sleep(2 * time.Second)
 		}
-		for i := 0; i < 3; i++ {
+		for i := 0; i < 2; i++ {
 			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 			taskID = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 			time.Sleep(2 * time.Second)
 		}
-		// for i := 0; i < 3; i++ {
-		// 	_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
-		// 	taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
-		// 	time.Sleep(2 * time.Second)
-		// }
-		// for i := 0; i < 1; i++ {
-		// 	_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
-		// 	taskID = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
-		// 	time.Sleep(2 * time.Second)
-		// }
+		for i := 0; i < 3; i++ {
+			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
+			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
+			time.Sleep(2 * time.Second)
+		}
+		for i := 0; i < 1; i++ {
+			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
+			taskID = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
+			time.Sleep(2 * time.Second)
+		}
 		waitSettled(t, taskID, apiNodeUrl, 30*time.Second, 10*time.Minute)
 
 		client, err := ethclient.Dial(chainEndpoint)
@@ -272,11 +272,11 @@ func TestE2E(t *testing.T) {
 
 		n, err := mockDappMovementBatchContract.DeviceTick(nil, crypto.PubkeyToAddress(deviceKey.PublicKey))
 		require.NoError(t, err)
-		require.Equal(t, n, uint64(7), "unexpect tick count")
+		require.Equal(t, n, uint64(4), "unexpect tick count")
 
-		// n, err = mockDappMovementBatchContract.DeviceTick(nil, crypto.PubkeyToAddress(deviceKey2.PublicKey))
-		// require.NoError(t, err)
-		// require.Equal(t, n, uint64(3), "unexpect tick count")
+		n, err = mockDappMovementBatchContract.DeviceTick(nil, crypto.PubkeyToAddress(deviceKey2.PublicKey))
+		require.NoError(t, err)
+		require.Equal(t, n, uint64(3), "unexpect tick count")
 	})
 }
 
