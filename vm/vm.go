@@ -51,9 +51,10 @@ func (r *Handler) Handle(tasks []*task.Task, projectConfig *project.Config) ([]b
 	}
 
 	resp, err := cli.ExecuteTask(context.Background(), &proto.ExecuteTaskRequest{
-		ProjectID: task.ProjectID.String(),
-		TaskID:    task.ID[:],
-		Payloads:  [][]byte{taskPayload},
+		ProjectID:      task.ProjectID.String(),
+		ProjectVersion: task.ProjectVersion,
+		TaskID:         task.ID[:],
+		Payloads:       [][]byte{taskPayload},
 	})
 	if err != nil {
 		slog.Error("failed to execute task", "project_id", task.ProjectID, "vm_type", projectConfig.VMTypeID,
