@@ -262,7 +262,11 @@ func TestE2E(t *testing.T) {
 
 		n, err := mockDappMovementBatchContract.DeviceTick(nil, crypto.PubkeyToAddress(deviceKey.PublicKey))
 		require.NoError(t, err)
-		require.Equal(t, n, uint64(10), "unexpect tick count")
+		require.Equal(t, n, uint64(7), "unexpect tick count")
+
+		n, err = mockDappMovementBatchContract.DeviceTick(nil, crypto.PubkeyToAddress(deviceKey2.PublicKey))
+		require.NoError(t, err)
+		require.Equal(t, n, uint64(3), "unexpect tick count")
 	})
 }
 
