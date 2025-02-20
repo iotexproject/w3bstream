@@ -190,7 +190,7 @@ func TestE2E(t *testing.T) {
 			CodeHash:            "0xdc3392204a56698891090ea1b729b7a25deba50ccad26ef70ff4b3d51f662ce4",
 			Metadata:            "ipfs://ipfs.mainnet.iotex.io/QmTXxKjQEQ8gAzgJjvoxoMB5ocYi16VimHjFwTKf6hEHSm",
 			MetadataHash:        "0xc969f436f4cef28377e3b5ec3ca2457bcaab2795f65c4e1bf3656b57087cd957",
-			TaskProcessingBatch: 20,
+			TaskProcessingBatch: 10,
 			SignedKeys: []project.SignedKey{
 				{Name: "timestamp", Type: "uint64"},
 				{Name: "latitude", Type: "uint64"},
@@ -229,7 +229,7 @@ func TestE2E(t *testing.T) {
 		})
 		require.NoError(t, err)
 		taskID := ""
-		for i := 0; i < 20; i++ {
+		for i := 0; i < 10; i++ {
 			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 			time.Sleep(2 * time.Second)

@@ -84,7 +84,7 @@ type ProofOfMovementBatchCircuit struct {
 func (circuit *ProofOfMovementBatchCircuit) Define(api frontend.API) error { return nil }
 
 func encodeMovementPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte, error) {
-	if len(tasks) != 20 {
+	if len(tasks) != 10 {
 		return nil, errors.New("invalid tasks len")
 	}
 	assignment := ProofOfMovementBatchCircuit{}
