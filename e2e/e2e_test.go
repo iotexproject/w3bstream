@@ -133,6 +133,7 @@ func TestE2E(t *testing.T) {
 	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID2)
 	projectID3 := big.NewInt(3)
 	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID3)
+	time.Sleep(1 * time.Second)
 
 	t.Run("gnark", func(t *testing.T) {
 		// Register project
