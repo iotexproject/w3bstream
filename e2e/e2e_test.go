@@ -183,7 +183,7 @@ func TestE2E(t *testing.T) {
 		waitSettled(t, taskid, apiNodeUrl)
 	})
 	t.Run("gnark-movement", func(t *testing.T) {
-		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappMovement))
+		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappMovementBatch))
 		project := &project.Project{
 			DefaultVersion: "v3",
 			Configs: []*project.Config{{
