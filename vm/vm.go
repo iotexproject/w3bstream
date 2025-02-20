@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -66,6 +67,7 @@ func (r *Handler) Handle(tasks []*task.Task, projectConfig *project.Config) ([]b
 			"task_id", task.ID, "binary", projectConfig.Code, "payloads", task.Payload, "err", err)
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
+	slog.Info("proof", "proof", hexutil.Encode(resp.Result))
 
 	return resp.Result, nil
 }
