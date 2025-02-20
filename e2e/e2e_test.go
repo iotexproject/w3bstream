@@ -14,10 +14,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotexproject/w3bstream/e2e/services"
 	"github.com/iotexproject/w3bstream/project"
+	"github.com/iotexproject/w3bstream/smartcontracts/go/mockdappmovementbatch"
 )
 
 const (
@@ -239,6 +241,16 @@ func TestE2E(t *testing.T) {
 			time.Sleep(2 * time.Second)
 		}
 		waitSettled(t, taskID, apiNodeUrl, 30*time.Second, 10*time.Minute)
+
+		client, err := ethclient.Dial(chainEndpoint)
+		require.NoError(t, err)
+		mockDappMovementBatchContract, err := mockdappmovementbatch.NewMockdappmovementbatch(
+			common.HexToAddress(contracts.MockDappMovementBatch), client)
+		require.NoError(t, err)
+
+		n, err := mockDappMovementBatchContract.DeviceTick(nil, crypto.PubkeyToAddress(deviceKey.PublicKey))
+		require.NoError(t, err)
+		require.Equal(t, n, uint64(10), "unexpect tick count")
 	})
 }
 
