@@ -123,8 +123,24 @@ func proverInit(chDSN, dbFile, chainEndpoint string, vmEndpoints map[int]string,
 	return prover, key, nil
 }
 
+func bindProjectDapp(t *testing.T, chainEndpoint string, contractDeployments *services.ContractsDeployments,
+	projectOwner *ecdsa.PrivateKey, projectID *big.Int, dpp common.Address) {
+	client, err := ethclient.Dial(chainEndpoint)
+	require.NoError(t, err)
+	chainID, err := client.ChainID(context.Background())
+	require.NoError(t, err)
+	tOpts, err := bind.NewKeyedTransactorWithChainID(projectOwner, chainID)
+	require.NoError(t, err)
+	router, err := router.NewRouter(common.HexToAddress(contractDeployments.Router), client)
+	require.NoError(t, err)
+	tx, err := router.BindDapp(tOpts, projectID, dpp)
+	require.NoError(t, err)
+	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+}
+
 func registerProject(t *testing.T, chainEndpoint string,
-	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey, projectID *big.Int, dpp common.Address) {
+	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey, projectID *big.Int) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)
 	chainID, err := client.ChainID(context.Background())
@@ -181,14 +197,6 @@ func registerProject(t *testing.T, chainEndpoint string,
 	debitsContract, err := debits.NewDebits(common.HexToAddress(contractDeployments.Debits), client)
 	require.NoError(t, err)
 	tx, err = debitsContract.Deposit(tOpts, mockerc20Addr, rewardAmount)
-	require.NoError(t, err)
-	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
-	require.NoError(t, err)
-
-	// Bind dapp to router
-	router, err := router.NewRouter(common.HexToAddress(contractDeployments.Router), client)
-	require.NoError(t, err)
-	tx, err = router.BindDapp(tOpts, projectID, dpp)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
