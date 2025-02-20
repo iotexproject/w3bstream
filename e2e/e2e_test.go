@@ -127,6 +127,12 @@ func TestE2E(t *testing.T) {
 	deviceAddr := crypto.PubkeyToAddress(deviceKey.PublicKey)
 	sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
 	//registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
+	projectID1 := big.NewInt(1)
+	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID1)
+	projectID2 := big.NewInt(2)
+	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID2)
+	projectID3 := big.NewInt(3)
+	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID3)
 
 	t.Run("gnark", func(t *testing.T) {
 		// Register project
@@ -134,9 +140,7 @@ func TestE2E(t *testing.T) {
 		require.NoError(t, err)
 		projectOwnerAddr := crypto.PubkeyToAddress(projectOwnerKey.PublicKey)
 		sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
-		projectID := big.NewInt(1)
-		registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
-		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDapp))
+		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID1, common.HexToAddress(contracts.MockDapp))
 
 		gnarkCodePath := "./testdata/gnark.code"
 		gnarkMetadataPath := "./testdata/gnark.metadata"
@@ -149,7 +153,7 @@ func TestE2E(t *testing.T) {
 		// Send message: prove 1+1=2
 		data, err := hex.DecodeString("00000001000000010000000200000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001")
 		require.NoError(t, err)
-		taskid := sendMessage(t, data, projectID, nil, deviceKey, apiNodeUrl)
+		taskid := sendMessage(t, data, projectID1, nil, deviceKey, apiNodeUrl)
 		waitSettled(t, taskid, apiNodeUrl)
 	})
 	t.Run("gnark-liveness", func(t *testing.T) {
@@ -194,9 +198,7 @@ func TestE2E(t *testing.T) {
 		require.NoError(t, err)
 		projectOwnerAddr := crypto.PubkeyToAddress(projectOwnerKey.PublicKey)
 		sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
-		projectID := big.NewInt(3)
-		registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
-		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappMovement))
+		registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID3, common.HexToAddress(contracts.MockDappMovement))
 
 		gnarkCodePath := "./testdata/geodnet.circuit"
 		gnarkMetadataPath := "./testdata/geodnet.pk"
@@ -246,8 +248,8 @@ func TestE2E(t *testing.T) {
 			Longitude: lastLongitude,
 		})
 		require.NoError(t, err)
-		_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
-		taskID := sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
+		_ = sendMessage(t, lastData, projectID3, project.Configs[0], deviceKey, apiNodeUrl)
+		taskID := sendMessage(t, data, projectID3, project.Configs[0], deviceKey, apiNodeUrl)
 		waitSettled(t, taskID, apiNodeUrl)
 	})
 }
