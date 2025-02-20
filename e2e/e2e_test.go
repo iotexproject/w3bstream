@@ -228,8 +228,12 @@ func TestE2E(t *testing.T) {
 			Longitude: lastLongitude,
 		})
 		require.NoError(t, err)
-		_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
-		taskID := sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
+		taskID := ""
+		for i := 0; i < 20; i++ {
+			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
+			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
+			time.Sleep(2 * time.Second)
+		}
 		waitSettled(t, taskID, apiNodeUrl)
 	})
 }
