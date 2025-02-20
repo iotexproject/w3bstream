@@ -200,6 +200,11 @@ func registerProject(t *testing.T, chainEndpoint string,
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
+
+	wsProject, err := project.NewProject(common.HexToAddress(contractDeployments.WSProject), client)
+	require.NoError(t, err)
+	tx, err = wsProject.Resume(tOpts, projectID)
+	require.NoError(t, err)
 }
 
 func uploadProject(t *testing.T, chainEndpoint, ipfsURL string,
@@ -239,8 +244,6 @@ func uploadProject(t *testing.T, chainEndpoint, ipfsURL string,
 	tx, err := wsProject.UpdateConfig(tOpts, newProjectID, projectFileURL, projHash)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
-	require.NoError(t, err)
-	tx, err = wsProject.Resume(tOpts, newProjectID)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
