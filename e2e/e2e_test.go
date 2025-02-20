@@ -129,6 +129,12 @@ func TestE2E(t *testing.T) {
 	deviceAddr := crypto.PubkeyToAddress(deviceKey.PublicKey)
 	sendETH(t, chainEndpoint, payerHex, deviceAddr, 20)
 
+	// Register device2
+	deviceKey2, err := crypto.GenerateKey()
+	require.NoError(t, err)
+	deviceAddr2 := crypto.PubkeyToAddress(deviceKey2.PublicKey)
+	sendETH(t, chainEndpoint, payerHex, deviceAddr2, 20)
+
 	// Register project
 	projectOwnerKey, err := crypto.GenerateKey()
 	require.NoError(t, err)
@@ -136,6 +142,7 @@ func TestE2E(t *testing.T) {
 	sendETH(t, chainEndpoint, payerHex, projectOwnerAddr, 20)
 	projectID := big.NewInt(1)
 	registerIoID(t, chainEndpoint, contracts, deviceKey, projectID)
+	registerIoID(t, chainEndpoint, contracts, deviceKey2, projectID)
 	registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID)
 
 	t.Run("gnark", func(t *testing.T) {
@@ -235,9 +242,14 @@ func TestE2E(t *testing.T) {
 		})
 		require.NoError(t, err)
 		taskID := ""
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 7; i++ {
 			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
+			time.Sleep(2 * time.Second)
+		}
+		for i := 0; i < 3; i++ {
+			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
+			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
 			time.Sleep(2 * time.Second)
 		}
 		waitSettled(t, taskID, apiNodeUrl, 30*time.Second, 10*time.Minute)
