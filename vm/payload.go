@@ -63,21 +63,21 @@ func encodeLivenessPayload(task *task.Task, projectConfig *project.Config) ([]by
 }
 
 type ProofOfMovementBatchCircuit struct {
-	LastPayloadHash [20][32]uints.U8
-	LastTimestamp   [20]frontend.Variable
-	LastLatitude    [20]frontend.Variable
-	LastLongitude   [20]frontend.Variable
-	LastSigBytes    [20][64]uints.U8
+	LastPayloadHash [10][32]uints.U8
+	LastTimestamp   [10]frontend.Variable
+	LastLatitude    [10]frontend.Variable
+	LastLongitude   [10]frontend.Variable
+	LastSigBytes    [10][64]uints.U8
 
-	CurPayloadHash [20][32]uints.U8
-	CurTimestamp   [20]frontend.Variable
-	CurLatitude    [20]frontend.Variable
-	CurLongitude   [20]frontend.Variable
-	CurSigBytes    [20][64]uints.U8
+	CurPayloadHash [10][32]uints.U8
+	CurTimestamp   [10]frontend.Variable
+	CurLatitude    [10]frontend.Variable
+	CurLongitude   [10]frontend.Variable
+	CurSigBytes    [10][64]uints.U8
 
-	PubBytes [20][65]uints.U8
+	PubBytes [10][65]uints.U8
 
-	EthAddress [20]frontend.Variable `gnark:",public"`
+	EthAddress [10]frontend.Variable `gnark:",public"`
 	IsMoved    frontend.Variable     `gnark:",public"`
 }
 
@@ -148,7 +148,7 @@ func encodeMovementPayload(tasks []*task.Task, projectConfig *project.Config) ([
 	}
 
 	var isMovedValue uint64 = 0
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 10; i++ {
 		if movedFlags[i] {
 			isMovedValue |= (1 << i)
 		}
