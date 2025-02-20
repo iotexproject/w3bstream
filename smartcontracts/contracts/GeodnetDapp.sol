@@ -22,19 +22,18 @@ contract GeodnetDapp is IDapp {
         bytes32[] calldata _taskIds,
         bytes calldata _data
     ) external override {
-        // Validate data length (79 uint256 values = 79 * 32 bytes)
-        require(_data.length == 33 * 32, "Invalid data length");
+        require(_data.length == 23 * 32, "Invalid data length");
 
         // Prepare function selector
-        bytes4 selector = bytes4(keccak256("verifyProof(uint256[8],uint256[2],uint256[2],uint256[21])"));
+        bytes4 selector = bytes4(keccak256("verifyProof(uint256[8],uint256[2],uint256[2],uint256[11])"));
 
         // Call verifier contract
         (bool success, ) = verifier.staticcall(abi.encodePacked(selector, _data));
         require(success, "Verifier call failed");
 
         bytes32[] memory data = bytesToBytes32Array(_data);
-        for (uint256 i = 12; i < 32; i++) {
-            bool isMoved = isBitSet(data[32], 236 + i - 12);
+        for (uint256 i = 12; i < 22; i++) {
+            bool isMoved = isBitSet(data[22], 246 + i - 12);
             if (isMoved) {
                 address deviceAddr = address(bytes20(data[i]));
                 IMarshalDAOTicker(ticker).tick(deviceAddr);
