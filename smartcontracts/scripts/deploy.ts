@@ -22,6 +22,10 @@ async function main() {
   await MovementVerifier.waitForDeployment();
   console.log(`MovementVerifier deployed to ${MovementVerifier.target}`);
 
+  const MovementBatchVerifier = await ethers.deployContract('MovementBatchVerifier', []);
+  await MovementBatchVerifier.waitForDeployment();
+  console.log(`MovementBatchVerifier deployed to ${MovementBatchVerifier.target}`);
+
   if (process.env.DAPP_PROCESSOR) {
   } else {
     const MockDapp = await ethers.deployContract('MockDapp', []);
@@ -32,9 +36,9 @@ async function main() {
     await MockDappLiveness.waitForDeployment();
     console.log(`MockDappLiveness deployed to ${MockDappLiveness.target}`);
 
-    const MockDappMovement = await ethers.deployContract('MockDappMovement', [MovementVerifier.target]);
-    await MockDappMovement.waitForDeployment();
-    console.log(`MockDappMovement deployed to ${MockDappMovement.target}`);
+    const MockDappMovementBatch = await ethers.deployContract('MockDappMovementBatch', [MovementBatchVerifier.target]);
+    await MockDappMovementBatch.waitForDeployment();
+    console.log(`MockDappMovementBatch deployed to ${MockDappMovementBatch.target}`);
   }
   if (process.env.PROJECT_REGISTRATION_FEE) {
     projectRegistrationFee = process.env.PROJECT_REGISTRATION_FEE
