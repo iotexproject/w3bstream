@@ -146,7 +146,7 @@ func TestE2E(t *testing.T) {
 		gnarkMetadataPath := "./testdata/gnark.metadata"
 		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 1}}}
 		// Upload project
-		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
+		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID1)
 		require.NoError(t, err)
 		// Wait a few seconds for the device info synced on api node
 		time.Sleep(2 * time.Second)
@@ -216,7 +216,7 @@ func TestE2E(t *testing.T) {
 				{Name: "longitude", Type: "uint64"}},
 		}}}
 
-		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
+		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID3)
 
 		// Wait a few seconds for the device info synced on api node
 		time.Sleep(2 * time.Second)
