@@ -33,7 +33,7 @@ contract GeodnetDapp is IDapp {
 
         bytes32[] memory data = bytesToBytes32Array(_data);
         for (uint256 i = 12; i < 22; i++) {
-            bool isMoved = isBitSet(data[22], 246 + i - 12);
+            bool isMoved = isBitSet(data[22], 9 - (i - 12));
             if (isMoved) {
                 address deviceAddr = address(bytes20(data[i]));
                 IMarshalDAOTicker(ticker).tick(deviceAddr);
@@ -56,8 +56,8 @@ contract GeodnetDapp is IDapp {
         return (dataList);
     }
 
-    function isBitSet(bytes32 bitmap, uint256 n) public pure returns (bool) {
-        require(n < 256, "n must be less than 256");
-        return (uint256(bitmap) >> n) & 1 == 1;
+    function isBitSet(bytes32 bitmap, uint256 index) public pure returns (bool) {
+        require(index < 256, "Index out of bounds");
+        return (bitmap & bytes32(1 << index)) != 0;
     }
 }
