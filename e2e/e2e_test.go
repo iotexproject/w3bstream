@@ -150,7 +150,7 @@ func TestE2E(t *testing.T) {
 		data, err := hex.DecodeString("00000001000000010000000200000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001")
 		require.NoError(t, err)
 		taskid := sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
-		waitSettled(t, taskid, apiNodeUrl)
+		waitSettled(t, taskid, apiNodeUrl, 30*time.Second, 30*time.Second)
 	})
 	t.Run("gnark-liveness", func(t *testing.T) {
 		t.Skip()
@@ -180,7 +180,7 @@ func TestE2E(t *testing.T) {
 		})
 		require.NoError(t, err)
 		taskid := sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
-		waitSettled(t, taskid, apiNodeUrl)
+		waitSettled(t, taskid, apiNodeUrl, 30*time.Second, 30*time.Second)
 	})
 	t.Run("gnark-movement", func(t *testing.T) {
 		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappMovementBatch))
@@ -238,7 +238,7 @@ func TestE2E(t *testing.T) {
 			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 			time.Sleep(2 * time.Second)
 		}
-		waitSettled(t, taskID, apiNodeUrl)
+		waitSettled(t, taskID, apiNodeUrl, 30*time.Second, 10*time.Minute)
 	})
 }
 
@@ -253,7 +253,7 @@ func sendMessage(t *testing.T, dataJson []byte, projectID *big.Int,
 	return taskID
 }
 
-func waitSettled(t *testing.T, taskID string, apiNodeUrl string) {
+func waitSettled(t *testing.T, taskID string, apiNodeUrl string, assigned, settled time.Duration) {
 	err := waitUntil(func() (bool, error) {
 		states, err := queryTask(taskID, apiNodeUrl)
 		if err != nil {
@@ -265,7 +265,7 @@ func waitSettled(t *testing.T, taskID string, apiNodeUrl string) {
 			}
 		}
 		return false, nil
-	}, 30*time.Second)
+	}, assigned)
 	require.NoError(t, err)
 
 	err = waitUntil(func() (bool, error) {
@@ -279,6 +279,6 @@ func waitSettled(t *testing.T, taskID string, apiNodeUrl string) {
 			}
 		}
 		return false, nil
-	}, 10*time.Minute)
+	}, settled)
 	require.NoError(t, err)
 }
