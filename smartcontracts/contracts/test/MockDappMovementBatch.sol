@@ -30,7 +30,7 @@ contract MockDappMovementBatch {
         for (uint256 i = 12; i < 22; i++) {
             bool isMoved = isBitSet(data[22], 9 - (i - 12));
             if (isMoved) {
-                address deviceAddr = address(bytes20(data[i]));
+                address deviceAddr = address(uint160(uint256(data[i])));
                 deviceTick[deviceAddr]++;
             }
         }
