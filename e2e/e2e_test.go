@@ -140,7 +140,7 @@ func TestE2E(t *testing.T) {
 		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDapp))
 		gnarkCodePath := "./testdata/gnark.code"
 		gnarkMetadataPath := "./testdata/gnark.metadata"
-		project := &project.Project{Configs: []*project.Config{{Version: "v1", VMTypeID: 1}}}
+		project := &project.Project{DefaultVersion: "v1", Configs: []*project.Config{{Version: "v1", VMTypeID: 1}}}
 		// Upload project
 		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
 		require.NoError(t, err)
@@ -157,12 +157,14 @@ func TestE2E(t *testing.T) {
 		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappLiveness))
 		gnarkCodePath := "./testdata/pebble.circuit"
 		gnarkMetadataPath := "./testdata/pebble.pk"
-		project := &project.Project{Configs: []*project.Config{{
-			Version:    "v1",
-			VMTypeID:   1,
-			ProofType:  "liveness",
-			SignedKeys: []project.SignedKey{{Name: "timestamp", Type: "uint64"}},
-		}}}
+		project := &project.Project{
+			DefaultVersion: "v2",
+			Configs: []*project.Config{{
+				Version:    "v2",
+				VMTypeID:   1,
+				ProofType:  "liveness",
+				SignedKeys: []project.SignedKey{{Name: "timestamp", Type: "uint64"}},
+			}}}
 
 		// Upload project
 		uploadProject(t, chainEndpoint, ipfsEndpoint, project, &gnarkCodePath, &gnarkMetadataPath, contracts, projectOwnerKey, projectID)
@@ -182,20 +184,22 @@ func TestE2E(t *testing.T) {
 	})
 	t.Run("gnark-movement", func(t *testing.T) {
 		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappMovement))
-		project := &project.Project{Configs: []*project.Config{{
-			Version:             "v1",
-			VMTypeID:            1,
-			ProofType:           "movement",
-			Code:                "ipfs://ipfs.mainnet.iotex.io/QmSg3NFgVbHZyUZsHAjrLV7o8CmLKYChNa3CVi4uKKrHeL",
-			CodeHash:            "0xdc3392204a56698891090ea1b729b7a25deba50ccad26ef70ff4b3d51f662ce4",
-			Metadata:            "ipfs://ipfs.mainnet.iotex.io/QmTXxKjQEQ8gAzgJjvoxoMB5ocYi16VimHjFwTKf6hEHSm",
-			MetadataHash:        "0xc969f436f4cef28377e3b5ec3ca2457bcaab2795f65c4e1bf3656b57087cd957",
-			TaskProcessingBatch: 10,
-			SignedKeys: []project.SignedKey{
-				{Name: "timestamp", Type: "uint64"},
-				{Name: "latitude", Type: "uint64"},
-				{Name: "longitude", Type: "uint64"}},
-		}}}
+		project := &project.Project{
+			DefaultVersion: "v3",
+			Configs: []*project.Config{{
+				Version:             "v3",
+				VMTypeID:            1,
+				ProofType:           "movement",
+				Code:                "ipfs://ipfs.mainnet.iotex.io/QmSg3NFgVbHZyUZsHAjrLV7o8CmLKYChNa3CVi4uKKrHeL",
+				CodeHash:            "0xdc3392204a56698891090ea1b729b7a25deba50ccad26ef70ff4b3d51f662ce4",
+				Metadata:            "ipfs://ipfs.mainnet.iotex.io/QmTXxKjQEQ8gAzgJjvoxoMB5ocYi16VimHjFwTKf6hEHSm",
+				MetadataHash:        "0xc969f436f4cef28377e3b5ec3ca2457bcaab2795f65c4e1bf3656b57087cd957",
+				TaskProcessingBatch: 10,
+				SignedKeys: []project.SignedKey{
+					{Name: "timestamp", Type: "uint64"},
+					{Name: "latitude", Type: "uint64"},
+					{Name: "longitude", Type: "uint64"}},
+			}}}
 
 		uploadProject(t, chainEndpoint, ipfsEndpoint, project, nil, nil, contracts, projectOwnerKey, projectID)
 		// Wait a few seconds for the device info synced on api node
