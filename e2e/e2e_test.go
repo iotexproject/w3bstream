@@ -149,7 +149,7 @@ func TestE2E(t *testing.T) {
 		// Send message: prove 1+1=2
 		data, err := hex.DecodeString("00000001000000010000000200000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001")
 		require.NoError(t, err)
-		taskid := sendMessage(t, data, projectID, nil, deviceKey, apiNodeUrl)
+		taskid := sendMessage(t, data, projectID, project.Configs[0], deviceKey, apiNodeUrl)
 		waitSettled(t, taskid, apiNodeUrl)
 	})
 	t.Run("gnark-liveness", func(t *testing.T) {
