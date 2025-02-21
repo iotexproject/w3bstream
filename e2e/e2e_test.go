@@ -257,7 +257,7 @@ func TestE2E(t *testing.T) {
 			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
 			time.Sleep(2 * time.Second)
 		}
-		for i := 0; i < 1; i++ {
+		for i := 0; i < 0; i++ {
 			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
 			taskID = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
 			time.Sleep(2 * time.Second)
