@@ -32,8 +32,10 @@ contract GeodnetDapp is IDapp {
         require(success, "Verifier call failed");
 
         bytes32[] memory data = bytesToBytes32Array(_data);
+        uint256 j = 0;
         for (uint256 i = 12; i < 22; i++) {
-            bool isMoved = isBitSet(data[22], 9 - (i - 12));
+            bool isMoved = isBitSet(data[22], j);
+            j++;
             if (isMoved) {
                 address deviceAddr = address(uint160(uint256(data[i])));
                 IMarshalDAOTicker(ticker).tick(deviceAddr);
