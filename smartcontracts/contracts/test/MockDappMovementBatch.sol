@@ -16,7 +16,12 @@ contract MockDappMovementBatch {
         errorType = _errorType;
     }
 
-    function process(address _prover, uint256 _projectId, bytes32[] calldata _taskIds, bytes calldata _data) external {
+    function process(
+        address _prover,
+        uint256 _projectId,
+        bytes32[] calldata _taskIds,
+        bytes calldata _data
+    ) external override {
         require(_data.length == 23 * 32, "Invalid data length");
 
         // Prepare function selector
@@ -27,8 +32,10 @@ contract MockDappMovementBatch {
         require(success, "Verifier call failed");
 
         bytes32[] memory data = bytesToBytes32Array(_data);
+        uint256 j = 0;
         for (uint256 i = 12; i < 22; i++) {
-            bool isMoved = isBitSet(data[22], 9 - (i - 12));
+            bool isMoved = isBitSet(data[22], j);
+            j++;
             if (isMoved) {
                 address deviceAddr = address(uint160(uint256(data[i])));
                 deviceTick[deviceAddr]++;
