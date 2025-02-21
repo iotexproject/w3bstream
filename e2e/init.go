@@ -123,8 +123,24 @@ func proverInit(chDSN, dbFile, chainEndpoint string, vmEndpoints map[int]string,
 	return prover, key, nil
 }
 
+func bindProjectDapp(t *testing.T, chainEndpoint string, contractDeployments *services.ContractsDeployments,
+	projectOwner *ecdsa.PrivateKey, projectID *big.Int, dpp common.Address) {
+	client, err := ethclient.Dial(chainEndpoint)
+	require.NoError(t, err)
+	chainID, err := client.ChainID(context.Background())
+	require.NoError(t, err)
+	tOpts, err := bind.NewKeyedTransactorWithChainID(projectOwner, chainID)
+	require.NoError(t, err)
+	router, err := router.NewRouter(common.HexToAddress(contractDeployments.Router), client)
+	require.NoError(t, err)
+	tx, err := router.BindDapp(tOpts, projectID, dpp)
+	require.NoError(t, err)
+	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
+	require.NoError(t, err)
+}
+
 func registerProject(t *testing.T, chainEndpoint string,
-	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey, projectID *big.Int, dpp common.Address) {
+	contractDeployments *services.ContractsDeployments, projectOwner *ecdsa.PrivateKey, projectID *big.Int) {
 	client, err := ethclient.Dial(chainEndpoint)
 	require.NoError(t, err)
 	chainID, err := client.ChainID(context.Background())
@@ -185,12 +201,9 @@ func registerProject(t *testing.T, chainEndpoint string,
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)
 
-	// Bind dapp to router
-	router, err := router.NewRouter(common.HexToAddress(contractDeployments.Router), client)
+	wsProject, err := project.NewProject(common.HexToAddress(contractDeployments.WSProject), client)
 	require.NoError(t, err)
-	tx, err = router.BindDapp(tOpts, projectID, dpp)
-	require.NoError(t, err)
-	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
+	tx, err = wsProject.Resume(tOpts, projectID)
 	require.NoError(t, err)
 }
 
@@ -231,8 +244,6 @@ func uploadProject(t *testing.T, chainEndpoint, ipfsURL string,
 	tx, err := wsProject.UpdateConfig(tOpts, newProjectID, projectFileURL, projHash)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
-	require.NoError(t, err)
-	tx, err = wsProject.Resume(tOpts, newProjectID)
 	require.NoError(t, err)
 	_, err = services.WaitForTransactionReceipt(client, tx.Hash())
 	require.NoError(t, err)

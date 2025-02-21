@@ -11,10 +11,9 @@ contract MockDapp {
     }
 
     function process(
-        uint256 _projectId,
-        bytes32 _taskId,
         address _prover,
-        address _deviceId,
+        uint256 _projectId,
+        bytes32[] calldata _taskIds,
         bytes calldata _data
     ) external view {
         if (errorType == 1) {

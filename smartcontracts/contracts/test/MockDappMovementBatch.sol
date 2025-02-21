@@ -1,27 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./interfaces/IDapp.sol";
+contract MockDappMovementBatch {
+    error CustomError();
 
-interface IMarshalDAOTicker {
-    function tick(address _device) external;
-}
-
-contract GeodnetDapp is IDapp {
+    uint8 public errorType;
     address public verifier;
-    address public ticker;
+    mapping(address => uint64) public deviceTick;
 
-    constructor(address _verifier, address _ticker) {
+    constructor(address _verifier) {
         verifier = _verifier;
-        ticker = _ticker;
     }
 
-    function process(
-        address _prover,
-        uint256 _projectId,
-        bytes32[] calldata _taskIds,
-        bytes calldata _data
-    ) external override {
+    function setErrorType(uint8 _errorType) external {
+        errorType = _errorType;
+    }
+
+    function process(address _prover, uint256 _projectId, bytes32[] calldata _taskIds, bytes calldata _data) external {
         require(_data.length == 23 * 32, "Invalid data length");
 
         // Prepare function selector
@@ -38,7 +33,7 @@ contract GeodnetDapp is IDapp {
             j++;
             if (isMoved) {
                 address deviceAddr = address(uint160(uint256(data[i])));
-                IMarshalDAOTicker(ticker).tick(deviceAddr);
+                deviceTick[deviceAddr]++;
             }
         }
     }

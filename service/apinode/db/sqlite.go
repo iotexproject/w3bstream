@@ -1,8 +1,6 @@
 package db
 
 import (
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
@@ -76,7 +74,7 @@ func (p *DB) DeleteTasks(ts []*Task) error {
 	return errors.Wrap(err, "failed to delete tasks")
 }
 
-func (p *DB) UpsertAssignedTask(taskID common.Hash, prover common.Address) error {
+func (p *DB) UpsertAssignedTask(taskID common.Hash, prover common.Address, projectID string) error {
 	t := AssignedTask{
 		TaskID: taskID.Hex(),
 		Prover: prover.Hex(),
@@ -122,9 +120,9 @@ func (p *DB) FetchSettledTask(taskID common.Hash) (*SettledTask, error) {
 	return &t, nil
 }
 
-func (p *DB) UpsertProjectDevice(projectID *big.Int, address common.Address) error {
+func (p *DB) UpsertProjectDevice(projectID string, address common.Address) error {
 	t := ProjectDevice{
-		ProjectID:     projectID.String(),
+		ProjectID:     projectID,
 		DeviceAddress: address.Hex(),
 	}
 	err := p.sqlite.Clauses(clause.OnConflict{
@@ -134,9 +132,9 @@ func (p *DB) UpsertProjectDevice(projectID *big.Int, address common.Address) err
 	return errors.Wrap(err, "failed to upsert project device")
 }
 
-func (p *DB) IsDeviceApproved(projectID *big.Int, address common.Address) (bool, error) {
+func (p *DB) IsDeviceApproved(projectID string, address common.Address) (bool, error) {
 	t := ProjectDevice{}
-	if err := p.sqlite.Where("project_id = ?", projectID.String()).Where("device_address = ?", address.Hex()).First(&t).Error; err != nil {
+	if err := p.sqlite.Where("project_id = ?", projectID).Where("device_address = ?", address.Hex()).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
 		}
@@ -170,17 +168,17 @@ func (p *DB) UpsertScannedBlockNumber(number uint64) error {
 	return errors.Wrap(err, "failed to upsert scanned block number")
 }
 
-func (p *DB) Project(projectID *big.Int) (string, common.Hash, error) {
+func (p *DB) Project(projectID string) (string, common.Hash, error) {
 	t := project{}
-	if err := p.sqlite.Where("project_id = ?", projectID.String()).First(&t).Error; err != nil {
+	if err := p.sqlite.Where("project_id = ?", projectID).First(&t).Error; err != nil {
 		return "", common.Hash{}, errors.Wrap(err, "failed to query project")
 	}
 	return t.URI, common.HexToHash(t.Hash), nil
 }
 
-func (p *DB) UpsertProject(projectID *big.Int, uri string, hash common.Hash) error {
+func (p *DB) UpsertProject(projectID string, uri string, hash common.Hash) error {
 	t := project{
-		ProjectID: projectID.String(),
+		ProjectID: projectID,
 		URI:       uri,
 		Hash:      hash.Hex(),
 	}
@@ -191,9 +189,9 @@ func (p *DB) UpsertProject(projectID *big.Int, uri string, hash common.Hash) err
 	return errors.Wrap(err, "failed to upsert project")
 }
 
-func (p *DB) ProjectFile(projectID *big.Int) ([]byte, common.Hash, error) {
+func (p *DB) ProjectFile(projectID string) ([]byte, common.Hash, error) {
 	t := projectFile{}
-	if err := p.sqlite.Where("project_id = ?", projectID.String()).First(&t).Error; err != nil {
+	if err := p.sqlite.Where("project_id = ?", projectID).First(&t).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, common.Hash{}, nil
 		}
@@ -202,9 +200,9 @@ func (p *DB) ProjectFile(projectID *big.Int) ([]byte, common.Hash, error) {
 	return t.File, common.HexToHash(t.Hash), nil
 }
 
-func (p *DB) UpsertProjectFile(projectID *big.Int, file []byte, hash common.Hash) error {
+func (p *DB) UpsertProjectFile(projectID string, file []byte, hash common.Hash) error {
 	t := projectFile{
-		ProjectID: projectID.String(),
+		ProjectID: projectID,
 		File:      file,
 		Hash:      hash.Hex(),
 	}

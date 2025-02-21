@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"log/slog"
 	"strings"
+	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,22 +22,24 @@ type Handler struct {
 	vmClients map[uint64]*grpc.ClientConn
 }
 
-func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte, error) {
+func (r *Handler) Handle(tasks []*task.Task, projectConfig *project.Config) ([]byte, error) {
+	task := tasks[0]
 	// TODO: load binary before being stored in db
+	now := time.Now()
 	bi, err := decodeBinary(projectConfig.Code)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode code")
 	}
+	slog.Info("fetch circuit code success", "time duration", time.Since(now).String())
+	now = time.Now()
 	metadata, err := decodeBinary(projectConfig.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode metadata")
 	}
-	taskPayload, err := loadPayload(task, projectConfig)
+	slog.Info("fetch circuit metadata success", "time duration", time.Since(now).String())
+	taskPayload, err := loadPayload(tasks, projectConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load payload")
-	}
-	if len(taskPayload) == 0 {
-		return nil, nil
 	}
 	conn, ok := r.vmClients[projectConfig.VMTypeID]
 	if !ok {
@@ -48,20 +52,22 @@ func (r *Handler) Handle(task *task.Task, projectConfig *project.Config) ([]byte
 		Binary:         bi,
 		Metadata:       metadata,
 	}); err != nil {
-		slog.Error("failed to new project", "project_id", task.ProjectID, "err", err)
+		slog.Error("failed to new project", "project_id", tasks[0].ProjectID, "err", err)
 		return nil, errors.Wrap(err, "failed to create vm instance")
 	}
 
 	resp, err := cli.ExecuteTask(context.Background(), &proto.ExecuteTaskRequest{
-		ProjectID: task.ProjectID.String(),
-		TaskID:    task.ID[:],
-		Payloads:  [][]byte{taskPayload},
+		ProjectID:      task.ProjectID.String(),
+		ProjectVersion: task.ProjectVersion,
+		TaskID:         task.ID[:],
+		Payloads:       [][]byte{taskPayload},
 	})
 	if err != nil {
 		slog.Error("failed to execute task", "project_id", task.ProjectID, "vm_type", projectConfig.VMTypeID,
 			"task_id", task.ID, "binary", projectConfig.Code, "payloads", task.Payload, "err", err)
 		return nil, errors.Wrap(err, "failed to execute vm instance")
 	}
+	slog.Info("proof", "proof", hexutil.Encode(resp.Result))
 
 	return resp.Result, nil
 }

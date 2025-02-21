@@ -31,9 +31,10 @@ import (
 
 func signMesssage(data []byte, projectID uint64, cfg *project.Config, key *ecdsa.PrivateKey) ([]byte, error) {
 	req := &api.CreateTaskReq{
-		Nonce:     uint64(time.Now().Unix()),
-		ProjectID: strconv.Itoa(int(projectID)),
-		Payload:   data,
+		Nonce:          uint64(time.Now().Unix()),
+		ProjectID:      strconv.Itoa(int(projectID)),
+		ProjectVersion: cfg.Version,
+		Payload:        data,
 	}
 
 	reqJson, err := json.Marshal(req)
