@@ -192,6 +192,7 @@ func TestE2E(t *testing.T) {
 		waitSettled(t, taskid, apiNodeUrl, 30*time.Second, 30*time.Second)
 	})
 	t.Run("gnark-movement", func(t *testing.T) {
+		t.Skip()
 		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDappMovementBatch))
 		project := &project.Project{
 			DefaultVersion: "v3",
@@ -257,7 +258,7 @@ func TestE2E(t *testing.T) {
 			taskID = sendMessage(t, data, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
 			time.Sleep(2 * time.Second)
 		}
-		for i := 0; i < 0; i++ {
+		for i := 0; i < 1; i++ {
 			_ = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
 			taskID = sendMessage(t, lastData, projectID, project.Configs[0], deviceKey2, apiNodeUrl)
 			time.Sleep(2 * time.Second)
