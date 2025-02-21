@@ -32,16 +32,16 @@ https://dragonfruit-mainnet.w3bstream.com/v1/task
 
 #### bind w3bstream project
 ```bash
-cast send 0x425D3FD5e8e0d0d7c73599adeb9B395505581ec7 "register(uint256)" 9 --private-key "your private key" --rpc-url "https://babel-api.mainnet.iotex.io" --legacy
+cast send 0x97c3696E5f9A17569711B002152fd1603f8F06eB "register(uint256)" 9 --private-key "your private key" --rpc-url "https://babel-api.mainnet.iotex.io" --legacy
 ```
 ```bash
-cast send 0x6EF4559f2023C93F78d27E0151deF083638478d2 "updateConfig(uint256,string,bytes32)" 9 ipfs://ipfs.mainnet.iotex.io/QmUHfDnvWrr2wiC78dw85xfctzawNWAN1TEbzosxwHdzYC 0x8153291c230dd107f102f75e826a11d9d4a8ac3f0f4e1c3619e547f82a94410e --private-key "your private key" --rpc-url "https://babel-api.mainnet.iotex.io" --legacy
+cast send 0xee8e318C712aB1731f9c3b708a5Caf2533614AF3 "updateConfig(uint256,string,bytes32)" 9 ipfs://ipfs.mainnet.iotex.io/QmPmnceezQsgWQRwR9seYLQ666rEkfxi4LgLCiLJeBqMpA 0xba270fc9a9a0817e1086ce2ecfd9c951b644a1aa628beb38b18e734c68a7e1f0 --private-key "your private key" --rpc-url "https://babel-api.mainnet.iotex.io" --legacy
 ```
 ```bash
-cast send 0x6EF4559f2023C93F78d27E0151deF083638478d2 "resume(uint256)" 9 --private-key "your private key" --rpc-url "https://babel-api.mainnet.iotex.io" --legacy
+cast send 0xee8e318C712aB1731f9c3b708a5Caf2533614AF3 "resume(uint256)" 9 --private-key "your private key" --rpc-url "https://babel-api.mainnet.iotex.io" --legacy
 ```
 
 #### bind dapp
 ```bash
-cast send 0x580D9686A7A188746B9f4a06fb5ec9e14E937fde "bindDapp(uint256,address)" 9 0xde44BEd8c143B75deDca6A065Fdabb8AbE95ECC6 --private-key "your private key" --rpc-url "https://babel-api.mainnet.iotex.io" --legacy
+cast send 0xeBf9Ab649f9952F9B6e85e59Fac9fED43594e3E0 "bindDapp(uint256,address)" 9 0xb6E9b57016288cBcd87B393E8a604F849bd77805 --private-key "your private key" --rpc-url "https://babel-api.mainnet.iotex.io" --legacy
 ```

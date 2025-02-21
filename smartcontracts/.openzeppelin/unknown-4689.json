@@ -50,6 +50,56 @@
       "address": "0x270bF4c2d0269f8Bf1c2187c20177DCc2f15C3C9",
       "txHash": "0xfbe93c0ddcd6d7573cdb0f5e65d4cd0a211b023b5df4fb83eafe913aed0fb6e9",
       "kind": "transparent"
+    },
+    {
+      "address": "0xee8e318C712aB1731f9c3b708a5Caf2533614AF3",
+      "txHash": "0x49aaab315427aedb157255760cfda1cf7b48778a4ddda912c103446e29912d50",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x97c3696E5f9A17569711B002152fd1603f8F06eB",
+      "txHash": "0x0ef74a51ef61f029f336be99c472500dbd3178b183f24940650e1debb8cd2bb8",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xD0a8E3317D20fE7546CD7c7d7964d7D4eDf653F1",
+      "txHash": "0xa320d65b35d24ac57b37167d94c5f36ab0c7b777bf780c4589fcffb2d6cb0d13",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xD3E3922f2fF03F6fc677b0820c849079d78b92c4",
+      "txHash": "0x65d81f74bc4a12052247435b1cfe1acf19d79c40348a0fa079ff69e09d5448c6",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x6003dFF453096032FfD35f78C95Aa13093a4bae2",
+      "txHash": "0xeb608a65d49fb94b07cbb8b1434de3ee25f10b0cb8bcd2ef3321a70997fac2b9",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xa80Ac1D881Bb302fDD1c94df528B6bb4b0a29927",
+      "txHash": "0xa4ee24f7319f027de19725b4be28ae7d8c687ed90f99829177b1cacf1eae08f6",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x314200F9c4F516131049e92a69731e0ccBC78218",
+      "txHash": "0xc80b4d673ddc475652370629d9071902cfd24fd65c849ea1ad5e3950fb165510",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xeBf9Ab649f9952F9B6e85e59Fac9fED43594e3E0",
+      "txHash": "0x17f2cc8e3f6c4c93c46e8a702c79ad3e5d0bffd6bf586447968aa3822fe97aff",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x59F83b20cC6b1872Eea72db3128FF06171db078f",
+      "txHash": "0xbcbd3d147b98a9bc1834fd312d57ef9dc916c719930847dc927ab1ae93105509",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xD323f014c598f033C40ae2e02Ed971c472a5BBE4",
+      "txHash": "0x96bf8a0989c098176b36a292452c16caf513da572a957e6b2f1bcc2fa29ecec0",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -1569,6 +1619,95 @@
               }
             ],
             "numberOfBytes": "256"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "c61ee223181cb1f7b3282f53a66b50c35ddff0f41214da5474f7df559215f97f": {
+      "address": "0x6A348825cde1584385005d2c2684fB0A7182adE6",
+      "txHash": "0x55fb62b6ceb4402f86d312363db4f7f8e8df691784aa361110e50cfed0ac1d41",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "taskManager",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(ITaskManager)1177",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:21"
+          },
+          {
+            "label": "proverStore",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IProverStore)878",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:22"
+          },
+          {
+            "label": "projectStore",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:23"
+          },
+          {
+            "label": "dapp",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:25"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IProverStore)878": {
+            "label": "contract IProverStore",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ITaskManager)1177": {
+            "label": "contract ITaskManager",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
           },
           "t_uint256": {
             "label": "uint256",

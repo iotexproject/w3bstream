@@ -1,0 +1,31 @@
+{
+    "defaultVersion": "v1",
+    "config": [
+        {
+            "version": "v1",
+            "vmTypeID": 1,
+            "proofType": "movement",
+            "signedKeys": [
+                {
+                    "name": "timestamp",
+                    "type": "uint64"
+                },
+                {
+                    "name": "latitude",
+                    "type": "uint64"
+                },
+                {
+                    "name": "longitude",
+                    "type": "uint64"
+                }
+            ],
+            "signatureAlgorithm": "",
+            "hashAlgorithm": "",
+            "taskProcessingBatch": 10,
+            "metadata": "ipfs://ipfs.mainnet.iotex.io/QmTXxKjQEQ8gAzgJjvoxoMB5ocYi16VimHjFwTKf6hEHSm",
+            "metadataHash": "0xc969f436f4cef28377e3b5ec3ca2457bcaab2795f65c4e1bf3656b57087cd957",
+            "code": "ipfs://ipfs.mainnet.iotex.io/QmSg3NFgVbHZyUZsHAjrLV7o8CmLKYChNa3CVi4uKKrHeL",
+            "codeHash": "0xdc3392204a56698891090ea1b729b7a25deba50ccad26ef70ff4b3d51f662ce4"
+        }
+    ]
+}
