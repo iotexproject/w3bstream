@@ -149,7 +149,7 @@ func encodeMovementPayload(tasks []*task.Task, projectConfig *project.Config) ([
 
 	var isMovedValue uint64 = 0
 	for i := 0; i < 10; i++ {
-		if movedFlags[i] {
+		if movedFlags[9-i] {
 			isMovedValue |= (1 << i)
 		}
 	}
