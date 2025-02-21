@@ -16,12 +16,7 @@ contract MockDappMovementBatch {
         errorType = _errorType;
     }
 
-    function process(
-        address _prover,
-        uint256 _projectId,
-        bytes32[] calldata _taskIds,
-        bytes calldata _data
-    ) external override {
+    function process(address _prover, uint256 _projectId, bytes32[] calldata _taskIds, bytes calldata _data) external {
         require(_data.length == 23 * 32, "Invalid data length");
 
         // Prepare function selector
