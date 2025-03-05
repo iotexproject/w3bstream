@@ -154,15 +154,21 @@ func (r *processor) run() {
 				continue
 			}
 			deviceTasks := []*task.Task{}
+			processTaskIDs := []common.Hash{}
+			i := uint64(0)
 			for _, t := range deviceTaskM {
+				if i >= batch {
+					break
+				}
 				deviceTasks = append(deviceTasks, t)
+				processTaskIDs = append(processTaskIDs, t.ID)
 			}
 
 			err = r.process(deviceTasks, c, pid)
 			if err != nil {
 				slog.Error("failed to process task", "error", err)
 			}
-			if err := r.db.ProcessTasks(taskIDs, err); err != nil {
+			if err := r.db.ProcessTasks(processTaskIDs, err); err != nil {
 				slog.Error("failed to process db tasks", "error", err)
 			}
 		}
