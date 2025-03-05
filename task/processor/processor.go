@@ -160,6 +160,7 @@ func (r *processor) run() {
 				if i >= batch {
 					break
 				}
+				i++
 				deviceTasks = append(deviceTasks, t)
 				processTaskIDs = append(processTaskIDs, t.ID)
 			}
