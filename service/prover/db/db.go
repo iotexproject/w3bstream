@@ -161,9 +161,9 @@ func (p *DB) ProcessedTask(taskID common.Hash) (bool, string, time.Time, error) 
 	return t.Processed, t.Error, t.CreatedAt, nil
 }
 
-func (p *DB) UnprocessedTasks(projectID string, limit uint64) ([]common.Hash, error) {
+func (p *DB) UnprocessedTasks(projectID string) ([]common.Hash, error) {
 	ts := []*task{}
-	if err := p.db.Order("created_at ASC").Where("processed = false").Where("project_id = ?", projectID).Find(&ts).Limit(int(limit)).Error; err != nil {
+	if err := p.db.Order("created_at ASC").Where("processed = false").Where("project_id = ?", projectID).Find(&ts).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to query unprocessed tasks")
 	}
 	hs := []common.Hash{}

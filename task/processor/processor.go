@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -26,7 +27,7 @@ type Project func(projectID string) (*project.Project, error)
 type RetrieveTask func(taskIDs []common.Hash) ([]*task.Task, error)
 
 type DB interface {
-	UnprocessedTasks(projectID string, limit uint64) ([]common.Hash, error)
+	UnprocessedTasks(projectID string) ([]common.Hash, error)
 	UnprocessedProjects() (map[string]uint64, error)
 	ProcessTasks(taskIDs []common.Hash, err error) error
 }
@@ -44,13 +45,8 @@ type processor struct {
 	routerInstance *router.Router
 }
 
-func (r *processor) process(taskIDs []common.Hash, c *project.Config, pid string) error {
-	ts, err := r.retrieve(taskIDs)
-	if err != nil {
-		return err
-	}
-
-	slog.Info("process tasks", "project_id", pid, "vm_type", c.VMTypeID)
+func (r *processor) process(ts []*task.Task, c *project.Config, pid string) error {
+	slog.Info("process tasks", "project_id", pid, "vm_type", c.VMTypeID, "tasks_len", len(ts))
 	startTime := time.Now()
 	proof, err := r.handle(ts, c)
 	if err != nil {
@@ -138,12 +134,31 @@ func (r *processor) run() {
 				time.Sleep(r.waitingTime)
 				continue
 			}
-			taskIDs, err := r.db.UnprocessedTasks(pid, batch)
+			taskIDs, err := r.db.UnprocessedTasks(pid)
 			if err != nil {
 				slog.Error("failed to get tasks", "project_id", pid, "error", err)
 				continue
 			}
-			err = r.process(taskIDs, c, pid)
+			ts, err := r.retrieve(taskIDs)
+			if err != nil {
+				slog.Error("failed to get tasks from datasource", "project_id", pid, "error", err, "task_ids", taskIDs)
+				continue
+			}
+			deviceTaskM := map[string]*task.Task{}
+			for _, t := range ts {
+				deviceTaskM[hexutil.Encode(t.DevicePubKey)] = t
+			}
+			if len(deviceTaskM) < int(batch) {
+				slog.Info("the project currently doesn't have enough device tasks", "project_id", pid, "task_processing_batch", batch, "current_number", len(deviceTaskM))
+				time.Sleep(r.waitingTime)
+				continue
+			}
+			deviceTasks := []*task.Task{}
+			for _, t := range deviceTaskM {
+				deviceTasks = append(deviceTasks, t)
+			}
+
+			err = r.process(deviceTasks, c, pid)
 			if err != nil {
 				slog.Error("failed to process task", "error", err)
 			}
