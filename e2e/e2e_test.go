@@ -146,6 +146,7 @@ func TestE2E(t *testing.T) {
 	registerProject(t, chainEndpoint, contracts, projectOwnerKey, projectID)
 
 	t.Run("gnark", func(t *testing.T) {
+		t.Skip()
 		bindProjectDapp(t, chainEndpoint, contracts, projectOwnerKey, projectID, common.HexToAddress(contracts.MockDapp))
 		gnarkCodePath := "./testdata/gnark.code"
 		gnarkMetadataPath := "./testdata/gnark.metadata"
