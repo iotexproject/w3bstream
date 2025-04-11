@@ -152,7 +152,7 @@ func Run(db DB, prv *ecdsa.PrivateKey, chainEndpoint string, retrieve RetrieveTa
 	p := &assigner{
 		db:             db,
 		prv:            prv,
-		waitingTime:    3 * time.Second,
+		waitingTime:    1 * time.Minute,
 		signer:         types.NewLondonSigner(chainID),
 		account:        crypto.PubkeyToAddress(prv.PublicKey),
 		client:         client,
