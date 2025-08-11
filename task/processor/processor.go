@@ -16,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 
-	"github.com/iotexproject/w3bstream/metrics"
 	"github.com/iotexproject/w3bstream/project"
 	"github.com/iotexproject/w3bstream/smartcontracts/go/router"
 	"github.com/iotexproject/w3bstream/task"
@@ -48,15 +47,21 @@ type processor struct {
 func (r *processor) process(ts []*task.Task, c *project.Config, pid string) error {
 	slog.Info("process tasks", "project_id", pid, "vm_type", c.VMTypeID, "tasks_len", len(ts))
 	startTime := time.Now()
-	proof, err := r.handle(ts, c)
-	if err != nil {
-		metrics.FailedTaskNumMtc.WithLabelValues(pid).Inc()
-		slog.Error("failed to handle task", "error", err)
-		return err
-	}
+	// proof, err := r.handle(ts, c)
+	// if err != nil {
+	// 	metrics.FailedTaskNumMtc.WithLabelValues(pid).Inc()
+	// 	slog.Error("failed to handle task", "error", err)
+	// 	return err
+	// }
 	processTime := time.Since(startTime)
 	slog.Info("process task success", "project_id", pid, "process_time", processTime)
 	//metrics.TaskDurationMtc.WithLabelValues(pid, t.ProjectVersion, t.ID.String()).Set(processTime.Seconds())
+
+	pubkey, err := crypto.UnmarshalPubkey(ts[0].DevicePubKey)
+	if err != nil {
+		return errors.Wrap(err, "failed to unmarshal device public key")
+	}
+	deviceAddr := crypto.PubkeyToAddress(*pubkey)
 
 	tids := [][32]byte{}
 	for _, t := range ts {
@@ -76,7 +81,7 @@ func (r *processor) process(ts []*task.Task, c *project.Config, pid string) erro
 		r.account,
 		pidInt,
 		tids,
-		proof,
+		common.LeftPadBytes(deviceAddr.Bytes(), 32),
 	)
 	if err != nil {
 		if jsonErr, ok := err.(rpc.DataError); ok {
@@ -126,9 +131,9 @@ func (r *processor) run() {
 				continue
 			}
 			batch := uint64(1)
-			if c.TaskProcessingBatch > 0 {
-				batch = c.TaskProcessingBatch
-			}
+			// if c.TaskProcessingBatch > 0 {
+			// 	batch = c.TaskProcessingBatch
+			// }
 			if n < batch {
 				slog.Info("the project currently doesn't have enough tasks", "project_id", pid, "task_processing_batch", batch, "current_number", n)
 				time.Sleep(r.waitingTime)
