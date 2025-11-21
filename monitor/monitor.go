@@ -253,7 +253,7 @@ func (c *contract) watch(listedBlockNumber uint64) {
 			query.ToBlock = new(big.Int).SetUint64(target)
 			logs, err := c.client.FilterLogs(context.Background(), query)
 			if err != nil {
-				if !strings.Contains(err.Error(), "start block > tip height") {
+				if !strings.Contains(err.Error(), "> tip height") {
 					slog.Error("failed to filter contract logs", "error", err)
 				}
 				continue
