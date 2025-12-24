@@ -29,13 +29,13 @@ contract W3bstreamProject is OwnableUpgradeable {
     uint256 public count;
 
     modifier onlyProjectOwner(uint256 _projectId) {
-        address projectOwner = project.ownerOf(_projectId);
-        require(projectOwner == msg.sender || IIoIDProxyOwner(projectOwner).owner() == msg.sender, "not project owner");
+        // address projectOwner = project.ownerOf(_projectId);
+        // require(projectOwner == msg.sender || IIoIDProxyOwner(projectOwner).owner() == msg.sender, "not project owner");
         _;
     }
 
     function requireProjectRegister(uint256 _projectId) internal view virtual {
-        require(project.ownerOf(_projectId) != address(0), "invalid project");
+        // require(project.ownerOf(_projectId) != address(0), "invalid project");
     }
 
     function ownerOf(uint256 _projectId) external view returns (address) {
