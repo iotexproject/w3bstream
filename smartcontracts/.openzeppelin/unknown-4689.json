@@ -1720,6 +1720,461 @@
         },
         "namespaces": {}
       }
+    },
+    "22ecb94a37adc05fabc8e881f048db549c33fb5311c9760599ff3bd4fae81cdb": {
+      "address": "0x13ABfe674d3BdfC611A6a9AE72632fF842087f10",
+      "txHash": "0x00ca40ea72e9390b209109843c05f1e8c6923740be33262c26514945e19ff0d8",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:40"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "projects",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_uint256,t_bool)",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:22"
+          },
+          {
+            "label": "projectConfigs",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_uint256,t_struct(ProjectConfig)824_storage)",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:23"
+          },
+          {
+            "label": "paused",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_mapping(t_uint256,t_bool)",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:24"
+          },
+          {
+            "label": "attributes",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_mapping(t_uint256,t_mapping(t_bytes32,t_bytes_storage))",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:25"
+          },
+          {
+            "label": "project",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_contract(IERC721)798",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:27"
+          },
+          {
+            "label": "binder",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_address",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:28"
+          },
+          {
+            "label": "count",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_uint256",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:29"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_bytes_storage": {
+            "label": "bytes",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC721)798": {
+            "label": "contract IERC721",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_bytes32,t_bytes_storage)": {
+            "label": "mapping(bytes32 => bytes)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_bytes32,t_bytes_storage))": {
+            "label": "mapping(uint256 => mapping(bytes32 => bytes))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(ProjectConfig)824_storage)": {
+            "label": "mapping(uint256 => struct W3bstreamProject.ProjectConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(ProjectConfig)824_storage": {
+            "label": "struct W3bstreamProject.ProjectConfig",
+            "members": [
+              {
+                "label": "uri",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "hash",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "d97dc27affa4f0f7cffc272a522d785569813e077659b0ee02917443ef6224fe": {
+      "address": "0xA6Cf6512549488DD2eBcF123C80dc8611FbeaF74",
+      "txHash": "0x7537ebbcfceeda761b5f519eb69a71022ebfd4a0d85cadddd77bb10cf985da61",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:40"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "projects",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_uint256,t_bool)",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:22"
+          },
+          {
+            "label": "projectConfigs",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_uint256,t_struct(ProjectConfig)824_storage)",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:23"
+          },
+          {
+            "label": "paused",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_mapping(t_uint256,t_bool)",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:24"
+          },
+          {
+            "label": "attributes",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_mapping(t_uint256,t_mapping(t_bytes32,t_bytes_storage))",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:25"
+          },
+          {
+            "label": "project",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_contract(IERC721)798",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:27"
+          },
+          {
+            "label": "binder",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_address",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:28"
+          },
+          {
+            "label": "count",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_uint256",
+            "contract": "W3bstreamProject",
+            "src": "contracts/W3bstreamProject.sol:29"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_bytes_storage": {
+            "label": "bytes",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC721)798": {
+            "label": "contract IERC721",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_bytes32,t_bytes_storage)": {
+            "label": "mapping(bytes32 => bytes)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_bytes32,t_bytes_storage))": {
+            "label": "mapping(uint256 => mapping(bytes32 => bytes))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(ProjectConfig)824_storage)": {
+            "label": "mapping(uint256 => struct W3bstreamProject.ProjectConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(ProjectConfig)824_storage": {
+            "label": "struct W3bstreamProject.ProjectConfig",
+            "members": [
+              {
+                "label": "uri",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "hash",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "dbfbb44a6da43654c98b45716b2b7ee39fc1f3f698ed6fe4cd4c90a1dcf48998": {
+      "address": "0x8093fd8cb80d41A970505B456f3D479137CaFd5e",
+      "txHash": "0xe4eb8a177ee9993be804a7638dda5aedea27ad8ffb2f60e5644a577290038b46",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "taskManager",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(ITaskManager)926",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:21"
+          },
+          {
+            "label": "proverStore",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IProverStore)653",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:22"
+          },
+          {
+            "label": "projectStore",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:23"
+          },
+          {
+            "label": "dapp",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "W3bstreamRouter",
+            "src": "contracts/W3bstreamRouter.sol:25"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IProverStore)653": {
+            "label": "contract IProverStore",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ITaskManager)926": {
+            "label": "contract ITaskManager",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
     }
   }
 }
