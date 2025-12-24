@@ -20,6 +20,8 @@ func loadPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte, err
 		return encodeLivenessPayload(tasks[0], projectConfig)
 	case "movement":
 		return encodeMovementPayload(tasks, projectConfig)
+	case "sum":
+		return encodeSumPayload(tasks, projectConfig)
 	default:
 		return tasks[0].Payload, nil
 	}
@@ -167,4 +169,82 @@ func abs(a, b uint64) uint64 {
 		return a - b
 	}
 	return b - a
+}
+
+const SumMaxItems = 2
+
+type ProofOfSumCircuit struct {
+	PayloadHashs [SumMaxItems][32]uints.U8
+	Timestamps   [SumMaxItems]frontend.Variable
+	Values       [SumMaxItems]frontend.Variable
+	SigBytes     [SumMaxItems][64]uints.U8
+
+	PubBytes  [SumMaxItems][65]uints.U8
+	StartTime frontend.Variable
+
+	Threshold  frontend.Variable `gnark:",public"`
+	EthAddress frontend.Variable `gnark:",public"`
+}
+
+func (circuit *ProofOfSumCircuit) Define(api frontend.API) error { return nil }
+
+func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte, error) {
+	if len(tasks) != 1 {
+		return nil, errors.Errorf("invalid tasks len, expect %d, get %d", 1, len(tasks))
+	}
+	assignment := ProofOfSumCircuit{}
+	task := tasks[0]
+	if task.PrevTask == nil {
+		return nil, errors.New("sum project miss previous task")
+	}
+	lastPayloadHash, _, _, lastData, err := api.HashTask(
+		&api.CreateTaskReq{
+			Nonce:          task.PrevTask.Nonce,
+			ProjectID:      task.PrevTask.ProjectID.String(),
+			ProjectVersion: task.PrevTask.ProjectVersion,
+			Payload:        task.PrevTask.Payload,
+		}, projectConfig)
+	if err != nil {
+		return nil, err
+	}
+	curPayloadHash, _, _, curData, err := api.HashTask(
+		&api.CreateTaskReq{
+			Nonce:          task.Nonce,
+			ProjectID:      task.ProjectID.String(),
+			ProjectVersion: task.ProjectVersion,
+			Payload:        task.Payload,
+		}, projectConfig)
+	if err != nil {
+		return nil, err
+	}
+	lastTimestamp := lastData[0].(uint64)
+	lastValue := lastData[1].(uint64)
+	lastSig := task.PrevTask.Signature[:64]
+	curTimestamp := curData[0].(uint64)
+	curValue := curData[1].(uint64)
+	curSig := task.Signature[:64]
+
+	assignment.PayloadHashs[0] = [32]uints.U8(uints.NewU8Array(lastPayloadHash[:]))
+	assignment.Timestamps[0] = lastTimestamp
+	assignment.Values[0] = lastValue
+	assignment.SigBytes[0] = [64]uints.U8(uints.NewU8Array(lastSig[:]))
+	assignment.PayloadHashs[1] = [32]uints.U8(uints.NewU8Array(curPayloadHash[:]))
+	assignment.Timestamps[1] = curTimestamp
+	assignment.Values[1] = curValue
+	assignment.SigBytes[1] = [64]uints.U8(uints.NewU8Array(curSig[:]))
+	assignment.PubBytes[0] = [65]uints.U8(uints.NewU8Array(task.DevicePubKey))
+	assignment.PubBytes[1] = [65]uints.U8(uints.NewU8Array(task.DevicePubKey))
+	assignment.Threshold = uint64(10)
+
+	pubkey, err := crypto.UnmarshalPubkey(task.DevicePubKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal pubkey")
+	}
+	assignment.EthAddress = crypto.PubkeyToAddress(*pubkey).Big()
+
+	witness, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
+	if err != nil {
+		return nil, err
+	}
+	return witness.MarshalBinary()
 }

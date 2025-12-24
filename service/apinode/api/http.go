@@ -170,19 +170,31 @@ func (s *httpServer) createTask(c *gin.Context) {
 	var matchedPubkey *ecdsa.PublicKey
 	var approved bool
 	for _, r := range recovered {
-		addr := crypto.PubkeyToAddress(*r.pubkey)
-		slog.Debug("recovered address", "project_id", req.ProjectID, "address", addr.String())
-		ok, err := s.db.IsDeviceApproved(req.ProjectID, addr)
-		if err != nil {
-			slog.Error("failed to check device permission", "error", err)
-			c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to check device permission")))
-			return
-		}
-		if ok {
-			approved = true
-			matchedPubkey = r.pubkey
-			sig = r.sig
-			break
+		if req.ProjectID == "9" {
+			addr := crypto.PubkeyToAddress(*r.pubkey)
+			slog.Debug("recovered address", "project_id", req.ProjectID, "address", addr.String())
+			ok, err := s.db.IsDeviceApproved(req.ProjectID, addr)
+			if err != nil {
+				slog.Error("failed to check device permission", "error", err)
+				c.JSON(http.StatusInternalServerError, newErrResp(errors.Wrap(err, "failed to check device permission")))
+				return
+			}
+			if ok {
+				approved = true
+				matchedPubkey = r.pubkey
+				sig = r.sig
+				break
+			}
+		} else {
+			addr := crypto.PubkeyToAddress(*r.pubkey)
+			deviceAddr := gjson.GetBytes(req.Payload, "address").Str
+
+			if strings.EqualFold(addr.Hex(), deviceAddr) {
+				approved = true
+				matchedPubkey = r.pubkey
+				sig = r.sig
+				break
+			}
 		}
 	}
 	if !approved {
