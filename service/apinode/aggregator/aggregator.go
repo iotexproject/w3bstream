@@ -47,7 +47,7 @@ func Run(projectManager *project.Manager, db *apidb.DB, sequencerAddr string, in
 				slog.Error("failed to get project config", "error", err, "project_id", pid)
 				continue
 			}
-			if cfg.ProofType == "movement" {
+			if cfg.ProofType == "movement" || cfg.ProofType == "sum" {
 				prevTaskID := tasks[0].TaskID
 				tasks[len(tasks)-1].PrevTaskID = prevTaskID
 			}
