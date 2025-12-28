@@ -188,6 +188,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 		} else {
 			addr := crypto.PubkeyToAddress(*r.pubkey)
 			deviceAddr := gjson.GetBytes(req.Payload, "address").Str
+			deviceAddr = strings.TrimPrefix(deviceAddr, "did:io:")
 
 			if strings.EqualFold(addr.Hex(), deviceAddr) {
 				approved = true
