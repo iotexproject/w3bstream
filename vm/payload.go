@@ -198,6 +198,8 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	if task.PrevTask == nil {
 		return nil, errors.New("sum project miss previous task")
 	}
+
+	slog.Debug("--------------1")
 	lastPayloadHash, _, _, lastData, err := api.HashTask(
 		&api.CreateTaskReq{
 			Nonce:          task.PrevTask.Nonce,
@@ -208,6 +210,7 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("--------------2")
 	curPayloadHash, _, _, curData, err := api.HashTask(
 		&api.CreateTaskReq{
 			Nonce:          task.Nonce,
@@ -218,12 +221,17 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("--------------3")
 	lastTimestamp := lastData[0].(uint64)
 	lastValue := lastData[1].(uint64)
 	lastSig := task.PrevTask.Signature[:64]
 	curTimestamp := curData[0].(uint64)
 	curValue := curData[1].(uint64)
 	curSig := task.Signature[:64]
+
+	slog.Debug("sum payload", "lastTimestamp", lastTimestamp, "lastValue", lastValue, "lastSig", lastSig,
+		"curTimestamp", curTimestamp, "curValue", curValue, "curSig", curSig, "lastPayloadHash", lastPayloadHash,
+		"curPayloadHash", curPayloadHash)
 
 	assignment.PayloadHashs[0] = [32]uints.U8(uints.NewU8Array(lastPayloadHash[:]))
 	assignment.Timestamps[0] = lastTimestamp
@@ -237,25 +245,28 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	assignment.PubBytes[1] = [65]uints.U8(uints.NewU8Array(task.DevicePubKey))
 	assignment.Threshold = uint64(10)
 
+	slog.Debug("--------------5")
+
 	pubkey, err := crypto.UnmarshalPubkey(task.DevicePubKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal pubkey")
 	}
 	assignment.EthAddress = crypto.PubkeyToAddress(*pubkey).Big()
 
-	slog.Debug("sum payload", "lastTimestamp", lastTimestamp, "lastValue", lastValue, "lastSig", lastSig,
-		"curTimestamp", curTimestamp, "curValue", curValue, "curSig", curSig, "lastPayloadHash", lastPayloadHash,
-		"curPayloadHash", curPayloadHash)
+	slog.Debug("--------------6")
 
 	witness, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new witness")
 	}
 
+	slog.Debug("--------------7")
+
 	data, err := witness.MarshalBinary()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal witness binary")
 	}
+	slog.Debug("--------------8")
 
 	return data, nil
 }
