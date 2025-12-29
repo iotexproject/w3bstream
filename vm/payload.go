@@ -2,6 +2,7 @@ package vm
 
 import (
 	_ "embed"
+	"log/slog"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
@@ -242,9 +243,19 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	}
 	assignment.EthAddress = crypto.PubkeyToAddress(*pubkey).Big()
 
+	slog.Debug("sum payload", "lastTimestamp", lastTimestamp, "lastValue", lastValue, "lastSig", lastSig,
+		"curTimestamp", curTimestamp, "curValue", curValue, "curSig", curSig, "lastPayloadHash", lastPayloadHash,
+		"curPayloadHash", curPayloadHash)
+
 	witness, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to new witness")
 	}
-	return witness.MarshalBinary()
+
+	data, err := witness.MarshalBinary()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal witness binary")
+	}
+
+	return data, nil
 }
