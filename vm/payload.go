@@ -244,6 +244,7 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	assignment.PubBytes[0] = [65]uints.U8(uints.NewU8Array(task.DevicePubKey))
 	assignment.PubBytes[1] = [65]uints.U8(uints.NewU8Array(task.DevicePubKey))
 	assignment.Threshold = uint64(10)
+	assignment.StartTime = lastData[0].(uint64)
 
 	slog.Debug("--------------5")
 
