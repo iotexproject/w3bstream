@@ -186,11 +186,10 @@ func (s *httpServer) createTask(c *gin.Context) {
 				break
 			}
 		} else {
-			addr := crypto.PubkeyToAddress(*r.pubkey)
-			deviceAddr := gjson.GetBytes(req.Payload, "address").Str
-			deviceAddr = strings.TrimPrefix(deviceAddr, "did:io:")
+			uncompressed := crypto.FromECDSAPub(r.pubkey)
+			deviceAddr := gjson.GetBytes(req.Payload, "publicKey").Str
 
-			if strings.EqualFold(addr.Hex(), deviceAddr) {
+			if strings.EqualFold(hexutil.Encode(uncompressed), deviceAddr) {
 				approved = true
 				matchedPubkey = r.pubkey
 				sig = r.sig
