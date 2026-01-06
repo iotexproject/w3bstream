@@ -199,11 +199,16 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 		return nil, errors.New("sum project miss previous task")
 	}
 
+	projectID := task.PrevTask.ProjectID.String()
+	if projectID == "1009" {
+		projectID = "delen-test"
+	}
+
 	slog.Debug("--------------1")
 	lastPayloadHash, _, _, lastData, err := api.HashTask(
 		&api.CreateTaskReq{
 			Nonce:          task.PrevTask.Nonce,
-			ProjectID:      task.PrevTask.ProjectID.String(),
+			ProjectID:      projectID,
 			ProjectVersion: task.PrevTask.ProjectVersion,
 			Payload:        task.PrevTask.Payload,
 		}, projectConfig)
@@ -214,7 +219,7 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	curPayloadHash, _, _, curData, err := api.HashTask(
 		&api.CreateTaskReq{
 			Nonce:          task.Nonce,
-			ProjectID:      task.ProjectID.String(),
+			ProjectID:      projectID,
 			ProjectVersion: task.ProjectVersion,
 			Payload:        task.Payload,
 		}, projectConfig)
