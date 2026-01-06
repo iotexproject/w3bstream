@@ -142,7 +142,12 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
-	proj, err := s.projectManager.Project(req.ProjectID)
+	projectID := req.ProjectID
+	if strings.Contains(projectID, "delen-test") {
+		projectID = "1009"
+	}
+
+	proj, err := s.projectManager.Project(projectID)
 	if err != nil {
 		slog.Error("failed to get project", "error", err)
 		c.JSON(http.StatusBadRequest, newErrResp(errors.Wrap(err, "failed to get project")))
@@ -211,7 +216,7 @@ func (s *httpServer) createTask(c *gin.Context) {
 			DevicePubKey:       hexutil.Encode(crypto.FromECDSAPub(matchedPubkey)),
 			TaskID:             taskID.Hex(),
 			Nonce:              req.Nonce,
-			ProjectID:          req.ProjectID,
+			ProjectID:          projectID,
 			ProjectVersion:     req.ProjectVersion,
 			Payload:            string(req.Payload),
 			Signature:          hexutil.Encode(sig),
