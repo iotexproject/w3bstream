@@ -174,16 +174,21 @@ func abs(a, b uint64) uint64 {
 
 const SumMaxItems = 2
 
+// Comments on the ZK circuit
 type ProofOfSumCircuit struct {
 	PayloadHashs [SumMaxItems][32]uints.U8
 	Timestamps   [SumMaxItems]frontend.Variable
 	Values       [SumMaxItems]frontend.Variable
 	SigBytes     [SumMaxItems][64]uints.U8
 
-	PubBytes  [SumMaxItems][65]uints.U8
+	// TODO: PubBytes  [65]uints.U8? pubkey should be same
+	PubBytes [SumMaxItems][65]uints.U8
+	// TODO: add project name as a U256(Bytes32) private var to calc ioID
 	StartTime frontend.Variable
 
-	Threshold  frontend.Variable `gnark:",public"`
+	Threshold frontend.Variable `gnark:",public"`
+
+	// TODO: replace EthAddress from the pubkey with ioID as a U256(Bytes32) public variable in the proof
 	EthAddress frontend.Variable `gnark:",public"`
 }
 

@@ -8,7 +8,7 @@ interface IMarshalDAOTicker {
 
 contract DelenDapp is IDapp {
     address public verifier;
-    mapping(address => uint64) public counter;
+    mapping(bytes32 => uint64) public counter;
 
     constructor(address _verifier) {
         verifier = _verifier;
@@ -30,8 +30,9 @@ contract DelenDapp is IDapp {
         require(success, "Verifier call failed");
 
         bytes32[] memory data = bytesToBytes32Array(_data);
-        address deviceAddr = address(uint160(uint256(data[13])));
-        counter[deviceAddr]++;
+        // TODO: extract ioID from the proof
+        bytes32 ioID = data[13];
+        counter[ioID]++;
     }
 
     function bytesToBytes32Array(bytes memory data) public pure returns (bytes32[] memory) {
