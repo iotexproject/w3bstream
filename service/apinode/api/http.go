@@ -10,9 +10,11 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -142,9 +144,21 @@ func (s *httpServer) createTask(c *gin.Context) {
 		return
 	}
 
+	letterCheck := func(s string) bool {
+		for _, r := range s {
+			if unicode.IsLetter(r) {
+				return true
+			}
+		}
+		return false
+	}
+
 	projectID := req.ProjectID
 	if strings.Contains(projectID, "delen-test") {
 		projectID = "1009"
+	} else if letterCheck(projectID) {
+		n := new(big.Int).SetBytes([]byte(projectID))
+		projectID = n.String()
 	}
 
 	proj, err := s.projectManager.Project(projectID)
