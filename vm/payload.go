@@ -205,7 +205,7 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	}
 
 	slog.Debug("--------------1")
-	lastPayloadHash, _, _, lastData, err := api.HashTask(
+	_, _, _, lastData, err := api.HashTask(
 		&api.CreateTaskReq{
 			Nonce:          task.PrevTask.Nonce,
 			ProjectID:      projectID,
@@ -215,8 +215,9 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	if err != nil {
 		return nil, err
 	}
+	lastPayloadHash := task.PrevTask.PayloadHash
 	slog.Debug("--------------2")
-	curPayloadHash, _, _, curData, err := api.HashTask(
+	_, _, _, curData, err := api.HashTask(
 		&api.CreateTaskReq{
 			Nonce:          task.Nonce,
 			ProjectID:      projectID,
@@ -226,6 +227,7 @@ func encodeSumPayload(tasks []*task.Task, projectConfig *project.Config) ([]byte
 	if err != nil {
 		return nil, err
 	}
+	curPayloadHash := task.PayloadHash
 	slog.Debug("--------------3")
 	lastTimestamp := lastData[0].(uint64)
 	lastValue := lastData[1].(uint64)
