@@ -23,6 +23,16 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
+      - name: Configure Git credentials for custom Git server
+        run: |
+          git config --global credential.helper store
+          echo "https://${{ secrets.LFS_S3_USER }}:${{ secrets.LFS_S3_SECRET }}@bguaey6s9d.execute-api.us-west-1.amazonaws.com" > ~/.git-credentials
+
+      - name: Pull LFS files
+        run: |
+          git config lfs.url https://bguaey6s9d.execute-api.us-west-1.amazonaws.com/common
+          git lfs pull
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
