@@ -156,6 +156,8 @@ func (s *httpServer) createTask(c *gin.Context) {
 	projectID := req.ProjectID
 	if strings.Contains(projectID, "delen-test") {
 		projectID = "1009"
+	} else if strings.Contains(strings.ToLower(projectID), "delen-dev") {
+		projectID = "1009"
 	} else if letterCheck(projectID) {
 		n := new(big.Int).SetBytes([]byte(projectID))
 		projectID = n.String()
